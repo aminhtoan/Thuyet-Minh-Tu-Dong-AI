@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+web-build/
+
+# Environment files (examples remain tracked)
+.env
+.env.*
+!.env.example
+
+# Expo
+.expo/
+expo-env.d.ts
+ios/
+android/
+
+# Tooling and caches
+*.tsbuildinfo
+*.log
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
