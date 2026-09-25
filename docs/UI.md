@@ -8,39 +8,33 @@
 - Rounded cards and subtle shadows
 - Clear typography, consistent spacing and accessible contrast
 
-## Web
+## Customer Web (`frontend-web/`)
 
 Desktop layout: Sidebar + Topbar + Main Workspace.
 
 Desktop tận dụng multiple columns, editor lớn và sidebar navigation.
 
-## Mobile
+## Customer Mobile (`frontend-mobile/`)
 
 Mobile layout: Header + Single-column Content + Bottom Navigation khi phù hợp.
 
 Không copy desktop layout trực tiếp sang mobile.
 
-## Planned Screens
+## Customer Screen Status
 
-1. Login
-2. Register
-3. Dashboard
-4. New Project / Upload
-5. Transcript Editor
-6. Translation
-7. Voice Selection
-8. Processing
-9. Result
-10. History
-11. Profile / Settings
+- Implemented UI: Login, Register, Dashboard, Projects, New Project / mock Upload, Customer Transcript Editor (S7).
+- Existing placeholders: History and Settings.
+- Planned Customer UI: Translation Editor (S8), Voice/TTS (S9), Generate/Processing (S10), Result and History completion (S11), Profile completion later.
 
-## Planned Components
+## Admin Web (`admin-web/`, future)
 
-- Button, Input, Select, Card and Badge
-- Modal, Dialog and Toast
-- Spinner, ProgressBar, EmptyState and ErrorState
-- PageHeader, Sidebar, Topbar and BottomNavigation
-- ProjectCard
+Admin Web is a **separate application**, not a route or component section inside Customer Web. It begins in S12 and does not exist yet. Planned screens: Admin Login, Admin Dashboard, Customers, Projects, Processing Jobs, Languages, Voices, Activity Logs and business/application Settings. No Admin UI is implemented in S6.
+
+## Component Inventory and Future Patterns
+
+- Implemented shared patterns: Button, Input, Card, Badge, Spinner, ProgressBar, EmptyState, ErrorState, PageHeader/Sidebar/Topbar on Web, and header/tab navigation on Mobile.
+- Later patterns as needed: Select, Modal, Dialog and Toast.
+- Implemented project-specific patterns: ProjectCard, filters and status badges.
 
 ## Implemented Design System
 
@@ -63,7 +57,7 @@ Không copy desktop layout trực tiếp sang mobile.
 - Persistent desktop Sidebar with active route highlighting
 - Responsive navigation drawer for tablet and mobile widths
 - Sticky Topbar, user placeholder and reusable PageHeader
-- Auth placeholders remain outside the application shell
+- Login and Register screens remain outside the application shell
 
 ### Mobile Application Shell
 
@@ -71,7 +65,7 @@ Không copy desktop layout trực tiếp sang mobile.
 - Safe-area-aware MobileHeader and scrollable screen container
 - New Project remains a stack route outside the tab bar
 
-The Dashboard placeholders provide a lightweight visual showcase only; feature implementation remains planned for later sprints.
+Dashboard and Projects are implemented with development mock data.
 
 ## Authentication UI
 
@@ -101,7 +95,7 @@ Authentication uses a short mock UI flow only. Backend authentication and persis
 
 - Two-column statistics and native project cards on Dashboard
 - FlatList-based Projects screen with search and horizontally scrollable filter chips
-- Dashboard and Projects CTAs navigate to the existing New Project placeholder
+- Dashboard and Projects CTAs navigate to the implemented New Project screen
 
 ### Project Components
 
@@ -110,3 +104,16 @@ Authentication uses a short mock UI flow only. Backend authentication and persis
 - Separate empty states for no project data and no matching results
 
 Project screens use clearly marked development mock data. Backend project APIs are not connected.
+
+## New Project and Media Upload (S5)
+
+- Web `/projects/new`: project name, source language, accessible browse input, drag-and-drop with active state, validated file card, video/audio preview, and upload progress.
+- Mobile `/projects/new`: project name, source-language chips, Expo Document Picker for existing video/audio, validated metadata card, and upload progress. Keyboard avoidance and safe areas are supported.
+- Both frontends support cancel, retry, success and error states. Upload is simulated locally; no media is sent or persisted. Continue returns to Projects; the sample uploaded project opens the S7 Transcript Editor.
+
+## Customer Transcript Editor (S7)
+
+- Web `/projects/:projectId/transcript`: two-column media information and timestamped segment editor, collapsing to one column on narrow screens. A mock project without a playable URL shows honest media metadata rather than a broken video/audio player. The segment list has an internal scroll area on desktop.
+- Mobile `/projects/[projectId]/transcript`: single-column FlatList with timestamped multiline inputs, KeyboardAvoidingView and safe-area padding; no new native media dependency.
+- Both clients load by route `projectId`, generate ten development-only sample segments, allow correction/reset/save, validate empty text, show dirty/saved/loading/error/empty states and offer retry. Full text is derived from segments on save.
+- Generated/saved transcripts live only in mock service memory for the current app session. No STT provider, backend or persistent media exists. Continue to Translation remains disabled with an S8 explanation.

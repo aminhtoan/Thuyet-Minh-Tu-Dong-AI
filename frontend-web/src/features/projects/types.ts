@@ -11,6 +11,9 @@ export type Project = {
   status: ProjectStatus
   progress?: number
   mediaType: MediaType
+  mediaName?: string
+  mediaSize?: number
+  durationSeconds?: number
   updatedAt: string
 }
 

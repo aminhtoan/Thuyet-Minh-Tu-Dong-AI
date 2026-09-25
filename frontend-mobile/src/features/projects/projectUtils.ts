@@ -1,6 +1,8 @@
+import { languages } from './languages';
 import type { LanguageCode, Project, ProjectStatistics, ProjectStatus, ProjectStatusFilter } from './types';
 
-const languageNames: Record<LanguageCode, string> = { vi: 'Vietnamese', en: 'English', ja: 'Japanese', ko: 'Korean' };
+export const languageNames = Object.fromEntries(languages.map(({ code, name }) => [code, name])) as Record<LanguageCode, string>;
+export const sourceLanguageOptions = languages.map(({ code, name }) => ({ value: code, label: name }));
 const processingStatuses = new Set<ProjectStatus>(['UPLOADED', 'TRANSCRIBING', 'TRANSCRIBED', 'TRANSLATING', 'TRANSLATED', 'GENERATING_AUDIO', 'PROCESSING_VIDEO']);
 
 export function isProcessingStatus(status: ProjectStatus): boolean { return processingStatuses.has(status); }

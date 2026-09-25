@@ -1,0 +1,33 @@
+.transcript-intro { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-lg); margin-bottom: var(--space-md); }
+.transcript-intro h2 { margin: var(--space-xs) 0; font-size: var(--font-size-xl); }
+.transcript-intro p { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.transcript-eyebrow { color: var(--color-primary); font-size: 0.7rem; font-weight: var(--font-weight-bold); letter-spacing: 0.08em; }
+.transcript-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: start; gap: var(--space-lg); }
+.transcript-media, .transcript-editor { min-width: 0; }
+.transcript-media { display: grid; gap: var(--space-md); }
+.transcript-media h2, .transcript-editor h2 { margin: 0; font-size: var(--font-size-lg); }
+.transcript-media__icon { display: grid; min-height: 12rem; place-items: center; border-radius: var(--radius-lg); color: #dbeafe; background: #172c4d; font-size: 3rem; }
+.transcript-media strong { overflow-wrap: anywhere; }
+.transcript-media p { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.transcript-media__note { padding: var(--space-md); border-radius: var(--radius-md); color: var(--color-text-secondary); background: var(--color-surface-secondary); font-size: var(--font-size-sm); }
+.transcript-editor { display: grid; gap: var(--space-lg); }
+.transcript-editor__heading { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); }
+.transcript-editor__heading p { margin: var(--space-xs) 0 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.transcript-centered { display: grid; justify-items: center; gap: var(--space-md); padding: var(--space-2xl) var(--space-md); text-align: center; color: var(--color-text-secondary); }
+.transcript-centered h3, .transcript-centered p { margin: 0; }
+.transcript-segment-list { display: grid; max-height: 34rem; overflow-y: auto; gap: var(--space-md); padding-right: var(--space-xs); }
+.transcript-segment { display: grid; gap: var(--space-sm); padding: var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-secondary); }
+.transcript-segment--invalid { border-color: var(--color-error); background: var(--color-error-light); }
+.transcript-segment__meta { display: flex; justify-content: space-between; gap: var(--space-sm); color: var(--color-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.transcript-segment label { color: var(--color-text-secondary); font-size: 0.75rem; font-weight: var(--font-weight-semibold); }
+.transcript-segment textarea { width: 100%; min-height: 5rem; resize: vertical; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-surface); line-height: var(--line-height-normal); }
+.transcript-segment textarea:focus { border-color: var(--color-primary); outline: 3px solid rgb(37 99 235 / 12%); }
+.transcript-segment textarea[aria-invalid='true'] { border-color: var(--color-error); }
+.transcript-segment__error { margin: 0; color: var(--color-error); font-size: var(--font-size-sm); }
+.transcript-actions { display: grid; gap: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border); }
+.transcript-actions__status { color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.transcript-actions__error { display: block; color: var(--color-error); font-weight: var(--font-weight-medium); }
+.transcript-actions__buttons { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.transcript-actions__next { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); color: var(--color-text-muted); font-size: var(--font-size-sm); }
+@media (max-width: 900px) { .transcript-layout { grid-template-columns: 1fr; }.transcript-media__icon { min-height: 8rem; } }
+@media (max-width: 600px) { .transcript-intro { flex-direction: column; }.transcript-segment-list { max-height: none; overflow: visible; }.transcript-actions__buttons .button { flex: 1 1 10rem; } }

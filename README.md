@@ -4,27 +4,35 @@ Hệ thống thuyết minh tự động đa ngôn ngữ.
 
 ## Overview
 
-Ứng dụng Web và Mobile được định hướng để quản lý quy trình tạo thuyết minh đa ngôn ngữ cho video và audio. Sprint hiện tại chỉ thiết lập frontend foundation; backend và AI được lập kế hoạch riêng.
+S1–S5 đã xây dựng UI Customer Web/Mobile: đăng nhập/đăng ký mock, Dashboard, Projects và New Project với upload mô phỏng. S6 chuẩn hóa kiến trúc full-stack; S7 bổ sung Transcript Editor với dữ liệu và dịch vụ mock. Chưa có backend, Admin Web, database connection hay AI processing thật.
 
 ## Main Flow
 
-Upload → Speech-to-Text → Translation → TTS → Media Processing → Result
+Upload → Speech-to-Text → Transcript Editing → Translation Editing → Voice/TTS → Media Processing → Result
 
 ## Tech Stack
 
-Web: React + TypeScript + Vite
+Customer Web: React + TypeScript + Vite
 
-Mobile: React Native + TypeScript + Expo
+Customer Mobile: React Native + TypeScript + Expo SDK 57
 
-Backend: Planned separately
+Admin Web (planned S12): React + TypeScript + Vite, ứng dụng riêng
+
+Backend (planned S17): Node.js + Express.js + TypeScript
+
+Database (planned): MongoDB + Mongoose; JWT/RBAC sẽ được triển khai ở sprint backend/auth tương ứng.
 
 ## Repository Structure
 
 ```text
 docs/
-frontend-web/
-frontend-mobile/
+frontend-web/      # Customer Web — implemented
+frontend-mobile/   # Customer Mobile — implemented
+admin-web/         # planned S12; not created yet
+backend/           # planned S17; not created yet
 ```
+
+Admin Web không nằm trong Customer Web. Cả ba client dự kiến dùng chung REST API `/api` của backend; các ứng dụng/thư mục được ghi “planned” chưa có lệnh chạy. Xem [kiến trúc hệ thống](docs/ARCHITECTURE.md) và [trạng thái sprint](docs/PROGRESS.md).
 
 ## Web Development
 
@@ -61,6 +69,7 @@ Các lệnh validation: `npm run lint`, `npx tsc --noEmit`.
 ## Documentation
 
 - [Project context](docs/CONTEXT.md)
+- [System architecture](docs/ARCHITECTURE.md)
 - [UI specification](docs/UI.md)
-- [Proposed API contract](docs/API.md)
+- [Current API status and proposed contract](docs/API.md)
 - [Project progress](docs/PROGRESS.md)

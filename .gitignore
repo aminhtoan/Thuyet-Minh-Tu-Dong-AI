@@ -5,6 +5,7 @@ node_modules/
 dist/
 build/
 web-build/
+backend/uploads/
 
 # Environment files (examples remain tracked)
 .env
