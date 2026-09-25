@@ -50,7 +50,7 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - Secrets, `passwordHash` and privileged settings belong only on the backend; hiding a menu is not authorization.
 - Current auth screens only simulate completion; they do not issue JWTs, persist sessions or call an API.
 
-## Current Implementation: S1–S7
+## Current Implementation: S1–S10
 
 - S1: Customer frontend foundations for Web and Mobile.
 - S2: design tokens, reusable components, Web AppShell and Mobile Expo Router navigation.
@@ -59,11 +59,14 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - S5: `/projects/new` project form, media validation and cancellable mock upload on both clients; Web drag/drop and preview; Mobile Expo Document Picker.
 - S6: full-stack architecture and domain alignment in documentation; no Admin/Backend scaffolding.
 - S7: Web/Mobile Customer Transcript Editor, timestamped segment editing and in-memory mock generate/save; no STT provider.
+- S8: Web/Mobile Translation Editor with saved transcript context, aligned segments, target languages, mock translation and save/reset. Real translation is planned S21.
+- S9: Web/Mobile Voice & TTS configuration, active language-scoped voices, simulated preview, speed selection and mock save/reset. Voice data is MOCK; TTS is NOT_INTEGRATED; narration audio is NOT_GENERATED.
+- S10: saved-configuration generation summary, confirmation and simulated narration/media progress on Web/Mobile, with completed/failed/cancelled states, retry and timer cleanup. Processing is MOCK; real TTS/FFmpeg are NOT_INTEGRATED and no output media is generated.
 - No Admin Web, Backend, MongoDB connection, real upload, JWT, AI processing or persistent project creation exists yet.
 
 ## Current Sprint and Next Direction
 
-S7 is **Customer Transcript Editor** on Web and Mobile. The next sprint is S8 Customer Translation Editor; it is not implemented. Admin Web starts at S12; Backend starts at S17.
+S9 Voice configuration and S10 **Customer Generate & Processing UI** are implemented on Web and Mobile with mock services. The next sprint is S11 Customer Result & History; it is not implemented. Admin Web starts at S12; Backend starts at S17.
 
 ## Domain Alignment Snapshot
 
@@ -86,7 +89,7 @@ S7 is **Customer Transcript Editor** on Web and Mobile. The next sprint is S8 Cu
 
 ## Roadmap Checkpoints
 
-- S7: Customer Transcript Editor with mock generation/save; S8–S11 complete translation, voice/TTS, processing and result/history UI.
+- S7–S10: Transcript/Translation editors, Voice/TTS configuration and Generate/Processing use mock services. S11 covers Result & History.
 - S12–S16: build the separate Admin Web and management screens.
 - S17–S23: backend foundation, JWT/RBAC, project/media API and AI/FFmpeg integrations.
 - S24–S26: integration, testing/security hardening and deployment automation.

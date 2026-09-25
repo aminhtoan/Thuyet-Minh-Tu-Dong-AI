@@ -39,6 +39,16 @@ async function requireSavedTranscript(projectId: string, options: MockOptions): 
 }
 
 export const translationService = {
+  async getSavedTranslation(projectId: string, target?: LanguageCode, options: MockOptions = {}): Promise<Translation | null> {
+    await waitForMock(200, options);
+    const transcript = await transcriptService.getTranscript(projectId, { signal: options.signal });
+    if (!transcript || transcript.status !== 'SAVED') return null;
+    const candidates = [...savedTranslations.values()].filter((translation) =>
+      translation.projectId === projectId && (!target || translation.targetLanguage === target) &&
+      isTranslationAligned(translation, transcript));
+    const latest = candidates.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+    return latest ? copyTranslation(latest) : null;
+  },
   async get(projectId: string, target: LanguageCode, options: MockOptions = {}): Promise<Translation | null> {
     await waitForMock(250, options);
     const transcript = await requireSavedTranscript(projectId, options);

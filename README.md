@@ -4,7 +4,7 @@ Hệ thống thuyết minh tự động đa ngôn ngữ.
 
 ## Overview
 
-S1–S5 đã xây dựng UI Customer Web/Mobile: đăng nhập/đăng ký mock, Dashboard, Projects và New Project với upload mô phỏng. S6 chuẩn hóa kiến trúc full-stack; S7 bổ sung Transcript Editor với dữ liệu và dịch vụ mock. Chưa có backend, Admin Web, database connection hay AI processing thật.
+S1–S5 đã xây dựng UI Customer Web/Mobile: đăng nhập/đăng ký mock, Dashboard, Projects và New Project với upload mô phỏng. S6 chuẩn hóa kiến trúc full-stack; S7–S10 bổ sung Transcript Editor, Translation Editor, cấu hình Voice/TTS và tiến độ Generate/Processing với dữ liệu và dịch vụ mock. Preview giọng nói và processing chỉ mô phỏng; chưa tạo âm thanh hoặc video kết quả. Chưa có backend, Admin Web, database connection hay AI processing thật.
 
 ## Main Flow
 

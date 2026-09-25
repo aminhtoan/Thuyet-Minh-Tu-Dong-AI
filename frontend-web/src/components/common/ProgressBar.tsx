@@ -5,7 +5,7 @@ type ProgressBarProps = {
 }
 
 export function ProgressBar({ value, label, showValue = true }: ProgressBarProps) {
-  const normalizedValue = Math.min(100, Math.max(0, value))
+  const normalizedValue = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0
 
   return (
     <div className="progress">

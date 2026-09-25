@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
@@ -10,13 +10,15 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { filterTargetLanguages, isLanguageCode } from '../features/projects/languages';
 import { projectRepository } from '../features/projects/projectRepository';
 import { languageNames } from '../features/projects/projectUtils';
-import type { Project } from '../features/projects/types';
+import type { LanguageCode, Project } from '../features/projects/types';
 import { TranslationSegmentRow } from '../features/translation/TranslationSegmentRow';
 import { useTranslationEditor } from '../features/translation/useTranslationEditor';
 import '../styles/translation.css';
 
 export function TranslationPage() {
   const { projectId } = useParams<{ projectId: string }>();
+  const [params] = useSearchParams();
+  const language = params.get('language');
   const project = projectId ? projectRepository.getById(projectId) : undefined;
   if (!project) return <>
     <PageHeader title="Translation" description="Review your translated transcript." />
@@ -24,11 +26,12 @@ export function TranslationPage() {
       <Link to="/projects" className="button button--secondary button--md">Back to Projects</Link>
     </Card>
   </>;
-  return <TranslationWorkspace key={project.id} project={project} />;
+  const preferredTarget = language && isLanguageCode(language) ? language : project.targetLanguage;
+  return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
 }
 
-function TranslationWorkspace({ project }: { project: Project }) {
-  const editor = useTranslationEditor(project.id, project.targetLanguage);
+function TranslationWorkspace({ project, preferredTarget }: { project: Project; preferredTarget: LanguageCode }) {
+  const editor = useTranslationEditor(project.id, preferredTarget);
   const navigate = useNavigate();
   function backToTranscript() {
     if (editor.dirty && !window.confirm('Discard unsaved translation changes and return to Transcript?')) return;
@@ -83,10 +86,10 @@ function TranslationWorkspace({ project }: { project: Project }) {
         <div className="translation-action-buttons">
           <Button variant="secondary" disabled={!editor.canReset} onClick={editor.reset}>Reset Changes</Button>
           <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onClick={editor.save}>Save Translation</Button>
-          <Button variant="secondary" disabled>Continue to Voice / TTS</Button>
+          <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onClick={() => navigate('/projects/' + project.id + '/voice?language=' + editor.targetLanguage)}>Continue to Voice / TTS</Button>
         </div>
         <p className="translation-note">{editor.saved ? 'Reset restores your last saved translation.' : 'Reset discards this unsaved translation so you can start again or change language.'}</p>
-        <p className="translation-note">Voice and TTS will be available in the next step.</p>
+        <p className="translation-note">Save all translation changes before choosing a narration voice.</p>
       </Card>}
     </div>}
   </>;

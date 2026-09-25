@@ -83,11 +83,11 @@ Project 1 ── N Media
 Language 1 ── N Voice
 ```
 
-The cardinalities above describe intended relationships, not physical MongoDB embedding decisions. Timed transcript segments retain numeric seconds for audio/video synchronization. S7 Customer editors use route `projectId`, a mock transcript service and editable segment drafts; they derive `fullText` on save. This is frontend-only in-memory behavior, not STT or a backend model.
+The cardinalities above describe intended relationships, not physical MongoDB embedding decisions. Timed transcript segments retain numeric seconds for audio/video synchronization. S7 Customer editors use route `projectId`, a mock transcript service and editable segment drafts; they derive `fullText` on save. This is frontend-only in-memory behavior, not STT or a backend model. S8 Translation editors read the saved transcript and preserve each source segment ID, sequence and timing in translated segments. Translation services store separate in-memory records per project/target language and detect stale source revisions. S9 consumes the saved target-language Translation and validates active Voice selection and speech speed before saving an in-memory narration configuration. Preview is a cancellable UI simulation. No audio path, TTS request or GENERATING_AUDIO project transition is created.
 
 ## Customer Scope
 
-Customer capabilities planned across later sprints: register/login/logout; view/update profile and change password; dashboard; create/view/update/delete/search/filter own projects; upload video/audio; generate/view/edit transcript; select target language and translate/view/edit text; browse/preview/select voice and speed, generate narration; inspect progress/failures and retry where supported; preview/download video or audio results; history. S1–S7 currently cover UI foundations, mock auth, Dashboard/Projects, mock media upload, and the mock Transcript Editor—not the whole list.
+Customer capabilities planned across later sprints: register/login/logout; view/update profile and change password; dashboard; create/view/update/delete/search/filter own projects; upload video/audio; generate/view/edit transcript; select target language and translate/view/edit text; browse/preview/select voice and speed, generate narration; inspect progress/failures and retry where supported; preview/download video or audio results; history. S1–S10 currently cover UI foundations, mock auth, Dashboard/Projects, mock media upload, mock Transcript/Translation editors, Voice/TTS configuration, and simulated Generate/Processing—not the whole list.
 
 ## Admin Scope
 
@@ -110,6 +110,8 @@ Customer upload → Media storage → Speech-to-Text → Transcript
 → Translation → Translated text → Text-to-Speech (voice + speed)
 → Narration audio → FFmpeg/media processing → Result preview/download
 ```
+
+S10 renders generation summaries and local processing sessions from saved translation/voice settings. The session service owns deterministic stage progress, start locking, cancellation and retry; screen cleanup disposes timers. Completion creates no media or Result record and does not persist authoritative Project/ProcessingJob state.
 
 Long operations are represented by `ProcessingJob`; project status summarizes the aggregate stage. FFmpeg is expected to extract/normalize audio when needed and merge narration into final media. No FFmpeg package, AI provider, job queue or live processing is installed in S6.
 
@@ -144,9 +146,9 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 | S5 | New Project + Media Upload | Completed in code (mock upload) |
 | S6 | Full-stack Architecture & Domain Alignment | Completed in documentation |
 | S7 | Customer Transcript Editor | Completed in frontend with mock service |
-| S8 | Customer Translation Editor | Planned |
-| S9 | Customer Voice & TTS UI | Planned |
-| S10 | Customer Generate & Processing UI | Planned |
+| S8 | Customer Translation Editor | Completed in frontend with mock service |
+| S9 | Customer Voice & TTS UI | Completed in frontend with mock configuration |
+| S10 | Customer Generate & Processing UI | Completed in frontend with mock processing |
 | S11 | Customer Result & History | Planned |
 | S12 | Admin Web Foundation | Planned |
 | S13 | Admin Dashboard | Planned |

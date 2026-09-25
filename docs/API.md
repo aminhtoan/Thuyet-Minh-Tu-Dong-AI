@@ -2,7 +2,7 @@
 
 ## Current: No Backend API
 
-**There is no implemented HTTP API in this repository.** S1–S5 Customer Web/Mobile use local mock auth, a static mock project repository, and a cancellable mock upload service. S7 adds a local mock transcript service; generation, retrieval and save use in-memory sample data only. S5 sends no media to a server and persists no new project. No JWT, RBAC middleware, Admin API, MongoDB connection, STT provider or AI endpoint exists. The paths below are **proposed**, subject to backend-sprint refinement.
+**There is no implemented HTTP API in this repository.** S1–S5 Customer Web/Mobile use local mock auth, a static mock project repository, and a cancellable mock upload service. S7 adds a local mock transcript service, S8 a local mock translation service, S9 mock voice/narration configuration services, and S10 a mock processing session; generation, retrieval and save use in-memory sample data only. S5 sends no media to a server and persists no new project. No JWT, RBAC middleware, Admin API, MongoDB connection, STT provider or AI endpoint exists. The paths below are **proposed**, subject to backend-sprint refinement.
 
 ## Proposed Stack and Base
 
@@ -31,6 +31,32 @@ Illustrative routes, **not implemented or finalized**: `POST /api/auth/register`
 **CURRENT:** Web/Mobile call a mock `getTranscript(projectId)`, `generateTranscript(projectId)` and `saveTranscript(projectId, draft)` service. It accepts route IDs, simulates latency, validates non-empty segments, derives `fullText` from segments and keeps saved drafts in module memory only. Generation does **not** analyze uploaded media, and no endpoint is called.
 
 **PROPOSED:** `POST /api/projects/:id/transcript/generate`, `GET /api/projects/:id/transcript`, `PUT /api/projects/:id/transcript`. A future response may include `id`, `projectId`, `languageCode`, `status`, `fullText` and segments with `id`, numeric `sequence`, `startTime`/`endTime` in seconds, and `text`. Backend contracts, ownership checks, processing jobs and transport are deferred to S20/S24.
+
+### Translation boundary (S8)
+
+**CURRENT:** `translationService.get(projectId, targetLanguage)`, `translate(projectId, transcript, targetLanguage)` and `save(projectId, translation)` use deterministic sample data and module memory. A valid saved S7 transcript is required. Each translation segment retains its source segment ID, sequence and numeric start/end seconds. Save validates text and source alignment. A development-only source fingerprint prevents loading/saving stale translations after transcript edits.
+
+**PROPOSED:** `POST /api/projects/:id/translations` with `{ targetLanguage }`, `GET /api/projects/:id/translations`, `GET /api/projects/:id/translations/:targetLanguage`, and `PUT /api/projects/:id/translations/:targetLanguage`. Future responses include project/source/target language, status and aligned translated segments. Backend: **NOT_IMPLEMENTED**. Translation provider: **NOT_INTEGRATED**, planned S21.
+
+### Voice and narration boundary (S9)
+
+**CURRENT:** `voiceService.getVoices(languageCode)` and `getVoice(id)` return active mock identities. `previewVoice(id)` is a short abortable UI simulation with no audio. `translationService.getSavedTranslation(projectId, language?)` retrieves the selected saved translation (or latest valid saved translation for a direct link with no language). Navigation carries the chosen target language.
+
+`narrationService.getConfig(projectId, language?)` and `saveConfig(projectId, config)` keep configuration in module memory, isolated by project and language. Configuration contains project/translation IDs, language, voice ID and speed; an internal source revision prevents stale saves. Language and active voice availability are validated. There is no `audioPath`, generated audio or provider request.
+
+**PROPOSED:** `GET /api/voices?language=en`, `GET /api/voices/:voiceId`, `POST /api/projects/:id/narrations/preview`, `POST /api/projects/:id/narrations`, and `GET /api/projects/:id/narrations`. The backend will distinguish draft configuration, preview and actual generation contracts when implemented. Backend: **NOT_IMPLEMENTED**. Real TTS: **NOT_INTEGRATED**.
+
+Future processing: saved Translation → voice/speed configuration → TTS service → narration audio / ProcessingJob → video processing. S9 stops at saved configuration.
+
+### Generate and processing boundary (S10)
+
+**CURRENT:** `generationService.getContext(projectId, language?)` resolves saved transcript, translation, voice and narration settings. `processingService.createSession(context, onUpdate)` returns `getStatus()`, `start(options?)`, `retry(options?)`, `cancel()` and `dispose()`. These are local operations with no HTTP or provider calls. A session owns its timer and abortable start validation, emits copied snapshots, prevents concurrent starts and resets both generation stages on retry. Cancellation/unmount stops the local simulation, not a server job.
+
+Snapshots expose a local run ID, status, optional per-stage percentages, overall percentage, message and safe failure reason. Conceptual project status progresses TRANSLATED → GENERATING_AUDIO → PROCESSING_VIDEO → COMPLETED (FAILED on error), but does not mutate the mock project repository. Audio-only inputs label the final simulated stage Audio Processing.
+
+**PROPOSED:** `POST /api/projects/:id/generate` with `{ translationId, voiceId, speed }`; `GET /api/projects/:id/status`; `GET /api/projects/:id/jobs`; `GET /api/projects/:id/jobs/:jobId`; `POST /api/projects/:id/jobs/:jobId/retry`; optional `POST /api/projects/:id/jobs/:jobId/cancel`. Backend jobs will resolve saved resources and enforce ownership.
+
+Future flow: frontend generate request → backend ProcessingJob → TTS/narration audio → FFmpeg → Result. Progress transport remains undecided; no polling/SSE/WebSocket is implemented in S10. Backend: **NOT_IMPLEMENTED**. TTS/FFmpeg: **NOT_INTEGRATED**. Narration audio/final video: **NOT_GENERATED**.
 
 ## Proposed Admin Resources
 

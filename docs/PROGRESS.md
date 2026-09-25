@@ -2,55 +2,63 @@
 
 ## Current Sprint
 
-S7 - Customer Transcript Editor
+S10 - Customer Generate & Processing UI
 
 ## Status
 
-COMPLETED (frontend mock scope; physical-device and browser interaction not manually verified)
+COMPLETED (frontend mock scope; physical-phone interaction not verified)
 
 ## Completed
 
-- S1-S2: Customer Web/Mobile foundations, design system and application shells.
-- S3: Login/Register UI with mock behavior; no real authentication.
-- S4: Dashboard/Projects with searchable, filterable mock data.
-- S5: New Project and local mock media upload; no file transfer or persistence.
-- S6: Full-stack architecture, domain boundaries and proposed roadmap documented.
+- S1-S6: Customer foundations, design system, auth/dashboard/projects/upload mocks and full-stack architecture.
+- S7-S8: editable saved transcript and aligned translation with mock services.
+- S9: active voice selection, simulated preview, speed and saved narration configuration.
 
-## S7 Completed
+## S10 Completed
 
-- Added a route-driven Customer Transcript Editor to Web and Mobile.
-- Added a sample uploaded project with media metadata and entry links from Projects.
-- Added ten timestamped sample segments per supported source language.
-- Centralized mock get/generate/save latency, validation and in-memory saved drafts in a replaceable service.
-- Added per-segment edits, empty/whitespace validation, dirty/saved feedback and reset.
-- Added loading, generating, empty and retryable error states.
-- Kept Translation disabled until S8; no real STT, translation or backend work.
+- Saved S9 configuration summary, review confirmation and project/language-preserving navigation.
+- Centralized deterministic narration/media processing, overall and optional stage progress.
+- Start locking, source/configuration revalidation and safe copied state updates.
+- Completed/failed/cancelled states; retry/restart both stages from 0%.
+- Timers cancelled on cancel, retry, new run and disposal; Mobile also cancels on blur.
+- Web responsive layout, Mobile scrolling, accessible text/progress and shared WorkflowSteps.
+- Disabled View Result; no S11, real processing or output files.
 
 ## Web
 
-- Transcript Route: YES (`/projects/:projectId/transcript`)
-- Generate Transcript: YES (mock)
-- Timestamp Segments: YES
-- Editing: YES
-- Save: YES (in-memory only)
-- Dirty State: YES
-- Media Preview: NO playable URL; media information card is shown instead
-- Responsive: YES (two columns on desktop, one on narrow screens)
+- Generate Route: YES (`/projects/:projectId/generate?language=en`)
+- Generation Summary: YES
+- Mock Processing: YES
+- Overall Progress: YES
+- Stage Progress: YES (optional percentages supported)
+- Completed State: YES
+- Failed State: YES
+- Retry: YES
+- Cancel: YES
+- Timer Cleanup: YES
+- Responsive: YES (browser checks at 375px and 1280px)
 
 ## Mobile
 
-- Transcript Screen: YES (`/projects/[projectId]/transcript`)
-- Generate Transcript: YES (mock)
-- Timestamp Segments: YES
-- Editing: YES
-- Save: YES (in-memory only)
-- Keyboard Handling: YES (`KeyboardAvoidingView`, `FlatList`, safe area)
-- Expo Go Compatible: YES (SDK 57; no new native dependency)
+- Generate Screen: YES
+- Generation Summary: YES
+- Mock Processing: YES
+- Overall Progress: YES
+- Stage Progress: YES
+- Completed: YES
+- Failed: YES
+- Retry: YES
+- Cancel: YES
+- Timer Cleanup: YES (unmount and navigation blur)
+- Expo Go Compatible: YES (SDK 57; no new dependencies)
 
 ## Data
 
-- Transcript: MOCK, module-memory only; resets on app reload
-- Speech-to-Text: NOT_INTEGRATED
+- Processing: MOCK
+- TTS: NOT_INTEGRATED
+- Narration Audio: NOT_GENERATED
+- FFmpeg: NOT_INTEGRATED
+- Final Video: NOT_GENERATED
 - Backend: NOT_IMPLEMENTED
 
 ## Validation
@@ -60,35 +68,31 @@ COMPLETED (frontend mock scope; physical-device and browser interaction not manu
 - lint: PASS
 - typecheck: PASS
 - build: PASS
-- test: NOT_AVAILABLE (no test script; pure utility and mock service flow checked directly)
+- test: PASS (standalone Node regression and Chrome headless checks; no npm test script)
 
 ### Mobile
 
 - lint: PASS
 - typecheck: PASS
-- test: NOT_AVAILABLE (no test script; pure utility behavior checked directly)
-- expo-doctor: PASS (21/21 checks)
-- Expo Android export: PASS
-- Expo development QR: PASS (`npx expo start --offline` showed Expo Go QR)
+- test: PASS (standalone service regression; no native interaction test or npm test script)
+- expo-doctor: PASS (21/21)
+- Expo QR / Android export: PASS (Expo Go QR; 1,338 modules bundled)
 
 ## Important Files
 
-- `frontend-web/src/pages/TranscriptPage.tsx`
-- `frontend-web/src/features/transcript/`
-- `frontend-web/src/styles/transcript.css`
-- `frontend-mobile/src/app/projects/[projectId]/transcript.tsx`
-- `frontend-mobile/src/screens/TranscriptScreen.tsx`
-- `frontend-mobile/src/features/transcript/`
-- `docs/UI.md`
-- `docs/API.md`
+- `frontend-web/src/pages/GeneratePage.tsx`
+- `frontend-web/src/features/processing/` and `frontend-web/src/styles/processing.css`
+- `frontend-mobile/src/app/projects/[projectId]/generate.tsx`
+- `frontend-mobile/src/screens/GenerateScreen.tsx` and `frontend-mobile/src/features/processing/`
+- `frontend-web/scripts/verify-processing.mjs` and `verify-processing-browser.mjs`
+- Both clients' Voice screens, WorkflowSteps and ProgressBar.
 
 ## Known Issues
 
-- Browser clicks/responsive rendering and a physical Expo Go scan/keyboard interaction were not manually tested here.
-- S5 mock upload does not retain a playable media URL, so S7 shows media information rather than playback.
-- Mock transcript saves do not survive an app reload and do not update the static S4 project repository.
-- On iOS, the App Store Expo Go version must match SDK 57; a compatible Expo Go build may be needed.
+- Physical Expo Go scan/touch/scroll behavior is not verified here.
+- Reload resets saved mocks; leaving Generate disposes its local simulation.
+- Simulation percentages are deterministic and do not measure real AI/media work.
 
 ## Next
 
-S8 - Customer Translation Editor (not started)
+S11 - Customer Result & History (not started)

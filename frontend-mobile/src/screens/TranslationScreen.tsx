@@ -11,27 +11,28 @@ import { Spinner } from '@/components/common/Spinner';
 import { WorkflowSteps } from '@/components/common/WorkflowSteps';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileScreen } from '@/components/layout/MobileScreen';
-import { filterTargetLanguages } from '@/features/projects/languages';
+import { filterTargetLanguages, isLanguageCode } from '@/features/projects/languages';
 import { projectRepository } from '@/features/projects/projectRepository';
 import { languageNames } from '@/features/projects/projectUtils';
-import type { Project } from '@/features/projects/types';
+import type { LanguageCode, Project } from '@/features/projects/types';
 import type { TranscriptSegment } from '@/features/transcript/types';
 import { TranslationSegmentCard } from '@/features/translation/TranslationSegmentCard';
 import { useTranslationEditor } from '@/features/translation/useTranslationEditor';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
-export function TranslationScreen({ projectId }: { projectId: string }) {
+export function TranslationScreen({ projectId, language }: { projectId: string; language?: string }) {
   const project = projectRepository.getById(projectId);
   if (!project) return <View style={styles.container}><MobileHeader title="AI Narrator" />
     <MobileScreen title="Translation" description="Project not found">
       <Card><ErrorState title="Project not found" description="This project is not available." /></Card>
       <Button onPress={() => router.replace('/projects')}>Back to Projects</Button>
     </MobileScreen></View>;
-  return <TranslationWorkspace key={project.id} project={project} />;
+  const preferredTarget = language && isLanguageCode(language) ? language : project.targetLanguage;
+  return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
 }
 
-function TranslationWorkspace({ project }: { project: Project }) {
-  const editor = useTranslationEditor(project.id, project.targetLanguage);
+function TranslationWorkspace({ project, preferredTarget }: { project: Project; preferredTarget: LanguageCode }) {
+  const editor = useTranslationEditor(project.id, preferredTarget);
   const list = useRef<FlatList<TranscriptSegment>>(null);
   const sourceLanguage = editor.transcript?.languageCode ?? project.sourceLanguage;
   const translationBySource = new Map(editor.draft?.segments.map((segment) => [segment.transcriptSegmentId, segment]));
@@ -89,8 +90,8 @@ function TranslationWorkspace({ project }: { project: Project }) {
       if (!editor.saved) list.current?.scrollToOffset({ offset: 0, animated: true });
     }}>Reset Changes</Button>
     <Text style={styles.note}>{editor.saved ? 'Reset restores your last saved translation.' : 'Reset discards this unsaved translation so you can start again or change language.'}</Text>
-    <Button variant="secondary" disabled>Continue to Voice / TTS</Button>
-    <Text style={styles.note}>Voice and TTS will be available in the next step.</Text>
+    <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onPress={() => { if (editor.targetLanguage) router.replace({ pathname: '/projects/[projectId]/voice', params: { projectId: project.id, language: editor.targetLanguage } }); }}>Continue to Voice / TTS</Button>
+    <Text style={styles.note}>Save all translation changes before choosing a narration voice.</Text>
   </Card> : null;
 
   return <View style={styles.container}><MobileHeader title="AI Narrator" />

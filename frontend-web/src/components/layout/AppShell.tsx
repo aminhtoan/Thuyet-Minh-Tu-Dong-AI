@@ -8,7 +8,7 @@ const titles: Record<string, string> = { '/dashboard': 'Dashboard', '/projects':
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { pathname } = useLocation()
-  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Transcript' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Translation' : titles[pathname] ?? 'AI Narrator'
+  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Transcript' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Translation' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Voice & Narration' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Generate Narration' : titles[pathname] ?? 'AI Narrator'
   return (
     <div className="app-shell">
       <Sidebar open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
