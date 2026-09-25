@@ -52,7 +52,7 @@ Future processing: saved Translation → voice/speed configuration → TTS servi
 
 **CURRENT:** `generationService.getContext(projectId, language?)` resolves saved transcript, translation, voice and narration settings. `processingService.createSession(context, onUpdate)` returns `getStatus()`, `start(options?)`, `retry(options?)`, `cancel()` and `dispose()`. These are local operations with no HTTP or provider calls. A session owns its timer and abortable start validation, emits copied snapshots, prevents concurrent starts and resets both generation stages on retry. Cancellation/unmount stops the local simulation, not a server job.
 
-Snapshots expose a local run ID, status, optional per-stage percentages, overall percentage, message and safe failure reason. Conceptual project status progresses TRANSLATED → GENERATING_AUDIO → PROCESSING_VIDEO → COMPLETED (FAILED on error), but does not mutate the mock project repository. Audio-only inputs label the final simulated stage Audio Processing.
+Snapshots expose a local run ID, status, optional per-stage percentages, overall percentage, message and safe failure reason. Conceptual project status progresses TRANSLATED → GENERATING_AUDIO → PROCESSING_VIDEO → COMPLETED (FAILED on error), and S11 projects this into the session-only mock repository (not a backend update). Audio-only inputs label the final simulated stage Audio Processing.
 
 **PROPOSED:** `POST /api/projects/:id/generate` with `{ translationId, voiceId, speed }`; `GET /api/projects/:id/status`; `GET /api/projects/:id/jobs`; `GET /api/projects/:id/jobs/:jobId`; `POST /api/projects/:id/jobs/:jobId/retry`; optional `POST /api/projects/:id/jobs/:jobId/cancel`. Backend jobs will resolve saved resources and enforce ownership.
 
@@ -96,3 +96,11 @@ Canonical Project statuses: `DRAFT`, `UPLOADED`, `TRANSCRIBING`, `TRANSCRIBED`, 
 ## Security and Upload Boundary
 
 The backend will derive `userId` from the authenticated principal, reject unauthorized cross-user access, validate request bodies and media metadata/content, and enforce upload limits. Store binaries outside MongoDB; persist only metadata and storage references. S5's 500 MB validation is a client-side hint, **not** a server guarantee. Never log passwords, JWTs or AI provider secrets. `JWT_SECRET`, `MONGODB_URI`, and provider credentials belong in backend environment configuration, not frontend variables.
+
+## Result and History boundary (S11)
+
+**CURRENT:** `resultService.getByProjectId(projectId, language?)` returns a copied mock Result or null when not ready; unknown project rejects. `getHistory()` derives project summaries from the same repository plus completed session metadata. No duplicate history fixtures are maintained. `getDownloadInfo(projectId)` returns `{ available: false, reason }`, never a URL.
+
+Result metadata: id, projectId, languageCode, mediaType, createdAt, availability `MOCK_PREVIEW`; optional saved transcriptCount, translationCount, voiceName and speed. Original source duration/size are labelled separately in UI. READY metadata is not a real file. History uses canonical Project status and carries hasResult; cancelled sessions return to TRANSLATED with no active progress, not a fabricated server cancellation status. Records live only in client memory.
+
+**PROPOSED:** authenticated/ownership-checked `GET /api/projects/:id/results`, history via project listing, and backend-issued download references after real media generation. Exact real-file/download transport is deferred. Real result media and download: **NOT_AVAILABLE**. Backend: **NOT_IMPLEMENTED**.

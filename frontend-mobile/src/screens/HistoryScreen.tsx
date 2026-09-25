@@ -1,5 +1,31 @@
-import { PlaceholderScreen } from '@/components/layout/PlaceholderScreen';
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { Button } from '@/components/common/Button';
+import { Card } from '@/components/common/Card';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ErrorState } from '@/components/common/ErrorState';
+import { Input } from '@/components/common/Input';
+import { Spinner } from '@/components/common/Spinner';
+import { FilterChips } from '@/features/projects/FilterChips';
+import { ProjectCard } from '@/features/projects/ProjectCard';
+import { filterProjects } from '@/features/projects/projectUtils';
+import type { ProjectStatusFilter } from '@/features/projects/types';
+import { useHistory } from '@/features/results/useHistory';
+import { colors, spacing, typography } from '@/theme/tokens';
 
 export function HistoryScreen() {
-  return <PlaceholderScreen title="History" description="Review completed and recent narration projects." />;
+  const { projects, isLoading, error, reload } = useHistory();
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState<ProjectStatusFilter>('ALL');
+  const filteredProjects = useMemo(() => filterProjects(projects, query, status), [projects, query, status]);
+  const hasActiveFilters = Boolean(query.trim()) || status !== 'ALL';
+  const header = <View style={styles.header}><View style={styles.pageHeading}><View style={styles.headingText}><Text style={styles.title}>History</Text><Text style={styles.description}>Lịch sử dự án mô phỏng. Chưa có file kết quả thực.</Text></View><Button size="sm" onPress={() => router.push('/projects/new')}>New Project</Button></View><Input accessibilityLabel="Search projects" placeholder="Search projects..." returnKeyType="search" autoCorrect={false} value={query} onChangeText={setQuery} /><FilterChips value={status} onChange={setStatus} /></View>;
+
+  if (isLoading) return <View style={styles.center}><Spinner size="large" /><Text style={styles.description}>Loading projects...</Text></View>;
+  if (error) return <View style={styles.center}><Card><ErrorState title="Unable to load projects" description={error} onRetry={reload} /></Card></View>;
+
+  return <FlatList style={styles.screen} contentContainerStyle={styles.content} data={filteredProjects} keyExtractor={(project) => project.id} renderItem={({ item }) => <ProjectCard project={item} />} ItemSeparatorComponent={() => <View style={styles.separator} />} ListHeaderComponent={header} ListEmptyComponent={<Card><EmptyState title={projects.length === 0 ? 'Chưa có lịch sử' : 'Không có lịch sử phù hợp'} description={projects.length === 0 ? 'Create your first multilingual narration project.' : 'Try adjusting your search or status filter.'} action={projects.length === 0 ? <Button size="sm" onPress={() => router.push('/projects/new')}>New Project</Button> : hasActiveFilters ? <Button size="sm" variant="secondary" onPress={() => { setQuery(''); setStatus('ALL'); }}>Clear filters</Button> : undefined} /></Card>} keyboardShouldPersistTaps="handled" />;
 }
+
+const styles = StyleSheet.create({ screen: { flex: 1, backgroundColor: colors.background }, content: { flexGrow: 1, padding: spacing.md, paddingBottom: spacing.xl }, header: { gap: spacing.md, marginBottom: spacing.lg }, pageHeading: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.md }, headingText: { minWidth: 0, flex: 1, gap: spacing.xs }, title: { color: colors.textPrimary, fontSize: typography.size.xl, fontWeight: typography.weight.bold }, description: { color: colors.textSecondary, fontSize: typography.size.sm, lineHeight: 21 }, separator: { height: spacing.md }, center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.md, backgroundColor: colors.background } });

@@ -1,3 +1,5 @@
+import { resultService } from '../results/resultService';
+import { projectRepository } from '../projects/projectRepository';
 import { generationService } from './generationService';
 import { mockProcessingScenario } from './mockProcessingScenario';
 import { calculateOverallProgress, clampProgress, copySnapshot, createInitialSnapshot, isProcessing, sameConfiguration } from './processingUtils';
@@ -23,7 +25,16 @@ export const processingService = {
       validation = null;
     }
     function emit() {
-      if (!disposed) onUpdate(copySnapshot(snapshot));
+      if (!disposed) {
+        if (snapshot.status === 'COMPLETED') resultService.record(context, snapshot);
+        if (snapshot.status !== 'WAITING') projectRepository.update(projectId, {
+          status: snapshot.status === 'COMPLETED' ? 'COMPLETED' : snapshot.status === 'FAILED' ? 'FAILED' :
+            snapshot.status === 'CANCELLED' ? 'TRANSLATED' : snapshot.currentStage === 'media' ? 'PROCESSING_VIDEO' : 'GENERATING_AUDIO',
+          progress: snapshot.status === 'CANCELLED' ? undefined : snapshot.progress,
+          targetLanguage: config.languageCode, updatedAt: new Date().toISOString(),
+        });
+        onUpdate(copySnapshot(snapshot));
+      }
     }
     function fail(stage: FailureStage, message: string) {
       clearPending();
@@ -103,7 +114,9 @@ export const processingService = {
           stages: snapshot.stages.map((stage) => stage.status === 'PROCESSING' ? { ...stage, status: 'CANCELLED' } : stage) };
         emit();
       },
-      dispose: () => { disposed = true; ++epoch; clearPending(); },
+      dispose: () => {
+        if (isProcessing(snapshot)) projectRepository.update(projectId, { status: 'TRANSLATED', progress: undefined });
+        disposed = true; ++epoch; clearPending(); },
     };
   },
 };

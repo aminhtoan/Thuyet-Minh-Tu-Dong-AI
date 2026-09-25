@@ -23,8 +23,8 @@ Không copy desktop layout trực tiếp sang mobile.
 ## Customer Screen Status
 
 - Implemented UI: Login, Register, Dashboard, Projects, New Project / mock Upload, Customer Transcript Editor (S7), Customer Translation Editor (S8), Customer Voice & TTS Configuration (S9), Customer Generate & Processing (S10).
-- Existing placeholders: History and Settings.
-- Planned Customer UI: Result and History completion (S11), Profile completion later.
+- Existing placeholders: Settings.
+- Implemented S11: Result and History. S11.5 Customer Web Visual Redesign completed; Profile completion later.
 
 ## Admin Web (`admin-web/`, future)
 
@@ -149,7 +149,41 @@ Project screens use clearly marked development mock data. Backend project APIs a
 - Default processing is deterministic and succeeds. The service owns all timers; synchronous start locking prevents double starts. Start/retry revalidate saved settings.
 - During STARTING/PROCESSING, Generate and settings edits are unavailable. Cancel stops immediately. Navigation/unmount disposes the session; Mobile also cancels on blur. Browser refresh warns during processing.
 - Failed state identifies stage/reason and offers retry. Retry/restart resets both stages to 0 and removes stale errors/timers. Completed state says simulation complete and explicitly states that no output file exists.
-- View Result is disabled with a next-step explanation; S11 is not implemented. Reloading clears mock saved data; navigating away discards this processing session.
+- Completed View Result opens the project/language-specific S11 screen. Navigation cancels active processing but retains completed mock metadata in memory; reload resets all session data.
 - Web summary/pipeline columns become one column below 950px. Mobile uses the existing scrollable screen, safe-area layout and accessible progress components without native dependencies.
 - Failure testing: set `features/processing/mockProcessingScenario.ts` → `failFirstAttemptAt` to `start`, `narration` or `media` in the desired client. A new session fails once at that stage; retry succeeds by default. Service `start/retry({ failAt })` can test repeated failures.
 - Regression checks: from `frontend-web`, run `node scripts/verify-processing.mjs` for both clients. Optional `node scripts/verify-processing-browser.mjs` requires Vite at 127.0.0.1:5175 and a separate temporary Chrome profile with remote debugging at 127.0.0.1:9223. No test framework is installed.
+
+## Customer Result & History (S11)
+
+- Web `/projects/:projectId/result?language=en`; Mobile `/projects/[projectId]/result`. Completed Generate preserves project and target language.
+- Result marks all five workflow steps complete and shows saved run metadata: source/target, media type, segment counts, voice, speed and completion date.
+- Existing completed S4 fixtures are reopenable; unavailable saved voice/count/speed fields say so instead of inventing values.
+- Duration and size, when present, are explicitly original-source metadata. No fake output paths, media player, URL, blob or file.
+- Dark video/audio placeholder and visibly explained disabled Download. MOCK_PREVIEW means metadata only, not a playable result.
+- Result handles loading, retryable error, unknown ID/language and not-ready states; Back to Projects/View History remain available.
+- History derives from the same project repository plus session results. Case-insensitive project search combines with All/Draft/Processing/Completed/Failed filters; separate empty/no-match states and clear filters.
+- Shared ProjectCard actions keep Dashboard, Projects and History aligned: completed → Result; failed/processing → Generate; draft/uploaded → Transcript. Missing saved settings are handled by the existing Generate guard.
+- Session processing updates project status/progress; cancelled/disposed work clears active progress. Completed metadata survives route changes, not reload. History is a project summary, not a durable job audit.
+- Web Result uses two columns collapsing below 800px; Mobile Result is single-column with safe areas. Mobile History reuses FlatList/filter chips; no dependencies added.
+- New S11 copy and completion dates use Vietnamese; existing S1–S10 English labels are preserved. Broad localization/polish is deferred to S11.5.
+
+## S11.5 Customer Web Visual Redesign
+
+- Visual authority: user IMAGE 1 (light AI SaaS dashboard), not IMAGE 2 (previous dark-sidebar UI). Product stays **Người kể chuyện AI**, with multilingual narration subtitle.
+- Web-only visual pass. Mobile layout, project data, mock services and S1–S11 processing/editor behavior remain unchanged.
+- One light lavender sidebar (232px), compact icon navigation, soft active indicator and neutral mock workspace card. No premium plan, notifications, growth analytics or invented feature routes.
+- White compact topbar with project search. Submitting navigates to existing Projects via `?q=`; existing case-insensitive filtering is reused, including subsequent searches while already on Projects.
+- Content uses a 1464px outer maximum including 32px horizontal padding (1400px usable); tablet 24px, phone 16px. This replaces the previous narrow/empty composition.
+- Dashboard: roughly 250px blue/lavender gradient hero, new-project CTA and original CSS/SVG video/wave/microphone/language illustration (VI/EN/JA/KO only). Illustration is decorative, not playable media.
+- Four quick actions: new project; transcript/translation/voice require choosing a project and therefore link to Projects, never a fabricated global editor.
+- Recent project table-style rows use existing project name, media icon, language codes, status, known progress and real workflow action. No fake thumbnails or durations.
+- Desktop 2.15:1 project/right-panel grid. Right panel has actual project counts in 2×2 compact statistics and recent project updates (not a new activity service). Below 1250px the side panels move beneath projects; below 600px they stack.
+- Indigo primary (#5850ec), violet accent (#794cff), lavender soft state, white cards, subtle #f7f8fd background. Existing token names are reused; previous dark-sidebar/stat-card styles are replaced, not layered alongside a second theme.
+- Cards use 10–12px radius and subtle borders/shadows. Primary buttons remain solid; only hero CTA/illustration uses decorative gradients.
+- Existing system font, 24–34px hero heading, 17px section headings, compact 12–14px body hierarchy. SVG Icon component extended consistently; no icon/font dependency added.
+- Projects and History use the same compact rows, filters, status badges and column headings. Completed/processing/draft/failed are soft green/blue/neutral/red.
+- New Project preserves the three-step upload logic, with lavender numbered sections and softer media dropzone. Workflow cards, inputs, buttons and badges inherit the shared tokens.
+- Web reusable stepper now displays six steps through Kết quả; prior stages show SVG checks and the current step uses indigo. Mobile stepper is unchanged.
+- Responsive checks: Dashboard at 1920/1440/1366/1024/768/375px; Projects/New Project/History/Transcript/Translation/Voice/Generate/Result at 1440/1024/768/375px. No page overflow detected.
+- Validation: lint/typecheck/build, existing service/browser regression and `node scripts/verify-redesign-browser.mjs` (same Vite 5175/temporary Chrome 9223 setup). New script covers topbar search, actual mock-upload form and responsive pages.

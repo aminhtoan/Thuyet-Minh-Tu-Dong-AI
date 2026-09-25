@@ -92,8 +92,8 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
             </View>}
             {snapshot.status === 'CANCELLED' && <View style={styles.outcome}><Button onPress={processing.retry}>Restart Generation</Button><Text style={styles.note}>Restart begins both simulated stages from 0%.</Text></View>}
             {snapshot.status === 'COMPLETED' && <View style={styles.outcome}><Text style={styles.sectionTitle}>All demo stages completed</Text>
-              <Text style={styles.note}>No output file was generated.</Text><Button disabled>View Result</Button>
-              <Text style={styles.note}>Result preview will be available in the next step.</Text>
+              <Text style={styles.note}>No output file was generated.</Text><Button onPress={() => router.replace({ pathname: '/projects/[projectId]/result', params: { projectId: project.id, language: target } })}>View Result</Button>
+              <Text style={styles.note}>View the mock result metadata; no real media is available.</Text>
             </View>}
           </Card>
         </>}

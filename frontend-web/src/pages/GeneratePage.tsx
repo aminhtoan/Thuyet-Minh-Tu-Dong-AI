@@ -94,7 +94,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
           <Button onClick={processing.retry}>Retry Processing</Button><p className="processing-note">Retry restarts both generation stages from 0%.</p></div>}
         {snapshot.status === 'CANCELLED' && <div className="processing-outcome"><Button onClick={processing.retry}>Restart Generation</Button><p className="processing-note">Restart begins both simulated stages from 0%.</p></div>}
         {snapshot.status === 'COMPLETED' && <div className="processing-outcome"><h3>All demo stages completed</h3><p>No output file was generated.</p>
-          <Button disabled>View Result</Button><p className="processing-note">Result preview will be available in the next step.</p></div>}
+          <Button onClick={() => navigate('/projects/' + project.id + '/result?language=' + target)}>View Result</Button><p className="processing-note">View the mock result metadata; no real media is available.</p></div>}
       </Card>
     </div>}
   </>;

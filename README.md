@@ -73,3 +73,22 @@ Các lệnh validation: `npm run lint`, `npx tsc --noEmit`.
 - [UI specification](docs/UI.md)
 - [Current API status and proposed contract](docs/API.md)
 - [Project progress](docs/PROGRESS.md)
+
+## Result & History (S11)
+
+Web/Mobile đã có Result metadata và History dùng dữ liệu mock trong phiên. Hoàn tất Generate → View Result; mở lại qua Projects, Dashboard hoặc History. Reload sẽ xóa dữ liệu đã lưu trong phiên. Chưa có file audio/video kết quả hoặc download thực.
+
+Kiểm tra service cả hai client từ `frontend-web`: `node scripts/verify-processing.mjs`.
+
+### Web production preview
+
+Trong thư mục `frontend-web`, chạy:
+
+```bash
+npm run build
+npm run preview
+```
+
+Không cần cài Vite global hay gọi trực tiếp `vite preview` trong PowerShell. Dùng URL được in ra. Chạy phát triển bằng `npm run dev`.
+
+Bước tiếp theo: **S11.5 Customer UI/UX Polish**, chưa triển khai S12.

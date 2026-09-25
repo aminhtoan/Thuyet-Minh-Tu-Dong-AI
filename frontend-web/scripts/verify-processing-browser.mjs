@@ -85,9 +85,9 @@ try {
   await click('Restart Generation');
   await wait("document.body.textContent.includes('All demo stages completed')", 'completion');
   assert.equal(await evaluate(overall), '100');
-  assert.ok(await evaluate(button('View Result') + '.disabled'));
+  assert.equal(await evaluate(button('View Result') + '.disabled'), false);
   assert.equal(await evaluate("document.querySelectorAll('[download]').length"), 0);
-  console.log('PASS: S7 -> S8 -> S9 -> S10, summary, confirmation, processing, cancel/restart, completion and disabled result');
+  console.log('PASS: S7 -> S10 and enabled Result action');
 
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 900, deviceScaleFactor: 1, mobile: false });
   await pause(200);
@@ -129,6 +129,40 @@ try {
   assert.ok(await evaluate(button('Generate Video') + '.disabled'));
   await evaluate("import('/src/features/processing/processingService.ts').then(m=>{m.processingService.createSession=window.__s10OriginalCreate;delete window.__s10OriginalCreate;delete window.__s10Session;})");
   console.log('PASS: sidebar navigation disposes processing, progress stops, return starts a fresh waiting session');
+  async function navigate(route) {
+    await evaluate('history.pushState({},"",' + JSON.stringify(route) + ');window.dispatchEvent(new PopStateEvent("popstate"))');
+  }
+  await navigate('/projects/project-009/result?language=en');
+  await wait("document.querySelector('.result-metadata')", 'saved result');
+  assert.ok(await evaluate("document.querySelector('.result-metadata').textContent.includes('Jenny')"));
+  assert.ok(await evaluate(button('Download Video') + '.disabled'));
+  assert.equal(await evaluate("document.querySelectorAll('video,audio,[download]').length"), 0);
+  assert.equal(await evaluate("document.querySelectorAll('.workflow-steps__done').length"), 5);
+  for (const width of [375, 1280]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
+    await pause(150);
+    assert.ok(await evaluate('document.documentElement.scrollWidth<=window.innerWidth'));
+    assert.equal(await evaluate("getComputedStyle(document.querySelector('.result-layout')).gridTemplateColumns.split(' ').length"), width === 375 ? 1 : 2);
+  }
+  await navigate('/history');
+  await wait("document.querySelectorAll('.project-card').length===9", 'history records');
+  await evaluate("(()=>{const input=document.querySelector('input[type=search]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'pRoDuCt');input.dispatchEvent(new Event('input',{bubbles:true}));})()");
+  await wait("document.querySelectorAll('.project-card').length===1", 'case insensitive history search');
+  await evaluate("document.querySelector('select').value='FAILED';document.querySelector('select').dispatchEvent(new Event('change',{bubbles:true}))");
+  await wait("document.querySelectorAll('.project-card').length===0", 'combined empty filter');
+  await click('Clear filters');
+  await wait("document.querySelectorAll('.project-card').length===9", 'clear filters');
+  await evaluate("document.querySelector('a[href=\"/projects/project-001/result?language=en\"]').click()");
+  await wait("document.querySelector('.result-metadata')", 'reopen fixture result');
+  assert.ok(await evaluate("document.querySelector('.result-metadata').textContent.includes('Product Introduction')"));
+  await navigate('/projects/project-008/result');
+  await wait(button('Download Audio'), 'audio result');
+  assert.ok(await evaluate(button('Download Audio') + '.disabled'));
+  await navigate('/projects/project-004/result');
+  await wait("document.body.textContent.includes('Result not ready')", 'not ready');
+  await navigate('/projects/not-a-project/result');
+  await wait("document.body.textContent.includes('Project not found')", 'not found');
+  console.log('PASS: S11 saved result, metadata, preview/download boundary, responsive layout, history/search/filter/reopen, audio, not-ready and invalid ID');
   assert.deepEqual(exceptions, []);
   console.log('PASS: no uncaught browser runtime exceptions');
 } finally {

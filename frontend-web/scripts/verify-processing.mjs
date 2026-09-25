@@ -33,6 +33,17 @@ async function verify(app, port) {
     const utils = await load('processing', 'processingUtils');
     const { mockProcessingScenario } = await load('processing', 'mockProcessingScenario');
     const id = 'project-009';
+    const { resultService } = await load('results', 'resultService');
+    const { projectRepository } = await load('projects', 'projectRepository');
+    const { filterProjects } = await load('projects', 'projectUtils');
+    const { projectAction } = await load('projects', 'projectAction');
+    assert.equal(await resultService.getByProjectId(id), null);
+    await assert.rejects(resultService.getByProjectId('unknown'));
+    const fixture = await resultService.getByProjectId('project-001');
+    assert.equal(fixture.availability, 'MOCK_PREVIEW');
+    assert.equal(fixture.voiceName, undefined);
+    assert.equal(await resultService.getByProjectId('project-001', 'ja'), null);
+    assert.equal((await resultService.getDownloadInfo(id)).available, false);
 
     for (const [value, expected] of [[-5, 0], [137, 100], [NaN, 0], [Infinity, 0], [42.6, 43]]) {
       assert.equal(utils.clampProgress(value), expected);
@@ -79,6 +90,25 @@ async function verify(app, port) {
     assert.equal(session.getStatus().stages[0].status, 'COMPLETED');
     assert.equal(JSON.stringify(context), original);
     assert.ok(!('audioPath' in session.getStatus()) && !('downloadUrl' in session.getStatus()));
+    const result = await resultService.getByProjectId(id, 'en');
+    assert.equal(result.voiceName, context.voice.name);
+    assert.equal(result.speed, 1.2);
+    assert.equal(result.transcriptCount, context.transcript.segments.length);
+    assert.equal(result.translationCount, context.translation.segments.length);
+    assert.equal(result.availability, 'MOCK_PREVIEW');
+    assert.ok(!('audioPath' in result) && !('videoPath' in result) && !('downloadUrl' in result));
+    result.voiceName = 'mutated';
+    assert.equal((await resultService.getByProjectId(id)).voiceName, context.voice.name);
+    assert.equal(await resultService.getByProjectId(id, 'ja'), null);
+    const history = await resultService.getHistory();
+    assert.equal(history.length, projectRepository.getAll().length);
+    assert.equal(history.find(item => item.id === id).hasResult, true);
+    assert.equal(projectRepository.getById(id).status, 'COMPLETED');
+    assert.equal(projectAction(projectRepository.getById(id)).step, 'result');
+    assert.equal(filterProjects(history, 'aN gIaNg', 'COMPLETED').length, 1);
+    assert.equal(filterProjects(history, 'missing', 'ALL').length, 0);
+    assert.equal(filterProjects(history, 'An Giang', 'FAILED').length, 0);
+    console.log(app + ': PASS - S11 metadata, history, filters, routing, no fake files, missing/not-ready');
 
     for (const failAt of ['start', 'narration', 'media']) {
       const { session: failing, events: failedEvents } = create();

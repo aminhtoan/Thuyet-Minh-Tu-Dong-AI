@@ -111,7 +111,7 @@ Customer upload → Media storage → Speech-to-Text → Transcript
 → Narration audio → FFmpeg/media processing → Result preview/download
 ```
 
-S10 renders generation summaries and local processing sessions from saved translation/voice settings. The session service owns deterministic stage progress, start locking, cancellation and retry; screen cleanup disposes timers. Completion creates no media or Result record and does not persist authoritative Project/ProcessingJob state.
+S10 renders generation summaries and local processing sessions from saved translation/voice settings. The session service owns deterministic stage progress, start locking, cancellation and retry; screen cleanup disposes timers. S11 completion records only in-memory Result metadata and updates a shared frontend project projection; it creates no media and persists no authoritative backend Project/ProcessingJob state.
 
 Long operations are represented by `ProcessingJob`; project status summarizes the aggregate stage. FFmpeg is expected to extract/normalize audio when needed and merge narration into final media. No FFmpeg package, AI provider, job queue or live processing is installed in S6.
 
@@ -149,7 +149,8 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 | S8 | Customer Translation Editor | Completed in frontend with mock service |
 | S9 | Customer Voice & TTS UI | Completed in frontend with mock configuration |
 | S10 | Customer Generate & Processing UI | Completed in frontend with mock processing |
-| S11 | Customer Result & History | Planned |
+| S11 | Customer Result & History | Completed with mock metadata; no real files |
+| S11.5 | Customer Web Visual Redesign | Completed; Web-only, domain unchanged |
 | S12 | Admin Web Foundation | Planned |
 | S13 | Admin Dashboard | Planned |
 | S14 | Admin Customer Management | Planned |
@@ -165,3 +166,7 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 | S24 | Full Frontend/Backend Integration | Planned |
 | S25 | Testing, Security & Hardening | Planned |
 | S26 | CI/CD & Deployment | Planned |
+
+## S11 Result boundary
+
+Each client has its own session-only result service (no shared package/backend). Completed processing records project/language, segment counts, voice, speed and timestamp. Existing completed project fixtures expose only known metadata. The repository publishes immutable project snapshots to Dashboard/Projects/History; Result lookup preserves the last completed metadata per language. Later failed/cancelled runs do not delete earlier completed metadata. History actions follow the latest project status. Full reload clears session overlays/results. Real preview/download and durable ownership-checked storage remain backend integration work.

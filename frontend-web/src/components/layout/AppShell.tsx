@@ -3,12 +3,12 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
-const titles: Record<string, string> = { '/dashboard': 'Dashboard', '/projects': 'Projects', '/projects/new': 'New Project', '/history': 'History', '/settings': 'Settings' }
+const titles: Record<string, string> = { '/dashboard': 'Bảng điều khiển', '/projects': 'Dự án', '/projects/new': 'Dự án mới', '/history': 'Lịch sử', '/settings': 'Cài đặt' }
 
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { pathname } = useLocation()
-  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Transcript' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Translation' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Voice & Narration' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Generate Narration' : titles[pathname] ?? 'AI Narrator'
+  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Transcript' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Translation' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Voice & Narration' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Generate Narration' : /^\/projects\/[^/]+\/result$/.test(pathname) ? 'Result' : titles[pathname] ?? 'Người kể chuyện AI'
   return (
     <div className="app-shell">
       <Sidebar open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />

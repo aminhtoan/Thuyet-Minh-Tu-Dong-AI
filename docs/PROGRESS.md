@@ -2,97 +2,82 @@
 
 ## Current Sprint
 
-S10 - Customer Generate & Processing UI
+S11.5 Customer Web Visual Redesign
 
 ## Status
 
-COMPLETED (frontend mock scope; physical-phone interaction not verified)
+COMPLETED (Customer Web visual scope)
 
-## Completed
+## Reference
 
-- S1-S6: Customer foundations, design system, auth/dashboard/projects/upload mocks and full-stack architecture.
-- S7-S8: editable saved transcript and aligned translation with mock services.
-- S9: active voice selection, simulated preview, speed and saved narration configuration.
+- IMAGE 1: target light AI narration SaaS dashboard.
+- IMAGE 2: previous heavy dark-sidebar application.
+- Brand preserved: Người kể chuyện AI / Thuyết minh đa ngôn ngữ.
 
-## S10 Completed
+## Updated
 
-- Saved S9 configuration summary, review confirmation and project/language-preserving navigation.
-- Centralized deterministic narration/media processing, overall and optional stage progress.
-- Start locking, source/configuration revalidation and safe copied state updates.
-- Completed/failed/cancelled states; retry/restart both stages from 0%.
-- Timers cancelled on cancel, retry, new run and disposal; Mobile also cancels on blur.
-- Web responsive layout, Mobile scrolling, accessible text/progress and shared WorkflowSteps.
-- Disabled View Result; no S11, real processing or output files.
+- AppShell: shared shell with wider desktop workspace and responsive padding.
+- Sidebar: light lavender, compact icons, clear active item, neutral mock workspace area.
+- Topbar: project search wired to existing Projects filter; truthful user placeholder.
+- Dashboard Hero: restrained blue/violet gradient, CTA, CSS/SVG media/wave/microphone illustration.
+- Quick Actions: four cards mapped to existing routes; project-required actions open Projects.
+- Recent Projects: compact table-style rows, media placeholders, language/status/progress/actions.
+- Quick Statistics: actual repository counts, compact 2×2 panel; no invented growth data.
+- Recent Activity: derived from latest project updates, not a backend event system.
+- Projects: same filters and workflow actions, URL-based topbar search.
+- New Project: shared card/input styles, numbered sections and soft media dropzone.
+- History: same compact visual language, existing search/filter/reopen behavior.
+- Workflow shared UI: tokens, cards/buttons/inputs/badges, reusable six-step Web stepper.
+- Responsive: desktop, tablet and phone Web layouts.
 
-## Web
+## Preserved
 
-- Generate Route: YES (`/projects/:projectId/generate?language=en`)
-- Generation Summary: YES
-- Mock Processing: YES
-- Overall Progress: YES
-- Stage Progress: YES (optional percentages supported)
-- Completed State: YES
-- Failed State: YES
-- Retry: YES
-- Cancel: YES
-- Timer Cleanup: YES
-- Responsive: YES (browser checks at 375px and 1280px)
-
-## Mobile
-
-- Generate Screen: YES
-- Generation Summary: YES
-- Mock Processing: YES
-- Overall Progress: YES
-- Stage Progress: YES
-- Completed: YES
-- Failed: YES
-- Retry: YES
-- Cancel: YES
-- Timer Cleanup: YES (unmount and navigation blur)
-- Expo Go Compatible: YES (SDK 57; no new dependencies)
-
-## Data
-
-- Processing: MOCK
-- TTS: NOT_INTEGRATED
-- Narration Audio: NOT_GENERATED
-- FFmpeg: NOT_INTEGRATED
-- Final Video: NOT_GENERATED
-- Backend: NOT_IMPLEMENTED
+- S1–S11 domain logic and project mock fixtures.
+- All routes, projectId and target-language propagation.
+- Transcript/translation save/reset/validation and voice settings.
+- Processing confirmation, progress, cancel/retry and cleanup.
+- Result metadata, unavailable real media/download and History.
+- Existing S5 mock upload behavior (no persisted new project).
+- Mobile unchanged during S11.5; prior S11 changes remain intact.
+- No dependencies added, no remote/random image assets.
 
 ## Validation
 
-### Web
+- Web lint: PASS (oxlint; no warnings)
+- Web typecheck: PASS
+- Web build: PASS
+- Tests: PASS (existing standalone Node service + Chrome browser checks)
+- npm test: NOT_AVAILABLE (no package script; no new test framework)
+- S1–S11 implemented Customer workflow regression: PASS
+- Service tests also pass against unchanged Mobile feature modules.
+- Dashboard widths: 1920, 1440, 1366, 1024, 768, 375 — PASS
+- Projects/upload/history/workflow route overflow checks: 1440, 1024, 768, 375 — PASS
+- Topbar search → Projects filter: PASS
+- New Project form → valid synthetic WAV → mock upload → Projects: PASS
+- Transcript → Translation → Voice → Generate → Processing → Result → History: PASS
+- Failure/retry, cancellation/navigation cleanup and result re-open: PASS
+- No uncaught browser runtime exceptions.
 
-- lint: PASS
-- typecheck: PASS
-- build: PASS
-- test: PASS (standalone Node regression and Chrome headless checks; no npm test script)
+## Test Commands
 
-### Mobile
+From frontend-web:
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+- `node scripts/verify-processing.mjs`
+- `node scripts/verify-processing-browser.mjs`
+- `node scripts/verify-redesign-browser.mjs`
 
-- lint: PASS
-- typecheck: PASS
-- test: PASS (standalone service regression; no native interaction test or npm test script)
-- expo-doctor: PASS (21/21)
-- Expo QR / Android export: PASS (Expo Go QR; 1,338 modules bundled)
+Browser scripts require Vite at 127.0.0.1:5175 and separate temporary Chrome debugging at 127.0.0.1:9223.
 
-## Important Files
+## Known Issues / Scope
 
-- `frontend-web/src/pages/GeneratePage.tsx`
-- `frontend-web/src/features/processing/` and `frontend-web/src/styles/processing.css`
-- `frontend-mobile/src/app/projects/[projectId]/generate.tsx`
-- `frontend-mobile/src/screens/GenerateScreen.tsx` and `frontend-mobile/src/features/processing/`
-- `frontend-web/scripts/verify-processing.mjs` and `verify-processing-browser.mjs`
-- Both clients' Voice screens, WorkflowSteps and ProgressBar.
-
-## Known Issues
-
-- Physical Expo Go scan/touch/scroll behavior is not verified here.
-- Reload resets saved mocks; leaving Generate disposes its local simulation.
-- Simulation percentages are deterministic and do not measure real AI/media work.
+- Session data still resets on reload; no backend/persistence or real AI/media output.
+- Old workflow labels still include English; this pass is visual redesign, not complete localization.
+- Settings remains the existing placeholder; no fake notifications, subscription or analytics.
+- Mobile visual redesign and physical-device interaction are outside this pass.
+- Auth remains mock; regression does not claim real authentication or real media processing.
 
 ## Next
 
-S11 - Customer Result & History (not started)
+S12 Admin Web Foundation — not started.

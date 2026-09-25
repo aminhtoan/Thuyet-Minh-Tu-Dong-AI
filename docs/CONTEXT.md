@@ -50,7 +50,7 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - Secrets, `passwordHash` and privileged settings belong only on the backend; hiding a menu is not authorization.
 - Current auth screens only simulate completion; they do not issue JWTs, persist sessions or call an API.
 
-## Current Implementation: S1–S10
+## Current Implementation: S1–S11
 
 - S1: Customer frontend foundations for Web and Mobile.
 - S2: design tokens, reusable components, Web AppShell and Mobile Expo Router navigation.
@@ -66,7 +66,7 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 
 ## Current Sprint and Next Direction
 
-S9 Voice configuration and S10 **Customer Generate & Processing UI** are implemented on Web and Mobile with mock services. The next sprint is S11 Customer Result & History; it is not implemented. Admin Web starts at S12; Backend starts at S17.
+S9 Voice configuration and S10 **Customer Generate & Processing UI** are implemented on Web and Mobile with mock services. S11 Result & History is implemented with session-only metadata, unavailable media/download, and shared project history. S11.5 Customer Web Visual Redesign is completed (light shell, reference-inspired dashboard and shared UI; no domain changes). Next is S12 Admin Web Foundation, not started. Admin Web starts at S12; Backend starts at S17.
 
 ## Domain Alignment Snapshot
 
@@ -89,7 +89,7 @@ S9 Voice configuration and S10 **Customer Generate & Processing UI** are impleme
 
 ## Roadmap Checkpoints
 
-- S7–S10: Transcript/Translation editors, Voice/TTS configuration and Generate/Processing use mock services. S11 covers Result & History.
+- S7–S10: Transcript/Translation editors, Voice/TTS configuration and Generate/Processing use mock services. S11 provides mock Result & History; S11.5 is Customer UI/UX Polish.
 - S12–S16: build the separate Admin Web and management screens.
 - S17–S23: backend foundation, JWT/RBAC, project/media API and AI/FFmpeg integrations.
 - S24–S26: integration, testing/security hardening and deployment automation.

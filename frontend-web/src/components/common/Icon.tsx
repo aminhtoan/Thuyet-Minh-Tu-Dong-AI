@@ -1,10 +1,19 @@
 import type { SVGProps } from 'react'
 
-export type IconName = 'dashboard' | 'projects' | 'plus' | 'history' | 'settings' | 'menu' | 'sparkles' | 'eye' | 'eyeOff'
+export type IconName = 'dashboard' | 'projects' | 'plus' | 'history' | 'settings' | 'menu' | 'sparkles' | 'eye' | 'eyeOff' | 'search' | 'arrow' | 'mic' | 'video' | 'document' | 'language' | 'wave' | 'check' | 'alert'
 
 type IconProps = SVGProps<SVGSVGElement> & { name: IconName }
 
 const paths: Record<IconName, string> = {
+  search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+  arrow: 'M4 12h16m-6-6 6 6-6 6',
+  mic: 'M9 5a3 3 0 0 1 6 0v7a3 3 0 0 1-6 0V5Zm-4 6v1a7 7 0 0 0 14 0v-1m-7 8v3m-4 0h8',
+  video: 'M3 5h18v14H3V5Zm7 4 5 3-5 3V9Z',
+  document: 'M5 3h10l4 4v14H5V3Zm9 0v5h5M8 12h8m-8 4h6',
+  language: 'M3 5h12M9 2v3m4 0c-1 7-5 11-10 13m2-10c2 4 5 7 9 9m1 4 4-12 4 12m-6-4h5',
+  wave: 'M2 10v4m4-8v12m4-15v18m4-13v8m4-11v14m4-9v4',
+  check: 'm5 12 4 4L19 6',
+  alert: 'M12 8v5m0 4h.01M3 21h18L12 3 3 21Z',
   dashboard: 'M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z',
   projects: 'M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2h6.5A2.5 2.5 0 0 1 21 8.5v8A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-10Z',
   plus: 'M12 5v14M5 12h14',
@@ -17,6 +26,6 @@ const paths: Record<IconName, string> = {
 }
 
 export function Icon({ name, ...props }: IconProps) {
-  const isStroke = name === 'plus' || name === 'history' || name === 'menu' || name === 'eyeOff'
+  const isStroke = name === 'plus' || name === 'history' || name === 'menu' || name === 'eyeOff' || ['search', 'arrow', 'mic', 'video', 'document', 'language', 'wave', 'check', 'alert'].includes(name)
   return <svg viewBox="0 0 24 24" aria-hidden="true" fill={isStroke ? 'none' : 'currentColor'} stroke={isStroke ? 'currentColor' : 'none'} strokeWidth={isStroke ? 2 : undefined} strokeLinecap="round" strokeLinejoin="round" {...props}><path d={paths[name]} /></svg>
 }
