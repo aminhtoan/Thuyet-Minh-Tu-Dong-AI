@@ -1,16 +1,19 @@
+import { Card } from './Card'
+import { EmptyState } from './EmptyState'
+import { PageHeader } from '../layout/PageHeader'
+
 type PlaceholderPageProps = {
   title: string
-  message?: string
+  description?: string
 }
 
-export function PlaceholderPage({
-  title,
-  message = `${title} screen will be implemented in a later sprint.`,
-}: PlaceholderPageProps) {
+export function PlaceholderPage({ title, description = `${title} will be implemented in a later sprint.` }: PlaceholderPageProps) {
   return (
-    <main className="placeholder-page">
-      <h1>{title}</h1>
-      <p>{message}</p>
-    </main>
+    <>
+      <PageHeader title={title} description={description} />
+      <Card padding="lg">
+        <EmptyState title={`${title} is ready for development`} description="The application shell and reusable UI foundation are in place." />
+      </Card>
+    </>
   )
 }

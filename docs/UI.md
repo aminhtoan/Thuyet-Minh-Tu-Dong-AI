@@ -42,4 +42,71 @@ Không copy desktop layout trực tiếp sang mobile.
 - PageHeader, Sidebar, Topbar and BottomNavigation
 - ProjectCard
 
-Design system chi tiết sẽ được triển khai trong S2.
+## Implemented Design System
+
+### Foundations
+
+- Matching Web and Mobile color, spacing, radius and typography tokens
+- Soft gray application background, white surfaces and blue primary palette
+- Responsive spacing, accessible contrast and restrained shadows
+
+### Common Components
+
+- Button: primary, secondary, ghost and danger variants; disabled and loading states
+- Input: label, helper, error, required and disabled states
+- Card and Badge
+- Spinner and ProgressBar
+- EmptyState and ErrorState
+
+### Web Application Shell
+
+- Persistent desktop Sidebar with active route highlighting
+- Responsive navigation drawer for tablet and mobile widths
+- Sticky Topbar, user placeholder and reusable PageHeader
+- Auth placeholders remain outside the application shell
+
+### Mobile Application Shell
+
+- Expo Router tab navigation for Dashboard, Projects, History and Settings
+- Safe-area-aware MobileHeader and scrollable screen container
+- New Project remains a stack route outside the tab bar
+
+The Dashboard placeholders provide a lightweight visual showcase only; feature implementation remains planned for later sprints.
+
+## Authentication UI
+
+### Web
+
+- Responsive split-screen `AuthLayout` shared by Login and Register
+- Accessible email and password controls with inline field/form errors
+- Password visibility controls and loading submit states
+
+### Mobile
+
+- Native Login and Register layouts with Safe Area handling
+- Keyboard-avoiding, scrollable forms with mobile keyboard configuration
+- Accessible password visibility controls and inline validation
+
+Authentication uses a short mock UI flow only. Backend authentication and persistent sessions are not connected.
+
+## Dashboard and Projects
+
+### Web
+
+- Responsive Dashboard statistics and recent-project list
+- Projects page with combined local search and status filtering
+- Desktop project rows collapse into readable cards on smaller screens
+
+### Mobile
+
+- Two-column statistics and native project cards on Dashboard
+- FlatList-based Projects screen with search and horizontally scrollable filter chips
+- Dashboard and Projects CTAs navigate to the existing New Project placeholder
+
+### Project Components
+
+- `StatCard`, `ProjectCard`, `ProjectStatusBadge` and project filters
+- Friendly language pairs, relative update dates and processing progress
+- Separate empty states for no project data and no matching results
+
+Project screens use clearly marked development mock data. Backend project APIs are not connected.

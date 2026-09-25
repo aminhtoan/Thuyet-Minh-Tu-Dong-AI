@@ -41,12 +41,22 @@ Các lệnh validation: `npm run lint`, `npm run typecheck`, `npm run build`.
 ```bash
 cd frontend-mobile
 npm install
-npm start
+npx expo start
 ```
 
-Các lựa chọn chạy thiết bị: `npm run android`, `npm run ios`, `npm run web`.
+Expo CLI sẽ hiển thị QR code. Cài Expo Go tương thích với Expo SDK 57 trên điện thoại Android, kết nối điện thoại và máy tính cùng mạng Wi-Fi, rồi dùng chức năng quét QR trong Expo Go. Ứng dụng mở vào Dashboard và có tab Projects; các route `/login` và `/register` vẫn hiện diện trong app.
 
-Các lệnh validation: `npm run lint`, `npm run typecheck`.
+Nếu điện thoại không truy cập được máy tính qua LAN, dừng server và chạy:
+
+```bash
+npx expo start --tunnel
+```
+
+Tunnel có thể cần cài `@expo/ngrok` và kết nối Internet. Expo Go trên iPhone từ App Store hiện không hỗ trợ SDK 57; để thử trên iPhone thật cần một bản Expo Go tương thích được phân phối riêng, hoặc development build. Xem [hướng dẫn Expo Go theo SDK](https://docs.expo.dev/troubleshooting/expo-go-version-mismatch/).
+
+Các lựa chọn chạy emulator/simulator hoặc Web: `npm run android`, `npm run ios`, `npm run web`.
+
+Các lệnh validation: `npm run lint`, `npx tsc --noEmit`.
 
 ## Documentation
 
