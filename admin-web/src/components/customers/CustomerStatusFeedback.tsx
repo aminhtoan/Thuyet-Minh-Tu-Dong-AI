@@ -1,0 +1,1 @@
+export function CustomerStatusFeedback({ message, error = false, onDismiss }: { message: string; error?: boolean; onDismiss: () => void }) { return <div className={'customer-feedback ' + (error ? 'customer-feedback--error' : '')} role={error ? 'alert' : 'status'}><span>{message}</span><button onClick={onDismiss} aria-label="Đóng thông báo">×</button></div>; }

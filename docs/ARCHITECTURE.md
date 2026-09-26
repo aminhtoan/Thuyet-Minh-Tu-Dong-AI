@@ -19,7 +19,7 @@ There is no separate `GUEST` business actor. An unauthenticated Customer can onl
 | --- | --- | --- | --- |
 | Customer Web | `frontend-web/` | React, TypeScript, Vite | Implemented UI, mock services |
 | Customer Mobile | `frontend-mobile/` | React Native, TypeScript, Expo SDK 57 | Implemented UI, mock services; matching Expo Go required |
-| Admin Web | `admin-web/` | React, TypeScript, Vite | Planned for S12; separate application, not `/admin` in Customer Web |
+| Admin Web | `admin-web/` | React, TypeScript, Vite | S12 foundation implemented; separate application, not `/admin` in Customer Web |
 
 Both Customer clients and the future Admin Web will use the same backend API. Customer Web and Mobile do not need identical UI components. Do not add `admin-web/` or a shared package in S6.
 
@@ -29,7 +29,7 @@ Both Customer clients and the future Admin Web will use the same backend API. Cu
 multilingual-ai-narration/
 ├── frontend-web/      Customer Web (implemented)
 ├── frontend-mobile/   Customer Mobile (implemented)
-├── admin-web/         Admin Web (planned S12; absent today)
+├── admin-web/         Admin Web (S12 foundation implemented)
 ├── backend/           Node.js + Express.js + TypeScript (planned S17; absent today)
 ├── docs/
 └── README.md
@@ -131,7 +131,7 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 | Service | Planned URL | Exists now? |
 | --- | --- | --- |
 | Customer Web | `http://localhost:5173` (Vite default) | Yes |
-| Admin Web | `http://localhost:5174` | No |
+| Admin Web | `http://localhost:5174` | Yes (S12 mock foundation) |
 | Backend API | `http://localhost:8080/api` | No |
 | MongoDB | `mongodb://localhost:27017` | No repository connection |
 
@@ -151,11 +151,11 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 | S10 | Customer Generate & Processing UI | Completed in frontend with mock processing |
 | S11 | Customer Result & History | Completed with mock metadata; no real files |
 | S11.5 | Customer Web Visual Redesign | Completed; Web-only, domain unchanged |
-| S12 | Admin Web Foundation | Planned |
-| S13 | Admin Dashboard | Planned |
-| S14 | Admin Customer Management | Planned |
-| S15 | Admin Projects & Processing Jobs | Planned |
-| S16 | Admin Languages, Voices, Logs & Settings | Planned |
+| S12 | Admin Web Foundation | Completed; mock UI only |
+| S13 | Admin Dashboard | Completed; mock service and dashboard states |
+| S14 | Admin Customer Management | Completed; mock frontend/service only |
+| S15 | Admin Projects & Processing Jobs | Completed; mock frontend/services only |
+| S16 | Admin Languages, Voices, Logs & Settings | Completed; mock frontend/services only |
 | S17 | Backend Foundation: Node.js, Express, TypeScript, MongoDB, Mongoose | Planned |
 | S18 | Authentication, JWT & RBAC | Planned |
 | S19 | Project & Media API | Planned |
@@ -170,3 +170,26 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 ## S11 Result boundary
 
 Each client has its own session-only result service (no shared package/backend). Completed processing records project/language, segment counts, voice, speed and timestamp. Existing completed project fixtures expose only known metadata. The repository publishes immutable project snapshots to Dashboard/Projects/History; Result lookup preserves the last completed metadata per language. Later failed/cancelled runs do not delete earlier completed metadata. History actions follow the latest project status. Full reload clears session overlays/results. Real preview/download and durable ownership-checked storage remain backend integration work.
+
+## S12 Admin foundation
+
+Independent `admin-web/` React/TypeScript/Vite package, npm lockfile, strict TypeScript; no Customer/Mobile imports or shared router. Customer stays on localhost:5173; Admin uses localhost:5174 (strictPort); future backend localhost:8080/api is not implemented.
+
+Routes: /login, / → /dashboard, /users, /projects, /jobs, /languages, /voices, /logs, /settings, plus not-found fallback. Mock login validates inputs then navigates; all preview routes intentionally remain public. No security boundary, session, password persistence, JWT or fake tokens. Real JWT/RBAC belongs to S18.
+
+Admin fixtures use centralized mock sources and service boundaries. Public VITE_API_BASE_URL prepares integration only; no HTTP calls. ADMIN monitors/configures without editing Customer transcripts/translations/narration. S13–S16 Admin screens are implemented locally; backend enforcement remains deferred.
+
+### S13 Dashboard service boundary
+
+AdminDashboardPage composes dashboard cards through useAdminDashboard → adminDashboardService.getDashboard → centralized typed fixtures. The service owns simulated latency, AbortSignal cancellation and copied snapshots. Unmount cancels pending work; refresh retains existing data while busy; failed requests expose a safe retry UI. There is no polling, transport, persistent state or connection to Customer fixtures. S12 navigation and management placeholders stay unchanged except removal of sprint/demo labels from the shared shell.
+## S14 Admin customer boundary
+
+`AdminUsersPage` và `AdminCustomerDetailPage` chỉ giao tiếp qua `adminCustomerService`. Service sở hữu độ trễ mô phỏng, truy vấn kết hợp, phân trang, bản sao dữ liệu và mutation; component không sửa trực tiếp fixture. Nguồn mock tập trung chỉ chứa view-model `AdminCustomer` có `role=CUSTOMER`. Khi có backend, boundary này được thay bằng Admin API mà không đổi domain/UI. Trạng thái frontend không phải RBAC hay security boundary.
+
+## S15 Admin operations boundary
+
+Project và ProcessingJob dùng kho mock quan hệ chung, truy cập qua `adminProjectService` và `adminJobService`. Service sở hữu lọc/phân trang, latency, clone snapshot và retry/cancel. UI không chỉnh nội dung Customer. Retry chỉ FAILED → QUEUED; cancel chỉ QUEUED/PROCESSING → CANCELLED. Đây không phải worker hoặc authorization boundary.
+
+## S16 Admin system boundary
+
+Language và Voice dùng catalog mock quan hệ chung; ActivityLog là read-only; SystemSettings là cấu hình in-memory. Bốn service sở hữu validation, latency và mutation. Không có hard delete, localStorage, real audio preview, secret fields, backend health claims hoặc frontend security enforcement.

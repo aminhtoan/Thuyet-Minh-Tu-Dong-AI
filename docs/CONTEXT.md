@@ -29,7 +29,7 @@ Upload → Speech-to-Text → Edit Transcript → Translate/Edit → Select Voic
 | --- | --- | --- |
 | Customer Web | `frontend-web/` | Implemented UI; React + TypeScript + Vite |
 | Customer Mobile | `frontend-mobile/` | Implemented UI; React Native + TypeScript + Expo SDK 57 |
-| Admin Web | `admin-web/` | Planned S12; React + TypeScript + Vite; separate app |
+| Admin Web | `admin-web/` | S12–S16 primary mock Admin screens implemented; React + TypeScript + Vite; separate app |
 | Backend | `backend/` | Planned S17; Node.js + Express.js + TypeScript |
 
 Customer Web and Admin Web will use one backend but remain independent applications. Do not place Admin under `frontend-web/src/admin` or treat `/admin` in Customer Web as the main Admin architecture.
@@ -62,11 +62,12 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - S8: Web/Mobile Translation Editor with saved transcript context, aligned segments, target languages, mock translation and save/reset. Real translation is planned S21.
 - S9: Web/Mobile Voice & TTS configuration, active language-scoped voices, simulated preview, speed selection and mock save/reset. Voice data is MOCK; TTS is NOT_INTEGRATED; narration audio is NOT_GENERATED.
 - S10: saved-configuration generation summary, confirmation and simulated narration/media progress on Web/Mobile, with completed/failed/cancelled states, retry and timer cleanup. Processing is MOCK; real TTS/FFmpeg are NOT_INTEGRATED and no output media is generated.
-- No Admin Web, Backend, MongoDB connection, real upload, JWT, AI processing or persistent project creation exists yet.
+- S12: separate Admin foundation with mock login and the shell later completed across S13–S16.
+- No Backend, MongoDB connection, real upload, JWT, AI processing or persistent project creation exists yet.
 
 ## Current Sprint and Next Direction
 
-S9 Voice configuration and S10 **Customer Generate & Processing UI** are implemented on Web and Mobile with mock services. S11 Result & History is implemented with session-only metadata, unavailable media/download, and shared project history. S11.5 Customer Web Visual Redesign is completed (light shell, reference-inspired dashboard and shared UI; no domain changes). Next is S12 Admin Web Foundation, not started. Admin Web starts at S12; Backend starts at S17.
+S9–S11.5 Customer workflows and redesign are completed. S12–S16 Admin foundation and all primary mock management screens are completed behind asynchronous service boundaries. Next recommended checkpoint is S16.5 Admin UI Polish + Full Frontend Regression; Backend starts at S17.
 
 ## Domain Alignment Snapshot
 
@@ -81,7 +82,7 @@ S9 Voice configuration and S10 **Customer Generate & Processing UI** are impleme
 ## Development Topology
 
 - Customer Web: Vite default `http://localhost:5173` (current app).
-- Admin Web: planned `http://localhost:5174` (no app or server yet).
+- Admin Web: `http://localhost:5174` (S12 mock foundation; strict port).
 - Backend: planned `http://localhost:8080/api` (no app or server yet).
 - MongoDB: planned `mongodb://localhost:27017`, database `multilingual_ai_narration` (no connection yet).
 - Customer Web and future Admin Web use public `VITE_API_BASE_URL`; Mobile uses public `EXPO_PUBLIC_API_BASE_URL`.

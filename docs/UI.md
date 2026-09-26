@@ -26,9 +26,9 @@ Không copy desktop layout trực tiếp sang mobile.
 - Existing placeholders: Settings.
 - Implemented S11: Result and History. S11.5 Customer Web Visual Redesign completed; Profile completion later.
 
-## Admin Web (`admin-web/`, future)
+## Admin Web (`admin-web/`, S12 foundation)
 
-Admin Web is a **separate application**, not a route or component section inside Customer Web. It begins in S12 and does not exist yet. Planned screens: Admin Login, Admin Dashboard, Customers, Projects, Processing Jobs, Languages, Voices, Activity Logs and business/application Settings. No Admin UI is implemented in S6.
+Admin Web is a **separate application**, not a route or component section inside Customer Web. S12–S16 now provide all primary mock Admin screens; backend integration remains future work.
 
 ## Component Inventory and Future Patterns
 
@@ -187,3 +187,54 @@ Project screens use clearly marked development mock data. Backend project APIs a
 - Web reusable stepper now displays six steps through Kết quả; prior stages show SVG checks and the current step uses indigo. Mobile stepper is unchanged.
 - Responsive checks: Dashboard at 1920/1440/1366/1024/768/375px; Projects/New Project/History/Transcript/Translation/Voice/Generate/Result at 1440/1024/768/375px. No page overflow detected.
 - Validation: lint/typecheck/build, existing service/browser regression and `node scripts/verify-redesign-browser.mjs` (same Vite 5175/temporary Chrome 9223 setup). New script covers topbar search, actual mock-upload form and responsive pages.
+
+## S12 Admin UI
+
+- Independent AdminAppShell/Sidebar/Topbar/PageContainer/PageHeader; light surfaces and indigo accents, no Customer hero.
+- Waveform brand “Người kể chuyện AI / Trang quản trị”, ADMIN badge and administrator placeholder. No fake search or notification system.
+- Sidebar groups TỔNG QUAN, QUẢN LÝ, CẤU HÌNH, HỆ THỐNG. Active links use aria-current, font weight and edge indicator, not color alone.
+- Split login layout with labelled email/password, inline errors and explicit mock/no-real-credentials warning. No identity verification or credential/token storage.
+- Dashboard shows four mock statistics, sample projects, job status summary, activity and S13 scope note. Fixtures are centralized; no charts/live monitoring.
+- Users S14, Projects/Jobs S15 and Languages/Voices/Logs/Settings S16 are now implemented; no primary sidebar destination remains a placeholder.
+- Shared Card/Button/Badge/StatusBadge/StatCard/EmptyState; existing inline SVG icon approach reused without cross-app imports or new library.
+- Sidebar is persistent from 1024px. Smaller widths use native modal dialog with focus containment, Escape and navigation close. Skip link and focus indicators included.
+- Tested at 1920/1440/1366/1024/768/375px. Tables scroll internally; login stacks. All routes support Vite refresh.
+- Customer/Mobile remain unchanged during S12.
+
+## S13 Admin Dashboard
+
+- Preserves approved S12 light shell/sidebar/topbar, ADMIN identity, cards, tokens and typography. Removes S12/MOCK PREVIEW/next-sprint presentation from the dashboard and sidebar; one shell notice identifies illustrative data. Workload card additionally clarifies that it is not infrastructure monitoring.
+- Four statistics: total customers/projects, processing jobs, failed jobs; supporting descriptions and semantic tones. StatCard supports optional comparison text, but no unsupported growth figures/range selector is shown.
+- RecentProjectsCard: five projects, customer, language pair, specific canonical status, known progress and localized update time; Xem tất cả links to /projects.
+- ProcessingJobsCard: five recent/active jobs, Vietnamese job type/status, known progress, start/update time; link to /jobs. No cancel/retry management actions.
+- SystemStatusCard summarizes queued/processing/completed-today/failed jobs, never API/MongoDB/provider health.
+- RecentActivityCard: six centralized ActivityLog-shaped records with category icons, descriptions and timestamps. Activity is illustrative, not evidence of implemented management operations.
+- Desktop grid remains approximately 65/35; below 1200px sections stack. Stat cards become 2×2 below 1024px. Narrow tables scroll internally, never the entire page.
+- Initial request: skeleton statistics and panels. Refresh: previous snapshot stays visible with aria-busy and disabled “Đang tải…” button. Failure: Vietnamese error and Thử lại; zero-data snapshot: four zero stats, workload zeros, and independent project/job/activity empty messages.
+- Service owns all simulated latency and cleanup; no polling or page reload. Progress has accessible labels/min/max/value; tables use column headers, times use shared Intl/Date formatting.
+- Developer testing: `src/mocks/adminDashboardScenario.ts` mode success/error/empty and latencyMs. Defaults success/350ms. Change mode then refresh/retry; no public simulation-control UI. Browser regression temporarily switches scenarios and restores defaults.
+- Validation: npm lint/typecheck/build/test, browser routes/refresh/active state/drawer and 1920/1440/1366/1024/768/375px; loading/error/retry/empty/refresh/navigation cancellation covered.
+## S14 Admin Customer Management
+
+- `/users` hiển thị bốn thống kê được suy ra từ cùng nguồn mock, tìm theo tên/email, lọc trạng thái, sắp xếp và phân trang 10 bản ghi/trang.
+- Bảng semantic chỉ hiển thị tài khoản `CUSTOMER`; trạng thái dùng mapping chuẩn `ACTIVE`/`BLOCKED`.
+- `/users/:userId` hiển thị hồ sơ chỉ đọc, tổng hợp dự án và dự án gần đây với `ProjectStatus` chuẩn.
+- Khóa/mở khóa dùng native dialog có nhãn/focus, pending, chống gửi lặp và phản hồi thành công/lỗi.
+- Có skeleton, lỗi/thử lại, empty trước/sau bộ lọc, not-found và responsive table/detail.
+- UI dùng mock trong bộ nhớ; trạng thái frontend không ngăn đăng nhập và không phải ranh giới bảo mật.
+
+## S15 Admin Projects & Processing Jobs
+
+- `/projects`: thống kê từ 18 project mock, tìm tên dự án/khách hàng/email, lọc trạng thái/ngôn ngữ/phương tiện và phân trang.
+- `/projects/:projectId`: tổng quan chỉ đọc, customer link, media metadata, pipeline, related jobs và result metadata trung thực.
+- `/jobs`: thống kê từ 26 job quan hệ hợp lệ, tìm mã/dự án, lọc type/status và phân trang.
+- `/jobs/:jobId`: project/customer links, progress, lỗi mock, retry FAILED và cancel QUEUED/PROCESSING qua dialog.
+- Có skeleton, lỗi/thử lại, empty, not-found và responsive table/detail.
+
+## S16 Admin Languages, Voices, Logs & Settings
+
+- `/languages`: derived summary/voice counts, search/status filter, add/edit validation and confirmed enable/disable without hard delete.
+- `/voices`: derived summary, combined filters, add/edit/enable/disable and honest preview-unavailable feedback; every voice references a language.
+- `/logs`: read-only search/category/role/time filters, pagination and accessible detail dialog without invented IP/token/stack data.
+- `/settings`: general, upload, processing, narration defaults and honest system-information cards; dirty save/reset, validation and mock feedback.
+- All modules have loading/error/empty states, responsive filters/tables/forms/dialogs and service-owned latency.

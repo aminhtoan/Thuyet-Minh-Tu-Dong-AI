@@ -1,0 +1,7 @@
+import type { IconName } from '../common/Icon';
+export const navigation: { group: string; items: { to: string; label: string; icon: IconName }[] }[] = [
+  { group: 'TỔNG QUAN', items: [{ to: '/dashboard', label: 'Bảng điều khiển', icon: 'dashboard' }] },
+  { group: 'QUẢN LÝ', items: [{ to: '/users', label: 'Khách hàng', icon: 'users' }, { to: '/projects', label: 'Dự án', icon: 'projects' }, { to: '/jobs', label: 'Công việc xử lý', icon: 'jobs' }] },
+  { group: 'CẤU HÌNH', items: [{ to: '/languages', label: 'Ngôn ngữ', icon: 'languages' }, { to: '/voices', label: 'Giọng đọc', icon: 'voices' }] },
+  { group: 'HỆ THỐNG', items: [{ to: '/logs', label: 'Nhật ký', icon: 'logs' }, { to: '/settings', label: 'Cài đặt', icon: 'settings' }] },
+];

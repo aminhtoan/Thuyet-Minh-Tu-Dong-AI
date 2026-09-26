@@ -104,3 +104,66 @@ The backend will derive `userId` from the authenticated principal, reject unauth
 Result metadata: id, projectId, languageCode, mediaType, createdAt, availability `MOCK_PREVIEW`; optional saved transcriptCount, translationCount, voiceName and speed. Original source duration/size are labelled separately in UI. READY metadata is not a real file. History uses canonical Project status and carries hasResult; cancelled sessions return to TRANSLATED with no active progress, not a fabricated server cancellation status. Records live only in client memory.
 
 **PROPOSED:** authenticated/ownership-checked `GET /api/projects/:id/results`, history via project listing, and backend-issued download references after real media generation. Exact real-file/download transport is deferred. Real result media and download: **NOT_AVAILABLE**. Backend: **NOT_IMPLEMENTED**.
+
+## S12 Admin frontend boundary
+
+Admin Web exists, but **all Admin APIs remain proposed and unimplemented**. Dashboard now reads through the S13 asynchronous mock service (src/services/adminDashboardService.ts); validateMockAdminLogin only validates and navigates. Preview routes are public; no HTTP client/call, session, JWT or RBAC. VITE_API_BASE_URL=http://localhost:8080/api is public preparation, never a secret.
+
+Future contracts under /api/admin: GET dashboard/users/projects/jobs/languages/voices/logs/settings; GET user/project/job by ID; PATCH user status; POST/PATCH languages/voices; PATCH settings. Future backend must enforce ADMIN authorization. No Customer content-editing API is introduced.
+
+## S13 Admin Dashboard contract — PROPOSED / NOT IMPLEMENTED
+
+Future endpoint: `GET /api/admin/dashboard`. Current `adminDashboardService.getDashboard({ signal? })` returns local copied fixtures asynchronously, with no HTTP request. Mock-only scenario/latency options support deterministic tests; they are not API query parameters.
+
+Proposed envelope:
+
+```json
+{
+  "success": true,
+  "data": {
+    "stats": { "totalCustomers": 128, "totalProjects": 246, "processing": 8, "failed": 3 },
+    "recentProjects": [],
+    "processingJobs": [],
+    "recentActivities": [],
+    "jobSummary": { "queued": 5, "processing": 8, "completedToday": 12, "failed": 3 },
+    "generatedAt": "2026-09-26T06:00:00.000Z"
+  }
+}
+```
+
+- recentProjects: id/name, userId/customerName, sourceLanguage/targetLanguage, canonical ProjectStatus, optional known progress, updatedAt.
+- processingJobs: id/projectId/projectName, canonical job type/status, optional progress/startedAt, updatedAt.
+- recentActivities: id/userId/action/entityType/entityId/description/createdAt (ActivityLog-shaped).
+- processing/failed headline statistics count jobs, matching jobSummary. Lists are recent subsets, not the source of aggregate totals.
+- generatedAt is the snapshot reference for relative dates; current mock fixtures generate dates relative to each request. These are illustrative snapshots, not live measurements.
+- All future access must be backend-authorized for ADMIN. No JWT/RBAC or infrastructure health API exists today.
+## S14 Admin Customer APIs — PROPOSED / NOT IMPLEMENTED
+
+Admin Web hiện dùng `adminCustomerService` trong bộ nhớ và không gọi mạng.
+
+- `GET /api/admin/users?page=1&limit=10&search=&status=` — danh sách chỉ gồm `role=CUSTOMER`; trả `items` và `pagination { page, limit, total, totalPages }`.
+- `GET /api/admin/users/:id` — chi tiết một khách hàng.
+- `PATCH /api/admin/users/:id/status` — body `{ "status": "ACTIVE" | "BLOCKED" }`.
+
+Các endpoint `/api/admin/**` sau này chỉ dành cho ADMIN đã xác thực; CUSTOMER phải nhận `403 Forbidden`. Việc thực thi khóa tài khoản thuộc backend authentication/session ở S18+, không thuộc React S14.
+
+## S15 Admin Project/Job APIs — PROPOSED / NOT IMPLEMENTED
+
+- `GET /api/admin/projects?page=1&limit=10&search=&status=&language=&mediaType=`
+- `GET /api/admin/projects/:id`
+- `GET /api/admin/projects/:id/jobs`
+- `GET /api/admin/jobs?page=1&limit=10&search=&type=&status=`
+- `GET /api/admin/jobs/:id`
+- `POST /api/admin/jobs/:id/retry`
+- `POST /api/admin/jobs/:id/cancel`
+
+List responses dự kiến có `items` và `pagination { page, limit, total, totalPages }`. Future backend phải xác thực ADMIN và kiểm tra quyền retry/cancel.
+
+## S16 Admin System APIs — PROPOSED / NOT IMPLEMENTED
+
+- Languages: `GET/POST /api/admin/languages`, `GET/PATCH /api/admin/languages/:id`, `PATCH /api/admin/languages/:id/status`.
+- Voices: `GET/POST /api/admin/voices`, `GET/PATCH /api/admin/voices/:id`, `PATCH /api/admin/voices/:id/status`; optional future `POST /api/admin/voices/:id/preview`.
+- Logs: `GET /api/admin/logs`, `GET /api/admin/logs/:id` (read-only).
+- Settings: `GET /api/admin/settings`, `PATCH /api/admin/settings`.
+
+All are proposed and unimplemented. `/api/admin/**` requires authenticated ADMIN in the future. Provider credentials, JWT/MongoDB secrets and cloud credentials must never be returned to Admin frontend; they belong to backend environment/secret management.

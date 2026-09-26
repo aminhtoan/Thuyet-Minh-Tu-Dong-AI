@@ -4,7 +4,7 @@ Hệ thống thuyết minh tự động đa ngôn ngữ.
 
 ## Overview
 
-S1–S5 đã xây dựng UI Customer Web/Mobile: đăng nhập/đăng ký mock, Dashboard, Projects và New Project với upload mô phỏng. S6 chuẩn hóa kiến trúc full-stack; S7–S10 bổ sung Transcript Editor, Translation Editor, cấu hình Voice/TTS và tiến độ Generate/Processing với dữ liệu và dịch vụ mock. Preview giọng nói và processing chỉ mô phỏng; chưa tạo âm thanh hoặc video kết quả. Chưa có backend, Admin Web, database connection hay AI processing thật.
+S1–S5 đã xây dựng UI Customer Web/Mobile: đăng nhập/đăng ký mock, Dashboard, Projects và New Project với upload mô phỏng. S6 chuẩn hóa kiến trúc full-stack; S7–S10 bổ sung Transcript Editor, Translation Editor, cấu hình Voice/TTS và tiến độ Generate/Processing với dữ liệu và dịch vụ mock. Preview giọng nói và processing chỉ mô phỏng; chưa tạo âm thanh hoặc video kết quả. S12 bổ sung Admin Web foundation riêng với dữ liệu mock. Chưa có backend, database connection hay AI processing thật.
 
 ## Main Flow
 
@@ -16,7 +16,7 @@ Customer Web: React + TypeScript + Vite
 
 Customer Mobile: React Native + TypeScript + Expo SDK 57
 
-Admin Web (planned S12): React + TypeScript + Vite, ứng dụng riêng
+Admin Web (S12 foundation): React + TypeScript + Vite, ứng dụng riêng
 
 Backend (planned S17): Node.js + Express.js + TypeScript
 
@@ -28,7 +28,7 @@ Database (planned): MongoDB + Mongoose; JWT/RBAC sẽ được triển khai ở 
 docs/
 frontend-web/      # Customer Web — implemented
 frontend-mobile/   # Customer Mobile — implemented
-admin-web/         # planned S12; not created yet
+admin-web/         # Admin Web — S12 mock foundation
 backend/           # planned S17; not created yet
 ```
 
@@ -91,4 +91,22 @@ npm run preview
 
 Không cần cài Vite global hay gọi trực tiếp `vite preview` trong PowerShell. Dùng URL được in ra. Chạy phát triển bằng `npm run dev`.
 
-Bước tiếp theo: **S11.5 Customer UI/UX Polish**, chưa triển khai S12.
+Customer S11.5 và Admin S12 đã hoàn tất. Tiếp theo: **S14 Admin Customer Management**, chưa triển khai.
+
+## Admin Web Development (S12)
+
+```bash
+cd admin-web
+npm install
+npm run dev
+```
+
+Admin: **http://localhost:5174** (strict port). Customer vẫn dùng **http://localhost:5173** với các lệnh Web Development phía trên. Backend tương lai: http://localhost:8080/api, chưa tồn tại.
+
+Routes: /login, /dashboard, /users, /projects, /jobs, /languages, /voices, /logs, /settings. / chuyển đến Dashboard. Đây là preview public; login chỉ kiểm tra email/mật khẩu mô phỏng rồi chuyển trang, không xác thực, không lưu mật khẩu/token. Không nhập thông tin thật.
+
+S13 Dashboard dùng service mock bất đồng bộ tập trung, hỗ trợ Làm mới, loading/error/retry/empty; trang quản lý vẫn là placeholder S14–S16. Không có JWT/RBAC/API. .env.example chỉ chuẩn bị URL public.
+
+Validation: `npm run lint`, `npm run typecheck`, `npm run build`, `npm test`. Build preview: `npm run preview` sau build (cổng 4174).
+
+Browser regression: `node scripts/verify-browser.mjs` trong admin-web; cần Vite 127.0.0.1:5174 và Chrome profile tạm riêng với remote debugging 127.0.0.1:9223. Kiểm tra login, routes/refresh, drawer, responsive, không lưu credentials và không gọi API.
