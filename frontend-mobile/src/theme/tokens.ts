@@ -22,7 +22,7 @@ export const colors = {
 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 } as const;
-export const radius = { sm: 6, md: 10, lg: 14, xl: 20, full: 999 } as const;
+export const radius = { sm: 6, md: 8, lg: 8, xl: 12, full: 999 } as const;
 export const typography = {
   size: { sm: 14, md: 16, lg: 18, xl: 24, xxl: 32 },
   weight: { medium: '500', semibold: '600', bold: '700' },

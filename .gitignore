@@ -23,6 +23,8 @@ android/
 *.log
 .idea/
 .vscode/
+.agent/
+.agents/
 
 # OS files
 .DS_Store
