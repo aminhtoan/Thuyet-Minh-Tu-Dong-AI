@@ -5,7 +5,7 @@ import { Button } from './Button';
 
 type ErrorStateProps = { title: string; description: string; onRetry?: () => void; retryLabel?: string };
 
-export function ErrorState({ title, description, onRetry, retryLabel = 'Try again' }: ErrorStateProps) {
+export function ErrorState({ title, description, onRetry, retryLabel = 'Thử lại' }: ErrorStateProps) {
   return <View accessibilityRole="alert" style={styles.container}><View style={styles.icon}><MaterialCommunityIcons name="alert-circle-outline" size={24} color={colors.error} /></View><Text style={styles.title}>{title}</Text><Text style={styles.description}>{description}</Text>{onRetry && <Button variant="secondary" size="sm" onPress={onRetry}>{retryLabel}</Button>}</View>;
 }
 

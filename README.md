@@ -1,112 +1,253 @@
-# Multilingual AI Narration
+# Multilingual AI Narration System
 
-Hệ thống thuyết minh tự động đa ngôn ngữ.
+**Hệ thống thuyết minh tự động đa ngôn ngữ**
 
-## Overview
-
-S1–S5 đã xây dựng UI Customer Web/Mobile: đăng nhập/đăng ký mock, Dashboard, Projects và New Project với upload mô phỏng. S6 chuẩn hóa kiến trúc full-stack; S7–S10 bổ sung Transcript Editor, Translation Editor, cấu hình Voice/TTS và tiến độ Generate/Processing với dữ liệu và dịch vụ mock. Preview giọng nói và processing chỉ mô phỏng; chưa tạo âm thanh hoặc video kết quả. S12 bổ sung Admin Web foundation riêng với dữ liệu mock. Chưa có backend, database connection hay AI processing thật.
-
-## Main Flow
-
-Upload → Speech-to-Text → Transcript Editing → Translation Editing → Voice/TTS → Media Processing → Result
-
-## Tech Stack
-
-Customer Web: React + TypeScript + Vite
-
-Customer Mobile: React Native + TypeScript + Expo SDK 57
-
-Admin Web (S12 foundation): React + TypeScript + Vite, ứng dụng riêng
-
-Backend (planned S17): Node.js + Express.js + TypeScript
-
-Database (planned): MongoDB + Mongoose; JWT/RBAC sẽ được triển khai ở sprint backend/auth tương ứng.
-
-## Repository Structure
+Repository hiện cung cấp ba ứng dụng frontend cho quy trình:
 
 ```text
-docs/
-frontend-web/      # Customer Web — implemented
-frontend-mobile/   # Customer Mobile — implemented
-admin-web/         # Admin Web — S12 mock foundation
-backend/           # planned S17; not created yet
+Media → Speech-to-Text → Transcript → Translation
+→ Voice / Text-to-Speech → Media Processing → Result
 ```
 
-Admin Web không nằm trong Customer Web. Cả ba client dự kiến dùng chung REST API `/api` của backend; các ứng dụng/thư mục được ghi “planned” chưa có lệnh chạy. Xem [kiến trúc hệ thống](docs/ARCHITECTURE.md) và [trạng thái sprint](docs/PROGRESS.md).
+Các màn hình và luồng frontend hiện dùng dữ liệu cùng service mô phỏng khi backend chưa tồn tại. Speech-to-Text, dịch máy, Text-to-Speech và xử lý media/FFmpeg trong sơ đồ trên là mục tiêu tích hợp tương lai, không phải dịch vụ AI đang hoạt động.
 
-## Web Development
+## Trạng thái hiện tại
 
-```bash
-cd frontend-web
+| Thành phần | Trạng thái |
+| --- | --- |
+| Customer Web | Đã triển khai phạm vi frontend hiện tại bằng React; dữ liệu, upload, xác thực và xử lý dùng mock/in-memory service khi chưa có backend. |
+| Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
+| Customer Mobile | Đã có frontend React Native + Expo Router cho các luồng Customer tương ứng; dùng mock service và không gọi backend thật. |
+| Backend | **Chưa triển khai.** Thư mục `backend/` chưa tồn tại và dự kiến bắt đầu ở S17. |
+| MongoDB | **Chưa kết nối.** Chưa có database hoặc persistence phía server. |
+| Authentication / JWT / RBAC | **Chưa triển khai bảo mật backend thật.** Các màn hình đăng nhập hiện chỉ mô phỏng UI/navigation. |
+| AI và media | STT, Translation provider, TTS provider và FFmpeg pipeline đều **chưa tích hợp**. |
+
+Mock frontend không phải security boundary, không ngăn đăng nhập thật và không tạo file audio/video kết quả thực. Dữ liệu in-memory có thể mất khi reload ứng dụng.
+
+## Chức năng frontend hiện có
+
+### Customer Web và Mobile
+
+- Login/Register mô phỏng, Dashboard, danh sách và lịch sử dự án.
+- Tạo dự án, chọn media và upload mô phỏng.
+- Transcript Editor và Translation Editor theo segment.
+- Chọn giọng đọc, tốc độ và preview mô phỏng.
+- Generate/Processing mô phỏng với trạng thái, retry và cancel.
+- Result metadata và History trong phiên; chưa có binary để preview/download thật.
+
+### Admin Web
+
+- Dashboard tổng quan.
+- Quản lý Customer: tìm kiếm, lọc, chi tiết, khóa/mở khóa mô phỏng.
+- Theo dõi Project và Processing Job; retry/cancel job mô phỏng.
+- Quản lý Language và Voice; không hard-delete dữ liệu quan hệ.
+- Activity Logs chỉ đọc.
+- System Settings mô phỏng, không chứa hoặc hiển thị secret.
+
+## Công nghệ sử dụng
+
+### Frontend hiện tại
+
+- **Customer Web:** React, TypeScript, Vite.
+- **Admin Web:** React, TypeScript, Vite.
+- **Customer Mobile:** React Native, TypeScript, Expo SDK 57, Expo Router.
+
+### Backend dự kiến
+
+- Node.js, Express.js, TypeScript.
+- MongoDB và Mongoose.
+- JWT authentication và backend-enforced RBAC.
+
+### Xử lý dự kiến
+
+- Speech-to-Text.
+- Translation.
+- Text-to-Speech.
+- FFmpeg media processing.
+
+Các provider AI, queue và worker cụ thể chưa được lựa chọn hoặc tích hợp.
+
+## Cấu trúc dự án
+
+```text
+multilingual-ai-narration/
+├── frontend-web/          # Customer Web
+├── frontend-mobile/       # Customer Mobile (Expo)
+├── admin-web/             # Admin Web độc lập
+├── docs/
+│   ├── CONTEXT.md
+│   ├── PROGRESS.md
+│   ├── UI.md
+│   ├── API.md
+│   └── ARCHITECTURE.md
+├── .gitignore
+├── .gitattributes
+└── README.md
+```
+
+`backend/` chưa tồn tại và dự kiến được tạo từ S17. Admin Web là một ứng dụng riêng, không nằm trong router của Customer Web.
+
+## Yêu cầu môi trường
+
+- Node.js.
+- npm.
+- Git.
+- Trình duyệt hiện đại.
+- VS Code hoặc editor tương đương được khuyến nghị.
+- Expo Go tương thích với Expo SDK 57 nếu kiểm thử trên điện thoại thật.
+
+Repository hiện không khai báo một phiên bản Node.js bắt buộc cụ thể. Nên dùng phiên bản Node.js còn được hỗ trợ và tương thích với Vite/Expo đang được khóa trong từng `package.json`.
+
+## Chạy Customer Web
+
+```powershell
+cd C:\cnpm\multilingual-ai-narration\frontend-web
 npm install
 npm run dev
 ```
 
-Các lệnh validation: `npm run lint`, `npm run typecheck`, `npm run build`.
+Vite sẽ in URL phát triển, thông thường là `http://localhost:5173`.
 
-## Mobile Development
+Các lệnh hiện có:
 
-```bash
-cd frontend-mobile
-npm install
-npx expo start
-```
-
-Expo CLI sẽ hiển thị QR code. Cài Expo Go tương thích với Expo SDK 57 trên điện thoại Android, kết nối điện thoại và máy tính cùng mạng Wi-Fi, rồi dùng chức năng quét QR trong Expo Go. Ứng dụng mở vào Dashboard và có tab Projects; các route `/login` và `/register` vẫn hiện diện trong app.
-
-Nếu điện thoại không truy cập được máy tính qua LAN, dừng server và chạy:
-
-```bash
-npx expo start --tunnel
-```
-
-Tunnel có thể cần cài `@expo/ngrok` và kết nối Internet. Expo Go trên iPhone từ App Store hiện không hỗ trợ SDK 57; để thử trên iPhone thật cần một bản Expo Go tương thích được phân phối riêng, hoặc development build. Xem [hướng dẫn Expo Go theo SDK](https://docs.expo.dev/troubleshooting/expo-go-version-mismatch/).
-
-Các lựa chọn chạy emulator/simulator hoặc Web: `npm run android`, `npm run ios`, `npm run web`.
-
-Các lệnh validation: `npm run lint`, `npx tsc --noEmit`.
-
-## Documentation
-
-- [Project context](docs/CONTEXT.md)
-- [System architecture](docs/ARCHITECTURE.md)
-- [UI specification](docs/UI.md)
-- [Current API status and proposed contract](docs/API.md)
-- [Project progress](docs/PROGRESS.md)
-
-## Result & History (S11)
-
-Web/Mobile đã có Result metadata và History dùng dữ liệu mock trong phiên. Hoàn tất Generate → View Result; mở lại qua Projects, Dashboard hoặc History. Reload sẽ xóa dữ liệu đã lưu trong phiên. Chưa có file audio/video kết quả hoặc download thực.
-
-Kiểm tra service cả hai client từ `frontend-web`: `node scripts/verify-processing.mjs`.
-
-### Web production preview
-
-Trong thư mục `frontend-web`, chạy:
-
-```bash
+```powershell
+npm run lint
+npm run typecheck
 npm run build
 npm run preview
 ```
 
-Không cần cài Vite global hay gọi trực tiếp `vite preview` trong PowerShell. Dùng URL được in ra. Chạy phát triển bằng `npm run dev`.
+Sau khi build, dùng `npm run preview`; không cần cài hoặc gọi `vite` global.
 
-Customer S11.5 và Admin S12 đã hoàn tất. Tiếp theo: **S14 Admin Customer Management**, chưa triển khai.
+## Chạy Admin Web
 
-## Admin Web Development (S12)
-
-```bash
-cd admin-web
+```powershell
+cd C:\cnpm\multilingual-ai-narration\admin-web
 npm install
 npm run dev
 ```
 
-Admin: **http://localhost:5174** (strict port). Customer vẫn dùng **http://localhost:5173** với các lệnh Web Development phía trên. Backend tương lai: http://localhost:8080/api, chưa tồn tại.
+Admin Web dùng `http://localhost:5174` với strict port.
 
-Routes: /login, /dashboard, /users, /projects, /jobs, /languages, /voices, /logs, /settings. / chuyển đến Dashboard. Đây là preview public; login chỉ kiểm tra email/mật khẩu mô phỏng rồi chuyển trang, không xác thực, không lưu mật khẩu/token. Không nhập thông tin thật.
+Các lệnh hiện có:
 
-S13 Dashboard dùng service mock bất đồng bộ tập trung, hỗ trợ Làm mới, loading/error/retry/empty; trang quản lý vẫn là placeholder S14–S16. Không có JWT/RBAC/API. .env.example chỉ chuẩn bị URL public.
+```powershell
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run preview
+```
 
-Validation: `npm run lint`, `npm run typecheck`, `npm run build`, `npm test`. Build preview: `npm run preview` sau build (cổng 4174).
+Các route chính:
 
-Browser regression: `node scripts/verify-browser.mjs` trong admin-web; cần Vite 127.0.0.1:5174 và Chrome profile tạm riêng với remote debugging 127.0.0.1:9223. Kiểm tra login, routes/refresh, drawer, responsive, không lưu credentials và không gọi API.
+```text
+/login
+/dashboard
+/users
+/users/:userId
+/projects
+/projects/:projectId
+/jobs
+/jobs/:jobId
+/languages
+/voices
+/logs
+/settings
+```
+
+Admin login hiện là preview public có validation mô phỏng; chưa tạo session, JWT hoặc quyền ADMIN thật.
+
+## Chạy Customer Mobile
+
+```powershell
+cd C:\cnpm\multilingual-ai-narration\frontend-mobile
+npm install
+npx expo start
+```
+
+Expo development server sẽ hiển thị QR code. Trên điện thoại Android có Expo Go tương thích SDK 57, kết nối điện thoại và máy tính cùng mạng LAN rồi quét QR để mở ứng dụng.
+
+Nếu thiết bị không kết nối được qua LAN:
+
+```powershell
+npx expo start --tunnel
+```
+
+Tunnel cần Internet và có thể yêu cầu `@expo/ngrok`. Expo Go từ iOS App Store có thể không hỗ trợ SDK 57; khi đó cần Expo Go tương thích hoặc development build phù hợp.
+
+Các scripts Mobile hiện có:
+
+```powershell
+npm start
+npm run android
+npm run ios
+npm run web
+npm run lint
+npm run typecheck
+```
+
+Entry point hiện tại là `expo-router/entry`. Khi backend được triển khai, điện thoại thật không thể dùng `localhost` của máy tính làm API host; cần địa chỉ LAN hoặc tunnel có thể truy cập.
+
+## Cổng phát triển
+
+| Dịch vụ | Địa chỉ | Trạng thái |
+| --- | --- | --- |
+| Customer Web | `http://localhost:5173` | Hiện có |
+| Admin Web | `http://localhost:5174` | Hiện có |
+| Backend API | `http://localhost:8080/api` | Dự kiến, chưa tồn tại |
+| MongoDB | `mongodb://localhost:27017` | Dự kiến, chưa kết nối |
+
+## Kiểm tra và build
+
+Mỗi ứng dụng có dependencies và scripts riêng; chạy lệnh trong đúng thư mục ứng dụng.
+
+Customer Web:
+
+```powershell
+cd frontend-web
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Admin Web:
+
+```powershell
+cd admin-web
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Customer Mobile:
+
+```powershell
+cd frontend-mobile
+npm run lint
+npm run typecheck
+```
+
+Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vite server tại `127.0.0.1:5174` và một Chrome instance riêng bật remote debugging tại `127.0.0.1:9223`; đây là script hỗ trợ phát triển, không phải lệnh bắt buộc để chạy ứng dụng.
+
+## Backend và API tương lai
+
+Các contract trong [docs/API.md](docs/API.md) là **PROPOSED / NOT IMPLEMENTED**. Kế hoạch hiện tại:
+
+- S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose.
+- S18: Authentication, JWT và backend-enforced RBAC.
+- S19 trở đi: Project/Media API và các tích hợp STT, Translation, TTS, FFmpeg.
+
+Secret như `JWT_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
+
+## Tài liệu
+
+- [Bối cảnh và trạng thái hệ thống](docs/CONTEXT.md)
+- [Tiến độ hiện tại](docs/PROGRESS.md)
+- [Đặc tả UI](docs/UI.md)
+- [API đề xuất](docs/API.md)
+- [Kiến trúc và roadmap](docs/ARCHITECTURE.md)
+
+Các tài liệu trên là nguồn chi tiết. `docs/PROGRESS.md` phản ánh sprint thực tế; `docs/ARCHITECTURE.md` mô tả kiến trúc mục tiêu và phải được đọc cùng cảnh báo về những phần chưa triển khai.

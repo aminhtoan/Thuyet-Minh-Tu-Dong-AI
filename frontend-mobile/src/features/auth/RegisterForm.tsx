@@ -36,7 +36,7 @@ export function RegisterForm() {
       await authService.register(nextValues);
       router.replace({ pathname: '/login', params: { registered: '1' } });
     } catch {
-      setFormError('Unable to create your account. Please try again.');
+      setFormError('Không thể tạo tài khoản. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -45,11 +45,11 @@ export function RegisterForm() {
   return (
     <View style={styles.form}>
       {formError && <InlineMessage variant="error">{formError}</InlineMessage>}
-      <Input label="Full name" placeholder="Your full name" autoCapitalize="words" autoComplete="name" textContentType="name" returnKeyType="next" value={values.fullName} error={errors.fullName} onChangeText={(value) => updateField('fullName', value)} required />
+      <Input label="Họ và tên" placeholder="Nhập họ và tên" autoCapitalize="words" autoComplete="name" textContentType="name" returnKeyType="next" value={values.fullName} error={errors.fullName} onChangeText={(value) => updateField('fullName', value)} required />
       <Input label="Email" placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="next" value={values.email} error={errors.email} onChangeText={(value) => updateField('email', value)} required />
-      <PasswordField label="Password" placeholder="Create a password" helperText="Password must contain at least 8 characters." autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" returnKeyType="next" value={values.password} error={errors.password} onChangeText={(value) => updateField('password', value)} required />
-      <PasswordField label="Confirm password" placeholder="Repeat your password" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" returnKeyType="done" value={values.confirmPassword} error={errors.confirmPassword} onChangeText={(value) => updateField('confirmPassword', value)} onSubmitEditing={handleSubmit} required />
-      <Button loading={submitting} onPress={handleSubmit}>{submitting ? 'Creating account...' : 'Create Account'}</Button>
+      <PasswordField label="Mật khẩu" placeholder="Tạo mật khẩu" helperText="Mật khẩu phải có ít nhất 8 ký tự." autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" returnKeyType="next" value={values.password} error={errors.password} onChangeText={(value) => updateField('password', value)} required />
+      <PasswordField label="Xác nhận mật khẩu" placeholder="Nhập lại mật khẩu" autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" returnKeyType="done" value={values.confirmPassword} error={errors.confirmPassword} onChangeText={(value) => updateField('confirmPassword', value)} onSubmitEditing={handleSubmit} required />
+      <Button loading={submitting} onPress={handleSubmit}>{submitting ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}</Button>
     </View>
   );
 }

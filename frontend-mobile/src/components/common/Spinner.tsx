@@ -3,6 +3,6 @@ import { colors } from '@/theme/tokens';
 
 type SpinnerProps = ViewProps & { size?: 'small' | 'large'; label?: string; color?: ColorValue };
 
-export function Spinner({ size = 'small', label = 'Loading', color = colors.primary, ...props }: SpinnerProps) {
+export function Spinner({ size = 'small', label = 'Đang tải', color = colors.primary, ...props }: SpinnerProps) {
   return <View accessibilityRole="progressbar" accessibilityLabel={label} {...props}><ActivityIndicator size={size} color={color} /></View>;
 }

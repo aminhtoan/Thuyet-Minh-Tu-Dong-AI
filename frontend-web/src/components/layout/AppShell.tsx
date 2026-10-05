@@ -8,7 +8,7 @@ const titles: Record<string, string> = { '/dashboard': 'Bảng điều khiển',
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { pathname } = useLocation()
-  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Transcript' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Translation' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Voice & Narration' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Generate Narration' : /^\/projects\/[^/]+\/result$/.test(pathname) ? 'Result' : titles[pathname] ?? 'Người kể chuyện AI'
+  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Bản ghi' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Bản dịch' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Giọng đọc và thuyết minh' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Tạo thuyết minh' : /^\/projects\/[^/]+\/result$/.test(pathname) ? 'Kết quả' : titles[pathname] ?? 'Người kể chuyện AI'
   return (
     <div className="app-shell">
       <Sidebar open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />

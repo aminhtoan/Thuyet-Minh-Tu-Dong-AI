@@ -12,9 +12,9 @@ import '../styles/dashboard.css';
 
 const quickActions: { title: string; detail: string; icon: IconName; route: string }[] = [
   { title: 'Tạo dự án mới', detail: 'Bắt đầu với video hoặc âm thanh', icon: 'video', route: '/projects/new' },
-  { title: 'Bản ghi', detail: 'Chọn dự án để chỉnh sửa văn bản', icon: 'document', route: '/projects' },
+  { title: 'Bản ghi', detail: 'Chọn dự án để chỉnh sửa bản ghi', icon: 'document', route: '/projects' },
   { title: 'Bản dịch', detail: 'Chọn dự án và ngôn ngữ đích', icon: 'language', route: '/projects' },
-  { title: 'Giọng đọc', detail: 'Chọn dự án để cấu hình giọng', icon: 'mic', route: '/projects' },
+  { title: 'Giọng đọc', detail: 'Chọn dự án để cấu hình giọng đọc', icon: 'mic', route: '/projects' },
 ];
 export function DashboardPlaceholder() {
   const { projects, isLoading, error } = useProjects();

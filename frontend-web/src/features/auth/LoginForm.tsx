@@ -38,7 +38,7 @@ export function LoginForm() {
       await authService.login(nextValues)
       navigate('/dashboard')
     } catch {
-      setFormError('Unable to sign in. Please check your credentials and try again.')
+      setFormError('Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.')
     } finally {
       setSubmitting(false)
     }
@@ -49,8 +49,8 @@ export function LoginForm() {
       {successMessage && <InlineMessage variant="success">{successMessage}</InlineMessage>}
       {formError && <InlineMessage variant="error">{formError}</InlineMessage>}
       <Input label="Email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={values.email} error={errors.email} onChange={(event) => updateField('email', event.target.value)} required />
-      <PasswordField label="Password" autoComplete="current-password" placeholder="Enter your password" value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
-      <Button className="auth-form__submit" type="submit" loading={submitting}>{submitting ? 'Signing in...' : 'Sign In'}</Button>
+      <PasswordField label="Mật khẩu" autoComplete="current-password" placeholder="Nhập mật khẩu" value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
+      <Button className="auth-form__submit" type="submit" loading={submitting}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</Button>
     </form>
   )
 }

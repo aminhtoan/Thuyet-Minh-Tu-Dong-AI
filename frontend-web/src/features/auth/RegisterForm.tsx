@@ -34,9 +34,9 @@ export function RegisterForm() {
     setFormError('')
     try {
       await authService.register(nextValues)
-      navigate('/login', { replace: true, state: { message: 'Account created. You can now sign in.' } })
+      navigate('/login', { replace: true, state: { message: 'Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.' } })
     } catch {
-      setFormError('Unable to create your account. Please try again.')
+      setFormError('Không thể tạo tài khoản. Vui lòng thử lại.')
     } finally {
       setSubmitting(false)
     }
@@ -45,11 +45,11 @@ export function RegisterForm() {
   return (
     <form className="auth-form" onSubmit={handleSubmit} noValidate>
       {formError && <InlineMessage variant="error">{formError}</InlineMessage>}
-      <Input label="Full name" autoComplete="name" placeholder="Your full name" value={values.fullName} error={errors.fullName} onChange={(event) => updateField('fullName', event.target.value)} required />
+      <Input label="Họ và tên" autoComplete="name" placeholder="Nhập họ và tên" value={values.fullName} error={errors.fullName} onChange={(event) => updateField('fullName', event.target.value)} required />
       <Input label="Email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={values.email} error={errors.email} onChange={(event) => updateField('email', event.target.value)} required />
-      <PasswordField label="Password" autoComplete="new-password" placeholder="Create a password" helperText="Password must contain at least 8 characters." value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
-      <PasswordField label="Confirm password" autoComplete="new-password" placeholder="Repeat your password" value={values.confirmPassword} error={errors.confirmPassword} onChange={(event) => updateField('confirmPassword', event.target.value)} required />
-      <Button className="auth-form__submit" type="submit" loading={submitting}>{submitting ? 'Creating account...' : 'Create Account'}</Button>
+      <PasswordField label="Mật khẩu" autoComplete="new-password" placeholder="Tạo mật khẩu" helperText="Mật khẩu phải có ít nhất 8 ký tự." value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
+      <PasswordField label="Xác nhận mật khẩu" autoComplete="new-password" placeholder="Nhập lại mật khẩu" value={values.confirmPassword} error={errors.confirmPassword} onChange={(event) => updateField('confirmPassword', event.target.value)} required />
+      <Button className="auth-form__submit" type="submit" loading={submitting}>{submitting ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}</Button>
     </form>
   )
 }

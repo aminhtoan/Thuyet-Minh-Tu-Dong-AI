@@ -37,7 +37,7 @@ export function LoginForm() {
       await authService.login(nextValues);
       router.replace('/dashboard');
     } catch {
-      setFormError('Unable to sign in. Please check your credentials and try again.');
+      setFormError('Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -45,11 +45,11 @@ export function LoginForm() {
 
   return (
     <View style={styles.form}>
-      {registered === '1' && <InlineMessage variant="success">Account created. You can now sign in.</InlineMessage>}
+      {registered === '1' && <InlineMessage variant="success">Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.</InlineMessage>}
       {formError && <InlineMessage variant="error">{formError}</InlineMessage>}
       <Input label="Email" placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="next" value={values.email} error={errors.email} onChangeText={(value) => updateField('email', value)} required />
-      <PasswordField label="Password" placeholder="Enter your password" autoCapitalize="none" autoCorrect={false} autoComplete="current-password" textContentType="password" returnKeyType="done" value={values.password} error={errors.password} onChangeText={(value) => updateField('password', value)} onSubmitEditing={handleSubmit} required />
-      <Button loading={submitting} onPress={handleSubmit}>{submitting ? 'Signing in...' : 'Sign In'}</Button>
+      <PasswordField label="Mật khẩu" placeholder="Nhập mật khẩu" autoCapitalize="none" autoCorrect={false} autoComplete="current-password" textContentType="password" returnKeyType="done" value={values.password} error={errors.password} onChangeText={(value) => updateField('password', value)} onSubmitEditing={handleSubmit} required />
+      <Button loading={submitting} onPress={handleSubmit}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</Button>
     </View>
   );
 }

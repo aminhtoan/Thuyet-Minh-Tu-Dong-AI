@@ -51,4 +51,11 @@ COMPLETED (Admin frontend + in-memory mock services)
 
 ## Next
 
-S16.5 Admin UI Polish + Full Frontend Regression, then S17 Backend Foundation.
+S17 Backend Foundation.
+
+## S16.5 — Full Vietnamese Localization
+
+- Đã chuẩn hóa nội dung hiển thị tiếng Việt trên Customer Web, Customer Mobile và Admin Web.
+- Đã thống nhất thuật ngữ TTS thành “Giọng đọc” và giữ nguyên enum, route, identifier cùng dữ liệu kỹ thuật.
+- Đã rà soát nhãn, trạng thái, thông báo lỗi, trạng thái rỗng, nút thao tác và nội dung hỗ trợ tiếp cận.
+- Không bổ sung backend, API, cơ sở dữ liệu hoặc tích hợp AI thực.

@@ -238,3 +238,10 @@ Project screens use clearly marked development mock data. Backend project APIs a
 - `/logs`: read-only search/category/role/time filters, pagination and accessible detail dialog without invented IP/token/stack data.
 - `/settings`: general, upload, processing, narration defaults and honest system-information cards; dirty save/reset, validation and mock feedback.
 - All modules have loading/error/empty states, responsive filters/tables/forms/dialogs and service-owned latency.
+
+## S16.5 — Chuẩn hóa tiếng Việt
+
+- Customer Web, Customer Mobile và Admin Web sử dụng tiếng Việt làm ngôn ngữ hiển thị chính.
+- Thuật ngữ nghiệp vụ được thống nhất: Bảng điều khiển, Dự án, Bản ghi, Bản dịch, Giọng đọc, Tạo thuyết minh và Kết quả.
+- Các giá trị kỹ thuật như route, enum, mã ngôn ngữ, tên nhà cung cấp và định dạng tệp vẫn được giữ nguyên.
+- Dữ liệu mẫu bằng ngôn ngữ nguồn/đích có thể giữ nguyên để minh họa đúng quy trình đa ngôn ngữ.

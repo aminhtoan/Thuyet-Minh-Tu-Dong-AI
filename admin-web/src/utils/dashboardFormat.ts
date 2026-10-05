@@ -1,7 +1,7 @@
 import type { ProcessingJobType, ProjectStatus } from '../types/domain';
+
 export const jobTypeLabels: Record<ProcessingJobType, string> = {
-  TRANSCRIPTION: 'Chuyển giọng nói thành văn bản', TRANSLATION: 'Dịch thuật',
-  TTS: 'Tạo giọng đọc', VIDEO_PROCESSING: 'Xử lý video',
+  TRANSCRIPTION: 'Tạo bản ghi', TRANSLATION: 'Dịch thuật', TTS: 'Tạo giọng đọc', VIDEO_PROCESSING: 'Xử lý video',
 };
 export function hasProjectProgress(status: ProjectStatus) {
   return ['TRANSCRIBING', 'TRANSLATING', 'GENERATING_AUDIO', 'PROCESSING_VIDEO', 'COMPLETED'].includes(status);

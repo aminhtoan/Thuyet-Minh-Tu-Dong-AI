@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/theme/tokens';
 
-const steps = ['Upload', 'Transcript', 'Translation', 'Voice', 'Generate'];
+const steps = ['Tải lên', 'Bản ghi', 'Bản dịch', 'Giọng đọc', 'Tạo thuyết minh'];
 export function WorkflowSteps({ current }: { current: 'transcript' | 'translation' | 'voice' | 'generate' | 'result' }) {
   const activeIndex = current === 'result' ? 5 : current === 'transcript' ? 1 : current === 'translation' ? 2 : current === 'voice' ? 3 : 4;
-  return <View style={styles.row} accessibilityLabel="Project workflow">
+  return <View style={styles.row} accessibilityLabel="Quy trình dự án">
     {steps.map((step, index) => <Text key={step} style={[styles.step, index < activeIndex && styles.done, index === activeIndex && styles.active]}
-      accessibilityLabel={step + (index < activeIndex ? ', complete' : index === activeIndex ? ', current step' : ', upcoming')}>
+      accessibilityLabel={step + (index < activeIndex ? ', đã hoàn tất' : index === activeIndex ? ', bước hiện tại' : ', sắp tới')}>
       {index < activeIndex ? '✓ ' : index === activeIndex ? '● ' : ''}{step}
     </Text>)}
   </View>;

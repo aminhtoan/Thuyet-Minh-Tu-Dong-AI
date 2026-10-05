@@ -21,9 +21,9 @@ export function TranslationPage() {
   const language = params.get('language');
   const project = projectId ? projectRepository.getById(projectId) : undefined;
   if (!project) return <>
-    <PageHeader title="Translation" description="Review your translated transcript." />
-    <Card><ErrorState title="Project not found" description="This project is not available." />
-      <Link to="/projects" className="button button--secondary button--md">Back to Projects</Link>
+    <PageHeader title="Bản dịch" description="Kiểm tra nội dung bản ghi đã dịch." />
+    <Card><ErrorState title="Không tìm thấy dự án" description="Dự án này không khả dụng." />
+      <Link to="/projects" className="button button--secondary button--md">Quay lại dự án</Link>
     </Card>
   </>;
   const preferredTarget = language && isLanguageCode(language) ? language : project.targetLanguage;
@@ -41,24 +41,24 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
   const sourceLanguage = editor.transcript?.languageCode ?? project.sourceLanguage;
   const showSource = editor.transcript && editor.status !== 'LOADING';
   return <>
-    <PageHeader title="Translation" description="Compare the original transcript and review each translated segment."
-      actions={<Button variant="secondary" disabled={editor.busy} onClick={backToTranscript}>Back to Transcript</Button>} />
-    <div className="translation-heading"><div><span className="translation-label">PROJECT WORKSPACE</span><h2>{project.name}</h2></div>
+    <PageHeader title="Bản dịch" description="So sánh bản ghi gốc và kiểm tra từng phân đoạn đã dịch."
+      actions={<Button variant="secondary" disabled={editor.busy} onClick={backToTranscript}>Quay lại bản ghi</Button>} />
+    <div className="translation-heading"><div><span className="translation-label">KHÔNG GIAN DỰ ÁN</span><h2>{project.name}</h2></div>
       <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status.replace('_', ' ')}</Badge>
     </div>
     <WorkflowSteps current="translation" />
-    {editor.status === 'LOADING' && <Card className="translation-loading"><Spinner label="Loading translation" /><p role="status">Loading transcript and translation...</p></Card>}
+    {editor.status === 'LOADING' && <Card className="translation-loading"><Spinner label="Đang tải bản dịch" /><p role="status">Đang tải bản ghi và bản dịch...</p></Card>}
     {editor.status === 'FAILED' && <Card><ErrorState
-      title={editor.failedAction === 'save' ? 'Unable to save translation' : editor.failedAction === 'load' ? 'Unable to load translation' : 'Unable to translate transcript'}
-      description={editor.error ?? 'Please try again.'} onRetry={editor.retry} /></Card>}
-    {!editor.transcript && editor.status === 'NOT_STARTED' && <Card><EmptyState title="Transcript required before translation"
-      description="Generate, review and save your transcript first."
-      action={<Button onClick={backToTranscript}>Back to Transcript</Button>} /></Card>}
+      title={editor.failedAction === 'save' ? 'Không thể lưu bản dịch' : editor.failedAction === 'load' ? 'Không thể tải bản dịch' : 'Không thể dịch bản ghi'}
+      description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
+    {!editor.transcript && editor.status === 'NOT_STARTED' && <Card><EmptyState title="Cần có bản ghi trước khi dịch"
+      description="Hãy tạo, kiểm tra và lưu bản ghi trước."
+      action={<Button onClick={backToTranscript}>Quay lại bản ghi</Button>} /></Card>}
     {showSource && <div className="translation-workspace">
       <Card className="translation-language-card">
-        <div><span className="translation-label">Source language</span><p className="translation-source-language">{languageNames[sourceLanguage]}</p></div>
+        <div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{languageNames[sourceLanguage]}</p></div>
         <div className="translation-language-field">
-          <label htmlFor="target-language">Target language</label>
+          <label htmlFor="target-language">Ngôn ngữ đích</label>
           <select id="target-language" value={editor.targetLanguage ?? ''} disabled={!editor.canChangeTarget}
             aria-describedby="translation-language-help"
             onChange={(event) => { if (isLanguageCode(event.target.value)) editor.changeTarget(event.target.value); }}>
@@ -67,13 +67,13 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
             </option>)}
           </select>
         </div>
-        {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={editor.busy || editor.status === 'FAILED'}>Translate</Button>}
+        {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
         <p id="translation-language-help" className="translation-note">{editor.dirty ? 'Save or reset changes before choosing another language.' : 'Choose a different language to create or reopen its translation.'}</p>
-        <p className="translation-note">Demo translation uses fixed samples. Edited source text receives labelled sample content for you to review.</p>
+        <p className="translation-note">Bản dịch mô phỏng dùng dữ liệu mẫu cố định. Nội dung nguồn đã sửa sẽ nhận bản dịch mẫu có nhãn để kiểm tra.</p>
       </Card>
       {editor.status === 'TRANSLATING' && <Card className="translation-loading"><Spinner label="Translating transcript" /><p role="status">Translating transcript... Preparing {editor.targetLanguage ? languageNames[editor.targetLanguage] : ''} sample translation.</p></Card>}
-      {!editor.draft && editor.status === 'NOT_STARTED' && <p className="translation-note" role="status">No saved translation for this language and transcript. Select Translate to begin.</p>}
-      <div className="translation-segments" aria-label="Original and translated segments">
+      {!editor.draft && editor.status === 'NOT_STARTED' && <p className="translation-note" role="status">Chưa có bản dịch đã lưu cho ngôn ngữ và bản ghi này. Chọn Dịch để bắt đầu.</p>}
+      <div className="translation-segments" aria-label="Phân đoạn gốc và phân đoạn đã dịch">
         {editor.transcript?.segments.map((source) => {
           const translation = translationBySource.get(source.id);
           return <TranslationSegmentRow key={source.id} source={source} translation={translation}
@@ -82,14 +82,14 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       </div>
       {editor.draft && <Card className="translation-actions">
         <p role="status">{editor.status === 'SAVING' ? 'Saving translation...' : editor.dirty ? 'Unsaved changes' : 'Saved'}</p>
-        {editor.invalid && <p className="translation-error" role="alert">Correct empty translations before saving.</p>}
+        {editor.invalid && <p className="translation-error" role="alert">Hãy bổ sung các bản dịch còn trống trước khi lưu.</p>}
         <div className="translation-action-buttons">
-          <Button variant="secondary" disabled={!editor.canReset} onClick={editor.reset}>Reset Changes</Button>
-          <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onClick={editor.save}>Save Translation</Button>
-          <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onClick={() => navigate('/projects/' + project.id + '/voice?language=' + editor.targetLanguage)}>Continue to Voice / TTS</Button>
+          <Button variant="secondary" disabled={!editor.canReset} onClick={editor.reset}>Đặt lại thay đổi</Button>
+          <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onClick={editor.save}>Lưu bản dịch</Button>
+          <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onClick={() => navigate('/projects/' + project.id + '/voice?language=' + editor.targetLanguage)}>Tiếp tục đến giọng đọc</Button>
         </div>
         <p className="translation-note">{editor.saved ? 'Reset restores your last saved translation.' : 'Reset discards this unsaved translation so you can start again or change language.'}</p>
-        <p className="translation-note">Save all translation changes before choosing a narration voice.</p>
+        <p className="translation-note">Hãy lưu mọi thay đổi bản dịch trước khi chọn giọng đọc thuyết minh.</p>
       </Card>}
     </div>}
   </>;
