@@ -63,15 +63,16 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - S9: Web/Mobile Voice & TTS configuration, active language-scoped voices, simulated preview, speed selection and mock save/reset. Voice data is MOCK; TTS is NOT_INTEGRATED; narration audio is NOT_GENERATED.
 - S10: saved-configuration generation summary, confirmation and simulated narration/media progress on Web/Mobile, with completed/failed/cancelled states, retry and timer cleanup. Processing is MOCK; real TTS/FFmpeg are NOT_INTEGRATED and no output media is generated.
 - S12: separate Admin foundation with mock login and the shell later completed across S13–S16.
-- S17 đã bổ sung backend foundation; S18 bổ sung auth/JWT/RBAC. Chưa có real upload, Project CRUD, AI processing hoặc persistent project creation qua API.
+- S17 foundation, S18 auth/JWT/RBAC và S19 Project CRUD/Media upload đã có trong backend. Chưa có STT hoặc AI processing.
 
 ## Current Sprint and Next Direction
 
-S9–S11.5 Customer workflows và redesign đã hoàn thành. S12–S16.5 Admin/frontend scope và localization đã hoàn thành. S17 foundation và S18 auth/JWT/RBAC đã có trong backend; hướng tiếp theo là S19 Project + Media API.
+S9–S16.5 frontend scope đã hoàn thành. S17 foundation, S18 auth và S19 Project/Media API đã có trong backend; hướng tiếp theo là S20 Speech-to-Text.
 
 ## Domain Alignment Snapshot
 
 - `Project` is the central aggregate owned by one `User`.
+- Customer Project ownership được enforce từ access token. Mỗi Project có tối đa một source Media; binary development nằm dưới ignored `backend/uploads/`, MongoDB chỉ lưu metadata/path nội bộ.
 - Core domain entities: User, Project, Media, Transcript, TranscriptSegment, Translation, TranslationSegment, Language, Voice, Narration, ProcessingJob, Result, ActivityLog.
 - A Project may have many target-language Translations and Narrations.
 - `ProjectStatus` describes the aggregate lifecycle; `ProcessingJobStatus` describes a long-running task; S5 `UploadStatus` is local UI state.

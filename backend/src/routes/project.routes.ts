@@ -1,0 +1,20 @@
+import { Router } from 'express';
+import * as mediaController from '../controllers/media.controller.js';
+import * as projectController from '../controllers/project.controller.js';
+import { authenticate } from '../middleware/authenticate.middleware.js';
+import { authorize } from '../middleware/authorize.middleware.js';
+import { requireProjectOwner } from '../middleware/project-owner.middleware.js';
+import { uploadMedia } from '../middleware/upload.middleware.js';
+import { validate } from '../middleware/validate.middleware.js';
+import { createProjectSchema, listProjectsSchema, projectIdSchema, updateProjectSchema } from '../validators/project.validator.js';
+
+export const projectRouter = Router();
+projectRouter.use(authenticate, authorize('CUSTOMER'));
+projectRouter.post('/', validate(createProjectSchema), projectController.create);
+projectRouter.get('/', validate(listProjectsSchema), projectController.list);
+projectRouter.get('/:id', validate(projectIdSchema), projectController.get);
+projectRouter.patch('/:id', validate(updateProjectSchema), projectController.update);
+projectRouter.delete('/:id', validate(projectIdSchema), projectController.remove);
+projectRouter.post('/:id/media', requireProjectOwner, uploadMedia, mediaController.upload);
+projectRouter.get('/:id/media', requireProjectOwner, mediaController.get);
+projectRouter.delete('/:id/media', requireProjectOwner, mediaController.remove);

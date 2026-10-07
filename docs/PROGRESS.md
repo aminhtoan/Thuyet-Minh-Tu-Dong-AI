@@ -2,13 +2,19 @@
 
 ## Current Sprint
 
-S18 Authentication + JWT + RBAC
+S19 Project + Media API
 
 ## Status
 
-COMPLETED (backend implementation + isolated MongoDB Atlas integration tests)
+COMPLETED (backend implementation + isolated Atlas/filesystem integration tests)
 
 ## Implemented
+
+- Customer Project CRUD với search, status filter, pagination và ownership enforcement.
+- Multipart audio/video upload, MIME/size validation và server-generated filename.
+- Một source Media mỗi Project; replacement/delete/project-delete cleanup metadata và file.
+- Binary lưu dưới ignored `backend/uploads/`; MongoDB chỉ lưu metadata/path nội bộ.
+- Client không thể gán `userId`, `status`, `progress`; Admin bị chặn khỏi Customer routes.
 
 - `POST /api/auth/register`, `login`, `refresh`, `logout` và `GET /api/auth/me`.
 - bcrypt password hashing; safe user serialization không trả `passwordHash`.
@@ -25,6 +31,13 @@ COMPLETED (backend implementation + isolated MongoDB Atlas integration tests)
 - `authsessions` cung cấp server-side refresh revocation; raw refresh token không được lưu.
 - Project ownership, CRUD, upload, AI provider, queue/worker và FFmpeg vẫn ngoài S18.
 - Ba frontend vẫn dùng mock/service hiện tại và chưa được nối với backend.
+
+## S19 Validation
+
+- S18 + S19 regression: PASS — 63 tests, 0 failed.
+- Atlas data và filesystem fixtures được cleanup đúng phạm vi.
+- Lint, typecheck, build: PASS.
+- Frontend không thay đổi.
 
 ## Validation
 
@@ -49,7 +62,7 @@ COMPLETED (backend implementation + isolated MongoDB Atlas integration tests)
 
 ## Next
 
-S19 Project + Media API.
+S20 Speech-to-Text Integration.
 
 ## S16.5 — Full Vietnamese Localization
 

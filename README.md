@@ -18,7 +18,7 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 | Customer Web | Đã triển khai phạm vi frontend hiện tại bằng React; dữ liệu, upload, xác thực và xử lý dùng mock/in-memory service khi chưa có backend. |
 | Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
 | Customer Mobile | Đã có frontend React Native + Expo Router cho các luồng Customer tương ứng; dùng mock service và không gọi backend thật. |
-| Backend | **S17–S18 đã triển khai.** Có Express/TypeScript, Mongoose models, auth/JWT/refresh sessions và RBAC; chưa có Project/Media CRUD. |
+| Backend | **S17–S19 đã triển khai.** Có foundation, auth/JWT/RBAC, Customer Project CRUD và Media upload. |
 | MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
 | Authentication / JWT / RBAC | **Đã triển khai ở backend.** Frontend login/register vẫn là mock và chưa gọi API thật. |
 | AI và media | STT, Translation provider, TTS provider và FFmpeg pipeline đều **chưa tích hợp**. |
@@ -61,7 +61,7 @@ Mock frontend không phải security boundary, không ngăn đăng nhập thật
 
 ### Backend dự kiến tiếp theo
 
-- Project ownership, Project/Media API và upload.
+- Speech-to-Text và transcript generation.
 
 ### Xử lý dự kiến
 
@@ -221,7 +221,7 @@ npm run seed:admin
 npm start
 ```
 
-Auth routes đã có: register, login, refresh, logout và `/auth/me`. Project CRUD, upload, AI provider, FFmpeg, queue/worker và frontend integration chưa có.
+Auth, Project CRUD và source Media upload routes đã có. File development nằm trong ignored `backend/uploads/`; `MAX_UPLOAD_SIZE_MB` cấu hình giới hạn. STT, AI provider, FFmpeg, queue/worker và frontend integration chưa có.
 
 ## Cổng phát triển
 
@@ -267,11 +267,12 @@ Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vi
 
 ## Backend hiện tại và API tương lai
 
-`GET /api`, health và năm auth endpoints đã có. Các contract Project/Media/AI trong [docs/API.md](docs/API.md) vẫn là **PROPOSED / NOT IMPLEMENTED**.
+Foundation, auth và Customer Project/Media endpoints đã có. Các contract STT/Translation/TTS/processing trong [docs/API.md](docs/API.md) vẫn **PROPOSED / NOT IMPLEMENTED**.
 
 - S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose — đã hoàn thành trong code.
 - S18: Authentication, JWT và backend-enforced RBAC — đã hoàn thành trong backend; frontend chưa tích hợp.
-- S19 trở đi: Project/Media API và các tích hợp STT, Translation, TTS, FFmpeg.
+- S19: Project + Media API — đã hoàn thành trong backend; frontend chưa tích hợp.
+- S20 trở đi: STT, Translation, TTS và FFmpeg.
 
 Secret như `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
 

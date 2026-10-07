@@ -13,6 +13,8 @@ declare global {
 
     interface Request {
       user?: AuthenticatedUser;
+      validated?: { body?: unknown; params?: unknown; query?: unknown };
+      ownedProjectId?: string;
     }
   }
 }

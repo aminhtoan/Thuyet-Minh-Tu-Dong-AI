@@ -1,6 +1,6 @@
 # API Status and Conventions
 
-## Current: S18 Authentication, JWT & RBAC
+## Current: S19 Project + Media API
 
 Backend hiện triển khai:
 
@@ -11,8 +11,28 @@ Backend hiện triển khai:
 - `POST /api/auth/refresh` — rotation access/refresh token.
 - `POST /api/auth/logout` — revoke refresh session.
 - `GET /api/auth/me` — thông tin user hiện tại, yêu cầu access token.
+- Customer Project CRUD và source Media subresource dưới `/api/projects`.
 
-Response sử dụng envelope `{ success, data }`; 404 và lỗi dùng `{ success: false, error: { code, message } }`. Authentication/JWT/RBAC backend đã có, nhưng Customer/Admin CRUD ngoài auth, upload, STT, Translation, TTS, FFmpeg, queue/worker và kết nối frontend vẫn **NOT IMPLEMENTED**. Các frontend vẫn dùng mock/service trong bộ nhớ.
+Response sử dụng envelope chuẩn. Auth và Customer Project/Media backend đã có; Admin business API, STT, Translation, TTS, FFmpeg, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
+
+## Project and Media API (Implemented)
+
+Tất cả route yêu cầu access JWT và role `CUSTOMER`; owner luôn lấy từ authenticated user. Project của user khác được che bằng `404 PROJECT_NOT_FOUND`.
+
+| Method | Path | Input | Success |
+| --- | --- | --- | --- |
+| `POST` | `/api/projects` | JSON `{ name, description?, sourceLanguage }` | `201`, Project `DRAFT`, progress `0` |
+| `GET` | `/api/projects` | Query `search?`, `status?`, `page=1`, `limit=10` (max 100) | `200`, projects + pagination |
+| `GET` | `/api/projects/:id` | Valid ObjectId | `200`, safe Project |
+| `PATCH` | `/api/projects/:id` | Allow-list `name`, `description`, `sourceLanguage` | `200`, updated Project |
+| `DELETE` | `/api/projects/:id` | — | `200`; xóa source Media metadata/file nếu có |
+| `POST` | `/api/projects/:id/media` | `multipart/form-data`, field `file` | `201`, safe Media metadata |
+| `GET` | `/api/projects/:id/media` | — | `200`, current source Media |
+| `DELETE` | `/api/projects/:id/media` | — | `200`; Project trở về `DRAFT`, progress `0` |
+
+Media nhận MP4/WebM/QuickTime video và MPEG/WAV/MP4/M4A/WebM audio theo MIME allow-list. Giới hạn lấy từ `MAX_UPLOAD_SIZE_MB`. Mỗi Project có một source Media; upload mới thay thế file/metadata cũ. Filename lưu trữ do server tạo và API không trả `fileName`, `storagePath` hoặc absolute path.
+
+Các lỗi chính: `400 VALIDATION_ERROR`, `400 FILE_REQUIRED`, `401 AUTH_REQUIRED`, `403 FORBIDDEN`, `404 PROJECT_NOT_FOUND`, `404 MEDIA_NOT_FOUND`, `413 FILE_TOO_LARGE`, `415 UNSUPPORTED_MEDIA_TYPE`.
 
 ## Implemented Foundation and Base
 
@@ -40,15 +60,15 @@ Access token và refresh token dùng secret khác nhau, có claim `type` riêng 
 | --- | --- |
 | `/api/auth/**` | Implemented in S18: register, login, refresh, logout, current user. |
 | `/api/users/me` | Retrieve/update the authenticated Customer profile; later change-password flow. |
-| `/api/projects/**` | Create, list, get, update and delete own projects; search/filter via validated query parameters. |
-| `/api/projects/:id/media` | Upload/list source media; backend checks owner, file type and size. |
+| `/api/projects/**` | Implemented S19: CRUD own projects, search/filter/pagination. |
+| `/api/projects/:id/media` | Implemented S19: one source media upload/get/delete/replace. |
 | `/api/projects/:id/transcript` | Retrieve/update transcript and timed segments; generation is a proposed sub-action. |
 | `/api/projects/:id/translations` | Request/list/edit translations by target language. |
 | `/api/projects/:id/narrations` | Request/list narration output using selected voice and speed. |
 | `/api/projects/:id/jobs` | Retrieve processing-job progress, failure and retry where supported. |
 | `/api/projects/:id/results` | Retrieve preview/download references for completed outputs. |
 
-Project routes remain **not implemented or finalized**: `GET /api/projects`, `POST /api/projects`, `GET /api/projects/:id`, `POST /api/projects/:id/media`. Earlier drafts used `POST /projects/:id/upload`; the canonical proposed resource family is now `/api/projects/:id/media`. Request/response schemas and upload transport will be decided during S19/S24.
+Project/Media routes above are implemented. Transcript, Translation, Narration, Job và Result routes remain proposed for later sprints.
 
 ### Transcript boundary (S7)
 

@@ -14,7 +14,7 @@ const projectSchema = new Schema(
 );
 
 projectSchema.index({ userId: 1, createdAt: -1 });
-projectSchema.index({ status: 1, createdAt: -1 });
+projectSchema.index({ userId: 1, status: 1, createdAt: -1 });
 
 export type ProjectDocument = InferSchemaType<typeof projectSchema>;
 export const Project = model<ProjectDocument>('Project', projectSchema);

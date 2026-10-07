@@ -9,6 +9,7 @@ export const validate = (schema: ZodType): RequestHandler => (request, _response
     return;
   }
   const parsed = result.data as { body?: unknown; params?: unknown; query?: unknown };
+  request.validated = parsed;
   if (parsed.body !== undefined) request.body = parsed.body;
   next();
 };

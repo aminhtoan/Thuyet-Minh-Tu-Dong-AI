@@ -18,6 +18,12 @@ const parsePort = (value: string | undefined): number => {
   return port;
 };
 
+const parsePositiveNumber = (name: string, value: string | undefined, fallback: number): number => {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isFinite(parsed) || parsed <= 0) throw new Error(`${name} phải là số dương.`);
+  return parsed;
+};
+
 const parseOrigins = (value: string | undefined): string[] =>
   (value ?? 'http://localhost:5173,http://localhost:5174')
     .split(',')
@@ -41,6 +47,7 @@ export const env = Object.freeze({
   mongoUri: requireValue('MONGODB_URI'),
   corsOrigins: parseOrigins(process.env.CORS_ORIGINS),
   uploadDir: process.env.UPLOAD_DIR?.trim() || 'uploads',
+  maxUploadSizeMb: parsePositiveNumber('MAX_UPLOAD_SIZE_MB', process.env.MAX_UPLOAD_SIZE_MB, 200),
   jwtAccessSecret: accessSecret,
   jwtAccessExpiresIn: requireValue('JWT_ACCESS_EXPIRES_IN'),
   jwtRefreshSecret: refreshSecret,

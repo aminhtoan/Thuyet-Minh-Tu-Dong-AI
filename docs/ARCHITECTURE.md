@@ -35,7 +35,7 @@ multilingual-ai-narration/
 └── README.md
 ```
 
-MongoDB với Mongoose là database/ODM của backend. S17 đã triển khai foundation/domain schemas; S18 bổ sung authentication, JWT, persistent refresh sessions và RBAC. FFmpeg vẫn chỉ được lên kế hoạch cho media operations. AI providers chưa được chọn; chưa có Project/Media business API, media worker hoặc AI integration.
+MongoDB với Mongoose là database/ODM của backend. S17 triển khai foundation, S18 auth/RBAC và S19 Customer Project/Media API. FFmpeg và AI providers chưa tích hợp.
 
 ## Authentication and Authorization
 
@@ -106,6 +106,15 @@ The separate Admin Web will provide login/logout; dashboard metrics (customers, 
 
 `backend/` hiện sở hữu Express app/server, environment/database config, auth routes/controllers/service/validation, authentication/RBAC middleware và Mongoose models. Project ownership middleware, domain repositories và asynchronous processing orchestration được dành cho các sprint sau. Controllers điều phối thay vì chứa provider business logic. Provider, queue và worker vẫn deferred.
 
+```text
+CUSTOMER → JWT → Project API → ownership → Project Service → MongoDB Atlas
+CUSTOMER → multipart/form-data → Multer validation → safe local storage
+                                          ├── binary → backend/uploads
+                                          └── metadata → MongoDB Media
+```
+
+S19 áp dụng một source Media mỗi Project. Storage filename do server tạo, response không lộ path; replacement/deletion chỉ xóa file đã xác minh nằm trong upload root. Production object storage vẫn là future concern.
+
 MongoDB Atlas là development database và system of record cho domain metadata cùng references; Mongoose là ODM. S17 đọc `MONGODB_URI` từ backend environment, kết nối trước khi HTTP server listen và đóng kết nối khi nhận `SIGINT`/`SIGTERM`. Database dùng tên `multilingual_ai_narration`; cluster URI và credential không được ghi vào source hoặc tài liệu. Foundation schemas, validation và indexes đã có; transaction/migration strategy vẫn deferred.
 
 ## Media Storage
@@ -126,7 +135,7 @@ Long operations are represented by `ProcessingJob`; project status summarizes th
 
 ## API Architecture
 
-REST base `/api` đã tồn tại. S18 triển khai `/api/auth/register`, `login`, `refresh`, `logout`, `me` cùng `/api` và `/api/health`. Customer/Admin business resources ngoài auth vẫn proposed. Xem [API.md](API.md). Realtime transport chưa được quyết định.
+REST base `/api` đã tồn tại. S19 bổ sung Customer `/api/projects/**` và media subresource bên cạnh foundation/auth. Admin Project API và AI resources vẫn proposed.
 
 ## Environment Strategy and Security Principles
 
@@ -167,7 +176,7 @@ REST base `/api` đã tồn tại. S18 triển khai `/api/auth/register`, `login
 | S16 | Admin Languages, Voices, Logs & Settings | Completed; mock frontend/services only |
 | S17 | Backend Foundation: Node.js, Express, TypeScript, MongoDB, Mongoose | Completed; MongoDB Atlas runtime validated |
 | S18 | Authentication, JWT & RBAC | Completed in backend; frontend integration deferred |
-| S19 | Project & Media API | Planned |
+| S19 | Project & Media API | Completed; frontend integration deferred |
 | S20 | Speech-to-Text Integration | Planned |
 | S21 | Translation Integration | Planned |
 | S22 | Text-to-Speech Integration | Planned |
