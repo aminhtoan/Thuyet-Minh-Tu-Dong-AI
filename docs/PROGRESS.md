@@ -2,55 +2,54 @@
 
 ## Current Sprint
 
-S17 Backend Foundation
+S18 Authentication + JWT + RBAC
 
 ## Status
 
-COMPLETED (backend foundation + MongoDB Atlas runtime validation)
+COMPLETED (backend implementation + isolated MongoDB Atlas integration tests)
 
 ## Implemented
 
-- Backend độc lập tại `backend/` dùng Node.js, Express, TypeScript strict, MongoDB và Mongoose.
-- Cấu hình môi trường tập trung, kết nối database trước khi listen và graceful shutdown cho `SIGINT`/`SIGTERM`.
-- Express app có JSON/urlencoded limits, CORS allowlist, `/api`, `/api/health`, 404 và central error handler.
-- Envelope API thống nhất cho success/error cùng `AppError` có HTTP status và mã lỗi an toàn.
-- 13 Mongoose model: User, Project, Media, Transcript, TranscriptSegment, Translation, TranslationSegment, Language, Voice, Narration, ProcessingJob, Result và ActivityLog.
-- Enum, quan hệ tham chiếu, timestamps, validation và index nền tảng đồng bộ với domain S6–S16.
-- Chỉ lưu metadata/đường dẫn media; chưa lưu binary và chưa tạo business endpoint.
+- `POST /api/auth/register`, `login`, `refresh`, `logout` và `GET /api/auth/me`.
+- bcrypt password hashing; safe user serialization không trả `passwordHash`.
+- Access/refresh JWT dùng secret và token type riêng.
+- Persistent `AuthSession` chỉ lưu SHA-256 refresh-token hash; rotation, reuse rejection và logout revocation.
+- Authentication middleware tải lại User và từ chối tài khoản `BLOCKED`; typed RBAC middleware cho `CUSTOMER`/`ADMIN`.
+- Zod validation, Helmet, auth rate limiting và error codes thống nhất.
+- `npm run seed:admin` idempotent, không hard-code credential và không nâng quyền Customer.
+- ActivityLog best-effort cho register/login/logout, không log password/token.
 
 ## Architecture / Boundaries
 
-- Backend là package độc lập; không import từ Customer Web, Mobile hoặc Admin Web.
-- MongoDB là system of record dự kiến; URI chỉ đọc từ environment và không được log.
-- Authentication/JWT/RBAC, CRUD, upload, AI provider, queue/worker và FFmpeg vẫn nằm ngoài S17.
+- `users` dùng chung cho Customer/Admin; không có collection actor riêng.
+- `authsessions` cung cấp server-side refresh revocation; raw refresh token không được lưu.
+- Project ownership, CRUD, upload, AI provider, queue/worker và FFmpeg vẫn ngoài S18.
 - Ba frontend vẫn dùng mock/service hiện tại và chưa được nối với backend.
 
 ## Validation
 
-- `npm run lint`: PASS.
-- `npm run typecheck`: PASS.
-- `npm run build`: PASS.
-- MongoDB Atlas connection: PASS với database `multilingual_ai_narration`.
-- Runtime `GET /api`, `GET /api/health` và JSON 404: PASS.
-- Frontend không thay đổi trong S17.
+- `npm test`: PASS — 35 tests (parent + 34 cases), dữ liệu Atlas được cô lập và cleanup theo ID/email test.
+- `npm run lint`, `npm run typecheck`, `npm run build`: PASS.
+- MongoDB Atlas/Auth runtime: PASS trong test process với DNS workaround của môi trường.
+- Frontend không thay đổi trong S18.
 
 ## Important Files
 
-- `backend/src/app.ts`, `backend/src/server.ts`
-- `backend/src/config/env.ts`, `backend/src/config/database.ts`
-- `backend/src/routes/`, `backend/src/controllers/`, `backend/src/middleware/`
-- `backend/src/models/`, `backend/src/constants/`
-- `backend/package.json`, `backend/.env.example`
+- `backend/src/controllers/auth.controller.ts`, `services/auth.service.ts`
+- `backend/src/routes/auth.routes.ts`, `validators/auth.validator.ts`
+- `backend/src/middleware/authenticate.middleware.ts`, `authorize.middleware.ts`
+- `backend/src/models/AuthSession.ts`, `utils/jwt.ts`, `utils/password.ts`
+- `backend/src/scripts/seed-admin.ts`, `backend/tests/auth.test.ts`
 
 ## Known Limitations
 
-- Cần file `.env` chứa `MONGODB_URI` Atlas hợp lệ để chạy server thực tế; credential không được commit.
-- Chưa có auth/JWT/RBAC, business CRUD, upload hoặc frontend integration.
+- Local `.env` cần bổ sung các biến JWT khác nhau và `ADMIN_SEED_*` trước khi chạy/seed; credential không được commit.
+- Chưa có Project/Media CRUD, upload hoặc frontend auth integration.
 - Chưa tích hợp STT, Translation, TTS, FFmpeg, queue hay worker.
 
 ## Next
 
-S18 Authentication, JWT & RBAC.
+S19 Project + Media API.
 
 ## S16.5 — Full Vietnamese Localization
 

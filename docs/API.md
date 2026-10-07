@@ -1,25 +1,44 @@
 # API Status and Conventions
 
-## Current: S17 Backend Foundation
+## Current: S18 Authentication, JWT & RBAC
 
-S17 đã tạo HTTP foundation tại `backend/`. Hai endpoint duy nhất hiện được triển khai là:
+Backend hiện triển khai:
 
 - `GET /api` — metadata tối thiểu của API.
 - `GET /api/health` — trạng thái service và trạng thái kết nối MongoDB lấy trực tiếp từ Mongoose. Server chỉ listen sau khi kết nối database thành công.
+- `POST /api/auth/register` — Customer tự đăng ký.
+- `POST /api/auth/login` — đăng nhập chung cho Customer và Admin.
+- `POST /api/auth/refresh` — rotation access/refresh token.
+- `POST /api/auth/logout` — revoke refresh session.
+- `GET /api/auth/me` — thông tin user hiện tại, yêu cầu access token.
 
-Response sử dụng envelope `{ success, data }`; 404 và lỗi dùng `{ success: false, error: { code, message } }`. Mọi route nghiệp vụ bên dưới vẫn là **PROPOSED / NOT IMPLEMENTED**. Chưa có JWT, RBAC, Customer/Admin CRUD, upload, STT, Translation, TTS, FFmpeg, queue/worker hoặc kết nối frontend. Các frontend vẫn dùng mock/service trong bộ nhớ.
+Response sử dụng envelope `{ success, data }`; 404 và lỗi dùng `{ success: false, error: { code, message } }`. Authentication/JWT/RBAC backend đã có, nhưng Customer/Admin CRUD ngoài auth, upload, STT, Translation, TTS, FFmpeg, queue/worker và kết nối frontend vẫn **NOT IMPLEMENTED**. Các frontend vẫn dùng mock/service trong bộ nhớ.
 
 ## Implemented Foundation and Base
 
 Backend hiện dùng Node.js + Express.js + TypeScript strict, với MongoDB + Mongoose. REST base: `/api`; local backend URL mặc định: `http://localhost:8080/api`. Customer Web dùng `VITE_API_BASE_URL`; Admin Web dùng cùng tên biến trong environment riêng; Mobile đọc `EXPO_PUBLIC_API_BASE_URL`. Các biến public này không được chứa secret.
 
-Authentication (JWT), RBAC và resource ownership checks vẫn dự kiến cho S18+. `CUSTOMER` sau này chỉ được truy cập project của chính mình; `ADMIN` dùng Admin routes. Ẩn điều khiển frontend không tạo security boundary. Trên điện thoại thật, `localhost:8080` là chính điện thoại; khi tích hợp cần dùng địa chỉ LAN có thể truy cập hoặc tunnel phù hợp.
+S18 triển khai access JWT, refresh JWT có persistent hashed session, authentication middleware và typed RBAC middleware. Resource ownership cho Project/Media vẫn thuộc S19. Ẩn điều khiển frontend không tạo security boundary. Trên điện thoại thật, `localhost:8080` là chính điện thoại; khi tích hợp cần dùng địa chỉ LAN có thể truy cập hoặc tunnel phù hợp.
+
+## Authentication API (Implemented)
+
+| Method | Path | Body / auth | Success | Main errors |
+| --- | --- | --- | --- | --- |
+| `POST` | `/api/auth/register` | `{ fullName, email, password }`; role/status do server đặt | `201`, safe user + token pair | `400 VALIDATION_ERROR`, `409 EMAIL_ALREADY_EXISTS` |
+| `POST` | `/api/auth/login` | `{ email, password }` | `200`, safe user + token pair | `400`, `401 INVALID_CREDENTIALS`, `403 ACCOUNT_BLOCKED` |
+| `POST` | `/api/auth/refresh` | `{ refreshToken }` | `200`, rotated token pair | `400`, `401 INVALID_TOKEN`, `403 ACCOUNT_BLOCKED` |
+| `POST` | `/api/auth/logout` | `{ refreshToken }` | `200`; idempotent revoke | `400 VALIDATION_ERROR` |
+| `GET` | `/api/auth/me` | `Authorization: Bearer <accessToken>` | `200`, safe current user | `401 AUTH_REQUIRED/INVALID_TOKEN/TOKEN_EXPIRED`, `403 ACCOUNT_BLOCKED` |
+
+Password yêu cầu 8–128 ký tự, có chữ hoa, chữ thường và chữ số. Email được trim/lowercase. Public registration luôn tạo `CUSTOMER / ACTIVE`; field `role` dư không thể tạo Admin. Sai email và sai password cùng trả generic `INVALID_CREDENTIALS`.
+
+Access token và refresh token dùng secret khác nhau, có claim `type` riêng và không dùng thay thế cho nhau. Refresh session lưu SHA-256 token hash, `expiresAt` và `revokedAt`; token cũ bị vô hiệu sau rotation/logout. Access middleware luôn tải lại user và từ chối user `BLOCKED`. `passwordHash`, raw token và secret không được trả từ API hoặc ghi log.
 
 ## Proposed Customer Resources
 
 | Path family | Intended operations |
 | --- | --- |
-| `/api/auth/**` | Register, login, logout; optional refresh-token flow when designed. |
+| `/api/auth/**` | Implemented in S18: register, login, refresh, logout, current user. |
 | `/api/users/me` | Retrieve/update the authenticated Customer profile; later change-password flow. |
 | `/api/projects/**` | Create, list, get, update and delete own projects; search/filter via validated query parameters. |
 | `/api/projects/:id/media` | Upload/list source media; backend checks owner, file type and size. |
@@ -29,7 +48,7 @@ Authentication (JWT), RBAC và resource ownership checks vẫn dự kiến cho S
 | `/api/projects/:id/jobs` | Retrieve processing-job progress, failure and retry where supported. |
 | `/api/projects/:id/results` | Retrieve preview/download references for completed outputs. |
 
-Illustrative routes, **not implemented or finalized**: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/users/me`, `GET /api/projects`, `POST /api/projects`, `GET /api/projects/:id`, `POST /api/projects/:id/media`. Earlier drafts used `POST /projects/:id/upload`; the canonical proposed resource family is now `/api/projects/:id/media`. Request/response schemas and upload transport will be decided during S19/S24.
+Project routes remain **not implemented or finalized**: `GET /api/projects`, `POST /api/projects`, `GET /api/projects/:id`, `POST /api/projects/:id/media`. Earlier drafts used `POST /projects/:id/upload`; the canonical proposed resource family is now `/api/projects/:id/media`. Request/response schemas and upload transport will be decided during S19/S24.
 
 ### Transcript boundary (S7)
 
@@ -78,7 +97,7 @@ Admin Web is a separate application; every route here requires backend `ADMIN` a
 | `/api/admin/logs/**` | View/filter safe activity logs. |
 | `/api/admin/settings/**` | Business/application settings only; never server secrets. |
 
-## Response Style (Implemented for Foundation Routes)
+## Response Style (Implemented)
 
 Success with body:
 
@@ -100,7 +119,7 @@ Canonical Project statuses: `DRAFT`, `UPLOADED`, `TRANSCRIBING`, `TRANSCRIBED`, 
 
 ## Security and Upload Boundary
 
-The backend will derive `userId` from the authenticated principal, reject unauthorized cross-user access, validate request bodies and media metadata/content, and enforce upload limits. Store binaries outside MongoDB; persist only metadata and storage references. S5's 500 MB validation is a client-side hint, **not** a server guarantee. Never log passwords, JWTs or AI provider secrets. `JWT_SECRET`, `MONGODB_URI`, and provider credentials belong in backend environment configuration, not frontend variables.
+The backend will derive `userId` from the authenticated principal, reject unauthorized cross-user access, validate request bodies and media metadata/content, and enforce upload limits. S18 đã có identity/RBAC; ownership cho Project/Media bắt đầu ở S19. Store binaries outside MongoDB; persist only metadata and storage references. Never log passwords, JWTs or AI provider secrets. `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, and provider credentials belong in backend environment configuration, not frontend variables.
 
 ## Result and History boundary (S11)
 

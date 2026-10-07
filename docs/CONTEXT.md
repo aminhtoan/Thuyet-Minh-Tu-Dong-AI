@@ -45,10 +45,10 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 
 ## Authentication and Security
 
-- Future authentication: JWT; future authorization: backend-enforced RBAC plus per-project ownership.
+- S18 backend authentication dùng bcrypt, access/refresh JWT, persistent hashed refresh sessions và backend-enforced RBAC. Per-project ownership bắt đầu ở S19.
 - `CUSTOMER` cannot call Admin APIs and cannot access another Customer's projects.
 - Secrets, `passwordHash` and privileged settings belong only on the backend; hiding a menu is not authorization.
-- Current auth screens only simulate completion; they do not issue JWTs, persist sessions or call an API.
+- Current frontend auth screens vẫn mô phỏng và chưa gọi API S18; backend hiện đã phát JWT và lưu refresh session thật.
 
 ## Current Implementation: S1–S11
 
@@ -63,11 +63,11 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - S9: Web/Mobile Voice & TTS configuration, active language-scoped voices, simulated preview, speed selection and mock save/reset. Voice data is MOCK; TTS is NOT_INTEGRATED; narration audio is NOT_GENERATED.
 - S10: saved-configuration generation summary, confirmation and simulated narration/media progress on Web/Mobile, with completed/failed/cancelled states, retry and timer cleanup. Processing is MOCK; real TTS/FFmpeg are NOT_INTEGRATED and no output media is generated.
 - S12: separate Admin foundation with mock login and the shell later completed across S13–S16.
-- S17 đã bổ sung backend foundation và Mongoose models; chưa có real upload, JWT, business CRUD, AI processing hoặc persistent project creation qua API.
+- S17 đã bổ sung backend foundation; S18 bổ sung auth/JWT/RBAC. Chưa có real upload, Project CRUD, AI processing hoặc persistent project creation qua API.
 
 ## Current Sprint and Next Direction
 
-S9–S11.5 Customer workflows và redesign đã hoàn thành. S12–S16.5 Admin/frontend scope và localization đã hoàn thành. S17 backend foundation đã có trong code; hướng tiếp theo là S18 Authentication, JWT & RBAC.
+S9–S11.5 Customer workflows và redesign đã hoàn thành. S12–S16.5 Admin/frontend scope và localization đã hoàn thành. S17 foundation và S18 auth/JWT/RBAC đã có trong backend; hướng tiếp theo là S19 Project + Media API.
 
 ## Domain Alignment Snapshot
 
@@ -86,7 +86,7 @@ S9–S11.5 Customer workflows và redesign đã hoàn thành. S12–S16.5 Admin/
 - Backend: `http://localhost:8080/api` khi MongoDB kết nối thành công.
 - Development database: MongoDB Atlas, database `multilingual_ai_narration`. URI và credential chỉ nằm trong `backend/.env`, không ghi vào source hoặc tài liệu.
 - Customer Web and future Admin Web use public `VITE_API_BASE_URL`; Mobile uses public `EXPO_PUBLIC_API_BASE_URL`.
-- Server-only configuration will include `MONGODB_URI`, `JWT_SECRET`, token lifetime and upload directory.
+- Server-only configuration gồm `MONGODB_URI`, hai JWT secret riêng, token lifetimes và upload directory.
 
 ## Roadmap Checkpoints
 

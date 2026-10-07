@@ -24,6 +24,12 @@ const parseOrigins = (value: string | undefined): string[] =>
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+const accessSecret = requireValue('JWT_ACCESS_SECRET');
+const refreshSecret = requireValue('JWT_REFRESH_SECRET');
+if (accessSecret === refreshSecret) {
+  throw new Error('JWT_ACCESS_SECRET và JWT_REFRESH_SECRET phải khác nhau.');
+}
+
 const nodeEnv = process.env.NODE_ENV?.trim() || 'development';
 if (!['development', 'test', 'production'].includes(nodeEnv)) {
   throw new Error('NODE_ENV phải là development, test hoặc production.');
@@ -35,4 +41,8 @@ export const env = Object.freeze({
   mongoUri: requireValue('MONGODB_URI'),
   corsOrigins: parseOrigins(process.env.CORS_ORIGINS),
   uploadDir: process.env.UPLOAD_DIR?.trim() || 'uploads',
+  jwtAccessSecret: accessSecret,
+  jwtAccessExpiresIn: requireValue('JWT_ACCESS_EXPIRES_IN'),
+  jwtRefreshSecret: refreshSecret,
+  jwtRefreshExpiresIn: requireValue('JWT_REFRESH_EXPIRES_IN'),
 });

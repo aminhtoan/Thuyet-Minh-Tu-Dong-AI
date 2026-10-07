@@ -9,7 +9,7 @@ Media → Speech-to-Text → Transcript → Translation
 → Voice / Text-to-Speech → Media Processing → Result
 ```
 
-Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng service mô phỏng. S17 đã bổ sung backend foundation và Mongoose models, nhưng chưa có API nghiệp vụ hay kết nối frontend. Speech-to-Text, dịch máy, Text-to-Speech và xử lý media/FFmpeg trong sơ đồ trên là mục tiêu tích hợp tương lai, không phải dịch vụ AI đang hoạt động.
+Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng service mô phỏng. Backend đã có foundation, MongoDB Atlas và auth/JWT/RBAC thật, nhưng frontend chưa tích hợp API. Speech-to-Text, dịch máy, Text-to-Speech và xử lý media/FFmpeg vẫn là mục tiêu tương lai.
 
 ## Trạng thái hiện tại
 
@@ -18,9 +18,9 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 | Customer Web | Đã triển khai phạm vi frontend hiện tại bằng React; dữ liệu, upload, xác thực và xử lý dùng mock/in-memory service khi chưa có backend. |
 | Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
 | Customer Mobile | Đã có frontend React Native + Expo Router cho các luồng Customer tương ứng; dùng mock service và không gọi backend thật. |
-| Backend | **S17 foundation đã triển khai.** Có Express/TypeScript app, health route, error handling, environment/database lifecycle và Mongoose models; chưa có business CRUD. |
+| Backend | **S17–S18 đã triển khai.** Có Express/TypeScript, Mongoose models, auth/JWT/refresh sessions và RBAC; chưa có Project/Media CRUD. |
 | MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
-| Authentication / JWT / RBAC | **Chưa triển khai bảo mật backend thật.** Các màn hình đăng nhập hiện chỉ mô phỏng UI/navigation. |
+| Authentication / JWT / RBAC | **Đã triển khai ở backend.** Frontend login/register vẫn là mock và chưa gọi API thật. |
 | AI và media | STT, Translation provider, TTS provider và FFmpeg pipeline đều **chưa tích hợp**. |
 
 Mock frontend không phải security boundary, không ngăn đăng nhập thật và không tạo file audio/video kết quả thực. Dữ liệu in-memory có thể mất khi reload ứng dụng.
@@ -57,10 +57,11 @@ Mock frontend không phải security boundary, không ngăn đăng nhập thật
 
 - Node.js, Express.js, TypeScript.
 - MongoDB và Mongoose.
+- bcrypt password hashing, access/refresh JWT, refresh-session revocation và RBAC.
 
 ### Backend dự kiến tiếp theo
 
-- JWT authentication và backend-enforced RBAC.
+- Project ownership, Project/Media API và upload.
 
 ### Xử lý dự kiến
 
@@ -194,7 +195,7 @@ npm run typecheck
 
 Entry point hiện tại là `expo-router/entry`. Khi backend được triển khai, điện thoại thật không thể dùng `localhost` của máy tính làm API host; cần địa chỉ LAN hoặc tunnel có thể truy cập.
 
-## Chạy Backend Foundation
+## Chạy Backend
 
 Backend dùng MongoDB Atlas và cần file environment cục bộ chứa URI hợp lệ:
 
@@ -207,16 +208,20 @@ npm run dev
 
 Mặc định API dùng `http://localhost:8080/api`. Kiểm tra health tại `GET /api/health`; trường `database` phản ánh trạng thái Mongoose thật. Không commit `.env` và không đưa `MONGODB_URI` hoặc secret vào frontend.
 
+Ngoài Atlas URI, `.env` phải có hai JWT secret khác nhau, thời hạn access/refresh và các biến `ADMIN_SEED_*` nếu chạy seed. Dùng placeholder trong `.env.example`; không commit giá trị thật.
+
 Các lệnh kiểm tra:
 
 ```powershell
 npm run lint
 npm run typecheck
 npm run build
+npm test
+npm run seed:admin
 npm start
 ```
 
-S17 chưa có auth/JWT/RBAC, CRUD nghiệp vụ, upload, AI provider, FFmpeg, queue/worker hoặc frontend integration.
+Auth routes đã có: register, login, refresh, logout và `/auth/me`. Project CRUD, upload, AI provider, FFmpeg, queue/worker và frontend integration chưa có.
 
 ## Cổng phát triển
 
@@ -262,13 +267,13 @@ Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vi
 
 ## Backend hiện tại và API tương lai
 
-`GET /api` và `GET /api/health` đã có trong S17. Các contract nghiệp vụ trong [docs/API.md](docs/API.md) vẫn là **PROPOSED / NOT IMPLEMENTED**. Kế hoạch hiện tại:
+`GET /api`, health và năm auth endpoints đã có. Các contract Project/Media/AI trong [docs/API.md](docs/API.md) vẫn là **PROPOSED / NOT IMPLEMENTED**.
 
 - S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose — đã hoàn thành trong code.
-- S18: Authentication, JWT và backend-enforced RBAC.
+- S18: Authentication, JWT và backend-enforced RBAC — đã hoàn thành trong backend; frontend chưa tích hợp.
 - S19 trở đi: Project/Media API và các tích hợp STT, Translation, TTS, FFmpeg.
 
-Secret như `JWT_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
+Secret như `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
 
 ## Tài liệu
 

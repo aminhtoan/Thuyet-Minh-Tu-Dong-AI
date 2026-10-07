@@ -35,13 +35,21 @@ multilingual-ai-narration/
 └── README.md
 ```
 
-MongoDB với Mongoose là database/ODM của backend. S17 đã triển khai connection lifecycle, Express foundation và domain schemas; cần MongoDB reachable để chạy server. FFmpeg vẫn chỉ được lên kế hoạch cho media operations. AI providers chưa được chọn; chưa có auth, business API, media worker hoặc AI integration.
+MongoDB với Mongoose là database/ODM của backend. S17 đã triển khai foundation/domain schemas; S18 bổ sung authentication, JWT, persistent refresh sessions và RBAC. FFmpeg vẫn chỉ được lên kế hoạch cho media operations. AI providers chưa được chọn; chưa có Project/Media business API, media worker hoặc AI integration.
 
 ## Authentication and Authorization
 
-The backend will issue JWTs after registration/login and support logout and current-user retrieval; refresh tokens may be added when the implementation is designed. A Customer account gets role `CUSTOMER`; an Admin account gets `ADMIN`. Frontends must never store or expose `passwordHash`. Current S3 auth is only a delayed UI mock with no JWT, persistent session, or server-side identity.
+Backend phát access JWT và refresh JWT sau registration/login, hỗ trợ rotation, persistent hashed refresh session, logout/revocation và current-user retrieval. Customer self-registration luôn nhận role `CUSTOMER`; tài khoản `ADMIN` chỉ được tạo qua seed kiểm soát bằng environment. Frontends không được nhận `passwordHash`. Các màn hình S3 vẫn là UI mock và chưa gọi auth backend S18.
 
 Authorization uses backend-enforced RBAC **and** resource ownership. Admin APIs require `ADMIN`; a `CUSTOMER` request to an Admin endpoint returns 403. Project/media queries must derive ownership from the authenticated user, not trust a client-supplied `userId`; Customer A cannot access Customer B's project. Blocking a user is enforced server-side. Hiding frontend navigation is not a security boundary.
+
+```text
+Client → /auth/login → AuthService → User + bcrypt
+       → Access JWT + hashed Refresh Session
+       → Protected API → authenticate → authorize(role)
+```
+
+Access middleware xác minh token type, tải lại User từ MongoDB và kiểm tra `ACTIVE`, nên token cũ của user vừa bị block cũng bị từ chối. Refresh rotation atomically revoke session cũ trước khi phát pair mới; raw refresh token không được lưu.
 
 ## Domain Model
 
@@ -62,6 +70,7 @@ Các entity và trường quan trọng dưới đây đã có Mongoose schemas n
 | `ProcessingJob` | `id`, `projectId`, `type`, `status`, `progress`, `errorMessage`, `startedAt`, `completedAt`, `createdAt`; tracks long-running work. |
 | `Result` | `id`, `projectId`, `narrationId`, `languageCode`, `videoPath`, `audioPath`, `duration`, `fileSize`, `createdAt`; preview/download output. |
 | `ActivityLog` | `id`, `userId`, `action`, `entityType`, `entityId`, `description`, `createdAt`; safe audit metadata, never credentials. |
+| `AuthSession` | `id`, `userId`, `tokenHash`, `expiresAt`, `revokedAt`, timestamps; persistent refresh-token revocation without raw tokens. |
 
 `MediaType` is `VIDEO | AUDIO`. `ProcessingJobType` is `TRANSCRIPTION | TRANSLATION | TTS | VIDEO_PROCESSING`. `ProcessingJobStatus` is `QUEUED | PROCESSING | COMPLETED | FAILED | CANCELLED`.
 
@@ -91,11 +100,11 @@ Customer capabilities planned across later sprints: register/login/logout; view/
 
 ## Admin Scope
 
-The separate Admin Web will provide login/logout; dashboard metrics (customers, projects, processing/completed/failed, activity); customer search/detail/block/unblock; all-project search/detail; processing-job list, filters, failures and detail; language enable/disable; voice view/search/filter/enable/disable; activity logs; and business/application settings. Admin transcript editing is not in scope. Admin settings must not reveal `JWT_SECRET`, MongoDB passwords, provider secrets, server credentials, or private keys.
+The separate Admin Web will provide login/logout; dashboard metrics (customers, projects, processing/completed/failed, activity); customer search/detail/block/unblock; all-project search/detail; processing-job list, filters, failures and detail; language enable/disable; voice view/search/filter/enable/disable; activity logs; and business/application settings. Admin transcript editing is not in scope. Admin settings must not reveal JWT secrets, MongoDB passwords, provider secrets, server credentials, or private keys.
 
 ## Backend and Database Architecture
 
-`backend/` hiện sở hữu Express app/server, environment/database config, foundation routes/controllers/middleware và Mongoose models. Request validation nghiệp vụ, authentication/RBAC/ownership middleware, domain services/repositories và asynchronous processing orchestration được dành cho các sprint sau. Controllers nên điều phối thay vì chứa AI/provider business logic. Các interface provider (`SpeechToTextService`, `TranslationService`, `TextToSpeechService`, `MediaProcessingService`) sẽ cho phép thay thế provider mà không đổi domain workflow; provider, queue và worker vẫn deferred.
+`backend/` hiện sở hữu Express app/server, environment/database config, auth routes/controllers/service/validation, authentication/RBAC middleware và Mongoose models. Project ownership middleware, domain repositories và asynchronous processing orchestration được dành cho các sprint sau. Controllers điều phối thay vì chứa provider business logic. Provider, queue và worker vẫn deferred.
 
 MongoDB Atlas là development database và system of record cho domain metadata cùng references; Mongoose là ODM. S17 đọc `MONGODB_URI` từ backend environment, kết nối trước khi HTTP server listen và đóng kết nối khi nhận `SIGINT`/`SIGTERM`. Database dùng tên `multilingual_ai_narration`; cluster URI và credential không được ghi vào source hoặc tài liệu. Foundation schemas, validation và indexes đã có; transaction/migration strategy vẫn deferred.
 
@@ -117,13 +126,13 @@ Long operations are represented by `ProcessingJob`; project status summarizes th
 
 ## API Architecture
 
-REST base `/api` đã tồn tại trên Node/Express backend. S17 chỉ triển khai `GET /api` và `GET /api/health`; Customer/Admin business resources vẫn proposed. Customer resources dự kiến là `/api/auth/**`, `/api/users/me`, `/api/projects/**` và các subresource `media`, `transcript`, `translations`, `narrations`, `jobs`, `results`. Admin resources dự kiến là `/api/admin/dashboard`, `/api/admin/users/**`, `/api/admin/projects/**`, `/api/admin/jobs/**`, `/api/admin/languages/**`, `/api/admin/voices/**`, `/api/admin/logs/**`, `/api/admin/settings/**`. Xem [API.md](API.md). Realtime transport (SSE/WebSocket) chưa được quyết định.
+REST base `/api` đã tồn tại. S18 triển khai `/api/auth/register`, `login`, `refresh`, `logout`, `me` cùng `/api` và `/api/health`. Customer/Admin business resources ngoài auth vẫn proposed. Xem [API.md](API.md). Realtime transport chưa được quyết định.
 
 ## Environment Strategy and Security Principles
 
 - Customer Web and planned Admin Web: `VITE_API_BASE_URL` (public client configuration, no secrets).
 - Mobile: `EXPO_PUBLIC_API_BASE_URL` (public Expo configuration, no secrets). On a physical phone, `localhost:8080` points to the phone, **not** the developer PC; use the PC LAN address or a suitable tunnel when the backend exists. Do not hard-code a sample IP in production code.
-- Backend (future): `PORT`, `MONGODB_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `UPLOAD_DIR`; AI provider credentials are server-only environment variables or secure configuration.
+- Backend: `PORT`, `MONGODB_URI`, `JWT_ACCESS_SECRET`, `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRES_IN`, `UPLOAD_DIR`; admin seed dùng ba biến `ADMIN_SEED_*`. AI provider credentials remain future server-only configuration.
 - Never commit secrets; validate input and media server-side; enforce least privilege, ownership and authorization at every protected API; avoid logging passwords, JWTs and provider keys.
 
 ## Development Ports
@@ -157,7 +166,7 @@ REST base `/api` đã tồn tại trên Node/Express backend. S17 chỉ triển 
 | S15 | Admin Projects & Processing Jobs | Completed; mock frontend/services only |
 | S16 | Admin Languages, Voices, Logs & Settings | Completed; mock frontend/services only |
 | S17 | Backend Foundation: Node.js, Express, TypeScript, MongoDB, Mongoose | Completed; MongoDB Atlas runtime validated |
-| S18 | Authentication, JWT & RBAC | Planned |
+| S18 | Authentication, JWT & RBAC | Completed in backend; frontend integration deferred |
 | S19 | Project & Media API | Planned |
 | S20 | Speech-to-Text Integration | Planned |
 | S21 | Translation Integration | Planned |

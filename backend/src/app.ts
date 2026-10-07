@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
 import { env } from './config/env.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.middleware.js';
 import { notFoundMiddleware } from './middleware/not-found.middleware.js';
@@ -9,6 +10,7 @@ import { AppError } from './utils/app-error.js';
 export const app = express();
 
 app.disable('x-powered-by');
+app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
