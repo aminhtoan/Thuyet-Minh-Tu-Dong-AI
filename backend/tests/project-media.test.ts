@@ -57,7 +57,10 @@ const json = (path: string, method: string, token?: string, body?: unknown) => r
 });
 const upload = (id: string, token: string | undefined, content: Uint8Array | undefined, type = 'video/mp4', name = 'sample.mp4') => {
   const form = new FormData();
-  if (content) form.append('file', new Blob([content], { type }), name);
+  if (content) {
+  const bytes = Uint8Array.from(content);
+  form.append('file', new Blob([bytes.buffer], { type }), name);
+            }
   return request(`/api/projects/${id}/media`, { method: 'POST', headers: token ? { authorization: `Bearer ${token}` } : {}, body: form });
 };
 
