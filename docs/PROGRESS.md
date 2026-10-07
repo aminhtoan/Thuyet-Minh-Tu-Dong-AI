@@ -2,13 +2,19 @@
 
 ## Current Sprint
 
-S21 Translation Integration
+S22 Text-to-Speech Integration
 
 ## Status
 
-COMPLETED (implementation/tests; real provider smoke không chạy do giới hạn credit hiện tại)
+COMPLETED (implementation/tests; không tự động gọi real provider)
 
 ## Implemented
+
+- TTS provider abstraction và OpenAI `/v1/audio/speech` adapter, model cấu hình `gpt-4o-mini-tts`, MP3.
+- API tạo/lấy narration và protected audio; dùng Translation hoàn tất và Voice catalog server-side.
+- Audio nằm trong project-scoped filesystem; MongoDB chỉ lưu metadata/path tương đối.
+- Hỗ trợ nhiều language/voice, idempotency, retry, active-job concurrency protection và cleanup khi xóa Project.
+- S18–S22: 91 tests PASS; S22 dùng mock provider, không tiêu thụ OpenAI credit.
 
 - Translation provider abstraction và OpenAI Responses API adapter với structured JSON output.
 - API tạo/lấy bản dịch đồng bộ theo segment; lưu `Translation` và `TranslationSegment` theo source alignment.
@@ -72,7 +78,7 @@ COMPLETED (implementation/tests; real provider smoke không chạy do giới h�
 
 ## Next
 
-S22 Text-to-Speech Integration.
+S23 FFmpeg / Media Processing.
 
 ## S16.5 — Full Vietnamese Localization
 

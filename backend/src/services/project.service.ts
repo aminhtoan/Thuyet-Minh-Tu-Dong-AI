@@ -1,6 +1,7 @@
 import type { Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
 import { Media } from '../models/Media.js';
+import { Narration } from '../models/Narration.js';
 import { Project, type ProjectDocument } from '../models/Project.js';
 import type { ProjectStatus } from '../constants/project.constants.js';
 import { AppError } from '../utils/app-error.js';
@@ -57,7 +58,9 @@ export const update = async (id: string, userId: string, input: Partial<ProjectI
 export const remove = async (id: string, userId: string) => {
   const project = await owned(id, userId);
   const media = await Media.findOne({ projectId: project._id });
-  await Promise.all([Media.deleteMany({ projectId: project._id }), Project.deleteOne({ _id: project._id })]);
+  const narrations = await Narration.find({ projectId: project._id }).select('audioPath');
+  await Promise.all([Media.deleteMany({ projectId: project._id }), Narration.deleteMany({ projectId: project._id }), Project.deleteOne({ _id: project._id })]);
   if (media) await safeDeleteStoredFile(media.storagePath);
+  await Promise.all(narrations.filter((item) => item.audioPath).map((item) => safeDeleteStoredFile(item.audioPath)));
   void log(userId, 'PROJECT_DELETED', project._id, 'Dự án đã được xóa.');
 };

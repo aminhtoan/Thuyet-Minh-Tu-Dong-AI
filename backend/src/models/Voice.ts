@@ -15,7 +15,7 @@ const voiceSchema = new Schema(
 );
 
 voiceSchema.index({ languageId: 1, isActive: 1 });
-voiceSchema.index({ provider: 1, providerVoiceId: 1 }, { unique: true });
+voiceSchema.index({ provider: 1, providerVoiceId: 1, languageId: 1 }, { unique: true });
 
 export type VoiceDocument = InferSchemaType<typeof voiceSchema>;
 export const Voice = model<VoiceDocument>('Voice', voiceSchema);

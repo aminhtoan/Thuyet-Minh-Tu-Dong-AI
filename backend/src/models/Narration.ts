@@ -8,12 +8,18 @@ const narrationSchema = new Schema(
     voiceId: { type: Schema.Types.ObjectId, ref: 'Voice', required: true },
     languageCode: { type: String, required: true, trim: true, lowercase: true },
     speed: { type: Number, required: true, min: 0.5, max: 2 },
-    audioPath: { type: String, trim: true },
+    audioPath: { type: String, required: true, trim: true },
+    mimeType: { type: String, required: true, trim: true },
+    fileSize: { type: Number, required: true, min: 1 },
+    provider: { type: String, required: true, trim: true },
+    model: { type: String, required: true, trim: true },
     duration: { type: Number, min: 0 },
     status: { type: String, enum: NARRATION_STATUSES, required: true, default: 'READY' },
   },
   { timestamps: true },
 );
+
+narrationSchema.index({ translationId: 1, voiceId: 1, speed: 1 }, { unique: true });
 
 export type NarrationDocument = InferSchemaType<typeof narrationSchema>;
 export const Narration = model<NarrationDocument>('Narration', narrationSchema);

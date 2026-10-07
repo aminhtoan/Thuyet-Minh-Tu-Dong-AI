@@ -1,6 +1,6 @@
 # API Status and Conventions
 
-## Current: S21 Translation Integration
+## Current: S22 Text-to-Speech Integration
 
 Backend hiện triển khai:
 
@@ -20,7 +20,7 @@ Hai route yêu cầu JWT, role `CUSTOMER` và ownership. POST xử lý đồng b
 
 GET trả full text cùng ordered timestamp segments. Lỗi chuẩn gồm `TRANSCRIPT_NOT_FOUND`, `MEDIA_NOT_FOUND`, `MEDIA_FILE_MISSING`, `INVALID_PROJECT_STATE`, `TRANSCRIPTION_ALREADY_RUNNING`, `STT_NOT_CONFIGURED`, `STT_FILE_TOO_LARGE`, `STT_TIMEOUT`, `STT_INVALID_RESPONSE`, `STT_PROVIDER_ERROR`. Client không cung cấp filesystem path.
 
-Response sử dụng envelope chuẩn. Auth, Customer Project/Media, STT và Translation backend đã có; Admin business API, TTS, FFmpeg, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
+Response sử dụng envelope chuẩn. Auth, Customer Project/Media, STT, Translation và TTS backend đã có; Admin business API, FFmpeg, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
 
 ## Project and Media API (Implemented)
 
@@ -75,7 +75,7 @@ Access token và refresh token dùng secret khác nhau, có claim `type` riêng 
 | `/api/projects/:id/jobs` | Retrieve processing-job progress, failure and retry where supported. |
 | `/api/projects/:id/results` | Retrieve preview/download references for completed outputs. |
 
-Project/Media routes above are implemented. Transcript, Translation, Narration, Job và Result routes remain proposed for later sprints.
+Project/Media, Transcript, Translation và Narration/TTS routes đã được triển khai. Result và video processing thuộc sprint sau.
 
 ### Transcript boundary (S7)
 
@@ -97,7 +97,9 @@ Lifecycle: `TRANSCRIBED|TRANSLATED|FAILED → TRANSLATING → TRANSLATED`; lỗi
 
 `narrationService.getConfig(projectId, language?)` and `saveConfig(projectId, config)` keep configuration in module memory, isolated by project and language. Configuration contains project/translation IDs, language, voice ID and speed; an internal source revision prevents stale saves. Language and active voice availability are validated. There is no `audioPath`, generated audio or provider request.
 
-**PROPOSED:** `GET /api/voices?language=en`, `GET /api/voices/:voiceId`, `POST /api/projects/:id/narrations/preview`, `POST /api/projects/:id/narrations`, and `GET /api/projects/:id/narrations`. The backend will distinguish draft configuration, preview and actual generation contracts when implemented. Backend: **NOT_IMPLEMENTED**. Real TTS: **NOT_INTEGRATED**.
+**IMPLEMENTED S22:** `POST /api/projects/:id/narrations` nhận `{ targetLanguage, voiceId? }`; `GET /api/projects/:id/narrations`; `GET /api/projects/:id/narrations/:narrationId`; và protected `GET /api/projects/:id/narrations/:narrationId/audio`. Tất cả yêu cầu JWT, role `CUSTOMER` và Project ownership. Xử lý đồng bộ; Voice được resolve server-side theo Language/provider, voice mặc định từ environment. Identity idempotent là Translation + Voice + speed; active job trùng trả `TTS_ALREADY_RUNNING`.
+
+Lifecycle S22: `TRANSLATED|FAILED → GENERATING_AUDIO`; sau thành công Project vẫn ở `GENERATING_AUDIO` để S23 tiếp quản, không chuyển `COMPLETED`. Lỗi chính: `TRANSLATION_NOT_FOUND`, `TRANSLATION_EMPTY`, `VOICE_NOT_FOUND`, `VOICE_INACTIVE`, `VOICE_NOT_SUPPORTED`, `TTS_ALREADY_RUNNING`, `TTS_NOT_CONFIGURED`, `TTS_TEXT_TOO_LARGE`, `TTS_TIMEOUT`, `TTS_INVALID_RESPONSE`, `TTS_PROVIDER_ERROR`, `NARRATION_NOT_FOUND`, `NARRATION_AUDIO_NOT_FOUND`.
 
 Future processing: saved Translation → voice/speed configuration → TTS service → narration audio / ProcessingJob → video processing. S9 stops at saved configuration.
 

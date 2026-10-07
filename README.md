@@ -21,7 +21,7 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 | Backend | **S17–S20 đã triển khai.** Có auth/JWT/RBAC, Project/Media API và Speech-to-Text pipeline. |
 | MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
 | Authentication / JWT / RBAC | **Đã triển khai ở backend.** Frontend login/register vẫn là mock và chưa gọi API thật. |
-| AI và media | STT, Translation provider, TTS provider và FFmpeg pipeline đều **chưa tích hợp**. |
+| AI và media | STT, Translation và TTS backend đã tích hợp; FFmpeg pipeline **chưa tích hợp**. |
 
 Mock frontend không phải security boundary, không ngăn đăng nhập thật và không tạo file audio/video kết quả thực. Dữ liệu in-memory có thể mất khi reload ứng dụng.
 
@@ -221,7 +221,7 @@ npm run seed:admin
 npm start
 ```
 
-Auth, Project/Media, transcription và translation routes đã có. STT adapter dùng `STT_PROVIDER=openai`, `STT_MODEL=whisper-1`; Translation adapter dùng `TRANSLATION_PROVIDER=openai`, `TRANSLATION_MODEL=gpt-4o-mini`. Cả hai đọc `OPENAI_API_KEY` từ backend environment; key không được commit. TTS, FFmpeg, queue/worker và frontend integration chưa có.
+Auth, Project/Media, transcription, translation và TTS routes đã có. TTS adapter dùng `TTS_PROVIDER=openai`, `TTS_MODEL=gpt-4o-mini-tts`, voice mặc định `coral` và MP3; API key chỉ đọc từ backend environment. FFmpeg, queue/worker và frontend integration chưa có.
 
 ## Cổng phát triển
 
@@ -267,14 +267,15 @@ Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vi
 
 ## Backend hiện tại và API tương lai
 
-Foundation, auth, Project/Media và STT endpoints đã có. Translation/TTS/processing contracts vẫn **PROPOSED / NOT IMPLEMENTED**.
+Foundation, auth, Project/Media, STT, Translation và TTS endpoints đã có. FFmpeg/final Result processing vẫn **PROPOSED / NOT IMPLEMENTED**.
 
 - S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose — đã hoàn thành trong code.
 - S18: Authentication, JWT và backend-enforced RBAC — đã hoàn thành trong backend; frontend chưa tích hợp.
 - S19: Project + Media API — đã hoàn thành trong backend; frontend chưa tích hợp.
 - S20: Speech-to-Text — implementation/tests hoàn tất; real provider smoke chưa chạy do thiếu API key.
 - S21: Translation theo segment, nhiều target language, persistence, retry/concurrency protection — đã hoàn thành trong backend.
-- S22 trở đi: TTS và FFmpeg.
+- S22: Text-to-Speech, Narration persistence, protected audio và ProcessingJob TTS — đã hoàn thành trong backend.
+- S23 trở đi: FFmpeg / Media Processing.
 
 Secret như `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
 
