@@ -49,16 +49,16 @@ export const processingService = {
       const progress = clampProgress((active?.progress ?? 0) + 10);
       snapshot = { ...snapshot, stages: snapshot.stages.map((stage) => stage.id === stageId ? { ...stage, progress } : stage) };
       snapshot.progress = calculateOverallProgress(snapshot.stages);
-      if (failAt === stageId && progress >= 60) { fail(stageId, 'Mock processing failure. Retry to restart the simulation.'); return; }
+      if (failAt === stageId && progress >= 60) { fail(stageId, 'Xử lý mô phỏng thất bại. Hãy thử lại để khởi động lại mô phỏng.'); return; }
       if (progress === 100) {
         snapshot.stages = snapshot.stages.map((stage) => stage.id === stageId ? { ...stage, status: 'COMPLETED' } : stage);
         if (stageId === 'narration') {
           snapshot.currentStage = 'media';
           snapshot.stages = snapshot.stages.map((stage) => stage.id === 'media' ? { ...stage, status: 'PROCESSING', progress: 0 } : stage);
-          snapshot.message = mediaType === 'VIDEO' ? 'Simulating video processing...' : 'Simulating audio processing...';
+          snapshot.message = mediaType === 'VIDEO' ? 'Đang mô phỏng xử lý video...' : 'Đang mô phỏng xử lý âm thanh...';
         } else {
           snapshot = { ...snapshot, status: 'COMPLETED', currentStage: null, progress: 100, completedAt: new Date().toISOString(),
-            message: 'Simulation complete. No narration audio or final media file was generated.' };
+            message: 'Mô phỏng hoàn tất. Không tạo âm thanh thuyết minh hoặc tệp phương tiện cuối cùng.' };
           clearPending();
           emit();
           return;
@@ -77,7 +77,7 @@ export const processingService = {
       const failAt = runOptions.failAt === undefined ? (attempts === 0 ? mockProcessingScenario.failFirstAttemptAt : null) : runOptions.failAt;
       attempts += 1;
       snapshot = { ...createInitialSnapshot(projectId, mediaType), status: 'STARTING',
-        runId: projectId + '-mock-' + attempts, message: 'Checking your saved configuration...' };
+        runId: projectId + '-mock-' + attempts, message: 'Đang kiểm tra cấu hình đã lưu...' };
       const controller = new AbortController();
       validation = controller;
       emit();
@@ -86,17 +86,17 @@ export const processingService = {
         const latest = await generationService.getContext(projectId, config.languageCode, { signal: controller.signal });
         if (disposed || controller.signal.aborted || token !== epoch) return;
         if (!latest || !sameConfiguration(config, latest.config)) {
-          fail('start', 'Your saved settings changed or are unavailable. Return to Voice Settings, review and save them, then reopen Generate.');
+          fail('start', 'Cấu hình đã lưu đã thay đổi hoặc không khả dụng. Hãy quay lại cấu hình Giọng đọc, kiểm tra và lưu, sau đó mở lại Tạo thuyết minh.');
           return;
         }
-        if (failAt === 'start') { fail('start', 'Mock start failure. Retry to restart the simulation.'); return; }
+        if (failAt === 'start') { fail('start', 'Không thể bắt đầu mô phỏng. Hãy thử lại để khởi động lại.'); return; }
         snapshot = { ...snapshot, status: 'PROCESSING', currentStage: 'narration', startedAt: new Date().toISOString(),
-          message: 'Simulating narration generation...',
+          message: 'Đang mô phỏng tạo giọng đọc...',
           stages: snapshot.stages.map((stage) => stage.id === 'narration' ? { ...stage, status: 'PROCESSING', progress: 0 } : stage) };
         emit();
         if (!disposed && token === epoch && snapshot.status === 'PROCESSING') timer = setTimeout(() => advance(token, failAt), tickMs);
       } catch {
-        if (!disposed && !controller.signal.aborted && token === epoch) fail('start', 'Unable to start the simulation. Please retry or review Voice Settings.');
+        if (!disposed && !controller.signal.aborted && token === epoch) fail('start', 'Không thể bắt đầu mô phỏng. Vui lòng thử lại hoặc kiểm tra cấu hình Giọng đọc.');
       }
     }
     return {
@@ -110,7 +110,7 @@ export const processingService = {
         if (disposed || !isProcessing(snapshot)) return;
         ++epoch;
         clearPending();
-        snapshot = { ...snapshot, status: 'CANCELLED', message: 'Simulation cancelled. No background processing is running.',
+        snapshot = { ...snapshot, status: 'CANCELLED', message: 'Đã hủy mô phỏng. Không có xử lý nền nào đang chạy.',
           stages: snapshot.stages.map((stage) => stage.status === 'PROCESSING' ? { ...stage, status: 'CANCELLED' } : stage) };
         emit();
       },

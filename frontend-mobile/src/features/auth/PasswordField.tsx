@@ -8,7 +8,7 @@ type PasswordFieldProps = Omit<ComponentProps<typeof Input>, 'secureTextEntry' |
 
 export function PasswordField(props: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
-  const label = visible ? 'Hide password' : 'Show password';
+  const label = visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
   return <Input {...props} secureTextEntry={!visible} rightElement={<Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={8} style={styles.toggle} onPress={() => setVisible((current) => !current)}><MaterialCommunityIcons name={visible ? 'eye-off-outline' : 'eye-outline'} size={22} color={colors.textMuted} /></Pressable>} />;
 }
 

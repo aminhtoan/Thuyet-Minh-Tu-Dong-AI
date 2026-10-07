@@ -2,7 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import type { ProjectStatusFilter } from './types';
 
-const options: { value: ProjectStatusFilter; label: string }[] = [{ value: 'ALL', label: 'All' }, { value: 'DRAFT', label: 'Draft' }, { value: 'PROCESSING', label: 'Processing' }, { value: 'COMPLETED', label: 'Completed' }, { value: 'FAILED', label: 'Failed' }];
+const options: { value: ProjectStatusFilter; label: string }[] = [{ value: 'ALL', label: 'Tất cả' }, { value: 'DRAFT', label: 'Bản nháp' }, { value: 'PROCESSING', label: 'Đang xử lý' }, { value: 'COMPLETED', label: 'Hoàn thành' }, { value: 'FAILED', label: 'Thất bại' }];
 
 export function FilterChips({ value, onChange }: { value: ProjectStatusFilter; onChange: (value: ProjectStatusFilter) => void }) {
   return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.content} accessibilityRole="tablist">{options.map((option) => { const active = option.value === value; return <Pressable key={option.value} accessibilityRole="tab" accessibilityState={{ selected: active }} onPress={() => onChange(option.value)} style={[styles.chip, active && styles.chipActive]}><Text style={[styles.label, active && styles.labelActive]}>{option.label}</Text></Pressable>; })}</ScrollView>;

@@ -11,7 +11,7 @@ import type { GenerationContext } from './types';
 export const generationService = {
   async getContext(projectId: string, language?: LanguageCode, options: { signal?: AbortSignal } = {}): Promise<GenerationContext | null> {
     const project = projectRepository.getById(projectId);
-    if (!project) throw new Error('Project not found.');
+    if (!project) throw new Error('Không tìm thấy dự án.');
     const config = await narrationService.getConfig(projectId, language, options);
     if (!config) return null;
     const [transcript, translation, voice] = await Promise.all([

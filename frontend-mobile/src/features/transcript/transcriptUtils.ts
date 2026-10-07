@@ -15,7 +15,7 @@ export function deriveFullText(segments: readonly TranscriptSegment[]): string {
 }
 
 export function getSegmentErrors(segments: readonly TranscriptSegment[]): Record<string, string> {
-  return Object.fromEntries(segments.filter((segment) => !segment.text.trim()).map((segment) => [segment.id, 'Segment text cannot be empty.']));
+  return Object.fromEntries(segments.filter((segment) => !segment.text.trim()).map((segment) => [segment.id, 'Nội dung đoạn không được để trống.']));
 }
 
 export function hasTranscriptChanges(draft: Transcript | null, saved: Transcript | null): boolean {

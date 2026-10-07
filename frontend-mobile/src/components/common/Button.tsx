@@ -11,7 +11,7 @@ export function Button({ children, variant = 'primary', size = 'md', loading = f
   const isDisabled = disabled || loading;
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: isDisabled, busy: loading }} disabled={isDisabled} style={({ pressed }) => [styles.base, styles[size], styles[variant], pressed && !isDisabled && styles[`${variant}Pressed`], isDisabled && styles.disabled]} {...props}>
-      {loading && <Spinner label="Loading" color={variant === 'primary' || variant === 'danger' ? colors.white : colors.primary} style={styles.spinner} />}
+      {loading && <Spinner label="Đang tải" color={variant === 'primary' || variant === 'danger' ? colors.white : colors.primary} style={styles.spinner} />}
       <View><Text style={[styles.label, styles[`${variant}Label`]]}>{children}</Text></View>
     </Pressable>
   );

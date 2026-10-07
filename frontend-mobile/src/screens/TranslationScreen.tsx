@@ -22,10 +22,10 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export function TranslationScreen({ projectId, language }: { projectId: string; language?: string }) {
   const project = projectRepository.getById(projectId);
-  if (!project) return <View style={styles.container}><MobileHeader title="AI Narrator" />
-    <MobileScreen title="Translation" description="Project not found">
-      <Card><ErrorState title="Project not found" description="This project is not available." /></Card>
-      <Button onPress={() => router.replace('/projects')}>Back to Projects</Button>
+  if (!project) return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
+    <MobileScreen title="Bản dịch" description="Không tìm thấy dự án">
+      <Card><ErrorState title="Không tìm thấy dự án" description="Dự án này không khả dụng." /></Card>
+      <Button onPress={() => router.replace('/projects')}>Quay lại danh sách dự án</Button>
     </MobileScreen></View>;
   const preferredTarget = language && isLanguageCode(language) ? language : project.targetLanguage;
   return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
@@ -38,63 +38,63 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
   const translationBySource = new Map(editor.draft?.segments.map((segment) => [segment.transcriptSegmentId, segment]));
   const goBack = () => router.replace({ pathname: '/projects/[projectId]/transcript', params: { projectId: project.id } });
   function backToTranscript() {
-    if (editor.dirty) Alert.alert('Unsaved changes', 'Discard translation changes and return to Transcript?', [
-      { text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard changes', style: 'destructive', onPress: goBack },
+    if (editor.dirty) Alert.alert('Thay đổi chưa lưu', 'Hủy thay đổi bản dịch và quay lại Bản ghi?', [
+      { text: 'Tiếp tục chỉnh sửa', style: 'cancel' },
+      { text: 'Hủy thay đổi', style: 'destructive', onPress: goBack },
     ]);
     else goBack();
   }
   const sourceVisible = editor.transcript && editor.status !== 'LOADING';
   const header = <View style={styles.header}>
     <View style={styles.heading}><View style={styles.headingText}>
-      <Text style={styles.title}>Translation</Text><Text style={styles.projectName}>{project.name}</Text>
-    </View><Button size="sm" variant="ghost" disabled={editor.busy} onPress={backToTranscript}>Back to Transcript</Button></View>
-    <Text style={styles.note}>Compare the original and review each translated segment.</Text>
+      <Text style={styles.title}>Bản dịch</Text><Text style={styles.projectName}>{project.name}</Text>
+    </View><Button size="sm" variant="ghost" disabled={editor.busy} onPress={backToTranscript}>Quay lại bản ghi</Button></View>
+    <Text style={styles.note}>So sánh nội dung gốc và kiểm tra từng đoạn đã dịch.</Text>
     <WorkflowSteps current="translation" />
     <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status.replace('_', ' ')}</Badge>
     {editor.status === 'FAILED' && <Card><ErrorState
-      title={editor.failedAction === 'save' ? 'Unable to save translation' : editor.failedAction === 'load' ? 'Unable to load translation' : 'Unable to translate transcript'}
-      description={editor.error ?? 'Please try again.'} onRetry={editor.retry} /></Card>}
+      title={editor.failedAction === 'save' ? 'Không thể lưu bản dịch' : editor.failedAction === 'load' ? 'Không thể tải bản dịch' : 'Không thể dịch bản ghi'}
+      description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
     {sourceVisible && <Card style={styles.languageCard}>
-      <Text style={styles.label}>Source language</Text><Text style={styles.sourceLanguage}>{languageNames[sourceLanguage]}</Text>
-      <Text style={styles.label}>Target language</Text>
-      <View style={styles.languageOptions} accessibilityRole="radiogroup" accessibilityLabel="Target language">
+      <Text style={styles.label}>Ngôn ngữ nguồn</Text><Text style={styles.sourceLanguage}>{languageNames[sourceLanguage]}</Text>
+      <Text style={styles.label}>Ngôn ngữ đích</Text>
+      <View style={styles.languageOptions} accessibilityRole="radiogroup" accessibilityLabel="Ngôn ngữ đích">
         {filterTargetLanguages(sourceLanguage).map((language) => <Pressable key={language.code}
-          accessibilityRole="radio" accessibilityLabel={'Target language: ' + language.name}
+          accessibilityRole="radio" accessibilityLabel={'Ngôn ngữ đích: ' + language.name}
           accessibilityState={{ checked: editor.targetLanguage === language.code, disabled: !editor.canChangeTarget }}
           disabled={!editor.canChangeTarget} onPress={() => editor.changeTarget(language.code)}
           style={[styles.languageOption, editor.targetLanguage === language.code && styles.selectedLanguage, !editor.canChangeTarget && styles.disabled]}>
           <Text style={styles.languageText}>{language.nativeName}</Text><Text style={styles.note}>{language.name}</Text>
         </Pressable>)}
       </View>
-      <Text style={styles.note}>{editor.dirty ? 'Save or reset changes before choosing another language.' : 'Choose a language to create or reopen its translation.'}</Text>
-      <Text style={styles.note}>Demo translation uses fixed samples. Edited source text receives labelled sample content.</Text>
-      {!editor.draft && <Button loading={editor.status === 'TRANSLATING'} disabled={editor.busy || editor.status === 'FAILED'} onPress={editor.translate}>Translate</Button>}
+      <Text style={styles.note}>{editor.dirty ? 'Hãy lưu hoặc đặt lại thay đổi trước khi chọn ngôn ngữ khác.' : 'Chọn ngôn ngữ để tạo hoặc mở lại bản dịch.'}</Text>
+      <Text style={styles.note}>Bản dịch mô phỏng dùng dữ liệu mẫu cố định. Nội dung nguồn đã sửa sẽ nhận bản dịch mẫu có nhãn.</Text>
+      {!editor.draft && <Button loading={editor.status === 'TRANSLATING'} disabled={editor.busy || editor.status === 'FAILED'} onPress={editor.translate}>Dịch</Button>}
     </Card>}
-    {editor.status === 'TRANSLATING' && <Card style={styles.loading}><Spinner label="Translating transcript" />
-      <Text accessibilityLiveRegion="polite" style={styles.note}>Translating transcript... Preparing {editor.targetLanguage ? languageNames[editor.targetLanguage] : ''} sample translation.</Text></Card>}
-    {sourceVisible && !editor.draft && editor.status === 'NOT_STARTED' && <Text style={styles.note}>No saved translation for this language and transcript. Select Translate to begin.</Text>}
+    {editor.status === 'TRANSLATING' && <Card style={styles.loading}><Spinner label="Đang dịch bản ghi" />
+      <Text accessibilityLiveRegion="polite" style={styles.note}>Đang dịch bản ghi... Đang chuẩn bị bản dịch mẫu {editor.targetLanguage ? languageNames[editor.targetLanguage] : ''}.</Text></Card>}
+    {sourceVisible && !editor.draft && editor.status === 'NOT_STARTED' && <Text style={styles.note}>Chưa có bản dịch đã lưu cho ngôn ngữ và bản ghi này. Chọn Dịch để bắt đầu.</Text>}
   </View>;
 
-  const empty = editor.status === 'LOADING' ? <Card style={styles.loading}><Spinner label="Loading translation" />
-    <Text style={styles.note}>Loading transcript and translation...</Text></Card> : editor.status === 'NOT_STARTED' && !editor.transcript ?
-    <Card><EmptyState title="Transcript required before translation" description="Generate, review and save your transcript first."
-      action={<Button onPress={backToTranscript}>Back to Transcript</Button>} /></Card> : null;
+  const empty = editor.status === 'LOADING' ? <Card style={styles.loading}><Spinner label="Đang tải bản dịch" />
+    <Text style={styles.note}>Đang tải bản ghi và bản dịch...</Text></Card> : editor.status === 'NOT_STARTED' && !editor.transcript ?
+    <Card><EmptyState title="Cần có bản ghi trước khi dịch" description="Hãy tạo, kiểm tra và lưu bản ghi trước."
+      action={<Button onPress={backToTranscript}>Quay lại bản ghi</Button>} /></Card> : null;
 
   const footer = editor.draft && sourceVisible ? <Card style={styles.actions}>
-    <Text accessibilityLiveRegion="polite" style={styles.label}>{editor.status === 'SAVING' ? 'Saving translation...' : editor.dirty ? 'Unsaved changes' : 'Saved'}</Text>
-    {editor.invalid && <Text accessibilityRole="alert" style={styles.error}>Correct empty translations before saving.</Text>}
-    <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Save Translation</Button>
+    <Text accessibilityLiveRegion="polite" style={styles.label}>{editor.status === 'SAVING' ? 'Đang lưu bản dịch...' : editor.dirty ? 'Thay đổi chưa lưu' : 'Đã lưu'}</Text>
+    {editor.invalid && <Text accessibilityRole="alert" style={styles.error}>Hãy bổ sung các bản dịch còn trống trước khi lưu.</Text>}
+    <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Lưu bản dịch</Button>
     <Button variant="secondary" disabled={!editor.canReset} onPress={() => {
       editor.reset();
       if (!editor.saved) list.current?.scrollToOffset({ offset: 0, animated: true });
-    }}>Reset Changes</Button>
-    <Text style={styles.note}>{editor.saved ? 'Reset restores your last saved translation.' : 'Reset discards this unsaved translation so you can start again or change language.'}</Text>
-    <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onPress={() => { if (editor.targetLanguage) router.replace({ pathname: '/projects/[projectId]/voice', params: { projectId: project.id, language: editor.targetLanguage } }); }}>Continue to Voice / TTS</Button>
-    <Text style={styles.note}>Save all translation changes before choosing a narration voice.</Text>
+    }}>Đặt lại thay đổi</Button>
+    <Text style={styles.note}>{editor.saved ? 'Đặt lại về bản dịch đã lưu gần nhất.' : 'Đặt lại sẽ hủy bản dịch chưa lưu để bạn bắt đầu lại hoặc đổi ngôn ngữ.'}</Text>
+    <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onPress={() => { if (editor.targetLanguage) router.replace({ pathname: '/projects/[projectId]/voice', params: { projectId: project.id, language: editor.targetLanguage } }); }}>Tiếp tục chọn giọng đọc</Button>
+    <Text style={styles.note}>Hãy lưu mọi thay đổi bản dịch trước khi chọn giọng đọc thuyết minh.</Text>
   </Card> : null;
 
-  return <View style={styles.container}><MobileHeader title="AI Narrator" />
+  return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <FlatList ref={list} data={sourceVisible ? editor.transcript?.segments : []} keyExtractor={(segment) => segment.id}

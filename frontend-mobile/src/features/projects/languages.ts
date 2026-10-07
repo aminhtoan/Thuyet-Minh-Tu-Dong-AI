@@ -1,10 +1,10 @@
 import type { LanguageCode } from './types';
 
 export const languages: readonly { code: LanguageCode; name: string; nativeName: string }[] = [
-  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
-  { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
-  { code: 'ko', name: 'Korean', nativeName: '한국어' },
+  { code: 'vi', name: 'Tiếng Việt', nativeName: 'Tiếng Việt' },
+  { code: 'en', name: 'Tiếng Anh', nativeName: 'English' },
+  { code: 'ja', name: 'Tiếng Nhật', nativeName: '日本語' },
+  { code: 'ko', name: 'Tiếng Hàn', nativeName: '한국어' },
 ];
 
 export function filterTargetLanguages(source: LanguageCode) {

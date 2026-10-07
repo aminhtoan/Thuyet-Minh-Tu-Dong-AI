@@ -53,7 +53,7 @@ export function useTranslationEditor(projectId: string, preferredTarget: Languag
       if (controller.signal.aborted) return;
       dispatch({ transcript, targetLanguage, draft: saved, saved, status: saved ? 'SAVED' : 'NOT_STARTED', error: null, failedAction: null });
     } catch (cause) {
-      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'load', error: cause instanceof Error ? cause.message : 'Unable to load translation.' });
+      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'load', error: cause instanceof Error ? cause.message : 'Không thể tải bản dịch.' });
     }
   }, [projectId, preferredTarget, startOperation]);
 
@@ -76,7 +76,7 @@ export function useTranslationEditor(projectId: string, preferredTarget: Languag
       const draft = await translationService.translate(projectId, state.transcript, state.targetLanguage, { signal: controller.signal });
       if (!controller.signal.aborted) dispatch({ draft, saved: null, status: 'READY' });
     } catch (cause) {
-      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'translate', error: cause instanceof Error ? cause.message : 'Unable to translate transcript.' });
+      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'translate', error: cause instanceof Error ? cause.message : 'Không thể dịch bản ghi.' });
     }
   }
 
@@ -94,7 +94,7 @@ export function useTranslationEditor(projectId: string, preferredTarget: Languag
       const saved = await translationService.save(projectId, state.draft, { signal: controller.signal });
       if (!controller.signal.aborted) dispatch({ draft: saved, saved: copyTranslation(saved), status: 'SAVED' });
     } catch (cause) {
-      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'save', error: cause instanceof Error ? cause.message : 'Unable to save translation.' });
+      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'save', error: cause instanceof Error ? cause.message : 'Không thể lưu bản dịch.' });
     }
   }
 

@@ -55,7 +55,12 @@ S17 Backend Foundation.
 
 ## S16.5 — Full Vietnamese Localization
 
-- Đã chuẩn hóa nội dung hiển thị tiếng Việt trên Customer Web, Customer Mobile và Admin Web.
-- Đã thống nhất thuật ngữ TTS thành “Giọng đọc” và giữ nguyên enum, route, identifier cùng dữ liệu kỹ thuật.
-- Đã rà soát nhãn, trạng thái, thông báo lỗi, trạng thái rỗng, nút thao tác và nội dung hỗ trợ tiếp cận.
+- Customer Web Vietnamese localization: PASS
+- Admin Web Vietnamese localization: PASS
+- Mobile Vietnamese localization: PASS
+- Customer validation: PASS
+- Admin validation: PASS
+- Mobile validation: PASS
+- Frontend Freeze: YES
+- Đã thống nhất thuật ngữ TTS thành “Giọng đọc”; giữ nguyên enum, route, identifier và các giá trị kỹ thuật.
 - Không bổ sung backend, API, cơ sở dữ liệu hoặc tích hợp AI thực.

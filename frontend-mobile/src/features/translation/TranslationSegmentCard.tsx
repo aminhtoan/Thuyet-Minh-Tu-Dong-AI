@@ -15,13 +15,13 @@ export function TranslationSegmentCard({ source, translation, error, disabled, o
   return <View style={styles.card}>
     <View style={styles.meta}><Text style={styles.metaText}>#{String(source.sequence).padStart(2, '0')}</Text>
       <Text style={styles.metaText}>{formatTimestamp(source.startTime)} → {formatTimestamp(source.endTime)}</Text></View>
-    <Text style={styles.label}>Original</Text><Text selectable style={styles.source}>{source.text}</Text>
-    <Text style={styles.label}>Translation</Text>
-    {translation ? <TextInput accessibilityLabel={'Translation for segment ' + source.sequence}
+    <Text style={styles.label}>Nội dung gốc</Text><Text selectable style={styles.source}>{source.text}</Text>
+    <Text style={styles.label}>Nội dung bản dịch</Text>
+    {translation ? <TextInput accessibilityLabel={'Bản dịch cho đoạn ' + source.sequence}
       accessibilityHint={error} multiline textAlignVertical="top" autoCapitalize="none"
       value={translation.translatedText} editable={!disabled}
       onChangeText={(text) => onChange(translation.id, text)}
-      style={[styles.input, error && styles.invalid]} /> : <Text style={styles.placeholder}>Translation will appear here.</Text>}
+      style={[styles.input, error && styles.invalid]} /> : <Text style={styles.placeholder}>Bản dịch sẽ hiển thị tại đây.</Text>}
     {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
   </View>;
 }

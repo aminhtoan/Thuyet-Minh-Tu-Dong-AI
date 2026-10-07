@@ -245,3 +245,4 @@ Project screens use clearly marked development mock data. Backend project APIs a
 - Thuật ngữ nghiệp vụ được thống nhất: Bảng điều khiển, Dự án, Bản ghi, Bản dịch, Giọng đọc, Tạo thuyết minh và Kết quả.
 - Các giá trị kỹ thuật như route, enum, mã ngôn ngữ, tên nhà cung cấp và định dạng tệp vẫn được giữ nguyên.
 - Dữ liệu mẫu bằng ngôn ngữ nguồn/đích có thể giữ nguyên để minh họa đúng quy trình đa ngôn ngữ.
+- Mobile đã hoàn tất Việt hóa New Project, Transcript, Translation, Voice, Generate, Result cùng loading/error/empty state, alert và nội dung hỗ trợ tiếp cận.

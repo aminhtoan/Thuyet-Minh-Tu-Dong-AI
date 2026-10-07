@@ -24,7 +24,7 @@ export const narrationService = {
     const translation = await translationService.getSavedTranslation(projectId, config.languageCode, { signal: options.signal });
     if (!translation || config.projectId !== projectId || config.translationId !== translation.id ||
         config.translationRevision !== translationRevision(translation)) {
-      throw new Error('The saved translation changed or is unavailable. Return to Translation and reopen Voice.');
+      throw new Error('Bản dịch đã lưu đã thay đổi hoặc không khả dụng. Hãy quay lại Bản dịch rồi mở lại Giọng đọc.');
     }
     const error = validateNarrationConfig(config, voices);
     if (error) throw new Error(error);

@@ -8,7 +8,7 @@ export function transcriptRevision(transcript: Transcript): string {
 export function validateTranslation(translation: Translation): Record<string, string> {
   return Object.fromEntries(translation.segments
     .filter((segment) => !segment.translatedText.trim())
-    .map((segment) => [segment.id, 'Translation cannot be empty.']));
+    .map((segment) => [segment.id, 'Bản dịch không được để trống.']));
 }
 
 export function hasTranslationChanges(draft: Translation | null, saved: Translation | null): boolean {

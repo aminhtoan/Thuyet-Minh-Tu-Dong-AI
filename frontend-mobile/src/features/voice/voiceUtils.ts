@@ -29,12 +29,12 @@ export function createNarrationConfig(translation: Translation): NarrationConfig
     voiceId: '', speed: 1, translationRevision: translationRevision(translation) };
 }
 export function validateNarrationConfig(config: NarrationConfig, voices: readonly Voice[]): string | null {
-  if (!config.projectId || !config.translationId || !config.languageCode) return 'A saved translation is required.';
-  if (!config.voiceId) return 'Select a voice before saving.';
+  if (!config.projectId || !config.translationId || !config.languageCode) return 'Cần có bản dịch đã lưu.';
+  if (!config.voiceId) return 'Hãy chọn giọng đọc trước khi lưu.';
   if (!voices.some((voice) => voice.id === config.voiceId && voice.isActive && voice.languageCode === config.languageCode)) {
-    return 'Select an available voice for the translation language.';
+    return 'Hãy chọn giọng đọc khả dụng cho ngôn ngữ bản dịch.';
   }
-  if (!isValidSpeed(config.speed)) return 'Speech speed must be between 0.5x and 2.0x.';
+  if (!isValidSpeed(config.speed)) return 'Tốc độ giọng đọc phải nằm trong khoảng từ 0.5x đến 2.0x.';
   return null;
 }
 export function hasNarrationConfigChanges(draft: NarrationConfig | null, saved: NarrationConfig | null): boolean {

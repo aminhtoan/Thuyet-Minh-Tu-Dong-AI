@@ -15,7 +15,7 @@ export const voiceService = {
     return voice ? { ...voice } : null;
   },
   async previewVoice(id: string, options: MockOptions = {}): Promise<void> {
-    if (!await this.getVoice(id, options)) throw new Error('This voice is not available.');
+    if (!await this.getVoice(id, options)) throw new Error('Giọng đọc này không khả dụng.');
     // No audio is played. The abortable duration drives a labelled preview simulation.
     await waitForMock(2400, options);
   },

@@ -12,11 +12,11 @@ function copyTranscript(transcript: Transcript): Transcript {
 
 function waitForMock(ms: number, { signal, fail }: MockOptions): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (signal?.aborted) { reject(new Error('Operation cancelled')); return; }
-    const onAbort = () => { clearTimeout(timer); reject(new Error('Operation cancelled')); };
+    if (signal?.aborted) { reject(new Error('Đã hủy thao tác')); return; }
+    const onAbort = () => { clearTimeout(timer); reject(new Error('Đã hủy thao tác')); };
     const timer = setTimeout(() => {
       signal?.removeEventListener('abort', onAbort);
-      if (fail) reject(new Error('Mock transcript operation failed. Please retry.'));
+      if (fail) reject(new Error('Thao tác bản ghi mô phỏng thất bại. Vui lòng thử lại.'));
       else resolve();
     }, ms);
     signal?.addEventListener('abort', onAbort, { once: true });
@@ -25,7 +25,7 @@ function waitForMock(ms: number, { signal, fail }: MockOptions): Promise<void> {
 
 function requireProject(projectId: string) {
   const project = projectRepository.getById(projectId);
-  if (!project) throw new Error('Project not found.');
+  if (!project) throw new Error('Không tìm thấy dự án.');
   return project;
 }
 
@@ -39,7 +39,7 @@ export const transcriptService = {
   async generateTranscript(projectId: string, options: MockOptions = {}): Promise<Transcript> {
     await waitForMock(1100, options);
     const project = requireProject(projectId);
-    if (project.status === 'DRAFT') throw new Error('Upload media before generating a transcript.');
+    if (project.status === 'DRAFT') throw new Error('Hãy tải phương tiện lên trước khi tạo bản ghi.');
     const lines = mockTranscriptLines[project.sourceLanguage];
     const now = new Date().toISOString();
     const segments: TranscriptSegment[] = lines.map((text, index) => ({
@@ -54,7 +54,7 @@ export const transcriptService = {
   async saveTranscript(projectId: string, draft: Transcript, options: MockOptions = {}): Promise<Transcript> {
     await waitForMock(500, options);
     requireProject(projectId);
-    if (draft.projectId !== projectId || draft.segments.length === 0 || Object.keys(getSegmentErrors(draft.segments)).length) throw new Error('Correct the transcript before saving.');
+    if (draft.projectId !== projectId || draft.segments.length === 0 || Object.keys(getSegmentErrors(draft.segments)).length) throw new Error('Hãy chỉnh sửa bản ghi trước khi lưu.');
     const segments = draft.segments.map((segment) => ({ ...segment, text: segment.text.trim() }));
     const saved: Transcript = { ...draft, status: 'SAVED', segments, fullText: deriveFullText(segments), updatedAt: new Date().toISOString() };
     savedTranscripts.set(projectId, copyTranscript(saved));

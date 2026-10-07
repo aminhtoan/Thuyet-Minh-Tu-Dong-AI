@@ -21,10 +21,10 @@ import { colors, spacing, typography } from '@/theme/tokens';
 
 export function VoiceScreen({ projectId, language }: { projectId: string; language?: string }) {
   const project = projectRepository.getById(projectId);
-  if (!project || (language !== undefined && !isLanguageCode(language))) return <View style={styles.container}><MobileHeader title="AI Narrator" />
-    <MobileScreen title="Voice & Narration" description="Open a saved translation first.">
-      <Card><ErrorState title={project ? 'Language unavailable' : 'Project not found'} description="Return to Projects and open a saved translation." /></Card>
-      <Button onPress={() => router.replace('/projects')}>Back to Projects</Button>
+  if (!project || (language !== undefined && !isLanguageCode(language))) return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
+    <MobileScreen title="Giọng đọc và thuyết minh" description="Hãy mở một bản dịch đã lưu trước.">
+      <Card><ErrorState title={project ? 'Ngôn ngữ không khả dụng' : 'Không tìm thấy dự án'} description="Quay lại danh sách dự án và mở một bản dịch đã lưu." /></Card>
+      <Button onPress={() => router.replace('/projects')}>Quay lại danh sách dự án</Button>
     </MobileScreen></View>;
   return <VoiceWorkspace key={project.id + (language ?? '')} project={project} language={language} />;
 }
@@ -35,68 +35,68 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
   const goBack = () => router.replace({ pathname: '/projects/[projectId]/translation', params: { projectId: project.id, ...(target ? { language: target } : {}) } });
   function backToTranslation() {
     editor.stopPreview();
-    if (editor.dirty) Alert.alert('Unsaved changes', 'Discard voice configuration changes and return to Translation?', [
-      { text: 'Keep editing', style: 'cancel' }, { text: 'Discard changes', style: 'destructive', onPress: goBack },
+    if (editor.dirty) Alert.alert('Thay đổi chưa lưu', 'Hủy thay đổi cấu hình giọng đọc và quay lại Bản dịch?', [
+      { text: 'Tiếp tục chỉnh sửa', style: 'cancel' }, { text: 'Hủy thay đổi', style: 'destructive', onPress: goBack },
     ]);
     else goBack();
   }
   const characterCount = editor.translation?.segments.reduce((count, segment) => count + segment.translatedText.length, 0) ?? 0;
   const showConfiguration = editor.translation && editor.draft && editor.status !== 'LOADING';
   const header = <View style={styles.header}>
-    <View style={styles.heading}><Text style={styles.title}>Voice & Narration</Text>
-      <Button size="sm" variant="ghost" disabled={editor.busy} onPress={backToTranslation}>Back to Translation</Button></View>
+    <View style={styles.heading}><Text style={styles.title}>Giọng đọc và thuyết minh</Text>
+      <Button size="sm" variant="ghost" disabled={editor.busy} onPress={backToTranslation}>Quay lại bản dịch</Button></View>
     <Text style={styles.projectName}>{project.name}</Text>
-    <Text style={styles.note}>Choose a voice and speech settings for your translated content.</Text>
+    <Text style={styles.note}>Chọn giọng đọc và thiết lập cách đọc cho nội dung đã dịch.</Text>
     <WorkflowSteps current="voice" />
     <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status}</Badge>
-    {editor.status === 'FAILED' && <Card><ErrorState title={editor.failedAction === 'save' ? 'Unable to save configuration' : 'Unable to load voices'} description={editor.error ?? 'Please retry.'} onRetry={editor.retry} /></Card>}
+    {editor.status === 'FAILED' && <Card><ErrorState title={editor.failedAction === 'save' ? 'Không thể lưu cấu hình' : 'Không thể tải giọng đọc'} description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
     {showConfiguration && editor.translation && <>
-      <Card style={styles.summary}><Text style={styles.label}>Narration language</Text>
+      <Card style={styles.summary}><Text style={styles.label}>Ngôn ngữ thuyết minh</Text>
         <Text style={styles.sectionTitle}>{languageNames[editor.translation.targetLanguage]}</Text>
-        <Text style={styles.note}>{editor.translation.segments.length} segments · {characterCount} characters</Text>
+        <Text style={styles.note}>{editor.translation.segments.length} phân đoạn · {characterCount} ký tự</Text>
         <Text numberOfLines={5} style={styles.description}>{editor.translation.segments.slice(0, 2).map((segment) => segment.translatedText).join(' ')}</Text>
       </Card>
-      <Text style={styles.sectionTitle}>Choose Voice</Text>
-      <View style={styles.controls} accessibilityLabel="Filter voices by gender">
+      <Text style={styles.sectionTitle}>Chọn giọng đọc</Text>
+      <View style={styles.controls} accessibilityLabel="Lọc giọng đọc theo giới tính">
         {voiceFilters.map((gender) => <Button key={gender} variant={editor.gender === gender ? 'primary' : 'secondary'}
-          accessibilityState={{ selected: editor.gender === gender }} onPress={() => editor.setGender(gender)}>{gender}</Button>)}
+          accessibilityState={{ selected: editor.gender === gender }} onPress={() => editor.setGender(gender)}>{gender === 'All' ? 'Tất cả' : gender === 'Female' ? 'Nữ' : 'Nam'}</Button>)}
       </View>
     </>}
-    {editor.previewError && <Card><ErrorState title="Unable to preview voice" description={editor.previewError}
+    {editor.previewError && <Card><ErrorState title="Không thể nghe thử giọng đọc" description={editor.previewError}
       onRetry={() => { if (editor.failedPreviewId) void editor.preview(editor.failedPreviewId); }} /></Card>}
   </View>;
 
-  const empty = editor.status === 'LOADING' ? <Card style={styles.loading}><Spinner label="Loading voices" /><Text style={styles.note}>Loading voices and configuration...</Text></Card>
-    : !editor.translation && editor.status !== 'FAILED' ? <Card><EmptyState title="Translation required before selecting a voice."
-      description="Review and save your translated segments first." action={<Button onPress={backToTranslation}>Back to Translation</Button>} /></Card>
-    : showConfiguration ? <Card><EmptyState title={editor.voices.length ? 'No voices match your filters.' : 'No voices are currently available for ' + (target ? languageNames[target] : 'this language') + '.'}
-      description={editor.voices.length ? 'Choose another gender filter.' : 'Return to Translation to review another saved language.'}
-      action={editor.voices.length ? <Button onPress={() => editor.setGender('All')}>Clear filters</Button> : <Button onPress={backToTranslation}>Back to Translation</Button>} /></Card> : null;
+  const empty = editor.status === 'LOADING' ? <Card style={styles.loading}><Spinner label="Đang tải giọng đọc" /><Text style={styles.note}>Đang tải giọng đọc và cấu hình...</Text></Card>
+    : !editor.translation && editor.status !== 'FAILED' ? <Card><EmptyState title="Cần có bản dịch trước khi chọn giọng đọc."
+      description="Hãy kiểm tra và lưu các phân đoạn đã dịch trước." action={<Button onPress={backToTranslation}>Quay lại bản dịch</Button>} /></Card>
+    : showConfiguration ? <Card><EmptyState title={editor.voices.length ? 'Không có giọng đọc phù hợp với bộ lọc.' : 'Hiện chưa có giọng đọc cho ' + (target ? languageNames[target] : 'ngôn ngữ này') + '.'}
+      description={editor.voices.length ? 'Hãy chọn bộ lọc giới tính khác.' : 'Quay lại Bản dịch để chọn một ngôn ngữ đã lưu khác.'}
+      action={editor.voices.length ? <Button onPress={() => editor.setGender('All')}>Xóa bộ lọc</Button> : <Button onPress={backToTranslation}>Quay lại bản dịch</Button>} /></Card> : null;
 
   const footer = showConfiguration && editor.draft ? <View style={styles.footer}>
-    <Card style={styles.summary}><Text style={styles.sectionTitle}>Speech Speed</Text>
-      <Text style={styles.label}>Current: {formatSpeed(editor.draft.speed)}</Text>
-      <View style={styles.controls} accessibilityLabel="Speech speed">
+    <Card style={styles.summary}><Text style={styles.sectionTitle}>Tốc độ giọng đọc</Text>
+      <Text style={styles.label}>Hiện tại: {formatSpeed(editor.draft.speed)}</Text>
+      <View style={styles.controls} accessibilityLabel="Tốc độ giọng đọc">
         {speedPresets.map((speed) => <Button key={speed} variant={editor.draft?.speed === speed ? 'primary' : 'secondary'}
-          disabled={editor.busy} accessibilityLabel={'Speech speed ' + formatSpeed(speed)}
+          disabled={editor.busy} accessibilityLabel={'Tốc độ giọng đọc ' + formatSpeed(speed)}
           accessibilityState={{ selected: editor.draft?.speed === speed, disabled: editor.busy }}
           onPress={() => editor.updateConfig({ speed })}>{formatSpeed(speed)}</Button>)}
-      </View><Text style={styles.note}>Slower speeds create longer narration. Faster speeds create shorter narration.</Text>
+      </View><Text style={styles.note}>Tốc độ chậm tạo phần thuyết minh dài hơn; tốc độ nhanh tạo phần thuyết minh ngắn hơn.</Text>
     </Card>
-    <Card style={styles.summary}><Text style={styles.sectionTitle}>Narration Configuration</Text>
-      <Text style={styles.description}>Language: {languageNames[editor.draft.languageCode]}</Text>
-      <Text style={styles.description}>Voice: {editor.selectedVoice?.name ?? 'Not selected'}</Text>
-      <Text style={styles.description}>Speed: {formatSpeed(editor.draft.speed)}</Text>
+    <Card style={styles.summary}><Text style={styles.sectionTitle}>Cấu hình thuyết minh</Text>
+      <Text style={styles.description}>Ngôn ngữ: {languageNames[editor.draft.languageCode]}</Text>
+      <Text style={styles.description}>Giọng đọc: {editor.selectedVoice?.name ?? 'Chưa chọn'}</Text>
+      <Text style={styles.description}>Tốc độ: {formatSpeed(editor.draft.speed)}</Text>
       {editor.validationError && <Text accessibilityLiveRegion="polite" style={styles.error}>{editor.validationError}</Text>}
-      <Text accessibilityLiveRegion="polite" style={styles.label}>{editor.status === 'SAVING' ? 'Saving configuration...' : editor.dirty ? 'Unsaved changes' : editor.saved ? 'Saved' : 'Choose a voice to configure narration.'}</Text>
-      <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Save Configuration</Button>
-      <Button variant="secondary" disabled={!editor.dirty || editor.busy} onPress={editor.reset}>Reset Changes</Button>
-      <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.busy || Boolean(editor.validationError) || editor.status === 'FAILED'} onPress={() => { if (target) { editor.stopPreview(); router.replace({ pathname: '/projects/[projectId]/generate', params: { projectId: project.id, language: target } }); } }}>Continue to Generate</Button>
-      <Text style={styles.note}>Save all configuration changes before continuing. The next step simulates processing.</Text>
+      <Text accessibilityLiveRegion="polite" style={styles.label}>{editor.status === 'SAVING' ? 'Đang lưu cấu hình...' : editor.dirty ? 'Thay đổi chưa lưu' : editor.saved ? 'Đã lưu' : 'Chọn giọng đọc để cấu hình thuyết minh.'}</Text>
+      <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Lưu cấu hình</Button>
+      <Button variant="secondary" disabled={!editor.dirty || editor.busy} onPress={editor.reset}>Đặt lại thay đổi</Button>
+      <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.busy || Boolean(editor.validationError) || editor.status === 'FAILED'} onPress={() => { if (target) { editor.stopPreview(); router.replace({ pathname: '/projects/[projectId]/generate', params: { projectId: project.id, language: target } }); } }}>Tiếp tục tạo thuyết minh</Button>
+      <Text style={styles.note}>Hãy lưu mọi thay đổi cấu hình trước khi tiếp tục. Bước tiếp theo sẽ mô phỏng quá trình xử lý.</Text>
     </Card>
   </View> : null;
 
-  return <View style={styles.container}><MobileHeader title="AI Narrator" />
+  return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
     <SafeAreaView edges={['bottom']} style={styles.container}>
       <FlatList data={showConfiguration ? editor.visibleVoices : []} keyExtractor={(voice) => voice.id}
         contentContainerStyle={styles.content} ListHeaderComponent={header} ListEmptyComponent={empty}

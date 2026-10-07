@@ -19,7 +19,7 @@ export const resultService = {
   },
   async getByProjectId(projectId: string, language?: LanguageCode): Promise<Result | null> {
     const project = projectRepository.getById(projectId);
-    if (!project) throw new Error('Project not found');
+    if (!project) throw new Error('Không tìm thấy dự án');
     const saved = [...results.values()].filter(item => item.projectId === projectId && (!language || item.languageCode === language))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
     if (saved) return { ...saved };

@@ -10,7 +10,7 @@ export function ProcessingStage({ stage }: { stage: Stage }) {
   const active = stage.status === 'PROCESSING';
   return <View style={[styles.stage, active && styles.active, stage.status === 'FAILED' && styles.failed]}>
     <View style={styles.heading}>
-      {active ? <Spinner label={stage.title + ' processing'} /> : <Text style={styles.icon}>{stage.status === 'COMPLETED' ? '✓' : stage.status === 'FAILED' ? '!' : stage.status === 'CANCELLED' ? '×' : '○'}</Text>}
+      {active ? <Spinner label={'Đang xử lý ' + stage.title} /> : <Text style={styles.icon}>{stage.status === 'COMPLETED' ? '✓' : stage.status === 'FAILED' ? '!' : stage.status === 'CANCELLED' ? '×' : '○'}</Text>}
       <Text style={styles.title}>{stage.title}</Text>
       <Badge variant={stage.status === 'COMPLETED' ? 'success' : stage.status === 'FAILED' ? 'error' : active ? 'info' : 'default'}>{stage.status}</Badge>
     </View>

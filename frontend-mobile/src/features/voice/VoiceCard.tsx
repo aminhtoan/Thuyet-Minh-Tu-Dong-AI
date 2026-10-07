@@ -7,13 +7,13 @@ import type { Voice } from './types';
 type Props = { voice: Voice; selected: boolean; previewing: boolean; disabled: boolean; onSelect: () => void; onPreview: () => void };
 export function VoiceCard({ voice, selected, previewing, disabled, onSelect, onPreview }: Props) {
   return <View style={[styles.card, selected && styles.selected]}>
-    <View style={styles.heading}><Text style={styles.name}>{voice.name}</Text>{selected && <Text style={styles.selectedLabel}>✓ Selected</Text>}</View>
+    <View style={styles.heading}><Text style={styles.name}>{voice.name}</Text>{selected && <Text style={styles.selectedLabel}>✓ Đã chọn</Text>}</View>
     <Text style={styles.note}>{voice.gender} · {languageNames[voice.languageCode]}</Text>
     <Text style={styles.description}>{voice.description}</Text>
-    <Text accessibilityLiveRegion="polite" style={styles.note}>{previewing ? 'Preview simulation running... No audio is played.' : 'Demo voice · simulated preview'}</Text>
+    <Text accessibilityLiveRegion="polite" style={styles.note}>{previewing ? 'Đang mô phỏng nghe thử... Không phát âm thanh.' : 'Giọng đọc mẫu · nghe thử mô phỏng'}</Text>
     <View style={styles.actions}>
-      <Button variant="secondary" disabled={disabled} accessibilityLabel={(previewing ? 'Stop preview of ' : 'Preview ') + voice.name + ' voice'} onPress={onPreview}>{previewing ? 'Stop Preview' : 'Preview'}</Button>
-      <Button variant={selected ? 'primary' : 'secondary'} disabled={disabled} accessibilityLabel={'Select ' + voice.name + ' voice'} accessibilityState={{ selected, disabled }} onPress={onSelect}>{selected ? 'Selected' : 'Select'}</Button>
+      <Button variant="secondary" disabled={disabled} accessibilityLabel={(previewing ? 'Dừng nghe thử giọng ' : 'Nghe thử giọng ') + voice.name} onPress={onPreview}>{previewing ? 'Dừng nghe thử' : 'Nghe thử'}</Button>
+      <Button variant={selected ? 'primary' : 'secondary'} disabled={disabled} accessibilityLabel={'Chọn giọng ' + voice.name} accessibilityState={{ selected, disabled }} onPress={onSelect}>{selected ? 'Đã chọn' : 'Chọn'}</Button>
     </View>
   </View>;
 }

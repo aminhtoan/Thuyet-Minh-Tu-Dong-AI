@@ -45,7 +45,7 @@ export function useVoiceEditor(projectId: string, language?: LanguageCode) {
       ]);
       if (!controller.signal.aborted) dispatch({ translation, voices, saved, draft: saved ? { ...saved } : createNarrationConfig(translation), status: saved ? 'SAVED' : 'READY', error: null, failedAction: null });
     } catch (cause) {
-      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'load', error: cause instanceof Error ? cause.message : 'Unable to load voices.' });
+      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'load', error: cause instanceof Error ? cause.message : 'Không thể tải giọng đọc.' });
     }
   }, [projectId, language]);
 
@@ -77,7 +77,7 @@ export function useVoiceEditor(projectId: string, language?: LanguageCode) {
       if (!controller.signal.aborted) {
         setPreviewingVoiceId(null);
         setFailedPreviewId(id);
-        setPreviewError(cause instanceof Error ? cause.message : 'Unable to preview this voice.');
+        setPreviewError(cause instanceof Error ? cause.message : 'Không thể nghe thử giọng đọc này.');
       }
     }
   }
@@ -99,7 +99,7 @@ export function useVoiceEditor(projectId: string, language?: LanguageCode) {
       const saved = await narrationService.saveConfig(projectId, state.draft, { signal: controller.signal });
       if (!controller.signal.aborted) dispatch({ draft: saved, saved: { ...saved }, status: 'SAVED' });
     } catch (cause) {
-      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'save', error: cause instanceof Error ? cause.message : 'Unable to save configuration.' });
+      if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'save', error: cause instanceof Error ? cause.message : 'Không thể lưu cấu hình.' });
     }
   }
   function reset() {
