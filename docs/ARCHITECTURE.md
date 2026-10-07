@@ -35,7 +35,7 @@ multilingual-ai-narration/
 └── README.md
 ```
 
-MongoDB với Mongoose là database/ODM của backend. S17 triển khai foundation, S18 auth/RBAC và S19 Customer Project/Media API. FFmpeg và AI providers chưa tích hợp.
+MongoDB với Mongoose là database/ODM của backend. S17 triển khai foundation, S18 auth/RBAC, S19 Customer Project/Media API, S20 STT và S21 Translation. TTS và FFmpeg chưa tích hợp.
 
 ## Authentication and Authorization
 
@@ -180,7 +180,7 @@ REST base `/api` đã tồn tại. S19 bổ sung Customer `/api/projects/**` và
 | S18 | Authentication, JWT & RBAC | Completed in backend; frontend integration deferred |
 | S19 | Project & Media API | Completed; frontend integration deferred |
 | S20 | Speech-to-Text Integration | Implemented; real provider smoke pending credentials |
-| S21 | Translation Integration | Planned |
+| S21 | Translation Integration | Implemented |
 | S22 | Text-to-Speech Integration | Planned |
 | S23 | FFmpeg Media Processing | Planned |
 | S24 | Full Frontend/Backend Integration | Planned |

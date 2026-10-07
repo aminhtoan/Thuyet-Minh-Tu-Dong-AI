@@ -5,6 +5,7 @@ const processingJobSchema = new Schema(
   {
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true, index: true },
     type: { type: String, enum: PROCESSING_JOB_TYPES, required: true },
+    targetLanguage: { type: String, trim: true, lowercase: true },
     status: { type: String, enum: PROCESSING_JOB_STATUSES, required: true, default: 'QUEUED', index: true },
     progress: { type: Number, required: true, default: 0, min: 0, max: 100 },
     errorMessage: { type: String, trim: true },
@@ -16,6 +17,10 @@ const processingJobSchema = new Schema(
 
 processingJobSchema.index({ projectId: 1, createdAt: -1 });
 processingJobSchema.index({ status: 1, type: 1, createdAt: -1 });
+processingJobSchema.index(
+  { projectId: 1, type: 1, targetLanguage: 1, status: 1 },
+  { unique: true, partialFilterExpression: { type: 'TRANSLATION', status: 'PROCESSING' } },
+);
 
 export type ProcessingJobDocument = InferSchemaType<typeof processingJobSchema>;
 export const ProcessingJob = model<ProcessingJobDocument>('ProcessingJob', processingJobSchema);

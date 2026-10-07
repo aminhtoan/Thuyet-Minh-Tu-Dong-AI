@@ -2,13 +2,18 @@
 
 ## Current Sprint
 
-S20 Speech-to-Text Integration
+S21 Translation Integration
 
 ## Status
 
-COMPLETED (implementation/tests; real provider smoke not run without API key)
+COMPLETED (implementation/tests; real provider smoke không chạy do giới hạn credit hiện tại)
 
 ## Implemented
+
+- Translation provider abstraction và OpenAI Responses API adapter với structured JSON output.
+- API tạo/lấy bản dịch đồng bộ theo segment; lưu `Translation` và `TranslationSegment` theo source alignment.
+- Hỗ trợ nhiều target language, idempotency, retry và khóa active job cùng target.
+- S18–S21: 82 tests PASS; S21 tests dùng mock provider, không tiêu thụ OpenAI credit.
 
 - STT abstraction và OpenAI `whisper-1` adapter; synchronous transcription/transcript endpoints.
 - Transcript/ordered timestamp segments persistence và ProcessingJob lifecycle.
@@ -63,11 +68,11 @@ COMPLETED (implementation/tests; real provider smoke not run without API key)
 
 - Local `.env` cần bổ sung các biến JWT khác nhau và `ADMIN_SEED_*` trước khi chạy/seed; credential không được commit.
 - Chưa có Project/Media CRUD, upload hoặc frontend auth integration.
-- Chưa tích hợp STT, Translation, TTS, FFmpeg, queue hay worker.
+- Chưa tích hợp TTS, FFmpeg, queue hay worker; frontend chưa gọi backend thật.
 
 ## Next
 
-S21 Translation Integration.
+S22 Text-to-Speech Integration.
 
 ## S16.5 — Full Vietnamese Localization
 

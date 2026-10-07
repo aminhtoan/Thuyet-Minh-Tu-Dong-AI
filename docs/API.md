@@ -1,6 +1,6 @@
 # API Status and Conventions
 
-## Current: S20 Speech-to-Text Integration
+## Current: S21 Translation Integration
 
 Backend hiện triển khai:
 
@@ -20,7 +20,7 @@ Hai route yêu cầu JWT, role `CUSTOMER` và ownership. POST xử lý đồng b
 
 GET trả full text cùng ordered timestamp segments. Lỗi chuẩn gồm `TRANSCRIPT_NOT_FOUND`, `MEDIA_NOT_FOUND`, `MEDIA_FILE_MISSING`, `INVALID_PROJECT_STATE`, `TRANSCRIPTION_ALREADY_RUNNING`, `STT_NOT_CONFIGURED`, `STT_FILE_TOO_LARGE`, `STT_TIMEOUT`, `STT_INVALID_RESPONSE`, `STT_PROVIDER_ERROR`. Client không cung cấp filesystem path.
 
-Response sử dụng envelope chuẩn. Auth và Customer Project/Media backend đã có; Admin business API, STT, Translation, TTS, FFmpeg, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
+Response sử dụng envelope chuẩn. Auth, Customer Project/Media, STT và Translation backend đã có; Admin business API, TTS, FFmpeg, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
 
 ## Project and Media API (Implemented)
 
@@ -87,7 +87,9 @@ Project/Media routes above are implemented. Transcript, Translation, Narration, 
 
 **CURRENT:** `translationService.get(projectId, targetLanguage)`, `translate(projectId, transcript, targetLanguage)` and `save(projectId, translation)` use deterministic sample data and module memory. A valid saved S7 transcript is required. Each translation segment retains its source segment ID, sequence and numeric start/end seconds. Save validates text and source alignment. A development-only source fingerprint prevents loading/saving stale translations after transcript edits.
 
-**PROPOSED:** `POST /api/projects/:id/translations` with `{ targetLanguage }`, `GET /api/projects/:id/translations`, `GET /api/projects/:id/translations/:targetLanguage`, and `PUT /api/projects/:id/translations/:targetLanguage`. Future responses include project/source/target language, status and aligned translated segments. Backend: **NOT_IMPLEMENTED**. Translation provider: **NOT_INTEGRATED**, planned S21.
+**IMPLEMENTED:** `POST /api/projects/:id/translations` với `{ targetLanguage }`, `GET /api/projects/:id/translations` và `GET /api/projects/:id/translations/:targetLanguage`. Các route yêu cầu JWT, role `CUSTOMER` và ownership. POST xử lý đồng bộ bằng một structured provider request, lưu full text cùng translated segments liên kết source segment. Một Transcript hỗ trợ nhiều target language; target đã hoàn tất trả idempotently, active job cùng target trả `TRANSLATION_ALREADY_RUNNING`.
+
+Lifecycle: `TRANSCRIBED|TRANSLATED|FAILED → TRANSLATING → TRANSLATED`; lỗi provider chuyển sang `FAILED` và có thể retry. Các lỗi chính gồm `TRANSCRIPT_NOT_FOUND`, `INVALID_PROJECT_STATE`, `SAME_SOURCE_TARGET_LANGUAGE`, `TRANSLATION_NOT_FOUND`, `TRANSLATION_NOT_CONFIGURED`, `TRANSLATION_TIMEOUT`, `TRANSLATION_INVALID_RESPONSE` và `TRANSLATION_PROVIDER_ERROR`.
 
 ### Voice and narration boundary (S9)
 

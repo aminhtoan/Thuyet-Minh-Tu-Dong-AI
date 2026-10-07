@@ -41,7 +41,7 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - Development media storage is planned under ignored `backend/uploads/`; production may use object storage.
 - Long AI/media tasks will use `ProcessingJob` records; provider-facing services remain replaceable.
 - FFmpeg is planned for extraction/normalization/merging, not installed in S6.
-- AI providers, worker implementation and queue technology are not decided.
+- STT và Translation dùng provider abstraction với OpenAI adapter; TTS, worker và queue technology chưa được quyết định.
 
 ## Authentication and Security
 
@@ -63,17 +63,18 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - S9: Web/Mobile Voice & TTS configuration, active language-scoped voices, simulated preview, speed selection and mock save/reset. Voice data is MOCK; TTS is NOT_INTEGRATED; narration audio is NOT_GENERATED.
 - S10: saved-configuration generation summary, confirmation and simulated narration/media progress on Web/Mobile, with completed/failed/cancelled states, retry and timer cleanup. Processing is MOCK; real TTS/FFmpeg are NOT_INTEGRATED and no output media is generated.
 - S12: separate Admin foundation with mock login and the shell later completed across S13–S16.
-- S17 foundation, S18 auth/JWT/RBAC và S19 Project CRUD/Media upload đã có trong backend. Chưa có STT hoặc AI processing.
+- S17 foundation, S18 auth/JWT/RBAC, S19 Project/Media, S20 STT và S21 Translation đã có trong backend. TTS và FFmpeg chưa được tích hợp.
 
 ## Current Sprint and Next Direction
 
-S9–S16.5 frontend scope đã hoàn thành. Backend hiện có foundation, auth, Project/Media và S20 transcription; hướng tiếp theo là S21 Translation.
+S9–S16.5 frontend scope đã hoàn thành. Backend hiện có foundation, auth, Project/Media, S20 transcription và S21 translation; hướng tiếp theo là S22 Text-to-Speech.
 
 ## Domain Alignment Snapshot
 
 - `Project` is the central aggregate owned by one `User`.
 - Customer Project ownership được enforce từ access token. Mỗi Project có tối đa một source Media; binary development nằm dưới ignored `backend/uploads/`, MongoDB chỉ lưu metadata/path nội bộ.
 - STT dùng provider abstraction với OpenAI `whisper-1` adapter, xử lý đồng bộ, lưu Transcript cùng ordered timestamp segments và ProcessingJob history. Retry từ `FAILED`; active request trùng bị chặn.
+- Translation dùng provider abstraction và OpenAI text adapter, xử lý structured batch đồng bộ, lưu nhiều target language với source segment alignment. Target đã hoàn tất trả idempotently; retry và active-job protection được backend enforce.
 - Core domain entities: User, Project, Media, Transcript, TranscriptSegment, Translation, TranslationSegment, Language, Voice, Narration, ProcessingJob, Result, ActivityLog.
 - A Project may have many target-language Translations and Narrations.
 - `ProjectStatus` describes the aggregate lifecycle; `ProcessingJobStatus` describes a long-running task; S5 `UploadStatus` is local UI state.

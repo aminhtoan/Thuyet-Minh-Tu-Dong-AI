@@ -221,7 +221,7 @@ npm run seed:admin
 npm start
 ```
 
-Auth, Project/Media và transcription routes đã có. STT adapter dùng `STT_PROVIDER=openai`, `STT_MODEL=whisper-1`, `OPENAI_API_KEY`; key không được commit. Translation, TTS, FFmpeg, queue/worker và frontend integration chưa có.
+Auth, Project/Media, transcription và translation routes đã có. STT adapter dùng `STT_PROVIDER=openai`, `STT_MODEL=whisper-1`; Translation adapter dùng `TRANSLATION_PROVIDER=openai`, `TRANSLATION_MODEL=gpt-4o-mini`. Cả hai đọc `OPENAI_API_KEY` từ backend environment; key không được commit. TTS, FFmpeg, queue/worker và frontend integration chưa có.
 
 ## Cổng phát triển
 
@@ -273,7 +273,8 @@ Foundation, auth, Project/Media và STT endpoints đã có. Translation/TTS/proc
 - S18: Authentication, JWT và backend-enforced RBAC — đã hoàn thành trong backend; frontend chưa tích hợp.
 - S19: Project + Media API — đã hoàn thành trong backend; frontend chưa tích hợp.
 - S20: Speech-to-Text — implementation/tests hoàn tất; real provider smoke chưa chạy do thiếu API key.
-- S21 trở đi: Translation, TTS và FFmpeg.
+- S21: Translation theo segment, nhiều target language, persistence, retry/concurrency protection — đã hoàn thành trong backend.
+- S22 trở đi: TTS và FFmpeg.
 
 Secret như `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
 

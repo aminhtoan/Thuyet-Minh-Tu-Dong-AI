@@ -11,7 +11,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src tests --max-warnings=0",
-    "test": "node --import tsx --test --test-concurrency=1 tests/auth.test.ts tests/project-media.test.ts tests/transcription.test.ts",
+    "test": "node --import tsx --test --test-concurrency=1 tests/auth.test.ts tests/project-media.test.ts tests/transcription.test.ts tests/translation.test.ts",
     "seed:admin": "tsx src/scripts/seed-admin.ts"
   },
   "dependencies": {
