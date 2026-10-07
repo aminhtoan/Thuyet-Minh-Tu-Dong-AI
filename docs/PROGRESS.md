@@ -2,56 +2,55 @@
 
 ## Current Sprint
 
-S16 Admin Languages, Voices, Logs & Settings
+S17 Backend Foundation
 
 ## Status
 
-COMPLETED (Admin frontend + in-memory mock services)
+COMPLETED (backend foundation + MongoDB Atlas runtime validation)
 
 ## Implemented
 
-- `/languages`: summary, voice counts, search/status filter, add/edit validation and enable/disable confirmation.
-- `/voices`: summary, combined filters, add/edit/enable/disable and honest TTS preview fallback.
-- `/logs`: read-only search/category/role/time filters, pagination and detail dialog.
-- `/settings`: general/upload/processing/narration/system sections, validation, dirty save and reset.
-- Six languages, 12 related voices, 27 activity logs and centralized mock settings.
-- Loading/error/empty states, responsive forms/tables/dialogs and service-owned latency/mutations.
-- No primary Admin sidebar destination remains a placeholder.
+- Backend độc lập tại `backend/` dùng Node.js, Express, TypeScript strict, MongoDB và Mongoose.
+- Cấu hình môi trường tập trung, kết nối database trước khi listen và graceful shutdown cho `SIGINT`/`SIGTERM`.
+- Express app có JSON/urlencoded limits, CORS allowlist, `/api`, `/api/health`, 404 và central error handler.
+- Envelope API thống nhất cho success/error cùng `AppError` có HTTP status và mã lỗi an toàn.
+- 13 Mongoose model: User, Project, Media, Transcript, TranscriptSegment, Translation, TranslationSegment, Language, Voice, Narration, ProcessingJob, Result và ActivityLog.
+- Enum, quan hệ tham chiếu, timestamps, validation và index nền tảng đồng bộ với domain S6–S16.
+- Chỉ lưu metadata/đường dẫn media; chưa lưu binary và chưa tạo business endpoint.
 
 ## Architecture / Boundaries
 
-- Language → Voice relationships share one catalog store.
-- Logs are read-only and contain no invented secrets/IP/stack traces.
-- Settings are session-only; no localStorage, real runtime effects or secret fields.
-- No backend, API calls, JWT/RBAC, providers or database.
+- Backend là package độc lập; không import từ Customer Web, Mobile hoặc Admin Web.
+- MongoDB là system of record dự kiến; URI chỉ đọc từ environment và không được log.
+- Authentication/JWT/RBAC, CRUD, upload, AI provider, queue/worker và FFmpeg vẫn nằm ngoài S17.
+- Ba frontend vẫn dùng mock/service hiện tại và chưa được nối với backend.
 
 ## Validation
 
-- Lint: PASS, no warnings.
-- Typecheck/build: PASS (92 modules).
-- Unit/service tests: PASS.
-- Dev server/browser smoke: PASS across S12–S16, six viewport widths and S16 interactions.
-- No runtime exceptions or API requests.
-- Customer Web/Mobile frozen hash: PASS.
+- `npm run lint`: PASS.
+- `npm run typecheck`: PASS.
+- `npm run build`: PASS.
+- MongoDB Atlas connection: PASS với database `multilingual_ai_narration`.
+- Runtime `GET /api`, `GET /api/health` và JSON 404: PASS.
+- Frontend không thay đổi trong S17.
 
 ## Important Files
 
-- `admin-web/src/pages/AdminLanguagesPage.tsx`, `AdminVoicesPage.tsx`
-- `admin-web/src/pages/AdminLogsPage.tsx`, `AdminSettingsPage.tsx`
-- `admin-web/src/types/system.ts`, `mocks/adminSystem.mock.ts`
-- `admin-web/src/services/adminLanguageService.ts`, `adminVoiceService.ts`
-- `admin-web/src/services/adminLogService.ts`, `adminSettingsService.ts`
-- `admin-web/src/styles/system.css`
+- `backend/src/app.ts`, `backend/src/server.ts`
+- `backend/src/config/env.ts`, `backend/src/config/database.ts`
+- `backend/src/routes/`, `backend/src/controllers/`, `backend/src/middleware/`
+- `backend/src/models/`, `backend/src/constants/`
+- `backend/package.json`, `backend/.env.example`
 
 ## Known Limitations
 
-- All mutations reset on reload.
-- Voice preview has no audio until a real TTS service exists.
-- Settings do not affect Customer clients or runtime infrastructure.
+- Cần file `.env` chứa `MONGODB_URI` Atlas hợp lệ để chạy server thực tế; credential không được commit.
+- Chưa có auth/JWT/RBAC, business CRUD, upload hoặc frontend integration.
+- Chưa tích hợp STT, Translation, TTS, FFmpeg, queue hay worker.
 
 ## Next
 
-S17 Backend Foundation.
+S18 Authentication, JWT & RBAC.
 
 ## S16.5 — Full Vietnamese Localization
 

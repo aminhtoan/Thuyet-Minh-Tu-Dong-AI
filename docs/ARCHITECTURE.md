@@ -30,12 +30,12 @@ multilingual-ai-narration/
 ├── frontend-web/      Customer Web (implemented)
 ├── frontend-mobile/   Customer Mobile (implemented)
 ├── admin-web/         Admin Web (S12 foundation implemented)
-├── backend/           Node.js + Express.js + TypeScript (planned S17; absent today)
+├── backend/           Node.js + Express.js + TypeScript + Mongoose (S17 foundation)
 ├── docs/
 └── README.md
 ```
 
-The planned database is MongoDB with Mongoose. FFmpeg is planned for media operations. AI providers are not yet selected. No backend, database connection, Admin app, media worker, or AI integration exists in S6.
+MongoDB với Mongoose là database/ODM của backend. S17 đã triển khai connection lifecycle, Express foundation và domain schemas; cần MongoDB reachable để chạy server. FFmpeg vẫn chỉ được lên kế hoạch cho media operations. AI providers chưa được chọn; chưa có auth, business API, media worker hoặc AI integration.
 
 ## Authentication and Authorization
 
@@ -45,7 +45,7 @@ Authorization uses backend-enforced RBAC **and** resource ownership. Admin APIs 
 
 ## Domain Model
 
-Conceptual entities and important fields (not Mongoose schemas yet):
+Các entity và trường quan trọng dưới đây đã có Mongoose schemas nền tảng từ S17; service/repository nghiệp vụ vẫn chưa triển khai:
 
 | Entity | Fields / purpose |
 | --- | --- |
@@ -95,9 +95,9 @@ The separate Admin Web will provide login/logout; dashboard metrics (customers, 
 
 ## Backend and Database Architecture
 
-The planned `backend/` owns Express REST routes/controllers, request validation, authentication/RBAC/ownership middleware, domain services, Mongoose repositories/models, and asynchronous processing orchestration. Controllers should coordinate rather than contain AI/provider business logic. Separate provider-facing interfaces (`SpeechToTextService`, `TranslationService`, `TextToSpeechService`, `MediaProcessingService`) allow later replacement without changing domain workflows. Provider, queue and worker implementations are deferred.
+`backend/` hiện sở hữu Express app/server, environment/database config, foundation routes/controllers/middleware và Mongoose models. Request validation nghiệp vụ, authentication/RBAC/ownership middleware, domain services/repositories và asynchronous processing orchestration được dành cho các sprint sau. Controllers nên điều phối thay vì chứa AI/provider business logic. Các interface provider (`SpeechToTextService`, `TranslationService`, `TextToSpeechService`, `MediaProcessingService`) sẽ cho phép thay thế provider mà không đổi domain workflow; provider, queue và worker vẫn deferred.
 
-MongoDB is the system of record for domain metadata and references; Mongoose is the planned ODM. Use `MONGODB_URI` from backend environment configuration, not source constants. Development convention: `mongodb://localhost:27017`, database `multilingual_ai_narration`. Schema design, indexes, transactions and migrations are deferred to backend sprints.
+MongoDB Atlas là development database và system of record cho domain metadata cùng references; Mongoose là ODM. S17 đọc `MONGODB_URI` từ backend environment, kết nối trước khi HTTP server listen và đóng kết nối khi nhận `SIGINT`/`SIGTERM`. Database dùng tên `multilingual_ai_narration`; cluster URI và credential không được ghi vào source hoặc tài liệu. Foundation schemas, validation và indexes đã có; transaction/migration strategy vẫn deferred.
 
 ## Media Storage
 
@@ -117,7 +117,7 @@ Long operations are represented by `ProcessingJob`; project status summarizes th
 
 ## API Architecture
 
-The **proposed**, not implemented, REST base is `/api` on the Node/Express backend. Customer resources are `/api/auth/**`, `/api/users/me`, `/api/projects/**` and project subresources `media`, `transcript`, `translations`, `narrations`, `jobs`, `results`. Admin resources are `/api/admin/dashboard`, `/api/admin/users/**`, `/api/admin/projects/**`, `/api/admin/jobs/**`, `/api/admin/languages/**`, `/api/admin/voices/**`, `/api/admin/logs/**`, `/api/admin/settings/**`. See [API.md](API.md) for proposed route and response conventions. Realtime transport (SSE/WebSocket) is undecided, not a current API.
+REST base `/api` đã tồn tại trên Node/Express backend. S17 chỉ triển khai `GET /api` và `GET /api/health`; Customer/Admin business resources vẫn proposed. Customer resources dự kiến là `/api/auth/**`, `/api/users/me`, `/api/projects/**` và các subresource `media`, `transcript`, `translations`, `narrations`, `jobs`, `results`. Admin resources dự kiến là `/api/admin/dashboard`, `/api/admin/users/**`, `/api/admin/projects/**`, `/api/admin/jobs/**`, `/api/admin/languages/**`, `/api/admin/voices/**`, `/api/admin/logs/**`, `/api/admin/settings/**`. Xem [API.md](API.md). Realtime transport (SSE/WebSocket) chưa được quyết định.
 
 ## Environment Strategy and Security Principles
 
@@ -132,8 +132,8 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 | --- | --- | --- |
 | Customer Web | `http://localhost:5173` (Vite default) | Yes |
 | Admin Web | `http://localhost:5174` | Yes (S12 mock foundation) |
-| Backend API | `http://localhost:8080/api` | No |
-| MongoDB | `mongodb://localhost:27017` | No repository connection |
+| Backend API | `http://localhost:8080/api` | S17 foundation; requires MongoDB before listen |
+| MongoDB Atlas | Database `multilingual_ai_narration` | Connection and runtime health validated |
 
 ## Roadmap
 
@@ -156,7 +156,7 @@ The **proposed**, not implemented, REST base is `/api` on the Node/Express backe
 | S14 | Admin Customer Management | Completed; mock frontend/service only |
 | S15 | Admin Projects & Processing Jobs | Completed; mock frontend/services only |
 | S16 | Admin Languages, Voices, Logs & Settings | Completed; mock frontend/services only |
-| S17 | Backend Foundation: Node.js, Express, TypeScript, MongoDB, Mongoose | Planned |
+| S17 | Backend Foundation: Node.js, Express, TypeScript, MongoDB, Mongoose | Completed; MongoDB Atlas runtime validated |
 | S18 | Authentication, JWT & RBAC | Planned |
 | S19 | Project & Media API | Planned |
 | S20 | Speech-to-Text Integration | Planned |

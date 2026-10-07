@@ -1,14 +1,19 @@
 # API Status and Conventions
 
-## Current: No Backend API
+## Current: S17 Backend Foundation
 
-**There is no implemented HTTP API in this repository.** S1–S5 Customer Web/Mobile use local mock auth, a static mock project repository, and a cancellable mock upload service. S7 adds a local mock transcript service, S8 a local mock translation service, S9 mock voice/narration configuration services, and S10 a mock processing session; generation, retrieval and save use in-memory sample data only. S5 sends no media to a server and persists no new project. No JWT, RBAC middleware, Admin API, MongoDB connection, STT provider or AI endpoint exists. The paths below are **proposed**, subject to backend-sprint refinement.
+S17 đã tạo HTTP foundation tại `backend/`. Hai endpoint duy nhất hiện được triển khai là:
 
-## Proposed Stack and Base
+- `GET /api` — metadata tối thiểu của API.
+- `GET /api/health` — trạng thái service và trạng thái kết nối MongoDB lấy trực tiếp từ Mongoose. Server chỉ listen sau khi kết nối database thành công.
 
-The future backend is Node.js + Express.js + TypeScript, with MongoDB + Mongoose. REST base: `/api`; planned local backend URL: `http://localhost:8080/api`. Customer Web uses `VITE_API_BASE_URL`; future Admin Web uses the same variable name in its own environment. Mobile already reads `EXPO_PUBLIC_API_BASE_URL`. These public client variables must never contain secrets.
+Response sử dụng envelope `{ success, data }`; 404 và lỗi dùng `{ success: false, error: { code, message } }`. Mọi route nghiệp vụ bên dưới vẫn là **PROPOSED / NOT IMPLEMENTED**. Chưa có JWT, RBAC, Customer/Admin CRUD, upload, STT, Translation, TTS, FFmpeg, queue/worker hoặc kết nối frontend. Các frontend vẫn dùng mock/service trong bộ nhớ.
 
-The backend owns authentication (JWT), RBAC and resource ownership checks. `CUSTOMER` may access only their own projects; `ADMIN` may access Admin management routes. A frontend-hidden control provides no security. On a physical phone, `localhost:8080` is the phone, not the development PC; configure a reachable PC LAN address or appropriate tunnel after the backend exists.
+## Implemented Foundation and Base
+
+Backend hiện dùng Node.js + Express.js + TypeScript strict, với MongoDB + Mongoose. REST base: `/api`; local backend URL mặc định: `http://localhost:8080/api`. Customer Web dùng `VITE_API_BASE_URL`; Admin Web dùng cùng tên biến trong environment riêng; Mobile đọc `EXPO_PUBLIC_API_BASE_URL`. Các biến public này không được chứa secret.
+
+Authentication (JWT), RBAC và resource ownership checks vẫn dự kiến cho S18+. `CUSTOMER` sau này chỉ được truy cập project của chính mình; `ADMIN` dùng Admin routes. Ẩn điều khiển frontend không tạo security boundary. Trên điện thoại thật, `localhost:8080` là chính điện thoại; khi tích hợp cần dùng địa chỉ LAN có thể truy cập hoặc tunnel phù hợp.
 
 ## Proposed Customer Resources
 
@@ -73,7 +78,7 @@ Admin Web is a separate application; every route here requires backend `ADMIN` a
 | `/api/admin/logs/**` | View/filter safe activity logs. |
 | `/api/admin/settings/**` | Business/application settings only; never server secrets. |
 
-## Proposed Response Style
+## Response Style (Implemented for Foundation Routes)
 
 Success with body:
 

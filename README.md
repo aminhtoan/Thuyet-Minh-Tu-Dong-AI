@@ -9,7 +9,7 @@ Media → Speech-to-Text → Transcript → Translation
 → Voice / Text-to-Speech → Media Processing → Result
 ```
 
-Các màn hình và luồng frontend hiện dùng dữ liệu cùng service mô phỏng khi backend chưa tồn tại. Speech-to-Text, dịch máy, Text-to-Speech và xử lý media/FFmpeg trong sơ đồ trên là mục tiêu tích hợp tương lai, không phải dịch vụ AI đang hoạt động.
+Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng service mô phỏng. S17 đã bổ sung backend foundation và Mongoose models, nhưng chưa có API nghiệp vụ hay kết nối frontend. Speech-to-Text, dịch máy, Text-to-Speech và xử lý media/FFmpeg trong sơ đồ trên là mục tiêu tích hợp tương lai, không phải dịch vụ AI đang hoạt động.
 
 ## Trạng thái hiện tại
 
@@ -18,8 +18,8 @@ Các màn hình và luồng frontend hiện dùng dữ liệu cùng service mô 
 | Customer Web | Đã triển khai phạm vi frontend hiện tại bằng React; dữ liệu, upload, xác thực và xử lý dùng mock/in-memory service khi chưa có backend. |
 | Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
 | Customer Mobile | Đã có frontend React Native + Expo Router cho các luồng Customer tương ứng; dùng mock service và không gọi backend thật. |
-| Backend | **Chưa triển khai.** Thư mục `backend/` chưa tồn tại và dự kiến bắt đầu ở S17. |
-| MongoDB | **Chưa kết nối.** Chưa có database hoặc persistence phía server. |
+| Backend | **S17 foundation đã triển khai.** Có Express/TypeScript app, health route, error handling, environment/database lifecycle và Mongoose models; chưa có business CRUD. |
+| MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
 | Authentication / JWT / RBAC | **Chưa triển khai bảo mật backend thật.** Các màn hình đăng nhập hiện chỉ mô phỏng UI/navigation. |
 | AI và media | STT, Translation provider, TTS provider và FFmpeg pipeline đều **chưa tích hợp**. |
 
@@ -53,10 +53,13 @@ Mock frontend không phải security boundary, không ngăn đăng nhập thật
 - **Admin Web:** React, TypeScript, Vite.
 - **Customer Mobile:** React Native, TypeScript, Expo SDK 57, Expo Router.
 
-### Backend dự kiến
+### Backend hiện tại
 
 - Node.js, Express.js, TypeScript.
 - MongoDB và Mongoose.
+
+### Backend dự kiến tiếp theo
+
 - JWT authentication và backend-enforced RBAC.
 
 ### Xử lý dự kiến
@@ -75,6 +78,7 @@ multilingual-ai-narration/
 ├── frontend-web/          # Customer Web
 ├── frontend-mobile/       # Customer Mobile (Expo)
 ├── admin-web/             # Admin Web độc lập
+├── backend/               # Backend foundation (Express + TypeScript + Mongoose)
 ├── docs/
 │   ├── CONTEXT.md
 │   ├── PROGRESS.md
@@ -86,7 +90,7 @@ multilingual-ai-narration/
 └── README.md
 ```
 
-`backend/` chưa tồn tại và dự kiến được tạo từ S17. Admin Web là một ứng dụng riêng, không nằm trong router của Customer Web.
+`backend/` là package độc lập được tạo ở S17. Admin Web là một ứng dụng riêng, không nằm trong router của Customer Web.
 
 ## Yêu cầu môi trường
 
@@ -190,14 +194,38 @@ npm run typecheck
 
 Entry point hiện tại là `expo-router/entry`. Khi backend được triển khai, điện thoại thật không thể dùng `localhost` của máy tính làm API host; cần địa chỉ LAN hoặc tunnel có thể truy cập.
 
+## Chạy Backend Foundation
+
+Backend dùng MongoDB Atlas và cần file environment cục bộ chứa URI hợp lệ:
+
+```powershell
+cd C:\cnpm\multilingual-ai-narration\backend
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
+
+Mặc định API dùng `http://localhost:8080/api`. Kiểm tra health tại `GET /api/health`; trường `database` phản ánh trạng thái Mongoose thật. Không commit `.env` và không đưa `MONGODB_URI` hoặc secret vào frontend.
+
+Các lệnh kiểm tra:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run build
+npm start
+```
+
+S17 chưa có auth/JWT/RBAC, CRUD nghiệp vụ, upload, AI provider, FFmpeg, queue/worker hoặc frontend integration.
+
 ## Cổng phát triển
 
 | Dịch vụ | Địa chỉ | Trạng thái |
 | --- | --- | --- |
 | Customer Web | `http://localhost:5173` | Hiện có |
 | Admin Web | `http://localhost:5174` | Hiện có |
-| Backend API | `http://localhost:8080/api` | Dự kiến, chưa tồn tại |
-| MongoDB | `mongodb://localhost:27017` | Dự kiến, chưa kết nối |
+| Backend API | `http://localhost:8080/api` | Foundation hiện có; chỉ listen sau khi kết nối MongoDB |
+| MongoDB Atlas | Database `multilingual_ai_narration` | Đã xác nhận kết nối runtime |
 
 ## Kiểm tra và build
 
@@ -232,11 +260,11 @@ npm run typecheck
 
 Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vite server tại `127.0.0.1:5174` và một Chrome instance riêng bật remote debugging tại `127.0.0.1:9223`; đây là script hỗ trợ phát triển, không phải lệnh bắt buộc để chạy ứng dụng.
 
-## Backend và API tương lai
+## Backend hiện tại và API tương lai
 
-Các contract trong [docs/API.md](docs/API.md) là **PROPOSED / NOT IMPLEMENTED**. Kế hoạch hiện tại:
+`GET /api` và `GET /api/health` đã có trong S17. Các contract nghiệp vụ trong [docs/API.md](docs/API.md) vẫn là **PROPOSED / NOT IMPLEMENTED**. Kế hoạch hiện tại:
 
-- S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose.
+- S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose — đã hoàn thành trong code.
 - S18: Authentication, JWT và backend-enforced RBAC.
 - S19 trở đi: Project/Media API và các tích hợp STT, Translation, TTS, FFmpeg.
 
