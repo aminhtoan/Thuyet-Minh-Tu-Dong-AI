@@ -246,3 +246,10 @@ Project screens use clearly marked development mock data. Backend project APIs a
 - Các giá trị kỹ thuật như route, enum, mã ngôn ngữ, tên nhà cung cấp và định dạng tệp vẫn được giữ nguyên.
 - Dữ liệu mẫu bằng ngôn ngữ nguồn/đích có thể giữ nguyên để minh họa đúng quy trình đa ngôn ngữ.
 - Mobile đã hoàn tất Việt hóa New Project, Transcript, Translation, Voice, Generate, Result cùng loading/error/empty state, alert và nội dung hỗ trợ tiếp cận.
+
+## S24 Integration State
+
+- Existing visual layouts and themes are unchanged.
+- Login/register errors now come from the sanitized backend contract; Customer and Admin application routes require an authenticated role-specific session.
+- New Project on Web/Mobile creates a real project and uploads real media. No intermediate upload percentage is fabricated.
+- Screens whose services are still mock remain integration gaps and must not be treated as production data.

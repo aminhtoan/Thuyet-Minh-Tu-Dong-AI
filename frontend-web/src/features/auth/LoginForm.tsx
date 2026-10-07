@@ -36,7 +36,7 @@ export function LoginForm() {
     setFormError('')
     try {
       await authService.login(nextValues)
-      navigate('/dashboard')
+      navigate((location.state as { returnUrl?: string } | null)?.returnUrl ?? '/dashboard', { replace: true })
     } catch {
       setFormError('Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.')
     } finally {

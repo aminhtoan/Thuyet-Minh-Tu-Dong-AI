@@ -125,11 +125,11 @@ export function NewProjectPlaceholder() {
         {file && !validation.valid && <p className="upload-error" role="alert">{validation.error}</p>}
       </Card>
       <Card padding="lg" className="upload-form-card upload-action-card">
-        <div className="upload-section-heading"><span className="upload-step">03</span><div><h2>Tải lên</h2><p>This sprint simulates upload progress; no file is sent or saved.</p></div></div>
+        <div className="upload-section-heading"><span className="upload-step">03</span><div><h2>Tải lên</h2><p>Dự án và tệp phương tiện sẽ được lưu qua backend.</p></div></div>
         {status === 'uploading' && <div className="upload-feedback"><ProgressBar value={progress} label="Uploading media" /><Button type="button" variant="secondary" onClick={cancelUpload}>Cancel upload</Button></div>}
         {status === 'cancelled' && <div className="upload-feedback" role="status"><strong>Upload cancelled</strong><p>Your file is still selected. Retry when ready.</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Retry</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Choose another file</Button></div></div>}
         {status === 'failed' && <div className="upload-feedback" role="alert"><strong>Upload failed</strong><p>{uploadError ?? 'We could not upload your media.'}</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Retry</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Choose another file</Button></div></div>}
-        {status === 'success' && <div className="upload-feedback upload-feedback--success" role="status"><strong>Upload complete</strong><p>This mock upload did not save a project or media. To try the transcript editor, open the sample uploaded project in Projects.</p><Link className="button button--primary button--md" to="/projects">Continue to Projects</Link></div>}
+        {status === 'success' && <div className="upload-feedback upload-feedback--success" role="status"><strong>Tải lên hoàn tất</strong><p>Dự án và tệp phương tiện đã được lưu.</p><Link className="button button--primary button--md" to="/projects">Tiếp tục đến dự án</Link></div>}
         {(status === 'idle' || status === 'selected') && <Button type="button" size="lg" disabled={!canUpload} onClick={startUpload}>Upload &amp; Continue</Button>}
         {status === 'validating' && <Button type="button" size="lg" loading disabled>Validating...</Button>}
       </Card>

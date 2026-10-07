@@ -217,3 +217,9 @@ Project và ProcessingJob dùng kho mock quan hệ chung, truy cập qua `adminP
 ## S16 Admin system boundary
 
 Language và Voice dùng catalog mock quan hệ chung; ActivityLog là read-only; SystemSettings là cấu hình in-memory. Bốn service sở hữu validation, latency và mutation. Không có hard delete, localStorage, real audio preview, secret fields, backend health claims hoặc frontend security enforcement.
+
+## S24 Client Integration Boundary
+
+The three clients now have platform-specific authenticated API clients. Customer Web and Admin Web keep token pairs in per-tab `sessionStorage`; Customer Mobile uses Expo SecureStore. Each client performs single-flight refresh rotation and retries the original request at most once.
+
+The integrated production path currently covers authentication plus Customer project creation/media upload. The remaining Customer artifact screens are not yet an end-to-end production path. Admin has real authentication only because `/api/admin/*` business resources do not exist. A Customer voice-catalog API is also required before voice selection can be backed by server data.

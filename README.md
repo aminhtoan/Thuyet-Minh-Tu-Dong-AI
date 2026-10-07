@@ -1,5 +1,7 @@
 # Multilingual AI Narration System
 
+> **S24 integration status: PARTIAL.** Customer Web/Mobile authentication and project/media creation use the real backend; Admin authentication is real. Project browsing and the Customer AI/result screens still use existing mock services, and Admin management remains mock because the required Admin APIs do not yet exist. Do not treat those screens as production data.
+
 **Hệ thống thuyết minh tự động đa ngôn ngữ**
 
 Repository hiện cung cấp ba ứng dụng frontend cho quy trình:
@@ -15,12 +17,12 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 
 | Thành phần | Trạng thái |
 | --- | --- |
-| Customer Web | Đã triển khai phạm vi frontend hiện tại bằng React; dữ liệu, upload, xác thực và xử lý dùng mock/in-memory service khi chưa có backend. |
+| Customer Web | Xác thực và tạo dự án/tải media đã gọi backend thật; danh sách dự án và các màn AI/kết quả vẫn dùng service mock. |
 | Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
-| Customer Mobile | Đã có frontend React Native + Expo Router cho các luồng Customer tương ứng; dùng mock service và không gọi backend thật. |
+| Customer Mobile | Xác thực và tạo dự án/tải media đã gọi backend thật; token lưu bằng Expo SecureStore. Các màn dữ liệu/AI còn lại vẫn dùng service mock. |
 | Backend | **S17–S20 đã triển khai.** Có auth/JWT/RBAC, Project/Media API và Speech-to-Text pipeline. |
 | MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
-| Authentication / JWT / RBAC | **Đã triển khai ở backend.** Frontend login/register vẫn là mock và chưa gọi API thật. |
+| Authentication / JWT / RBAC | **Đã triển khai ở backend và đã nối vào ba frontend.** Route guard phía client hỗ trợ UX; backend RBAC vẫn là ranh giới bảo mật. |
 | AI và media | STT, Translation, TTS và FFmpeg/media-processing backend đã tích hợp; frontend chưa kết nối API thật. |
 
 Mock frontend không phải security boundary, không ngăn đăng nhập thật và không tạo file audio/video kết quả thực. Dữ liệu in-memory có thể mất khi reload ứng dụng.
@@ -163,7 +165,7 @@ Các route chính:
 /settings
 ```
 
-Admin login hiện là preview public có validation mô phỏng; chưa tạo session, JWT hoặc quyền ADMIN thật.
+Admin login dùng JWT thật và chỉ chấp nhận role `ADMIN`. Các màn quản trị nghiệp vụ vẫn là mock vì backend chưa có API Admin tương ứng.
 
 ## Chạy Customer Mobile
 
@@ -194,7 +196,7 @@ npm run lint
 npm run typecheck
 ```
 
-Entry point hiện tại là `expo-router/entry`. Khi backend được triển khai, điện thoại thật không thể dùng `localhost` của máy tính làm API host; cần địa chỉ LAN hoặc tunnel có thể truy cập.
+Entry point hiện tại là `expo-router/entry`. Điện thoại thật không thể dùng `localhost` của máy tính làm API host; đặt `EXPO_PUBLIC_API_BASE_URL` thành địa chỉ LAN có thể truy cập, ví dụ `http://192.168.1.100:8080/api`.
 
 ## Chạy Backend
 

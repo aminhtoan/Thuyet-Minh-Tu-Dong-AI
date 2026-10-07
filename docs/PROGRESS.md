@@ -6,7 +6,7 @@ S23 FFmpeg / Media Processing
 
 ## Status
 
-COMPLETED về implementation/mock tests; real FFmpeg smoke test chưa chạy vì binary không có trong PATH
+COMPLETED — implementation, regression và real FFmpeg smoke test đã PASS
 
 ## Implemented
 
@@ -14,7 +14,19 @@ COMPLETED về implementation/mock tests; real FFmpeg smoke test chưa chạy v�
 - API xử lý video, Result metadata/list/detail và protected MP4 streaming có HTTP Range.
 - Narration thay thế audio gốc; H.264/AAC MP4, thời lượng theo source video, output được FFprobe kiểm tra.
 - ProcessingJob VIDEO_PROCESSING, retry, idempotency, concurrency protection và project-scoped cleanup.
-- S23 mock regression PASS; real FFmpeg smoke test SKIP vì môi trường chưa cài FFmpeg/FFprobe.
+- S23 regression và real FFmpeg smoke test PASS với FFmpeg/FFprobe 9.0.2.
+
+## S23.5 Real FFmpeg Validation
+
+- FFmpeg `9.0.2-full_build-www.gyan.dev`: PASS.
+- FFprobe `9.0.2-full_build-www.gyan.dev`: PASS.
+- Fixture tổng hợp tạm: video màu 320×240 dài 2 giây và tone audio dài 1 giây; không dùng AI API hoặc media người dùng.
+- `FfmpegMediaProcessor` composition: PASS; output MP4 có video stream, audio stream, duration dương và file size khác 0 theo FFprobe.
+- Fixture/output tạm được xóa sau test; không xóa development media.
+- Full regression: 101 passed, 0 failed, 0 skipped.
+- Lint, typecheck, build: PASS.
+- MongoDB Atlas và `GET /api/health`: PASS.
+- Terminal process cũ chưa nhận WinGet PATH mới; development `.env` cục bộ đang trỏ tới binary đã cài và vẫn được Git ignore. Mở terminal/VS Code mới để `ffmpeg` và `ffprobe` hoạt động trực tiếp qua PATH.
 
 - TTS provider abstraction và OpenAI `/v1/audio/speech` adapter, model cấu hình `gpt-4o-mini-tts`, MP3.
 - API tạo/lấy narration và protected audio; dùng Translation hoàn tất và Voice catalog server-side.
@@ -97,3 +109,13 @@ S24 Full Frontend / Backend Integration.
 - Frontend Freeze: YES
 - Đã thống nhất thuật ngữ TTS thành “Giọng đọc”; giữ nguyên enum, route, identifier và các giá trị kỹ thuật.
 - Không bổ sung backend, API, cơ sở dữ liệu hoặc tích hợp AI thực.
+
+## S24 — Frontend / Backend Integration (PARTIAL)
+
+- Customer Web: real register/login/logout/me session client, refresh-token rotation with single-flight retry, protected routes, and real project creation + multipart media upload.
+- Customer Mobile: same real authentication flow, refresh token stored with `expo-secure-store`, protected navigation, and real project creation + media upload. Physical devices must set `EXPO_PUBLIC_API_BASE_URL` to a reachable LAN address.
+- Admin Web: real ADMIN login/me/logout client and ADMIN route guard. Management screens remain explicitly mock because the backend has no admin business APIs.
+- Still not integrated: real project list/detail/edit/delete UI, transcript/translation/narration/processing/result screens, protected binary playback/download, Customer voice catalog, and Admin dashboard/users/projects/jobs/languages/voices/logs/settings.
+- Contract blockers: no Customer voice-catalog endpoint; no Admin business endpoints; editor save/update endpoints are absent. No endpoint was invented and no paid AI request was made.
+- Validation (2026-10-08): backend 101/101 tests PASS; backend lint/typecheck/build PASS; health PASS with Atlas `database: connected`; Customer Web lint/typecheck/build PASS; Admin Web lint/typecheck/build and 1/1 test PASS; Mobile lint/typecheck PASS; Expo Doctor 21/21 PASS.
+- S24 status: **PARTIAL**. Next work must close the API gaps and replace the remaining mock services before S24 can be marked complete.

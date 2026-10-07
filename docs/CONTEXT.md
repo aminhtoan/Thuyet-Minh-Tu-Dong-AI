@@ -112,3 +112,11 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Use environment-based public API URLs. On a real phone, `localhost` is the phone; future Mobile backend calls must use a reachable LAN address or tunnel.
 - No secrets in client code or Git; backend must revalidate files and enforce access.
 - TypeScript strict, reusable components, explicit loading/error/empty states, and honest validation reporting.
+
+## S24 Integration Decisions (2026-10-08)
+
+- Web sessions use per-tab `sessionStorage`; Mobile stores the token pair with Expo SecureStore. All clients use one refresh request at a time, rotate the pair, retry a failed request once, and clear the session when refresh fails.
+- Customer and Admin route guards are role-specific; backend RBAC remains the security boundary.
+- Customer project creation and multipart media upload now call the real backend. Fetch does not expose portable upload progress here, so the UI does not invent intermediate percentages.
+- `VITE_API_BASE_URL` defaults to `http://localhost:8080/api` for local web development. Mobile has no localhost fallback for physical devices; configure `EXPO_PUBLIC_API_BASE_URL` with the computer's reachable LAN address.
+- S24 remains partial: current backend lacks Customer voice discovery and all Admin management APIs, while several frontend editor services still use mock/in-memory data. Paid provider smoke was not run.
