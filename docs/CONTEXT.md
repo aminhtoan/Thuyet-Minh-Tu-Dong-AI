@@ -67,12 +67,13 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 
 ## Current Sprint and Next Direction
 
-S9–S16.5 frontend scope đã hoàn thành. S17 foundation, S18 auth và S19 Project/Media API đã có trong backend; hướng tiếp theo là S20 Speech-to-Text.
+S9–S16.5 frontend scope đã hoàn thành. Backend hiện có foundation, auth, Project/Media và S20 transcription; hướng tiếp theo là S21 Translation.
 
 ## Domain Alignment Snapshot
 
 - `Project` is the central aggregate owned by one `User`.
 - Customer Project ownership được enforce từ access token. Mỗi Project có tối đa một source Media; binary development nằm dưới ignored `backend/uploads/`, MongoDB chỉ lưu metadata/path nội bộ.
+- STT dùng provider abstraction với OpenAI `whisper-1` adapter, xử lý đồng bộ, lưu Transcript cùng ordered timestamp segments và ProcessingJob history. Retry từ `FAILED`; active request trùng bị chặn.
 - Core domain entities: User, Project, Media, Transcript, TranscriptSegment, Translation, TranslationSegment, Language, Voice, Narration, ProcessingJob, Result, ActivityLog.
 - A Project may have many target-language Translations and Narrations.
 - `ProjectStatus` describes the aggregate lifecycle; `ProcessingJobStatus` describes a long-running task; S5 `UploadStatus` is local UI state.

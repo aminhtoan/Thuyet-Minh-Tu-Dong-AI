@@ -2,13 +2,18 @@
 
 ## Current Sprint
 
-S19 Project + Media API
+S20 Speech-to-Text Integration
 
 ## Status
 
-COMPLETED (backend implementation + isolated Atlas/filesystem integration tests)
+COMPLETED (implementation/tests; real provider smoke not run without API key)
 
 ## Implemented
+
+- STT abstraction và OpenAI `whisper-1` adapter; synchronous transcription/transcript endpoints.
+- Transcript/ordered timestamp segments persistence và ProcessingJob lifecycle.
+- Retry/failure handling, atomic duplicate protection và safe provider errors.
+- S18–S20: 72 tests PASS; real OpenAI smoke NOT RUN vì thiếu API key.
 
 - Customer Project CRUD với search, status filter, pagination và ownership enforcement.
 - Multipart audio/video upload, MIME/size validation và server-generated filename.
@@ -62,7 +67,7 @@ COMPLETED (backend implementation + isolated Atlas/filesystem integration tests)
 
 ## Next
 
-S20 Speech-to-Text Integration.
+S21 Translation Integration.
 
 ## S16.5 — Full Vietnamese Localization
 

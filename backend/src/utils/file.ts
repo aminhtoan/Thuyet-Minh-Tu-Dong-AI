@@ -20,13 +20,18 @@ export const assertInsideUploadRoot = (target: string): void => {
 };
 
 export const safeDeleteStoredFile = async (storagePath: string): Promise<void> => {
-  const target = resolve(uploadRoot, storagePath);
-  assertInsideUploadRoot(target);
+  const target = resolveStoredFile(storagePath);
   try {
     await unlink(target);
   } catch (error) {
     if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
   }
+};
+
+export const resolveStoredFile = (storagePath: string): string => {
+  const target = resolve(uploadRoot, storagePath);
+  assertInsideUploadRoot(target);
+  return target;
 };
 
 export const safeOriginalName = (value: string): string =>

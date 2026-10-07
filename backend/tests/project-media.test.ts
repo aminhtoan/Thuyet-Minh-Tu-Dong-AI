@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
-import dns from 'node:dns';
 import { access, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test, { after, before } from 'node:test';
@@ -14,7 +13,6 @@ process.env.JWT_REFRESH_EXPIRES_IN ||= '7d';
 const suffix = randomUUID();
 process.env.UPLOAD_DIR = `uploads/s19-test-${suffix}`;
 process.env.MAX_UPLOAD_SIZE_MB = '0.0002';
-dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const ownerEmail = `s19-test-owner-${suffix}@example.com`;
 const otherEmail = `s19-test-other-${suffix}@example.com`;

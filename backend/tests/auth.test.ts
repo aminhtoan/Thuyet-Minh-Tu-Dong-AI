@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
-import dns from 'node:dns';
 import test, { after, before } from 'node:test';
 import type { Server } from 'node:http';
 
@@ -9,7 +8,6 @@ process.env.JWT_ACCESS_SECRET ||= randomBytes(48).toString('base64url');
 process.env.JWT_REFRESH_SECRET ||= randomBytes(48).toString('base64url');
 process.env.JWT_ACCESS_EXPIRES_IN ||= '15m';
 process.env.JWT_REFRESH_EXPIRES_IN ||= '7d';
-dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const suffix = randomUUID();
 const customerEmail = `s18-test-customer-${suffix}@example.com`;

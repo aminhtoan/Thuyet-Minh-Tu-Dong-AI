@@ -1,6 +1,6 @@
 # API Status and Conventions
 
-## Current: S19 Project + Media API
+## Current: S20 Speech-to-Text Integration
 
 Backend hiện triển khai:
 
@@ -12,6 +12,13 @@ Backend hiện triển khai:
 - `POST /api/auth/logout` — revoke refresh session.
 - `GET /api/auth/me` — thông tin user hiện tại, yêu cầu access token.
 - Customer Project CRUD và source Media subresource dưới `/api/projects`.
+- `POST /api/projects/:id/transcription` và `GET /api/projects/:id/transcript`.
+
+## Transcription API (Implemented)
+
+Hai route yêu cầu JWT, role `CUSTOMER` và ownership. POST xử lý đồng bộ: Media → ProcessingJob → STT provider → Transcript/segments. Allowed states: `UPLOADED`, `FAILED` và `TRANSCRIBED`. Lifecycle: `UPLOADED → TRANSCRIBING → TRANSCRIBED`; failure → `FAILED`; atomic state claim chặn request trùng.
+
+GET trả full text cùng ordered timestamp segments. Lỗi chuẩn gồm `TRANSCRIPT_NOT_FOUND`, `MEDIA_NOT_FOUND`, `MEDIA_FILE_MISSING`, `INVALID_PROJECT_STATE`, `TRANSCRIPTION_ALREADY_RUNNING`, `STT_NOT_CONFIGURED`, `STT_FILE_TOO_LARGE`, `STT_TIMEOUT`, `STT_INVALID_RESPONSE`, `STT_PROVIDER_ERROR`. Client không cung cấp filesystem path.
 
 Response sử dụng envelope chuẩn. Auth và Customer Project/Media backend đã có; Admin business API, STT, Translation, TTS, FFmpeg, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
 

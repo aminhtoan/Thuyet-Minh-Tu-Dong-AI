@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as mediaController from '../controllers/media.controller.js';
 import * as projectController from '../controllers/project.controller.js';
+import * as transcriptionController from '../controllers/transcription.controller.js';
 import { authenticate } from '../middleware/authenticate.middleware.js';
 import { authorize } from '../middleware/authorize.middleware.js';
 import { requireProjectOwner } from '../middleware/project-owner.middleware.js';
@@ -18,3 +19,5 @@ projectRouter.delete('/:id', validate(projectIdSchema), projectController.remove
 projectRouter.post('/:id/media', requireProjectOwner, uploadMedia, mediaController.upload);
 projectRouter.get('/:id/media', requireProjectOwner, mediaController.get);
 projectRouter.delete('/:id/media', requireProjectOwner, mediaController.remove);
+projectRouter.post('/:id/transcription', requireProjectOwner, transcriptionController.start);
+projectRouter.get('/:id/transcript', requireProjectOwner, transcriptionController.get);

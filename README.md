@@ -18,7 +18,7 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 | Customer Web | Đã triển khai phạm vi frontend hiện tại bằng React; dữ liệu, upload, xác thực và xử lý dùng mock/in-memory service khi chưa có backend. |
 | Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
 | Customer Mobile | Đã có frontend React Native + Expo Router cho các luồng Customer tương ứng; dùng mock service và không gọi backend thật. |
-| Backend | **S17–S19 đã triển khai.** Có foundation, auth/JWT/RBAC, Customer Project CRUD và Media upload. |
+| Backend | **S17–S20 đã triển khai.** Có auth/JWT/RBAC, Project/Media API và Speech-to-Text pipeline. |
 | MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
 | Authentication / JWT / RBAC | **Đã triển khai ở backend.** Frontend login/register vẫn là mock và chưa gọi API thật. |
 | AI và media | STT, Translation provider, TTS provider và FFmpeg pipeline đều **chưa tích hợp**. |
@@ -221,7 +221,7 @@ npm run seed:admin
 npm start
 ```
 
-Auth, Project CRUD và source Media upload routes đã có. File development nằm trong ignored `backend/uploads/`; `MAX_UPLOAD_SIZE_MB` cấu hình giới hạn. STT, AI provider, FFmpeg, queue/worker và frontend integration chưa có.
+Auth, Project/Media và transcription routes đã có. STT adapter dùng `STT_PROVIDER=openai`, `STT_MODEL=whisper-1`, `OPENAI_API_KEY`; key không được commit. Translation, TTS, FFmpeg, queue/worker và frontend integration chưa có.
 
 ## Cổng phát triển
 
@@ -267,12 +267,13 @@ Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vi
 
 ## Backend hiện tại và API tương lai
 
-Foundation, auth và Customer Project/Media endpoints đã có. Các contract STT/Translation/TTS/processing trong [docs/API.md](docs/API.md) vẫn **PROPOSED / NOT IMPLEMENTED**.
+Foundation, auth, Project/Media và STT endpoints đã có. Translation/TTS/processing contracts vẫn **PROPOSED / NOT IMPLEMENTED**.
 
 - S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose — đã hoàn thành trong code.
 - S18: Authentication, JWT và backend-enforced RBAC — đã hoàn thành trong backend; frontend chưa tích hợp.
 - S19: Project + Media API — đã hoàn thành trong backend; frontend chưa tích hợp.
-- S20 trở đi: STT, Translation, TTS và FFmpeg.
+- S20: Speech-to-Text — implementation/tests hoàn tất; real provider smoke chưa chạy do thiếu API key.
+- S21 trở đi: Translation, TTS và FFmpeg.
 
 Secret như `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
 

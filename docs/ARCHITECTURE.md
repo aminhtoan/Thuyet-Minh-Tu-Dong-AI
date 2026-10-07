@@ -115,6 +115,8 @@ CUSTOMER → multipart/form-data → Multer validation → safe local storage
 
 S19 áp dụng một source Media mỗi Project. Storage filename do server tạo, response không lộ path; replacement/deletion chỉ xóa file đã xác minh nằm trong upload root. Production object storage vẫn là future concern.
 
+S20 dùng flow `Project Media → STT Service → OpenAI whisper-1 adapter → normalized result → Transcript → ordered TranscriptSegments`. Provider call chạy ngoài MongoDB transaction; transaction chỉ bao quanh persistence. Lifecycle: `UPLOADED → TRANSCRIBING → TRANSCRIBED`, failure → `FAILED`, retry → `TRANSCRIBING`. Xử lý hiện đồng bộ, không có queue/worker; tests inject mock provider.
+
 MongoDB Atlas là development database và system of record cho domain metadata cùng references; Mongoose là ODM. S17 đọc `MONGODB_URI` từ backend environment, kết nối trước khi HTTP server listen và đóng kết nối khi nhận `SIGINT`/`SIGTERM`. Database dùng tên `multilingual_ai_narration`; cluster URI và credential không được ghi vào source hoặc tài liệu. Foundation schemas, validation và indexes đã có; transaction/migration strategy vẫn deferred.
 
 ## Media Storage
@@ -177,7 +179,7 @@ REST base `/api` đã tồn tại. S19 bổ sung Customer `/api/projects/**` và
 | S17 | Backend Foundation: Node.js, Express, TypeScript, MongoDB, Mongoose | Completed; MongoDB Atlas runtime validated |
 | S18 | Authentication, JWT & RBAC | Completed in backend; frontend integration deferred |
 | S19 | Project & Media API | Completed; frontend integration deferred |
-| S20 | Speech-to-Text Integration | Planned |
+| S20 | Speech-to-Text Integration | Implemented; real provider smoke pending credentials |
 | S21 | Translation Integration | Planned |
 | S22 | Text-to-Speech Integration | Planned |
 | S23 | FFmpeg Media Processing | Planned |
