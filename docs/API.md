@@ -1,6 +1,6 @@
 # API Status and Conventions
 
-## Current: S22 Text-to-Speech Integration
+## Current: S23 FFmpeg / Media Processing
 
 Backend hiện triển khai:
 
@@ -20,7 +20,13 @@ Hai route yêu cầu JWT, role `CUSTOMER` và ownership. POST xử lý đồng b
 
 GET trả full text cùng ordered timestamp segments. Lỗi chuẩn gồm `TRANSCRIPT_NOT_FOUND`, `MEDIA_NOT_FOUND`, `MEDIA_FILE_MISSING`, `INVALID_PROJECT_STATE`, `TRANSCRIPTION_ALREADY_RUNNING`, `STT_NOT_CONFIGURED`, `STT_FILE_TOO_LARGE`, `STT_TIMEOUT`, `STT_INVALID_RESPONSE`, `STT_PROVIDER_ERROR`. Client không cung cấp filesystem path.
 
-Response sử dụng envelope chuẩn. Auth, Customer Project/Media, STT, Translation và TTS backend đã có; Admin business API, FFmpeg, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
+Response sử dụng envelope chuẩn. Auth, Customer Project/Media, STT, Translation, TTS và media-processing backend đã có; Admin business API, queue/worker và frontend integration vẫn **NOT IMPLEMENTED**.
+
+## Result / Media Processing API (Implemented)
+
+`POST /api/projects/:id/process` nhận strict body `{ "narrationId": "..." }`; source video và narration path luôn được resolve phía server. Các route đọc gồm `GET /api/projects/:id/results`, `GET /api/projects/:id/results/:resultId`, và protected `GET /api/projects/:id/results/:resultId/file`. Tất cả yêu cầu JWT, role `CUSTOMER` và ownership; file route hỗ trợ byte Range hợp lệ (`206`) và trả `416` cho range sai.
+
+Xử lý đồng bộ: `GENERATING_AUDIO|FAILED|COMPLETED → PROCESSING_VIDEO → COMPLETED`. Narration thay thế audio gốc; output MP4 H.264/AAC có thời lượng bằng video nguồn, audio ngắn được pad và audio dài bị trim. Request cùng Project/Narration đã hoàn tất trả idempotently; active duplicate trả `VIDEO_PROCESSING_ALREADY_RUNNING`. Lỗi được sanitize, gồm `FFMPEG_NOT_AVAILABLE`, `VIDEO_SOURCE_REQUIRED`, `MEDIA_FILE_MISSING`, `NARRATION_NOT_FOUND`, `NARRATION_FILE_MISSING`, `MEDIA_PROCESSING_TIMEOUT`, `MEDIA_PROCESSING_FAILED`, `MEDIA_PROCESSING_INVALID_OUTPUT`, `RESULT_NOT_FOUND`, `RESULT_FILE_MISSING`.
 
 ## Project and Media API (Implemented)
 

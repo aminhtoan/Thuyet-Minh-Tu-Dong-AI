@@ -2,13 +2,19 @@
 
 ## Current Sprint
 
-S22 Text-to-Speech Integration
+S23 FFmpeg / Media Processing
 
 ## Status
 
-COMPLETED (implementation/tests; không tự động gọi real provider)
+COMPLETED về implementation/mock tests; real FFmpeg smoke test chưa chạy vì binary không có trong PATH
 
 ## Implemented
+
+- MediaProcessor abstraction và FFmpeg/FFprobe implementation dùng `spawn`, argument array, `shell:false`, timeout cấu hình.
+- API xử lý video, Result metadata/list/detail và protected MP4 streaming có HTTP Range.
+- Narration thay thế audio gốc; H.264/AAC MP4, thời lượng theo source video, output được FFprobe kiểm tra.
+- ProcessingJob VIDEO_PROCESSING, retry, idempotency, concurrency protection và project-scoped cleanup.
+- S23 mock regression PASS; real FFmpeg smoke test SKIP vì môi trường chưa cài FFmpeg/FFprobe.
 
 - TTS provider abstraction và OpenAI `/v1/audio/speech` adapter, model cấu hình `gpt-4o-mini-tts`, MP3.
 - API tạo/lấy narration và protected audio; dùng Translation hoàn tất và Voice catalog server-side.
@@ -78,7 +84,7 @@ COMPLETED (implementation/tests; không tự động gọi real provider)
 
 ## Next
 
-S23 FFmpeg / Media Processing.
+S24 Full Frontend / Backend Integration.
 
 ## S16.5 — Full Vietnamese Localization
 

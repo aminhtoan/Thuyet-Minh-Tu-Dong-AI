@@ -4,6 +4,7 @@ import * as projectController from '../controllers/project.controller.js';
 import * as transcriptionController from '../controllers/transcription.controller.js';
 import * as translationController from '../controllers/translation.controller.js';
 import * as narrationController from '../controllers/narration.controller.js';
+import * as resultController from '../controllers/result.controller.js';
 import { authenticate } from '../middleware/authenticate.middleware.js';
 import { authorize } from '../middleware/authorize.middleware.js';
 import { requireProjectOwner } from '../middleware/project-owner.middleware.js';
@@ -12,6 +13,7 @@ import { validate } from '../middleware/validate.middleware.js';
 import { createProjectSchema, listProjectsSchema, projectIdSchema, updateProjectSchema } from '../validators/project.validator.js';
 import { startTranslationSchema, targetTranslationSchema } from '../validators/translation.validator.js';
 import { narrationIdSchema, startNarrationSchema } from '../validators/narration.validator.js';
+import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
 
 export const projectRouter = Router();
 projectRouter.use(authenticate, authorize('CUSTOMER'));
@@ -32,3 +34,7 @@ projectRouter.post('/:id/narrations', validate(startNarrationSchema), requirePro
 projectRouter.get('/:id/narrations', requireProjectOwner, narrationController.list);
 projectRouter.get('/:id/narrations/:narrationId', validate(narrationIdSchema), requireProjectOwner, narrationController.get);
 projectRouter.get('/:id/narrations/:narrationId/audio', validate(narrationIdSchema), requireProjectOwner, narrationController.audio);
+projectRouter.post('/:id/process', validate(processMediaSchema), requireProjectOwner, resultController.process);
+projectRouter.get('/:id/results', requireProjectOwner, resultController.list);
+projectRouter.get('/:id/results/:resultId', validate(resultIdSchema), requireProjectOwner, resultController.get);
+projectRouter.get('/:id/results/:resultId/file', validate(resultIdSchema), requireProjectOwner, resultController.file);

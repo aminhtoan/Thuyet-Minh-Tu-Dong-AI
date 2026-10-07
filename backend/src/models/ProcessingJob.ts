@@ -7,6 +7,7 @@ const processingJobSchema = new Schema(
     type: { type: String, enum: PROCESSING_JOB_TYPES, required: true },
     targetLanguage: { type: String, trim: true, lowercase: true },
     voiceId: { type: Schema.Types.ObjectId, ref: 'Voice' },
+    narrationId: { type: Schema.Types.ObjectId, ref: 'Narration' },
     status: { type: String, enum: PROCESSING_JOB_STATUSES, required: true, default: 'QUEUED', index: true },
     progress: { type: Number, required: true, default: 0, min: 0, max: 100 },
     errorMessage: { type: String, trim: true },
@@ -21,6 +22,10 @@ processingJobSchema.index({ status: 1, type: 1, createdAt: -1 });
 processingJobSchema.index(
   { projectId: 1, type: 1, targetLanguage: 1, status: 1 },
   { unique: true, partialFilterExpression: { type: 'TRANSLATION', status: 'PROCESSING' } },
+);
+processingJobSchema.index(
+  { projectId: 1, type: 1, narrationId: 1, status: 1 },
+  { unique: true, partialFilterExpression: { type: 'VIDEO_PROCESSING', status: 'PROCESSING' } },
 );
 processingJobSchema.index(
   { projectId: 1, type: 1, targetLanguage: 1, voiceId: 1, status: 1 },

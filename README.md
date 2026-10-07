@@ -9,7 +9,7 @@ Media → Speech-to-Text → Transcript → Translation
 → Voice / Text-to-Speech → Media Processing → Result
 ```
 
-Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng service mô phỏng. Backend đã có foundation, MongoDB Atlas và auth/JWT/RBAC thật, nhưng frontend chưa tích hợp API. Speech-to-Text, dịch máy, Text-to-Speech và xử lý media/FFmpeg vẫn là mục tiêu tương lai.
+Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng service mô phỏng. Backend đã có foundation, MongoDB Atlas, auth/JWT/RBAC và pipeline xử lý đến Result, nhưng frontend chưa tích hợp API.
 
 ## Trạng thái hiện tại
 
@@ -21,7 +21,7 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 | Backend | **S17–S20 đã triển khai.** Có auth/JWT/RBAC, Project/Media API và Speech-to-Text pipeline. |
 | MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
 | Authentication / JWT / RBAC | **Đã triển khai ở backend.** Frontend login/register vẫn là mock và chưa gọi API thật. |
-| AI và media | STT, Translation và TTS backend đã tích hợp; FFmpeg pipeline **chưa tích hợp**. |
+| AI và media | STT, Translation, TTS và FFmpeg/media-processing backend đã tích hợp; frontend chưa kết nối API thật. |
 
 Mock frontend không phải security boundary, không ngăn đăng nhập thật và không tạo file audio/video kết quả thực. Dữ liệu in-memory có thể mất khi reload ứng dụng.
 
@@ -97,6 +97,7 @@ multilingual-ai-narration/
 
 - Node.js.
 - npm.
+- FFmpeg và FFprobe trong PATH để chạy media processing.
 - Git.
 - Trình duyệt hiện đại.
 - VS Code hoặc editor tương đương được khuyến nghị.
@@ -221,7 +222,7 @@ npm run seed:admin
 npm start
 ```
 
-Auth, Project/Media, transcription, translation và TTS routes đã có. TTS adapter dùng `TTS_PROVIDER=openai`, `TTS_MODEL=gpt-4o-mini-tts`, voice mặc định `coral` và MP3; API key chỉ đọc từ backend environment. FFmpeg, queue/worker và frontend integration chưa có.
+Auth, Project/Media, transcription, translation, TTS và Result routes đã có. Media processing đọc `FFMPEG_PATH`, `FFPROBE_PATH`, `FFMPEG_TIMEOUT_MS`; mặc định gọi binary trong PATH. Kiểm tra bằng `ffmpeg -version` và `ffprobe -version`. Queue/worker và frontend integration chưa có.
 
 ## Cổng phát triển
 
@@ -267,7 +268,7 @@ Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vi
 
 ## Backend hiện tại và API tương lai
 
-Foundation, auth, Project/Media, STT, Translation và TTS endpoints đã có. FFmpeg/final Result processing vẫn **PROPOSED / NOT IMPLEMENTED**.
+Foundation, auth, Project/Media, STT, Translation, TTS và final Result processing endpoints đã có. Frontend integration vẫn chưa triển khai.
 
 - S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose — đã hoàn thành trong code.
 - S18: Authentication, JWT và backend-enforced RBAC — đã hoàn thành trong backend; frontend chưa tích hợp.
@@ -275,7 +276,8 @@ Foundation, auth, Project/Media, STT, Translation và TTS endpoints đã có. FF
 - S20: Speech-to-Text — implementation/tests hoàn tất; real provider smoke chưa chạy do thiếu API key.
 - S21: Translation theo segment, nhiều target language, persistence, retry/concurrency protection — đã hoàn thành trong backend.
 - S22: Text-to-Speech, Narration persistence, protected audio và ProcessingJob TTS — đã hoàn thành trong backend.
-- S23 trở đi: FFmpeg / Media Processing.
+- S23: FFmpeg / Media Processing và protected Result delivery — đã triển khai; cần cài `ffmpeg` và `ffprobe` để chạy thật.
+- S24: Full Frontend / Backend Integration.
 
 Secret như `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
 

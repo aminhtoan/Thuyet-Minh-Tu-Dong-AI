@@ -63,11 +63,11 @@ Customer Web and Admin Web will use one backend but remain independent applicati
 - S9: Web/Mobile Voice & TTS configuration, active language-scoped voices, simulated preview, speed selection and mock save/reset. Voice data is MOCK; TTS is NOT_INTEGRATED; narration audio is NOT_GENERATED.
 - S10: saved-configuration generation summary, confirmation and simulated narration/media progress on Web/Mobile, with completed/failed/cancelled states, retry and timer cleanup. Processing is MOCK; real TTS/FFmpeg are NOT_INTEGRATED and no output media is generated.
 - S12: separate Admin foundation with mock login and the shell later completed across S13–S16.
-- S17 foundation, S18 auth/JWT/RBAC, S19 Project/Media, S20 STT, S21 Translation và S22 TTS đã có trong backend. FFmpeg chưa được tích hợp.
+- S17–S23 backend đã có foundation, auth/RBAC, Project/Media, STT, Translation, TTS và FFmpeg media-processing. Máy phát triển cần `ffmpeg`/`ffprobe` trong PATH hoặc cấu hình binary tương ứng.
 
 ## Current Sprint and Next Direction
 
-S9–S16.5 frontend scope đã hoàn thành. Backend hiện có foundation, auth, Project/Media, STT, Translation và TTS; hướng tiếp theo là S23 FFmpeg / Media Processing.
+S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã triển khai; hướng tiếp theo là S24 frontend/backend integration.
 
 ## Domain Alignment Snapshot
 
@@ -76,6 +76,7 @@ S9–S16.5 frontend scope đã hoàn thành. Backend hiện có foundation, auth
 - STT dùng provider abstraction với OpenAI `whisper-1` adapter, xử lý đồng bộ, lưu Transcript cùng ordered timestamp segments và ProcessingJob history. Retry từ `FAILED`; active request trùng bị chặn.
 - Translation dùng provider abstraction và OpenAI text adapter, xử lý structured batch đồng bộ, lưu nhiều target language với source segment alignment. Target đã hoàn tất trả idempotently; retry và active-job protection được backend enforce.
 - TTS dùng OpenAI `gpt-4o-mini-tts`, voice resolve từ catalog theo target language, lưu MP3 dưới project-scoped uploads và chỉ trả protected audio URL. Identity là Translation + Voice + speed; Project giữ `GENERATING_AUDIO` sau thành công cho S23.
+- Media processing dùng abstraction với FFmpeg/FFprobe, server-owned paths và protected Result access. Narration thay audio gốc, output H.264/AAC MP4 theo duration video nguồn; MongoDB chỉ giữ metadata/path tương đối. `COMPLETED` nghĩa là Result cuối đã được tạo và probe hợp lệ.
 - Core domain entities: User, Project, Media, Transcript, TranscriptSegment, Translation, TranslationSegment, Language, Voice, Narration, ProcessingJob, Result, ActivityLog.
 - A Project may have many target-language Translations and Narrations.
 - `ProjectStatus` describes the aggregate lifecycle; `ProcessingJobStatus` describes a long-running task; S5 `UploadStatus` is local UI state.

@@ -35,7 +35,9 @@ multilingual-ai-narration/
 └── README.md
 ```
 
-MongoDB với Mongoose là database/ODM của backend. S17–S22 đã triển khai foundation, auth/RBAC, Project/Media, STT, Translation và TTS. FFmpeg chưa tích hợp.
+MongoDB với Mongoose là database/ODM của backend. S17–S23 đã triển khai pipeline backend đến Result MP4.
+
+S23 xử lý đồng bộ `Source Video + Narration → MediaProcessor → FFmpeg → FFprobe validation → Result → COMPLETED`. Tiến trình dùng `spawn` với argument array, `shell:false`, binary/timeout cấu hình và stderr bị giới hạn. Client không cung cấp path hay FFmpeg argument. Narration thay audio gốc; output H.264/AAC, duration theo video nguồn (`apad` khi narration ngắn, trim khi dài). File tạm nằm trong project results directory và chỉ rename sau validation; MongoDB lưu metadata/path tương đối. Result retrieval được bảo vệ và hỗ trợ HTTP Range. Identity Project + Narration cung cấp idempotency và active-job protection.
 
 S22 xử lý đồng bộ `Translation → TTS Service → TTS Provider → generated MP3 → Narration metadata`. Provider call nằm ngoài MongoDB transaction. Voice được resolve server-side từ catalog active theo Language/provider; client không truyền provider voice code. Audio nằm tại project-scoped ignored uploads, MongoDB chỉ giữ relative path và metadata, còn retrieval luôn qua JWT/ownership-protected endpoint. Identity `translationId + voiceId + speed` cung cấp idempotency; ProcessingJob TTS khóa duplicate active request, giữ history và cho phép retry. S23 tiêu thụ Narration output để xử lý media.
 
@@ -184,7 +186,7 @@ REST base `/api` đã tồn tại. S19 bổ sung Customer `/api/projects/**` và
 | S20 | Speech-to-Text Integration | Implemented; real provider smoke pending credentials |
 | S21 | Translation Integration | Implemented |
 | S22 | Text-to-Speech Integration | Implemented |
-| S23 | FFmpeg Media Processing | Planned |
+| S23 | FFmpeg Media Processing | Implemented; runtime smoke requires local FFmpeg/FFprobe |
 | S24 | Full Frontend/Backend Integration | Planned |
 | S25 | Testing, Security & Hardening | Planned |
 | S26 | CI/CD & Deployment | Planned |
