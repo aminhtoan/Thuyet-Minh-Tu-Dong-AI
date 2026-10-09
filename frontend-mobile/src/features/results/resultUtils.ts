@@ -2,14 +2,13 @@ import type { Project } from '../projects/types';
 import { languageNames } from '../projects/projectUtils';
 import type { Result } from './types';
 export function resultRows(project: Project, result: Result): [string, string][] {
-  const missing = 'Chưa lưu trong dữ liệu mẫu';
+  const missing = 'Không có dữ liệu';
   return [
     ['Dự án', project.name], ['Ngôn ngữ gốc', languageNames[project.sourceLanguage]],
     ['Ngôn ngữ đích', languageNames[result.languageCode]], ['Loại media', result.mediaType],
-    ['Bản ghi', result.transcriptCount === undefined ? missing : result.transcriptCount + ' đoạn'],
-    ['Bản dịch', result.translationCount === undefined ? missing : result.translationCount + ' đoạn'],
     ['Giọng đọc', result.voiceName ?? missing], ['Tốc độ', result.speed === undefined ? missing : result.speed + 'x'],
-    ['Hoàn tất mô phỏng', new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(result.createdAt))],
+    ['Dung lượng kết quả', (result.fileSize / 1048576).toFixed(2) + ' MB'],
+    ['Hoàn tất', new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(result.createdAt))],
     ...(project.durationSeconds === undefined ? [] : [['Thời lượng nguồn', project.durationSeconds + ' giây'] as [string, string]]),
     ...(project.mediaSize === undefined ? [] : [['Dung lượng nguồn', (project.mediaSize / 1048576).toFixed(1) + ' MB'] as [string, string]]),
   ];

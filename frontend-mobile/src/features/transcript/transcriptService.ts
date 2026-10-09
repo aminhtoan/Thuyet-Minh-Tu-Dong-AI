@@ -1,63 +1,12 @@
+import { ApiError, api } from '../../lib/api';
+import { confirmAction } from '../../lib/confirm';
 import { projectRepository } from '../projects/projectRepository';
-import { mockSegmentStarts, mockTranscriptDuration, mockTranscriptLines } from './mockTranscriptData';
-import { deriveFullText, getSegmentErrors } from './transcriptUtils';
-import type { Transcript, TranscriptSegment } from './types';
-
-type MockOptions = { signal?: AbortSignal; fail?: boolean };
-const savedTranscripts = new Map<string, Transcript>();
-
-function copyTranscript(transcript: Transcript): Transcript {
-  return { ...transcript, segments: transcript.segments.map((segment) => ({ ...segment })) };
-}
-
-function waitForMock(ms: number, { signal, fail }: MockOptions): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) { reject(new Error('Đã hủy thao tác')); return; }
-    const onAbort = () => { clearTimeout(timer); reject(new Error('Đã hủy thao tác')); };
-    const timer = setTimeout(() => {
-      signal?.removeEventListener('abort', onAbort);
-      if (fail) reject(new Error('Thao tác bản ghi mô phỏng thất bại. Vui lòng thử lại.'));
-      else resolve();
-    }, ms);
-    signal?.addEventListener('abort', onAbort, { once: true });
-  });
-}
-
-function requireProject(projectId: string) {
-  const project = projectRepository.getById(projectId);
-  if (!project) throw new Error('Không tìm thấy dự án.');
-  return project;
-}
-
+import type { Transcript } from './types';
+type Options = { signal?: AbortSignal };
+type TranscriptDto = { id: string; projectId: string; language: string; fullText: string; status: 'READY'; createdAt: string; updatedAt: string; segments: { id: string; index: number; startTime: number; endTime: number; text: string }[] };
+const map = (value: TranscriptDto): Transcript => ({ id: value.id, projectId: value.projectId, languageCode: value.language, fullText: value.fullText, status: 'SAVED', createdAt: value.createdAt, updatedAt: value.updatedAt, segments: value.segments.map((segment) => ({ id: segment.id, sequence: segment.index, startTime: segment.startTime, endTime: segment.endTime, text: segment.text })) });
 export const transcriptService = {
-  async getTranscript(projectId: string, options: MockOptions = {}): Promise<Transcript | null> {
-    await waitForMock(300, options);
-    requireProject(projectId);
-    const transcript = savedTranscripts.get(projectId);
-    return transcript ? copyTranscript(transcript) : null;
-  },
-  async generateTranscript(projectId: string, options: MockOptions = {}): Promise<Transcript> {
-    await waitForMock(1100, options);
-    const project = requireProject(projectId);
-    if (project.status === 'DRAFT') throw new Error('Hãy tải phương tiện lên trước khi tạo bản ghi.');
-    const lines = mockTranscriptLines[project.sourceLanguage];
-    const now = new Date().toISOString();
-    const segments: TranscriptSegment[] = lines.map((text, index) => ({
-      id: `${projectId}-segment-${index + 1}`,
-      sequence: index + 1,
-      startTime: mockSegmentStarts[index],
-      endTime: mockSegmentStarts[index + 1] ?? mockTranscriptDuration,
-      text,
-    }));
-    return { id: `${projectId}-transcript`, projectId, languageCode: project.sourceLanguage, fullText: deriveFullText(segments), status: 'READY', segments, createdAt: now, updatedAt: now };
-  },
-  async saveTranscript(projectId: string, draft: Transcript, options: MockOptions = {}): Promise<Transcript> {
-    await waitForMock(500, options);
-    requireProject(projectId);
-    if (draft.projectId !== projectId || draft.segments.length === 0 || Object.keys(getSegmentErrors(draft.segments)).length) throw new Error('Hãy chỉnh sửa bản ghi trước khi lưu.');
-    const segments = draft.segments.map((segment) => ({ ...segment, text: segment.text.trim() }));
-    const saved: Transcript = { ...draft, status: 'SAVED', segments, fullText: deriveFullText(segments), updatedAt: new Date().toISOString() };
-    savedTranscripts.set(projectId, copyTranscript(saved));
-    return copyTranscript(saved);
-  },
+  async getTranscript(projectId: string, options: Options = {}) { try { const response = await api<{ transcript: TranscriptDto }>(`/projects/${projectId}/transcript`, { signal: options.signal }); return map(response.transcript); } catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error; } },
+  async generateTranscript(projectId: string, options: Options = {}) { if (!await confirmAction('Tạo bản ghi', 'Bắt đầu chuyển giọng nói thành văn bản? Thao tác này có thể sử dụng dịch vụ AI tính phí.')) throw new Error('Đã hủy thao tác.'); const response = await api<{ transcript: TranscriptDto }>(`/projects/${projectId}/transcription`, { method: 'POST', signal: options.signal }); await projectRepository.refresh(); return map(response.transcript); },
+  async saveTranscript(_projectId?: string, _draft?: Transcript, _options?: Options) { throw new Error('Backend chưa hỗ trợ chỉnh sửa bản ghi.'); },
 };

@@ -14,7 +14,7 @@ export function calculateOverallProgress(stages: readonly ProcessingStage[]): nu
 export function createInitialSnapshot(projectId: string, mediaType: MediaType): ProcessingSnapshot {
   return {
     projectId, runId: null, status: 'WAITING', progress: 0, currentStage: null,
-    message: 'Kiểm tra cấu hình đã lưu, sau đó bắt đầu mô phỏng.',
+    message: 'Kiểm tra cấu hình đã lưu, sau đó bắt đầu xử lý.',
     error: null, startedAt: null, completedAt: null,
     stages: [
       { id: 'upload', title: 'Tải lên', status: 'COMPLETED' },
@@ -37,7 +37,7 @@ export function sameConfiguration(first: NarrationConfig, second: NarrationConfi
     first.languageCode === second.languageCode && first.voiceId === second.voiceId &&
     first.speed === second.speed && first.translationRevision === second.translationRevision;
 }
-export function getSimulatedProjectStatus(snapshot: ProcessingSnapshot, mediaType: MediaType): ProjectStatus {
+export function getProjectStatus(snapshot: ProcessingSnapshot, mediaType: MediaType): ProjectStatus {
   if (snapshot.status === 'COMPLETED') return 'COMPLETED';
   if (snapshot.status === 'FAILED') return 'FAILED';
   if (snapshot.status === 'PROCESSING') return snapshot.currentStage === 'media' && mediaType === 'VIDEO' ? 'PROCESSING_VIDEO' : 'GENERATING_AUDIO';

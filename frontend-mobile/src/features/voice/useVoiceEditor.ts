@@ -61,25 +61,14 @@ export function useVoiceEditor(projectId: string, language?: LanguageCode) {
     setPreviewError(null);
     setFailedPreviewId(null);
   }
-  async function preview(id: string) {
-    if (busy || !state.voices.some((voice) => voice.id === id)) return;
+  function preview(id: string) {
+    const voice = state.voices.find((item) => item.id === id);
+    if (busy || !voice?.previewUrl) return;
     if (previewingVoiceId === id) { stopPreview(); return; }
     previewOperation.current?.abort();
-    const controller = new AbortController();
-    previewOperation.current = controller;
     setPreviewingVoiceId(id);
     setPreviewError(null);
     setFailedPreviewId(null);
-    try {
-      await voiceService.previewVoice(id, { signal: controller.signal });
-      if (!controller.signal.aborted) setPreviewingVoiceId(null);
-    } catch (cause) {
-      if (!controller.signal.aborted) {
-        setPreviewingVoiceId(null);
-        setFailedPreviewId(id);
-        setPreviewError(cause instanceof Error ? cause.message : 'Không thể nghe thử giọng đọc này.');
-      }
-    }
   }
   function updateConfig(patch: Partial<Pick<NarrationConfig, 'voiceId' | 'speed'>>) {
     if (busy || !state.draft) return;

@@ -1,35 +1,9 @@
+import { api } from '../../lib/api';
+import { confirmAction } from '../../lib/confirm';
 import type { LanguageCode } from '../projects/types';
 import { translationService } from '../translation/translationService';
-import { waitForMock, type MockOptions } from './mockAsync';
+import type { NarrationConfig, RequestOptions } from './types';
 import { voiceService } from './voiceService';
 import { translationRevision, validateNarrationConfig } from './voiceUtils';
-import type { NarrationConfig } from './types';
-
-const savedConfigs = new Map<string, NarrationConfig>();
-const key = (projectId: string, language: LanguageCode) => projectId + ':' + language;
-
-export const narrationService = {
-  async getConfig(projectId: string, language?: LanguageCode, options: MockOptions = {}): Promise<NarrationConfig | null> {
-    await waitForMock(200, options);
-    const translation = await translationService.getSavedTranslation(projectId, language, { signal: options.signal });
-    if (!translation) return null;
-    const saved = savedConfigs.get(key(projectId, translation.targetLanguage));
-    if (!saved || saved.translationId !== translation.id || saved.translationRevision !== translationRevision(translation)) return null;
-    const voices = await voiceService.getVoices(translation.targetLanguage, { signal: options.signal });
-    return validateNarrationConfig(saved, voices) ? null : { ...saved };
-  },
-  async saveConfig(projectId: string, config: NarrationConfig, options: MockOptions = {}): Promise<NarrationConfig> {
-    await waitForMock(400, options);
-    const voices = await voiceService.getVoices(config.languageCode, { signal: options.signal });
-    const translation = await translationService.getSavedTranslation(projectId, config.languageCode, { signal: options.signal });
-    if (!translation || config.projectId !== projectId || config.translationId !== translation.id ||
-        config.translationRevision !== translationRevision(translation)) {
-      throw new Error('Bản dịch đã lưu đã thay đổi hoặc không khả dụng. Hãy quay lại Bản dịch rồi mở lại Giọng đọc.');
-    }
-    const error = validateNarrationConfig(config, voices);
-    if (error) throw new Error(error);
-    const saved = { ...config };
-    savedConfigs.set(key(projectId, config.languageCode), saved);
-    return { ...saved };
-  },
-};
+type NarrationDto = { id: string; translationId: string; targetLanguage: string; voice: { id: string; name: string }; speed: number };
+export const narrationService = { async getConfig(projectId: string, language?: LanguageCode, options: RequestOptions = {}): Promise<NarrationConfig | null> { const translation = await translationService.getSavedTranslation(projectId, language, options); if (!translation) return null; const response = await api<{ narrations: NarrationDto[] }>(`/projects/${projectId}/narrations`, { signal: options.signal }); const narration = [...response.narrations].reverse().find((item) => item.targetLanguage === translation.targetLanguage); if (!narration) return null; return { projectId, translationId: translation.id, languageCode: translation.targetLanguage, voiceId: narration.voice.id, speed: narration.speed, translationRevision: translationRevision(translation), narrationId: narration.id }; }, async saveConfig(projectId: string, config: NarrationConfig, options: RequestOptions = {}) { const voices = await voiceService.getVoices(config.languageCode, options); const translation = await translationService.getSavedTranslation(projectId, config.languageCode, options); if (!translation || config.translationId !== translation.id || config.translationRevision !== translationRevision(translation)) throw new Error('Bản dịch đã thay đổi hoặc không còn khả dụng.'); const error = validateNarrationConfig(config, voices); if (error) throw new Error(error); if (!await confirmAction('Tạo giọng đọc', 'Tạo âm thanh thuyết minh bằng giọng đã chọn? Thao tác này có thể sử dụng dịch vụ AI tính phí.')) throw new Error('Đã hủy thao tác.'); const response = await api<{ narration: NarrationDto }>(`/projects/${projectId}/narrations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: config.languageCode, voiceId: config.voiceId }) }); return { ...config, speed: response.narration.speed, narrationId: response.narration.id }; } };

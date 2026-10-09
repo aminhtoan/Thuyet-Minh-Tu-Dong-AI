@@ -11,7 +11,7 @@ import { WorkflowSteps } from '@/components/common/WorkflowSteps';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileScreen } from '@/components/layout/MobileScreen';
 import { isLanguageCode } from '@/features/projects/languages';
-import { projectRepository } from '@/features/projects/projectRepository';
+import { useProject } from '@/features/projects/useProjects';
 import { languageNames } from '@/features/projects/projectUtils';
 import type { LanguageCode, Project } from '@/features/projects/types';
 import { VoiceCard } from '@/features/voice/VoiceCard';
@@ -20,7 +20,9 @@ import { formatSpeed, speedPresets, voiceFilters } from '@/features/voice/voiceU
 import { colors, spacing, typography } from '@/theme/tokens';
 
 export function VoiceScreen({ projectId, language }: { projectId: string; language?: string }) {
-  const project = projectRepository.getById(projectId);
+  const { project, isLoading, error } = useProject(projectId);
+  if (isLoading) return <View style={styles.container}><Spinner label="Đang tải dự án" /></View>;
+  if (error) return <View style={styles.container}><ErrorState title="Không thể tải dự án" description={error} /></View>;
   if (!project || (language !== undefined && !isLanguageCode(language))) return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
     <MobileScreen title="Giọng đọc và thuyết minh" description="Hãy mở một bản dịch đã lưu trước.">
       <Card><ErrorState title={project ? 'Ngôn ngữ không khả dụng' : 'Không tìm thấy dự án'} description="Quay lại danh sách dự án và mở một bản dịch đã lưu." /></Card>
@@ -59,7 +61,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
       <Text style={styles.sectionTitle}>Chọn giọng đọc</Text>
       <View style={styles.controls} accessibilityLabel="Lọc giọng đọc theo giới tính">
         {voiceFilters.map((gender) => <Button key={gender} variant={editor.gender === gender ? 'primary' : 'secondary'}
-          accessibilityState={{ selected: editor.gender === gender }} onPress={() => editor.setGender(gender)}>{gender === 'All' ? 'Tất cả' : gender === 'Female' ? 'Nữ' : 'Nam'}</Button>)}
+          accessibilityState={{ selected: editor.gender === gender }} onPress={() => editor.setGender(gender)}>{gender === 'All' ? 'Tất cả' : gender === 'Female' ? 'Nữ' : gender === 'Male' ? 'Nam' : 'Trung tính'}</Button>)}
       </View>
     </>}
     {editor.previewError && <Card><ErrorState title="Không thể nghe thử giọng đọc" description={editor.previewError}
@@ -77,11 +79,11 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
     <Card style={styles.summary}><Text style={styles.sectionTitle}>Tốc độ giọng đọc</Text>
       <Text style={styles.label}>Hiện tại: {formatSpeed(editor.draft.speed)}</Text>
       <View style={styles.controls} accessibilityLabel="Tốc độ giọng đọc">
-        {speedPresets.map((speed) => <Button key={speed} variant={editor.draft?.speed === speed ? 'primary' : 'secondary'}
-          disabled={editor.busy} accessibilityLabel={'Tốc độ giọng đọc ' + formatSpeed(speed)}
+        {speedPresets.filter((speed) => speed === 1).map((speed) => <Button key={speed} variant="primary"
+          disabled accessibilityLabel={'Tốc độ giọng đọc ' + formatSpeed(speed)}
           accessibilityState={{ selected: editor.draft?.speed === speed, disabled: editor.busy }}
           onPress={() => editor.updateConfig({ speed })}>{formatSpeed(speed)}</Button>)}
-      </View><Text style={styles.note}>Tốc độ chậm tạo phần thuyết minh dài hơn; tốc độ nhanh tạo phần thuyết minh ngắn hơn.</Text>
+      </View><Text style={styles.note}>Backend hiện hỗ trợ tốc độ đọc cố định 1.0x.</Text>
     </Card>
     <Card style={styles.summary}><Text style={styles.sectionTitle}>Cấu hình thuyết minh</Text>
       <Text style={styles.description}>Ngôn ngữ: {languageNames[editor.draft.languageCode]}</Text>
@@ -89,10 +91,10 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
       <Text style={styles.description}>Tốc độ: {formatSpeed(editor.draft.speed)}</Text>
       {editor.validationError && <Text accessibilityLiveRegion="polite" style={styles.error}>{editor.validationError}</Text>}
       <Text accessibilityLiveRegion="polite" style={styles.label}>{editor.status === 'SAVING' ? 'Đang lưu cấu hình...' : editor.dirty ? 'Thay đổi chưa lưu' : editor.saved ? 'Đã lưu' : 'Chọn giọng đọc để cấu hình thuyết minh.'}</Text>
-      <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Lưu cấu hình</Button>
+      <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Tạo giọng đọc</Button>
       <Button variant="secondary" disabled={!editor.dirty || editor.busy} onPress={editor.reset}>Đặt lại thay đổi</Button>
       <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.busy || Boolean(editor.validationError) || editor.status === 'FAILED'} onPress={() => { if (target) { editor.stopPreview(); router.replace({ pathname: '/projects/[projectId]/generate', params: { projectId: project.id, language: target } }); } }}>Tiếp tục tạo thuyết minh</Button>
-      <Text style={styles.note}>Hãy lưu mọi thay đổi cấu hình trước khi tiếp tục. Bước tiếp theo sẽ mô phỏng quá trình xử lý.</Text>
+      <Text style={styles.note}>Tạo giọng đọc sẽ gọi dịch vụ TTS sau khi bạn xác nhận.</Text>
     </Card>
   </View> : null;
 
@@ -103,7 +105,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
         ListFooterComponent={footer} ItemSeparatorComponent={VoiceSeparator}
         renderItem={({ item }) => <VoiceCard voice={item} selected={editor.draft?.voiceId === item.id}
           previewing={editor.previewingVoiceId === item.id} disabled={editor.busy}
-          onPreview={() => void editor.preview(item.id)} onSelect={() => editor.updateConfig({ voiceId: item.id })} />}
+          onPreview={() => editor.preview(item.id)} onSelect={() => editor.updateConfig({ voiceId: item.id })} />}
       />
     </SafeAreaView>
   </View>;

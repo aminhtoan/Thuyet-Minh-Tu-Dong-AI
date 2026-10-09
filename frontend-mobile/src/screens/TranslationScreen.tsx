@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { router } from 'expo-router';
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,29 +10,29 @@ import { Spinner } from '@/components/common/Spinner';
 import { WorkflowSteps } from '@/components/common/WorkflowSteps';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileScreen } from '@/components/layout/MobileScreen';
-import { filterTargetLanguages, isLanguageCode } from '@/features/projects/languages';
-import { projectRepository } from '@/features/projects/projectRepository';
+import { isLanguageCode } from '@/features/projects/languages';
+import { useProject } from '@/features/projects/useProjects';
 import { languageNames } from '@/features/projects/projectUtils';
 import type { LanguageCode, Project } from '@/features/projects/types';
-import type { TranscriptSegment } from '@/features/transcript/types';
 import { TranslationSegmentCard } from '@/features/translation/TranslationSegmentCard';
 import { useTranslationEditor } from '@/features/translation/useTranslationEditor';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export function TranslationScreen({ projectId, language }: { projectId: string; language?: string }) {
-  const project = projectRepository.getById(projectId);
+  const { project, isLoading, error } = useProject(projectId);
+  if (isLoading) return <View style={styles.container}><Spinner label="Đang tải dự án" /></View>;
+  if (error) return <View style={styles.container}><ErrorState title="Không thể tải dự án" description={error} /></View>;
   if (!project) return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
     <MobileScreen title="Bản dịch" description="Không tìm thấy dự án">
       <Card><ErrorState title="Không tìm thấy dự án" description="Dự án này không khả dụng." /></Card>
       <Button onPress={() => router.replace('/projects')}>Quay lại danh sách dự án</Button>
     </MobileScreen></View>;
-  const preferredTarget = language && isLanguageCode(language) ? language : project.targetLanguage;
+  const preferredTarget = language && isLanguageCode(language) ? language : project.targetLanguage ?? '';
   return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
 }
 
 function TranslationWorkspace({ project, preferredTarget }: { project: Project; preferredTarget: LanguageCode }) {
   const editor = useTranslationEditor(project.id, preferredTarget);
-  const list = useRef<FlatList<TranscriptSegment>>(null);
   const sourceLanguage = editor.transcript?.languageCode ?? project.sourceLanguage;
   const translationBySource = new Map(editor.draft?.segments.map((segment) => [segment.transcriptSegmentId, segment]));
   const goBack = () => router.replace({ pathname: '/projects/[projectId]/transcript', params: { projectId: project.id } });
@@ -59,7 +58,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       <Text style={styles.label}>Ngôn ngữ nguồn</Text><Text style={styles.sourceLanguage}>{languageNames[sourceLanguage]}</Text>
       <Text style={styles.label}>Ngôn ngữ đích</Text>
       <View style={styles.languageOptions} accessibilityRole="radiogroup" accessibilityLabel="Ngôn ngữ đích">
-        {filterTargetLanguages(sourceLanguage).map((language) => <Pressable key={language.code}
+        {editor.targetChoices.map((language) => <Pressable key={language.code}
           accessibilityRole="radio" accessibilityLabel={'Ngôn ngữ đích: ' + language.name}
           accessibilityState={{ checked: editor.targetLanguage === language.code, disabled: !editor.canChangeTarget }}
           disabled={!editor.canChangeTarget} onPress={() => editor.changeTarget(language.code)}
@@ -67,12 +66,12 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
           <Text style={styles.languageText}>{language.nativeName}</Text><Text style={styles.note}>{language.name}</Text>
         </Pressable>)}
       </View>
-      <Text style={styles.note}>{editor.dirty ? 'Hãy lưu hoặc đặt lại thay đổi trước khi chọn ngôn ngữ khác.' : 'Chọn ngôn ngữ để tạo hoặc mở lại bản dịch.'}</Text>
-      <Text style={styles.note}>Bản dịch mô phỏng dùng dữ liệu mẫu cố định. Nội dung nguồn đã sửa sẽ nhận bản dịch mẫu có nhãn.</Text>
+      <Text style={styles.note}>Chọn ngôn ngữ để tạo hoặc mở lại bản dịch đã lưu.</Text>
+      <Text style={styles.note}>Bản dịch được tạo và lưu bởi backend.</Text>
       {!editor.draft && <Button loading={editor.status === 'TRANSLATING'} disabled={editor.busy || editor.status === 'FAILED'} onPress={editor.translate}>Dịch</Button>}
     </Card>}
     {editor.status === 'TRANSLATING' && <Card style={styles.loading}><Spinner label="Đang dịch bản ghi" />
-      <Text accessibilityLiveRegion="polite" style={styles.note}>Đang dịch bản ghi... Đang chuẩn bị bản dịch mẫu {editor.targetLanguage ? languageNames[editor.targetLanguage] : ''}.</Text></Card>}
+      <Text accessibilityLiveRegion="polite" style={styles.note}>Đang tạo bản dịch {editor.targetLanguage ? languageNames[editor.targetLanguage] : ''}...</Text></Card>}
     {sourceVisible && !editor.draft && editor.status === 'NOT_STARTED' && <Text style={styles.note}>Chưa có bản dịch đã lưu cho ngôn ngữ và bản ghi này. Chọn Dịch để bắt đầu.</Text>}
   </View>;
 
@@ -82,14 +81,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       action={<Button onPress={backToTranscript}>Quay lại bản ghi</Button>} /></Card> : null;
 
   const footer = editor.draft && sourceVisible ? <Card style={styles.actions}>
-    <Text accessibilityLiveRegion="polite" style={styles.label}>{editor.status === 'SAVING' ? 'Đang lưu bản dịch...' : editor.dirty ? 'Thay đổi chưa lưu' : 'Đã lưu'}</Text>
-    {editor.invalid && <Text accessibilityRole="alert" style={styles.error}>Hãy bổ sung các bản dịch còn trống trước khi lưu.</Text>}
-    <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Lưu bản dịch</Button>
-    <Button variant="secondary" disabled={!editor.canReset} onPress={() => {
-      editor.reset();
-      if (!editor.saved) list.current?.scrollToOffset({ offset: 0, animated: true });
-    }}>Đặt lại thay đổi</Button>
-    <Text style={styles.note}>{editor.saved ? 'Đặt lại về bản dịch đã lưu gần nhất.' : 'Đặt lại sẽ hủy bản dịch chưa lưu để bạn bắt đầu lại hoặc đổi ngôn ngữ.'}</Text>
+    <Text accessibilityLiveRegion="polite" style={styles.label}>Bản dịch được lưu bởi backend. Chỉnh sửa hiện chưa được hỗ trợ.</Text>
     <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onPress={() => { if (editor.targetLanguage) router.replace({ pathname: '/projects/[projectId]/voice', params: { projectId: project.id, language: editor.targetLanguage } }); }}>Tiếp tục chọn giọng đọc</Button>
     <Text style={styles.note}>Hãy lưu mọi thay đổi bản dịch trước khi chọn giọng đọc thuyết minh.</Text>
   </Card> : null;
@@ -97,13 +89,13 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
   return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <SafeAreaView style={styles.container} edges={['bottom']}>
-        <FlatList ref={list} data={sourceVisible ? editor.transcript?.segments : []} keyExtractor={(segment) => segment.id}
+        <FlatList data={sourceVisible ? editor.transcript?.segments : []} keyExtractor={(segment) => segment.id}
           contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
           ListHeaderComponent={header} ListEmptyComponent={empty} ListFooterComponent={footer}
           ItemSeparatorComponent={SegmentSeparator} renderItem={({ item }) => {
             const translation = translationBySource.get(item.id);
             return <TranslationSegmentCard source={item} translation={translation}
-              error={translation ? editor.errors[translation.id] : undefined} disabled={editor.busy} onChange={editor.updateSegment} />;
+              error={translation ? editor.errors[translation.id] : undefined} disabled onChange={editor.updateSegment} />;
           }} />
       </SafeAreaView>
     </KeyboardAvoidingView>

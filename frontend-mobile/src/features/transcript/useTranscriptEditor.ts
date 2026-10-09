@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { transcriptService } from './transcriptService';
-import { getSegmentErrors, hasSegmentEdits, hasTranscriptChanges } from './transcriptUtils';
+import { getSegmentErrors, hasTranscriptChanges } from './transcriptUtils';
 import type { Transcript, TranscriptStatus } from './types';
 
 type FailedAction = 'load' | 'generate' | 'save' | null;
@@ -21,8 +21,8 @@ export function useTranscriptEditor(projectId: string) {
   const segmentErrors = draft ? getSegmentErrors(draft.segments) : {};
   const hasInvalidSegments = !draft?.segments.length || Object.keys(segmentErrors).length > 0;
   const busy = status === 'LOADING' || status === 'GENERATING' || status === 'SAVING';
-  const canSave = Boolean(draft && dirty && !hasInvalidSegments && !busy && status !== 'FAILED');
-  const canReset = !busy && hasSegmentEdits(draft, saved ?? generatedBaseline);
+  const canSave = false;
+  const canReset = false;
 
   const requestTranscript = useCallback(() => {
     operationRef.current?.abort();
@@ -66,9 +66,9 @@ export function useTranscriptEditor(projectId: string) {
       const result = await transcriptService.generateTranscript(projectId, { signal: controller.signal });
       if (controller.signal.aborted) return;
       setDraft(result);
-      setSaved(null);
+      setSaved(copyTranscript(result));
       setGeneratedBaseline(copyTranscript(result));
-      setStatus('READY');
+      setStatus('SAVED');
     } catch (cause) {
       if (controller.signal.aborted) return;
       setError(cause instanceof Error ? cause.message : 'Không thể tạo bản ghi.');
@@ -78,11 +78,7 @@ export function useTranscriptEditor(projectId: string) {
   }
 
   function updateSegment(segmentId: string, text: string) {
-    if (busy) return;
-    setDraft((current) => current && { ...current, segments: current.segments.map((segment) => segment.id === segmentId ? { ...segment, text } : segment) });
-    setStatus('READY');
-    setError(null);
-    setFailedAction(null);
+    void segmentId; void text;
   }
 
   async function saveTranscript() {

@@ -1,4 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useAudioPlayer } from 'expo-audio';
+import { useEffect } from 'react';
 import { Button } from '@/components/common/Button';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { languageNames } from '../projects/projectUtils';
@@ -6,13 +8,20 @@ import type { Voice } from './types';
 
 type Props = { voice: Voice; selected: boolean; previewing: boolean; disabled: boolean; onSelect: () => void; onPreview: () => void };
 export function VoiceCard({ voice, selected, previewing, disabled, onSelect, onPreview }: Props) {
+  const player = useAudioPlayer(voice.previewUrl ?? null);
+  useEffect(() => { if (!previewing) player.pause(); }, [player, previewing]);
+  function togglePreview() {
+    if (!voice.previewUrl) return;
+    if (previewing) player.pause(); else player.play();
+    onPreview();
+  }
   return <View style={[styles.card, selected && styles.selected]}>
     <View style={styles.heading}><Text style={styles.name}>{voice.name}</Text>{selected && <Text style={styles.selectedLabel}>✓ Đã chọn</Text>}</View>
-    <Text style={styles.note}>{voice.gender} · {languageNames[voice.languageCode]}</Text>
+    <Text style={styles.note}>{voice.gender === 'Female' ? 'Nữ' : voice.gender === 'Male' ? 'Nam' : 'Trung tính'} · {languageNames[voice.languageCode] ?? voice.languageCode.toUpperCase()}</Text>
     <Text style={styles.description}>{voice.description}</Text>
-    <Text accessibilityLiveRegion="polite" style={styles.note}>{previewing ? 'Đang mô phỏng nghe thử... Không phát âm thanh.' : 'Giọng đọc mẫu · nghe thử mô phỏng'}</Text>
+    <Text accessibilityLiveRegion="polite" style={styles.note}>{voice.previewUrl ? (previewing ? 'Đang phát bản nghe thử.' : 'Có bản nghe thử') : 'Nhà cung cấp chưa có bản nghe thử.'}</Text>
     <View style={styles.actions}>
-      <Button variant="secondary" disabled={disabled} accessibilityLabel={(previewing ? 'Dừng nghe thử giọng ' : 'Nghe thử giọng ') + voice.name} onPress={onPreview}>{previewing ? 'Dừng nghe thử' : 'Nghe thử'}</Button>
+      <Button variant="secondary" disabled={disabled || !voice.previewUrl} accessibilityLabel={(previewing ? 'Dừng nghe thử giọng ' : 'Nghe thử giọng ') + voice.name} onPress={togglePreview}>{previewing ? 'Dừng nghe thử' : 'Nghe thử'}</Button>
       <Button variant={selected ? 'primary' : 'secondary'} disabled={disabled} accessibilityLabel={'Chọn giọng ' + voice.name} accessibilityState={{ selected, disabled }} onPress={onSelect}>{selected ? 'Đã chọn' : 'Chọn'}</Button>
     </View>
   </View>;

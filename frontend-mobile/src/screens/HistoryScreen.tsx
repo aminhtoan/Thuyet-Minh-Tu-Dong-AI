@@ -20,7 +20,7 @@ export function HistoryScreen() {
   const [status, setStatus] = useState<ProjectStatusFilter>('ALL');
   const filteredProjects = useMemo(() => filterProjects(projects, query, status), [projects, query, status]);
   const hasActiveFilters = Boolean(query.trim()) || status !== 'ALL';
-  const header = <View style={styles.header}><View style={styles.pageHeading}><View style={styles.headingText}><Text style={styles.title}>Lịch sử</Text><Text style={styles.description}>Lịch sử dự án mô phỏng. Chưa có tệp kết quả thực.</Text></View><Button size="sm" onPress={() => router.push('/projects/new')}>Dự án mới</Button></View><Input accessibilityLabel="Tìm kiếm dự án" placeholder="Tìm kiếm dự án..." returnKeyType="search" autoCorrect={false} value={query} onChangeText={setQuery} /><FilterChips value={status} onChange={setStatus} /></View>;
+  const header = <View style={styles.header}><View style={styles.pageHeading}><View style={styles.headingText}><Text style={styles.title}>Lịch sử</Text><Text style={styles.description}>Theo dõi trạng thái và kết quả xử lý của các dự án.</Text></View><Button size="sm" onPress={() => router.push('/projects/new')}>Dự án mới</Button></View><Input accessibilityLabel="Tìm kiếm dự án" placeholder="Tìm kiếm dự án..." returnKeyType="search" autoCorrect={false} value={query} onChangeText={setQuery} /><FilterChips value={status} onChange={setStatus} /></View>;
 
   if (isLoading) return <View style={styles.center}><Spinner size="large" /><Text style={styles.description}>Đang tải dự án...</Text></View>;
   if (error) return <View style={styles.center}><Card><ErrorState title="Không thể tải dự án" description={error} onRetry={reload} /></Card></View>;

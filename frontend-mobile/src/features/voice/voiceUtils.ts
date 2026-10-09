@@ -5,7 +5,7 @@ import type { NarrationConfig, Voice, VoiceFilter } from './types';
 export const MIN_SPEED = 0.5;
 export const MAX_SPEED = 2;
 export const speedPresets = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-export const voiceFilters: readonly VoiceFilter[] = ['All', 'Female', 'Male'];
+export const voiceFilters: readonly VoiceFilter[] = ['All', 'Female', 'Male', 'Neutral'];
 
 export function filterVoicesByLanguage(voices: readonly Voice[], language: LanguageCode): Voice[] {
   return voices.filter((voice) => voice.isActive && voice.languageCode === language);

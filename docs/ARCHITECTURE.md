@@ -18,7 +18,7 @@ There is no separate `GUEST` business actor. An unauthenticated Customer can onl
 | Application | Folder | Stack | State |
 | --- | --- | --- | --- |
 | Customer Web | `frontend-web/` | React, TypeScript, Vite | Implemented UI, mock services |
-| Customer Mobile | `frontend-mobile/` | React Native, TypeScript, Expo SDK 57 | Implemented UI, mock services; matching Expo Go required |
+| Customer Mobile | `frontend-mobile/` | React Native, TypeScript, Expo SDK 57 | API-integrated Customer client; matching Expo Go required |
 | Admin Web | `admin-web/` | React, TypeScript, Vite | S12 foundation implemented; separate application, not `/admin` in Customer Web |
 
 Both Customer clients and the future Admin Web will use the same backend API. Customer Web and Mobile do not need identical UI components. Do not add `admin-web/` or a shared package in S6.

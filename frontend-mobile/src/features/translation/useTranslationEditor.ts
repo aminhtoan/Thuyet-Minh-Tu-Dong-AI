@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { filterTargetLanguages } from '../projects/languages';
 import type { LanguageCode } from '../projects/types';
 import { transcriptService } from '../transcript/transcriptService';
 import type { Transcript } from '../transcript/types';
 import { translationService } from './translationService';
+import { voiceService } from '../voice/voiceService';
 import { copyTranslation, hasTranslationChanges, validateTranslation } from './translationUtils';
 import type { Translation, TranslationStatus } from './types';
 
@@ -16,10 +16,11 @@ type State = {
   saved: Translation | null;
   error: string | null;
   failedAction: FailedAction;
+  targetChoices: { code: string; name: string; nativeName: string }[];
 };
 const initialState: State = {
   status: 'LOADING', transcript: null, targetLanguage: null,
-  draft: null, saved: null, error: null, failedAction: null,
+  draft: null, saved: null, error: null, failedAction: null, targetChoices: [],
 };
 
 export function useTranslationEditor(projectId: string, preferredTarget: LanguageCode) {
@@ -46,12 +47,13 @@ export function useTranslationEditor(projectId: string, preferredTarget: Languag
         dispatch({ ...initialState, status: 'NOT_STARTED' });
         return;
       }
-      const choices = filterTargetLanguages(transcript.languageCode);
+      const choices = (await voiceService.getLanguages({ signal: controller.signal })).filter((item) => item.code !== transcript.languageCode);
+      if (!choices.length) { dispatch({ transcript, targetChoices: [], status: 'NOT_STARTED', error: null }); return; }
       const desired = requestedTarget ?? preferredTarget;
       const targetLanguage = choices.find((language) => language.code === desired)?.code ?? choices[0].code;
       const saved = await translationService.get(projectId, targetLanguage, { signal: controller.signal });
       if (controller.signal.aborted) return;
-      dispatch({ transcript, targetLanguage, draft: saved, saved, status: saved ? 'SAVED' : 'NOT_STARTED', error: null, failedAction: null });
+      dispatch({ transcript, targetChoices: choices, targetLanguage, draft: saved, saved, status: saved ? 'SAVED' : 'NOT_STARTED', error: null, failedAction: null });
     } catch (cause) {
       if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'load', error: cause instanceof Error ? cause.message : 'Không thể tải bản dịch.' });
     }
@@ -74,16 +76,14 @@ export function useTranslationEditor(projectId: string, preferredTarget: Languag
     dispatch({ status: 'TRANSLATING', error: null, failedAction: null });
     try {
       const draft = await translationService.translate(projectId, state.transcript, state.targetLanguage, { signal: controller.signal });
-      if (!controller.signal.aborted) dispatch({ draft, saved: null, status: 'READY' });
+      if (!controller.signal.aborted) dispatch({ draft, saved: copyTranslation(draft), status: 'SAVED' });
     } catch (cause) {
       if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'translate', error: cause instanceof Error ? cause.message : 'Không thể dịch bản ghi.' });
     }
   }
 
   function updateSegment(id: string, translatedText: string) {
-    if (busy || !state.draft) return;
-    const draft = { ...state.draft, segments: state.draft.segments.map((segment) => segment.id === id ? { ...segment, translatedText } : segment) };
-    dispatch({ draft, status: hasTranslationChanges(draft, state.saved) ? 'READY' : 'SAVED', error: null, failedAction: null });
+    void id; void translatedText;
   }
 
   async function save() {
@@ -113,7 +113,7 @@ export function useTranslationEditor(projectId: string, preferredTarget: Languag
     }
   }
 
-  return { ...state, dirty, errors, busy, invalid, canSave: dirty && !busy && !invalid && state.status !== 'FAILED',
-    canReset: dirty && !busy, canChangeTarget: !dirty && !busy,
+  return { ...state, dirty, errors, busy, invalid, canSave: false,
+    canReset: false, canChangeTarget: !busy,
     changeTarget, translate, updateSegment, save, reset, retry };
 }

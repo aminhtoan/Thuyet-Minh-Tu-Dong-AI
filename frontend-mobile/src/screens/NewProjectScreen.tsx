@@ -11,7 +11,7 @@ import { ProgressBar } from '@/components/common/ProgressBar';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileScreen } from '@/components/layout/MobileScreen';
 import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, validateProjectName, type UploadStatus } from '@/features/projects/mediaUpload';
-import { uploadProjectMedia } from '@/features/projects/mockUploadService';
+import { uploadProjectMedia } from '@/features/projects/uploadService';
 import { sourceLanguageOptions } from '@/features/projects/projectUtils';
 import type { LanguageCode } from '@/features/projects/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
@@ -69,8 +69,9 @@ export function NewProjectScreen() {
     controllerRef.current = controller;
     try {
       setStatus('uploading');
-      await uploadProjectMedia({ projectName: projectName.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress });
+      const projectId = await uploadProjectMedia({ projectName: projectName.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress });
       if (!controller.signal.aborted) setStatus('success');
+      if (!controller.signal.aborted) router.replace(`/projects/${projectId}`);
     } catch (error) {
       if (controller.signal.aborted) setStatus('cancelled');
       else { setStatus('failed'); setUploadError(error instanceof Error ? error.message : 'Tải lên thất bại. Vui lòng thử lại.'); }
@@ -96,11 +97,11 @@ export function NewProjectScreen() {
           {pickerError && <Text accessibilityRole="alert" style={styles.error}>{pickerError}</Text>}
         </Card>
         <Card style={styles.section}>
-          <View style={styles.heading}><Text style={styles.step}>03</Text><View style={styles.headingText}><Text style={styles.sectionTitle}>Tải lên</Text><Text style={styles.muted}>Chỉ mô phỏng tiến độ; tệp của bạn không được gửi hoặc lưu.</Text></View></View>
+          <View style={styles.heading}><Text style={styles.step}>03</Text><View style={styles.headingText}><Text style={styles.sectionTitle}>Tải lên</Text><Text style={styles.muted}>Dự án và tệp phương tiện sẽ được gửi an toàn đến máy chủ.</Text></View></View>
           {status === 'uploading' && <View style={styles.feedback}><ProgressBar value={progress} label="Đang tải phương tiện lên" /><Button variant="secondary" onPress={cancelUpload}>Hủy tải lên</Button></View>}
           {status === 'cancelled' && <View style={styles.feedback}><Text style={styles.sectionTitle}>Đã hủy tải lên</Text><Text style={styles.muted}>Tệp vẫn đang được chọn. Hãy thử lại khi sẵn sàng.</Text><Button onPress={startUpload}>Thử lại</Button><Button variant="secondary" onPress={chooseFile}>Chọn tệp khác</Button></View>}
           {status === 'failed' && <View style={styles.feedback}><Text style={[styles.sectionTitle, styles.error]}>Tải lên thất bại</Text><Text style={styles.muted}>{uploadError ?? 'Không thể tải phương tiện lên.'}</Text><Button onPress={startUpload}>Thử lại</Button><Button variant="secondary" onPress={chooseFile}>Chọn tệp khác</Button></View>}
-          {status === 'success' && <View style={styles.feedback}><Text style={[styles.sectionTitle, styles.success]}>Tải lên hoàn tất</Text><Text style={styles.muted}>Lượt tải lên mô phỏng không lưu dự án hoặc phương tiện. Để thử trình chỉnh sửa bản ghi, hãy mở dự án mẫu đã tải lên trong danh sách Dự án.</Text><Button onPress={() => router.replace('/projects')}>Tiếp tục đến dự án</Button></View>}
+          {status === 'success' && <View style={styles.feedback}><Text style={[styles.sectionTitle, styles.success]}>Tải lên hoàn tất</Text><Text style={styles.muted}>Dự án và phương tiện đã được lưu.</Text></View>}
           {(status === 'idle' || status === 'selected') && <Button size="lg" disabled={!canUpload} onPress={startUpload}>Tải lên và tiếp tục</Button>}
           {status === 'validating' && <Button size="lg" loading disabled>Đang kiểm tra...</Button>}
         </Card>

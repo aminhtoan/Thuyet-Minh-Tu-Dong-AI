@@ -119,7 +119,7 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Customer and Admin route guards are role-specific; backend RBAC remains the security boundary.
 - Customer project creation and multipart media upload now call the real backend. Fetch does not expose portable upload progress here, so the UI does not invent intermediate percentages.
 - `VITE_API_BASE_URL` defaults to `http://localhost:8080/api` for local web development. Mobile has no localhost fallback for physical devices; configure `EXPO_PUBLIC_API_BASE_URL` with the computer's reachable LAN address.
-- S24 remains partial: current backend lacks Customer voice discovery and all Admin management APIs, while several frontend editor services still use mock/in-memory data. Paid provider smoke was not run.
+- S24.1 đã bổ sung Voice Catalog và Admin APIs. S24.2.1 Customer Web và S24.3 Customer Mobile đã bỏ runtime mock Customer, dùng backend thật; Transcript/Translation vẫn chỉ đọc vì chưa có update API. Không gọi paid provider trong validation S24.3.
 
 ## S24.1 Backend API Decisions (2026-10-09)
 
@@ -131,6 +131,7 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 ## S24.2 Customer Web Decisions (2026-10-09)
 
 - `frontend-web` đã bỏ runtime mock khỏi các màn Customer và dùng backend cho auth, project/media, STT, translation, voice/TTS, processing, result/history.
+- `frontend-mobile` đã bỏ runtime mock khỏi các màn Customer; dùng SecureStore + refresh single-flight, API pagination/CRUD/upload, AI workflow có xác nhận và tải artifact có Bearer token vào Expo cache trước khi phát/chia sẻ.
 - Protected audio/video được fetch bằng Bearer token và phát qua Blob URL; không đưa token vào URL.
 - STT, Translation và TTS chỉ bắt đầu sau xác nhận rõ ràng của người dùng. Không có paid provider call trong validation tự động.
 - Transcript/Translation đang read-only vì backend chưa có update endpoint; UI không giả lập persistence.
