@@ -10,7 +10,7 @@ import { Spinner } from '../components/common/Spinner';
 import { WorkflowSteps } from '../components/common/WorkflowSteps';
 import { PageHeader } from '../components/layout/PageHeader';
 import { isLanguageCode } from '../features/projects/languages';
-import { projectRepository } from '../features/projects/projectRepository';
+import { useProject } from '../features/projects/useProjects';
 import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
 import { ProcessingStage } from '../features/processing/ProcessingStage';
@@ -23,7 +23,9 @@ export function GeneratePage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [params] = useSearchParams();
   const language = params.get('language');
-  const project = projectId ? projectRepository.getById(projectId) : undefined;
+  const { project, isLoading, error } = useProject(projectId);
+  if (isLoading) return <Card><Spinner label="Đang tải dự án" /></Card>;
+  if (error) return <Card><ErrorState title="Không thể tải dự án" description={error} /></Card>;
   if (!project || (language !== null && !isLanguageCode(language))) return <>
     <PageHeader title="Tạo thuyết minh" description="Kiểm tra cấu hình thuyết minh đã lưu." />
     <Card><ErrorState title={project ? 'Ngôn ngữ không khả dụng' : 'Không tìm thấy dự án'} description="Mở một cấu hình giọng đọc đã lưu để bắt đầu." />
@@ -51,9 +53,9 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
   }, [busy]);
   const failedStage = snapshot?.error?.stage === 'start' ? 'Bắt đầu tạo' : snapshot?.stages.find((stage) => stage.id === snapshot?.error?.stage)?.title;
   return <>
-    <PageHeader title="Tạo thuyết minh" description="Kiểm tra cấu hình trước khi bắt đầu mô phỏng xử lý."
+    <PageHeader title="Tạo thuyết minh" description="Kiểm tra cấu hình trước khi bắt đầu xử lý."
       actions={<Button variant="secondary" disabled={busy} onClick={() => edit('voice')}>Quay lại cấu hình giọng đọc</Button>} />
-    <div className="generation-heading"><h2>{project.name}</h2><Badge variant="info">MÔ PHỎNG</Badge></div>
+    <div className="generation-heading"><h2>{project.name}</h2><Badge variant="info">SẴN SÀNG</Badge></div>
     <WorkflowSteps current="generate" />
     {processing.loadStatus === 'LOADING' && <Card className="processing-loading"><Spinner label="Đang tải cấu hình tạo thuyết minh" /><p role="status">Đang tải cấu hình đã lưu...</p></Card>}
     {processing.loadStatus === 'FAILED' && <Card><ErrorState title="Không thể tải cấu hình tạo thuyết minh" description={processing.error ?? 'Vui lòng thử lại.'} onRetry={processing.reload} /></Card>}
@@ -70,11 +72,11 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
           <div><dt>Bản dịch</dt><dd>{context.translation.segments.length} phân đoạn</dd></div>
           <div><dt>Giọng đọc</dt><dd>{context.voice.name}</dd></div>
           <div><dt>Tốc độ đọc</dt><dd>{formatSpeed(context.config.speed)}</dd></div>
-          <div><dt>Phương tiện</dt><dd>{context.project.mediaName ?? 'Tham chiếu phương tiện mô phỏng đã lưu'} ({context.project.mediaType === 'VIDEO' ? 'video' : 'âm thanh'})</dd></div>
+          <div><dt>Phương tiện</dt><dd>{context.project.mediaName ?? 'Phương tiện đã lưu'} ({context.project.mediaType === 'VIDEO' ? 'video' : 'âm thanh'})</dd></div>
         </dl>
         <div className="generation-actions"><Button variant="secondary" disabled={busy} onClick={() => edit('translation')}>Chỉnh sửa bản dịch</Button>
           <Button variant="secondary" disabled={busy} onClick={() => edit('voice')}>Chỉnh sửa giọng đọc</Button></div>
-        <p className="processing-note">Bản dùng thử chỉ mô phỏng tiến độ, không tạo âm thanh thuyết minh hoặc tệp phương tiện đã xử lý.</p>
+        <p className="processing-note">Dự án video sẽ được ghép với âm thanh thuyết minh bằng FFmpeg. Dự án âm thanh dùng trực tiếp tệp giọng đọc đã tạo.</p>
         {snapshot.status === 'WAITING' && <>
           <label className="generation-confirmation"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />Tôi đã kiểm tra ngôn ngữ, giọng đọc và tốc độ đọc.</label>
           <Button disabled={!confirmed} onClick={processing.start}>{project.mediaType === 'VIDEO' ? 'Tạo video' : 'Tạo âm thanh'}</Button>
@@ -83,18 +85,16 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
       <Card className="processing-panel">
         <div className="processing-panel__heading"><h2>{snapshot.status === 'COMPLETED' ? 'Xử lý hoàn tất' : snapshot.status === 'FAILED' ? 'Xử lý thất bại' : snapshot.status === 'CANCELLED' ? 'Đã hủy xử lý' : 'Quy trình xử lý'}</h2>
           <Badge variant={snapshot.status === 'COMPLETED' ? 'success' : snapshot.status === 'FAILED' ? 'error' : 'info'}>{snapshot.status}</Badge></div>
-        <p className="processing-note">Trạng thái dự án mô phỏng: {getSimulatedProjectStatus(snapshot, project.mediaType)}</p>
+        <p className="processing-note">Trạng thái dự án: {getSimulatedProjectStatus(snapshot, project.mediaType ?? 'AUDIO')}</p>
         <ProgressBar value={snapshot.progress} label="Tiến độ xử lý tổng thể" />
         <p className="processing-message" role="status">{snapshot.message}</p>
         <ol className="processing-stages" aria-label="Các giai đoạn xử lý">{snapshot.stages.map((stage) => <ProcessingStage key={stage.id} stage={stage} />)}</ol>
-        {busy && <><p className="processing-note">Hãy giữ trang này mở trong khi mô phỏng. Rời trang sẽ hủy quá trình.</p>
-          <Button variant="secondary" onClick={processing.cancel}>Hủy xử lý</Button></>}
+        {busy && <p className="processing-note">Hãy giữ trang này mở trong khi máy chủ xử lý. Đóng trang không hủy tác vụ phía máy chủ.</p>}
         {snapshot.status === 'FAILED' && <div className="processing-outcome" role="alert"><h3>Xử lý thất bại</h3>
           <p>Giai đoạn: {failedStage ?? 'Tạo thuyết minh'}</p><p>{snapshot.error?.message}</p>
           <Button onClick={processing.retry}>Thử xử lý lại</Button><p className="processing-note">Thử lại sẽ khởi động hai giai đoạn từ 0%.</p></div>}
-        {snapshot.status === 'CANCELLED' && <div className="processing-outcome"><Button onClick={processing.retry}>Khởi động lại</Button><p className="processing-note">Quá trình mô phỏng sẽ bắt đầu lại từ 0%.</p></div>}
-        {snapshot.status === 'COMPLETED' && <div className="processing-outcome"><h3>Đã hoàn tất mọi giai đoạn mô phỏng</h3><p>Không có tệp đầu ra nào được tạo.</p>
-          <Button onClick={() => navigate('/projects/' + project.id + '/result?language=' + target)}>Xem kết quả</Button><p className="processing-note">Xem siêu dữ liệu kết quả mô phỏng; chưa có phương tiện thực.</p></div>}
+        {snapshot.status === 'COMPLETED' && <div className="processing-outcome"><h3>Đã hoàn tất xử lý</h3><p>Tệp kết quả đã sẵn sàng để phát và tải xuống.</p>
+          <Button onClick={() => navigate('/projects/' + project.id + '/result?language=' + target)}>Xem kết quả</Button></div>}
       </Card>
     </div>}
   </>;

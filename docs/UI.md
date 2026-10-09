@@ -249,6 +249,15 @@ Project screens use clearly marked development mock data. Backend project APIs a
 
 ## S24 Integration State
 
+### S24.2 Customer Web
+
+- Customer Web giữ nguyên visual shell nhưng dữ liệu runtime đến từ backend: auth, projects/media, transcript, translation, voice/TTS, processing và result/history.
+- Transcript/Translation hiển thị read-only vì chưa có API update; không hiển thị save giả.
+- Voice preview bị vô hiệu hóa khi catalog không có preview URL. Tốc độ TTS hiển thị cố định 1.0x theo backend.
+- Result phát/tải protected video hoặc audio qua Blob URL. Project detail hỗ trợ cập nhật và xóa có xác nhận.
+- Mobile và Admin Web không thay đổi trong S24.2.
+- S24.2.1: `/projects` có Previous/Next server-side, tổng số record/trang, URL-backed search/status/page, loading/error/empty states và reset trang khi đổi bộ lọc.
+
 - Existing visual layouts and themes are unchanged.
 - Login/register errors now come from the sanitized backend contract; Customer and Admin application routes require an authenticated role-specific session.
 - New Project on Web/Mobile creates a real project and uploads real media. No intermediate upload percentage is fabricated.

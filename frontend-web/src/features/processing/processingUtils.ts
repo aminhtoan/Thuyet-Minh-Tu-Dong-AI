@@ -14,7 +14,7 @@ export function calculateOverallProgress(stages: readonly ProcessingStage[]): nu
 export function createInitialSnapshot(projectId: string, mediaType: MediaType): ProcessingSnapshot {
   return {
     projectId, runId: null, status: 'WAITING', progress: 0, currentStage: null,
-    message: 'Review your saved settings, then start the simulation.',
+    message: 'Kiểm tra cấu hình đã lưu rồi bắt đầu xử lý.',
     error: null, startedAt: null, completedAt: null,
     stages: [
       { id: 'upload', title: 'Upload', status: 'COMPLETED' },

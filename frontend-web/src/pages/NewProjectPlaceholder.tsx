@@ -7,7 +7,7 @@ import { Input } from '../components/common/Input'
 import { ProgressBar } from '../components/common/ProgressBar'
 import { PageHeader } from '../components/layout/PageHeader'
 import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, validateProjectName, type UploadStatus } from '../features/projects/mediaUpload'
-import { uploadProjectMedia } from '../features/projects/mockUploadService'
+import { uploadProjectMedia } from '../features/projects/uploadService'
 import { sourceLanguageOptions } from '../features/projects/projectUtils'
 import type { LanguageCode } from '../features/projects/types'
 import '../styles/upload.css'
@@ -127,8 +127,8 @@ export function NewProjectPlaceholder() {
       <Card padding="lg" className="upload-form-card upload-action-card">
         <div className="upload-section-heading"><span className="upload-step">03</span><div><h2>Tải lên</h2><p>Dự án và tệp phương tiện sẽ được lưu qua backend.</p></div></div>
         {status === 'uploading' && <div className="upload-feedback"><ProgressBar value={progress} label="Uploading media" /><Button type="button" variant="secondary" onClick={cancelUpload}>Cancel upload</Button></div>}
-        {status === 'cancelled' && <div className="upload-feedback" role="status"><strong>Upload cancelled</strong><p>Your file is still selected. Retry when ready.</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Retry</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Choose another file</Button></div></div>}
-        {status === 'failed' && <div className="upload-feedback" role="alert"><strong>Upload failed</strong><p>{uploadError ?? 'We could not upload your media.'}</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Retry</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Choose another file</Button></div></div>}
+        {status === 'cancelled' && <div className="upload-feedback" role="status"><strong>Đã hủy tải lên</strong><p>Tệp vẫn đang được chọn. Bạn có thể thử lại khi sẵn sàng.</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Thử lại</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Chọn tệp khác</Button></div></div>}
+        {status === 'failed' && <div className="upload-feedback" role="alert"><strong>Tải lên thất bại</strong><p>{uploadError ?? 'Không thể tải tệp phương tiện lên.'}</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Thử lại</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Chọn tệp khác</Button></div></div>}
         {status === 'success' && <div className="upload-feedback upload-feedback--success" role="status"><strong>Tải lên hoàn tất</strong><p>Dự án và tệp phương tiện đã được lưu.</p><Link className="button button--primary button--md" to="/projects">Tiếp tục đến dự án</Link></div>}
         {(status === 'idle' || status === 'selected') && <Button type="button" size="lg" disabled={!canUpload} onClick={startUpload}>Upload &amp; Continue</Button>}
         {status === 'validating' && <Button type="button" size="lg" loading disabled>Validating...</Button>}

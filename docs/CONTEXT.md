@@ -127,4 +127,13 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Project target language is represented as `targetLanguages[]`, derived from persisted ready Translations; no single target language is invented.
 - Admin can only change CUSTOMER status. Blocking revokes refresh sessions; Admin roles/status cannot be changed through this API.
 - Languages, voices and safe runtime settings are read-only. Existing Admin mock create/edit/retry/cancel controls must be disabled or omitted during frontend integration unless a later backend scope explicitly adds safe mutations.
+
+## S24.2 Customer Web Decisions (2026-10-09)
+
+- `frontend-web` đã bỏ runtime mock khỏi các màn Customer và dùng backend cho auth, project/media, STT, translation, voice/TTS, processing, result/history.
+- Protected audio/video được fetch bằng Bearer token và phát qua Blob URL; không đưa token vào URL.
+- STT, Translation và TTS chỉ bắt đầu sau xác nhận rõ ràng của người dùng. Không có paid provider call trong validation tự động.
+- Transcript/Translation đang read-only vì backend chưa có update endpoint; UI không giả lập persistence.
+- S24.2.1 hoàn tất server-side Customer Projects pagination và authenticated Chrome smoke bằng tài khoản disposable. Smoke không gọi paid AI; project test đã được cleanup.
+- Protected binary transport được xác nhận bởi frontend Bearer-to-Blob implementation và backend regression. Actual browser playback của artifact không chạy vì tài khoản disposable không có artifact và không được tạo qua paid provider trong validation.
 - Voice seed is explicit and idempotent, uses existing active languages plus validated configured OpenAI voice, and never calls a paid provider.

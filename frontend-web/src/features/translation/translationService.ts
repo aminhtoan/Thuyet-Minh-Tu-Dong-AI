@@ -1,96 +1,30 @@
-import { isLanguageCode } from '../projects/languages';
+import { ApiError, api } from '../../lib/api';
 import type { LanguageCode } from '../projects/types';
+import { projectRepository } from '../projects/projectRepository';
 import { transcriptService } from '../transcript/transcriptService';
 import type { Transcript } from '../transcript/types';
-import { getMockTranslatedText } from './mockTranslationData';
-import { copyTranslation, isTranslationAligned, transcriptRevision, validateTranslation } from './translationUtils';
 import type { Translation } from './types';
 
-type MockOptions = { signal?: AbortSignal; fail?: boolean };
-const savedTranslations = new Map<string, Translation>();
-const storageKey = (projectId: string, target: LanguageCode) => projectId + ':' + target;
-
-function waitForMock(ms: number, { signal, fail }: MockOptions): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) { reject(new Error('Operation cancelled.')); return; }
-    const onAbort = () => { clearTimeout(timer); reject(new Error('Operation cancelled.')); };
-    const timer = setTimeout(() => {
-      signal?.removeEventListener('abort', onAbort);
-      if (fail) reject(new Error('Unable to complete this translation operation. Please retry.'));
-      else resolve();
-    }, ms);
-    signal?.addEventListener('abort', onAbort, { once: true });
-  });
-}
-
-function requireTarget(transcript: Transcript, target: LanguageCode) {
-  if (!isLanguageCode(target) || target === transcript.languageCode) {
-    throw new Error('Choose a target language different from the source language.');
-  }
-}
-
-async function requireSavedTranscript(projectId: string, options: MockOptions): Promise<Transcript> {
-  const transcript = await transcriptService.getTranscript(projectId, { signal: options.signal });
-  if (!transcript || transcript.status !== 'SAVED' || !transcript.segments.length ||
-      transcript.segments.some((segment) => !segment.text.trim())) {
-    throw new Error('Save a valid transcript before translating.');
-  }
-  return transcript;
-}
+type Options = { signal?: AbortSignal };
+type TranslationDto = { id: string; projectId: string; sourceLanguage: string; targetLanguage: string; fullText: string; segments: Array<{ index: number; sourceSegmentId: string; text: string }>; createdAt: string; updatedAt: string };
+type TranslationSummary = Omit<TranslationDto, 'segments'>;
+async function map(projectId: string, dto: TranslationDto, options: Options): Promise<Translation> { const transcript = await transcriptService.getTranscript(projectId, options); if (!transcript) throw new Error('Không tìm thấy bản ghi nguồn.'); return { id: dto.id, projectId, sourceLanguage: dto.sourceLanguage, targetLanguage: dto.targetLanguage, status: 'SAVED', sourceRevision: transcript.updatedAt, createdAt: dto.createdAt, updatedAt: dto.updatedAt, segments: dto.segments.map((segment) => { const source = transcript.segments[segment.index]; return { id: `${dto.id}-${segment.index}`, transcriptSegmentId: source?.id ?? segment.sourceSegmentId, sequence: segment.index + 1, startTime: source?.startTime ?? 0, endTime: source?.endTime ?? 0, translatedText: segment.text }; }) }; }
 
 export const translationService = {
-  async getSavedTranslation(projectId: string, target?: LanguageCode, options: MockOptions = {}): Promise<Translation | null> {
-    await waitForMock(200, options);
-    const transcript = await transcriptService.getTranscript(projectId, { signal: options.signal });
-    if (!transcript || transcript.status !== 'SAVED') return null;
-    const candidates = [...savedTranslations.values()].filter((translation) =>
-      translation.projectId === projectId && (!target || translation.targetLanguage === target) &&
-      isTranslationAligned(translation, transcript));
-    const latest = candidates.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-    return latest ? copyTranslation(latest) : null;
+  async getSavedTranslation(projectId: string, target?: LanguageCode, options: Options = {}): Promise<Translation | null> {
+    if (target) return this.get(projectId, target, options);
+    const response = await api<{ translations: TranslationSummary[] }>(`/projects/${projectId}/translations`, { signal: options.signal });
+    const latest = [...response.translations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+    return latest ? this.get(projectId, latest.targetLanguage, options) : null;
   },
-  async get(projectId: string, target: LanguageCode, options: MockOptions = {}): Promise<Translation | null> {
-    await waitForMock(250, options);
-    const transcript = await requireSavedTranscript(projectId, options);
-    requireTarget(transcript, target);
-    const saved = savedTranslations.get(storageKey(projectId, target));
-    // A reviewed transcript may have changed since the translation was saved.
-    return saved && isTranslationAligned(saved, transcript) ? copyTranslation(saved) : null;
+  async get(projectId: string, target: LanguageCode, options: Options = {}): Promise<Translation | null> {
+    try { const response = await api<{ translation: TranslationDto }>(`/projects/${projectId}/translations/${encodeURIComponent(target)}`, { signal: options.signal }); return map(projectId, response.translation, options) }
+    catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error }
   },
-  async translate(projectId: string, transcript: Transcript, target: LanguageCode, options: MockOptions = {}): Promise<Translation> {
-    await waitForMock(900, options);
-    const source = await requireSavedTranscript(projectId, options);
-    requireTarget(source, target);
-    if (transcript.projectId !== projectId || transcriptRevision(transcript) !== transcriptRevision(source)) {
-      throw new Error('The transcript changed. Return to Transcript and reopen Translation.');
-    }
-    const now = new Date().toISOString();
-    return {
-      id: projectId + '-translation-' + target, projectId,
-      sourceLanguage: source.languageCode, targetLanguage: target, sourceRevision: transcriptRevision(source),
-      status: 'READY', createdAt: now, updatedAt: now,
-      segments: source.segments.map((segment) => ({
-        id: segment.id + '-' + target, transcriptSegmentId: segment.id,
-        sequence: segment.sequence, startTime: segment.startTime, endTime: segment.endTime,
-        translatedText: getMockTranslatedText(source.languageCode, target, segment.text, segment.sequence),
-      })),
-    };
+  async translate(projectId: string, _transcript: Transcript, target: LanguageCode, options: Options = {}): Promise<Translation> {
+    if (!window.confirm(`Bắt đầu dịch sang ${target.toUpperCase()}? Thao tác này có thể sử dụng dịch vụ AI tính phí.`)) throw new DOMException('Đã hủy', 'AbortError');
+    const response = await api<{ translation: TranslationDto }>(`/projects/${projectId}/translations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: target }) });
+    await projectRepository.refresh(); return map(projectId, response.translation, options);
   },
-  async save(projectId: string, draft: Translation, options: MockOptions = {}): Promise<Translation> {
-    await waitForMock(400, options);
-    const transcript = await requireSavedTranscript(projectId, options);
-    requireTarget(transcript, draft.targetLanguage);
-    if (!isTranslationAligned(draft, transcript)) {
-      throw new Error('The source transcript changed. Return to Transcript and reopen Translation.');
-    }
-    if (!draft.segments.length || Object.keys(validateTranslation(draft)).length) {
-      throw new Error('Correct empty translations before saving.');
-    }
-    const saved: Translation = {
-      ...draft, status: 'SAVED', updatedAt: new Date().toISOString(),
-      segments: draft.segments.map((segment) => ({ ...segment, translatedText: segment.translatedText.trim() })),
-    };
-    savedTranslations.set(storageKey(projectId, saved.targetLanguage), copyTranslation(saved));
-    return copyTranslation(saved);
-  },
+  async save(_projectId: string, _draft: Translation, _options: Options = {}): Promise<Translation> { throw new Error('Backend chưa hỗ trợ lưu chỉnh sửa bản dịch.'); },
 };

@@ -8,7 +8,7 @@ import { Spinner } from '../components/common/Spinner';
 import { WorkflowSteps } from '../components/common/WorkflowSteps';
 import { PageHeader } from '../components/layout/PageHeader';
 import { isLanguageCode } from '../features/projects/languages';
-import { projectRepository } from '../features/projects/projectRepository';
+import { useProject } from '../features/projects/useProjects';
 import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
 import { VoiceCard } from '../features/voice/VoiceCard';
@@ -20,7 +20,9 @@ export function VoicePage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [params] = useSearchParams();
   const requestedLanguage = params.get('language');
-  const project = projectId ? projectRepository.getById(projectId) : undefined;
+  const { project, isLoading, error } = useProject(projectId);
+  if (isLoading) return <Card><Spinner label="Đang tải dự án" /></Card>;
+  if (error) return <Card><ErrorState title="Không thể tải dự án" description={error} /></Card>;
   if (!project || (requestedLanguage !== null && !isLanguageCode(requestedLanguage))) return <>
     <PageHeader title="Giọng đọc và thuyết minh" description="Chọn giọng đọc cho bản dịch." />
     <Card><ErrorState title={project ? 'Ngôn ngữ không khả dụng' : 'Không tìm thấy dự án'} description="Mở một bản dịch đã lưu để chọn giọng đọc thuyết minh." />
@@ -56,7 +58,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
       </Card>
       <section aria-labelledby="voice-list-heading"><div className="voice-toolbar"><h2 id="voice-list-heading">Chọn giọng đọc</h2>
         <div className="voice-filters" role="group" aria-label="Lọc giọng đọc theo giới tính">
-          {voiceFilters.map((gender) => <Button key={gender} size="sm" variant={editor.gender === gender ? 'primary' : 'secondary'} aria-pressed={editor.gender === gender} onClick={() => editor.setGender(gender)}>{gender === 'All' ? 'Tất cả' : gender === 'Female' ? 'Nữ' : 'Nam'}</Button>)}
+          {voiceFilters.map((gender) => <Button key={gender} size="sm" variant={editor.gender === gender ? 'primary' : 'secondary'} aria-pressed={editor.gender === gender} onClick={() => editor.setGender(gender)}>{gender === 'All' ? 'Tất cả' : gender === 'Female' ? 'Nữ' : gender === 'Male' ? 'Nam' : 'Trung tính'}</Button>)}
         </div><label className="voice-search">Tìm kiếm giọng đọc<input type="search" value={editor.query} onChange={(event) => editor.setQuery(event.target.value)} placeholder="Tìm theo tên" /></label>
       </div>
       {editor.previewError && <Card><ErrorState title="Không thể nghe thử giọng đọc" description={editor.previewError} onRetry={() => { if (editor.failedPreviewId) void editor.preview(editor.failedPreviewId); }} /></Card>}
@@ -69,19 +71,19 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
         action={editor.voices.length ? <Button variant="secondary" onClick={() => { editor.setGender('All'); editor.setQuery(''); }}>Xóa bộ lọc</Button> : <Button onClick={backToTranslation}>Quay lại bản dịch</Button>} /></Card>}
       </section>
       <Card className="voice-speed"><label htmlFor="speech-speed">Tốc độ đọc <strong>{formatSpeed(editor.draft.speed)}</strong></label>
-        <input id="speech-speed" type="range" min={MIN_SPEED} max={MAX_SPEED} step={0.1} value={editor.draft.speed} disabled={editor.busy}
+        <input id="speech-speed" type="range" min={MIN_SPEED} max={MAX_SPEED} step={0.1} value={editor.draft.speed} disabled
           aria-valuetext={formatSpeed(editor.draft.speed)} onChange={(event) => editor.updateConfig({ speed: Number(event.target.value) })} />
         <div className="voice-speed-limits"><span>0.5x</span><span>1.0x mặc định</span><span>2.0x</span></div>
-        <p className="voice-note">Tốc độ chậm tạo phần thuyết minh dài hơn; tốc độ nhanh tạo phần thuyết minh ngắn hơn.</p>
+        <p className="voice-note">Backend hiện hỗ trợ tốc độ đọc cố định 1.0x.</p>
       </Card>
       <Card className="voice-configuration"><h2>Cấu hình thuyết minh</h2>
         <dl><div><dt>Ngôn ngữ</dt><dd>{languageNames[editor.draft.languageCode]}</dd></div><div><dt>Giọng đọc</dt><dd>{editor.selectedVoice?.name ?? 'Chưa chọn'}</dd></div><div><dt>Tốc độ</dt><dd>{formatSpeed(editor.draft.speed)}</dd></div></dl>
         {editor.validationError && <p className="voice-error" role="status">{editor.validationError}</p>}
         <p role="status">{editor.status === 'SAVING' ? 'Đang lưu cấu hình...' : editor.dirty ? 'Có thay đổi chưa lưu' : editor.saved ? 'Đã lưu' : 'Chọn giọng đọc để cấu hình thuyết minh.'}</p>
         <div className="voice-actions"><Button variant="secondary" disabled={!editor.dirty || editor.busy} onClick={editor.reset}>Đặt lại thay đổi</Button>
-          <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onClick={editor.save}>Lưu cấu hình</Button>
+          <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onClick={editor.save}>Tạo giọng đọc</Button>
           <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.busy || Boolean(editor.validationError) || editor.status === 'FAILED'} onClick={() => { editor.stopPreview(); navigate('/projects/' + project.id + '/generate?language=' + target); }}>Tiếp tục tạo thuyết minh</Button></div>
-        <p className="voice-note">Hãy lưu mọi thay đổi cấu hình trước khi tiếp tục. Bước tiếp theo sẽ mô phỏng quá trình xử lý.</p>
+        <p className="voice-note">Tạo giọng đọc sẽ gọi dịch vụ TTS sau khi bạn xác nhận.</p>
       </Card>
     </div>}
   </>;

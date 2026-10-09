@@ -11,6 +11,6 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
       <Icon name="search" width="17" /><input aria-label="Tìm kiếm dự án toàn ứng dụng" placeholder="Tìm kiếm dự án..." value={query} onChange={event => setQuery(event.target.value)} />
       <button type="submit" aria-label="Tìm dự án"><Icon name="arrow" width="16" /></button>
     </form>
-    <div className="topbar__user" aria-label="Tài khoản mô phỏng"><span className="topbar__avatar" aria-hidden="true">U</span><span>Người dùng</span></div>
+    <button className="topbar__user" type="button" aria-label="Mở cài đặt tài khoản" onClick={() => navigate('/settings')}><span className="topbar__avatar" aria-hidden="true">U</span><span>Tài khoản</span></button>
   </header>;
 }

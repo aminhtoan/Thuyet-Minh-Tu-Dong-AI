@@ -1,6 +1,6 @@
 # Multilingual AI Narration System
 
-> **S24 integration status: PARTIAL.** Customer Web/Mobile authentication and project/media creation use the real backend; Admin authentication is real. Project browsing, Customer AI/result screens and Admin management screens still use existing mock services. S24.1 now provides the missing backend read APIs; frontend wiring remains for S24.2/S24.3. Do not treat mock screens as production data.
+> **S24 integration status: PARTIAL toàn hệ thống.** Customer Web S24.2.1 đã hoàn tất API integration, server-side project pagination và authenticated browser smoke. Mobile cùng các màn nghiệp vụ Admin vẫn chờ các bước tích hợp riêng. Không coi dữ liệu mock ở các client đó là dữ liệu production.
 
 > **S24.1 backend:** Customer Voice Catalog and the minimal secure Admin business APIs are now available. The frontend services are intentionally unchanged in S24.1 and will be connected in S24.2/S24.3.
 
@@ -28,7 +28,7 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 
 | Thành phần | Trạng thái |
 | --- | --- |
-| Customer Web | Xác thực và tạo dự án/tải media đã gọi backend thật; danh sách dự án và các màn AI/kết quả vẫn dùng service mock. |
+| Customer Web | Đã tích hợp backend cho xác thực, CRUD project, upload media, STT, Translation, Voice/TTS, Processing, Result/History và logout. |
 | Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
 | Customer Mobile | Xác thực và tạo dự án/tải media đã gọi backend thật; token lưu bằng Expo SecureStore. Các màn dữ liệu/AI còn lại vẫn dùng service mock. |
 | Backend | **S17–S20 đã triển khai.** Có auth/JWT/RBAC, Project/Media API và Speech-to-Text pipeline. |

@@ -224,6 +224,10 @@ The three clients now have platform-specific authenticated API clients. Customer
 
 The integrated frontend path currently covers authentication plus Customer project creation/media upload. The remaining Customer artifact screens and Admin management screens are not yet wired to the S24.1 APIs; this is now a frontend integration gap rather than a missing backend read API.
 
+### S24.2 Customer Web integration
+
+Customer Web hiện dùng authenticated API client cho toàn bộ workflow Customer. Access token được gắn vào request; refresh rotation dùng single-flight và retry tối đa một lần. Media/result protected endpoints được tải thành `Blob` rồi phát/tải qua object URL, không đặt JWT vào query string hoặc URL public. Dữ liệu project, transcript, translation, voice, narration và result đều đến từ backend. Do backend chưa hỗ trợ mutation transcript/translation, hai editor hiển thị bản persisted ở chế độ chỉ đọc.
+
 ## S24.1 Backend Read Model
 
 S24.1 adds no collections. Customer voice discovery reads active `Language` and `Voice` documents and limits results to the configured TTS provider. Admin routes build safe read DTOs from existing User, Project, Media, Translation, ProcessingJob, Language, Voice and ActivityLog collections.

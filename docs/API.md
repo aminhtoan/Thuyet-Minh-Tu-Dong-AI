@@ -174,6 +174,10 @@ Implemented contracts under `/api/admin`: dashboard, paginated users/projects/jo
 
 ## S24.1 Voice Catalog and Admin API
 
+> S24.2 update: Customer Web hiện gọi các Customer API được mô tả trong tài liệu này thay cho mock runtime. Protected narration/result files được tải bằng Bearer JWT qua fetch Blob. Các mô tả `CURRENT` cũ về mock Customer UI phía trên chỉ còn là lịch sử S7–S11, không phản ánh runtime `frontend-web` hiện tại. Backend vẫn chưa có PUT/PATCH transcript hoặc translation.
+
+S24.2.1 Customer Projects gọi `GET /api/projects?page=<n>&limit=10&search=<text>&status=<canonical-status>`. UI dùng trực tiếp `pagination { page, limit, total, totalPages }`, reset `page=1` khi đổi search/status và không còn xem 100 record đầu là toàn bộ dữ liệu.
+
 All responses use the standard success/error envelope. Query objects are strict; unknown or invalid values return `400 VALIDATION_ERROR`.
 
 ### Customer Voice Catalog

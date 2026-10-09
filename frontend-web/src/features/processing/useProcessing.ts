@@ -26,7 +26,7 @@ export function useProcessing(projectId: string, language?: LanguageCode) {
       session.current = currentSession;
       dispatch({ loadStatus: 'READY', context, snapshot: currentSession.getStatus(), error: null });
     } catch {
-      if (!controller.signal.aborted) dispatch({ loadStatus: 'FAILED', error: 'Unable to load your generation settings. Please retry.' });
+      if (!controller.signal.aborted) dispatch({ loadStatus: 'FAILED', error: 'Không thể tải cấu hình tạo thuyết minh. Vui lòng thử lại.' });
     }
   }, [projectId, language]);
 

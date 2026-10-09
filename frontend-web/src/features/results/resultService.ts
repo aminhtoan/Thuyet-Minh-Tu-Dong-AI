@@ -1,40 +1,30 @@
+import { api, apiBlob } from '../../lib/api';
 import { projectRepository } from '../projects/projectRepository';
-import type { GenerationContext, ProcessingSnapshot } from '../processing/types';
 import type { LanguageCode } from '../projects/types';
-import type { Result, HistoryItem } from './types';
+import type { HistoryItem, Result } from './types';
 
-const results = new Map<string, Result>();
-export const downloadUnavailable = 'Chưa có file kết quả thực. Tải xuống sẽ khả dụng khi backend tạo media.';
+type VideoResultDto = { id: string; projectId: string; narrationId: string; targetLanguage: string; mimeType: string; fileSize: number; duration: number; width: number | null; height: number | null; fileUrl: string; createdAt: string };
+type NarrationDto = { id: string; projectId: string; targetLanguage: string; voice: { id: string; name: string }; speed: number; mimeType: string; fileSize: number; duration: number | null; audioUrl: string; createdAt: string };
+
+const newest = <T extends { createdAt: string }>(items: T[]) => [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+
 export const resultService = {
-  record(context: GenerationContext, snapshot: ProcessingSnapshot) {
-    if (snapshot.status !== 'COMPLETED' || !snapshot.completedAt) return;
-    const result: Result = {
-      id: context.project.id + '-' + context.config.languageCode + '-' + snapshot.completedAt,
-      projectId: context.project.id, languageCode: context.config.languageCode,
-      mediaType: context.project.mediaType, createdAt: snapshot.completedAt, availability: 'MOCK_PREVIEW',
-      transcriptCount: context.transcript.segments.length, translationCount: context.translation.segments.length,
-      voiceName: context.voice.name, speed: context.config.speed,
-    };
-    results.set(result.projectId + ':' + result.languageCode, result);
-  },
   async getByProjectId(projectId: string, language?: LanguageCode): Promise<Result | null> {
-    const project = projectRepository.getById(projectId);
-    if (!project) throw new Error('Project not found');
-    const saved = [...results.values()].filter(item => item.projectId === projectId && (!language || item.languageCode === language))
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
-    if (saved) return { ...saved };
-    if (project.status !== 'COMPLETED' || (language && language !== project.targetLanguage)) return null;
-    // Existing S4 fixtures have no saved voice/segment metadata. Do not invent it.
-    return { id: project.id + '-fixture', projectId, languageCode: project.targetLanguage,
-      mediaType: project.mediaType, createdAt: project.updatedAt, availability: 'MOCK_PREVIEW' };
+    const [{ results }, { narrations }] = await Promise.all([
+      api<{ results: VideoResultDto[] }>(`/projects/${projectId}/results`),
+      api<{ narrations: NarrationDto[] }>(`/projects/${projectId}/narrations`),
+    ]);
+    const video = newest(results.filter((item) => !language || item.targetLanguage === language));
+    if (video) return { id: video.id, projectId, languageCode: video.targetLanguage, mediaType: 'VIDEO', artifactType: 'VIDEO', createdAt: video.createdAt, mimeType: video.mimeType, fileSize: video.fileSize, duration: video.duration, width: video.width, height: video.height, filePath: video.fileUrl };
+    const audio = newest(narrations.filter((item) => !language || item.targetLanguage === language));
+    if (!audio) return null;
+    return { id: audio.id, projectId, languageCode: audio.targetLanguage, mediaType: 'AUDIO', artifactType: 'AUDIO', createdAt: audio.createdAt, mimeType: audio.mimeType, fileSize: audio.fileSize, duration: audio.duration ?? undefined, voiceName: audio.voice.name, speed: audio.speed, filePath: audio.audioUrl };
   },
+  getFile: (result: Result) => apiBlob(result.filePath),
   async getHistory(): Promise<HistoryItem[]> {
-    return projectRepository.getAll().map(project => ({ ...project, hasResult: project.status === 'COMPLETED' ||
-      [...results.values()].some(result => result.projectId === project.id) }))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  },
-  async getDownloadInfo(_projectId: string) {
-    return { available: false as const, reason: downloadUnavailable };
+    return Promise.all(projectRepository.getAll().map(async (project) => {
+      try { return { ...project, hasResult: Boolean(await resultService.getByProjectId(project.id)) }; }
+      catch { return { ...project, hasResult: false }; }
+    })).then((items) => items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
   },
 };
-

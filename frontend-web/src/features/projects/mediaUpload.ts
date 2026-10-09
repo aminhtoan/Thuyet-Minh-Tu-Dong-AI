@@ -30,7 +30,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function validateMediaFile(file: MediaFile | null): { valid: true; mediaType: MediaType } | { valid: false; error: string } {
-  if (!file) return { valid: false, error: 'Choose a video or audio file.' }
+  if (!file) return { valid: false, error: 'Hãy chọn một tệp video hoặc âm thanh.' }
   if (!file.name?.trim()) return { valid: false, error: 'File name is unavailable.' }
   const mediaType = getMediaType(file)
   if (!mediaType) return { valid: false, error: 'Unsupported file format. Use MP4, MOV, WEBM, MP3, WAV or M4A.' }

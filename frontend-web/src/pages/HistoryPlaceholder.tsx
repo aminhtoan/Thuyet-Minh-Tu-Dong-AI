@@ -20,7 +20,7 @@ export function HistoryPlaceholder() {
   const hasActiveFilters = Boolean(query.trim()) || status !== 'ALL'
 
   return <>
-    <PageHeader title="Lịch sử" description="Lịch sử dự án mô phỏng. Chưa có tệp kết quả thực." actions={<Link className="button button--primary button--md" to="/projects/new">Dự án mới</Link>} />
+    <PageHeader title="Lịch sử" description="Theo dõi các dự án và mở lại kết quả đã tạo." actions={<Link className="button button--primary button--md" to="/projects/new">Dự án mới</Link>} />
     <Card className="projects-panel" padding="sm">
       <ProjectFilters query={query} status={status} onQueryChange={setQuery} onStatusChange={setStatus} />
       {isLoading ? <div className="project-loading"><Spinner size="lg" /><p>Đang tải dự án...</p></div>

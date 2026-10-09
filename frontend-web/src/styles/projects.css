@@ -37,7 +37,9 @@
 .project-filter-select select { min-height: 42px; width: 100%; padding: 0 12px; color: var(--color-text-primary); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; }
 .project-loading { display: grid; justify-items: center; gap: 16px; padding: 32px; color: var(--color-text-secondary); }
 .project-loading p { margin: 0; }
+.project-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 18px 8px 8px; color: var(--color-text-muted); font-size: 0.875rem; }
 @media (max-width: 600px) {
 .project-table-heading { display: none; }.project-card { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 16px 4px; }
 .project-card__language { justify-content: flex-end; }.project-card__end { justify-items: end; }.project-filters { grid-template-columns: 1fr; }
+.project-pagination { flex-wrap: wrap; gap: 10px; }.project-pagination span { width: 100%; text-align: center; order: -1; }
 }

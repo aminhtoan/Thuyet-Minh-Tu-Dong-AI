@@ -24,7 +24,7 @@ export function DashboardPlaceholder() {
   const recent = getRecentProjects(projects);
   return <div className="dashboard">
     <section className="dashboard-hero">
-      <div className="dashboard-hero__copy"><span className="dashboard-eyebrow">CHÀO MỪNG TRỞ LẠI!</span><h1>Tạo thuyết minh đa ngôn ngữ<br />cho video của bạn</h1><p>Một không gian cho bản ghi, bản dịch và giọng đọc.<br className="desktop-break" /> Khám phá quy trình sáng tạo với dữ liệu mô phỏng.</p><Link className="button button--primary button--md hero-cta" to="/projects/new"><Icon name="plus" width="19" />Tạo dự án mới</Link></div>
+      <div className="dashboard-hero__copy"><span className="dashboard-eyebrow">CHÀO MỪNG TRỞ LẠI!</span><h1>Tạo thuyết minh đa ngôn ngữ<br />cho video của bạn</h1><p>Một không gian cho bản ghi, bản dịch và giọng đọc.<br className="desktop-break" /> Tiếp tục quy trình thuyết minh đa ngôn ngữ của bạn.</p><Link className="button button--primary button--md hero-cta" to="/projects/new"><Icon name="plus" width="19" />Tạo dự án mới</Link></div>
       <div className="hero-art" aria-hidden="true">
         <div className="hero-art__orbit" />
         <div className="hero-art__video"><div className="hero-art__scene"><span /><i /><b /></div><div className="hero-art__timeline"><Icon name="video" width="15" /><span /></div></div>
@@ -37,7 +37,7 @@ export function DashboardPlaceholder() {
     <div className="dashboard-grid">
       <Card className="dashboard-projects"><div className="section-heading"><h2>Dự án gần đây</h2><Link to="/projects">Xem tất cả <Icon name="arrow" width="14" /></Link></div>
         {recent.length ? <><div className="project-table-heading" aria-hidden="true"><span>Tên dự án</span><span>Ngôn ngữ</span><span>Trạng thái</span><span>Thao tác</span></div><div className="project-list">{recent.map(project => <ProjectCard key={project.id} project={project} compact />)}</div></> : <EmptyState title="Chưa có dự án" description="Bắt đầu với video hoặc âm thanh của bạn." action={<Link to="/projects/new">Tạo dự án mới</Link>} />}
-        <p className="dashboard-footnote">Dữ liệu mô phỏng · Các dự án được cập nhật gần đây nhất</p>
+        <p className="dashboard-footnote">Các dự án được cập nhật gần đây nhất</p>
       </Card>
       <aside className="dashboard-side">
         <Card className="dashboard-statistics"><div className="section-heading"><h2>Thống kê nhanh</h2><span>Hiện tại</span></div><div className="stats-grid">

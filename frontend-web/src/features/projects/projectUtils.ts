@@ -18,7 +18,7 @@ export function getProjectStatusVariant(status: ProjectStatus): 'default' | 'inf
   if (isProcessingStatus(status)) return 'info'
   return 'default'
 }
-export function formatLanguagePair(project: Project): string { return `${languageNames[project.sourceLanguage]} → ${languageNames[project.targetLanguage]}` }
+export function formatLanguagePair(project: Project): string { return `${languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()} → ${project.targetLanguage ? languageNames[project.targetLanguage] ?? project.targetLanguage.toUpperCase() : 'Chưa dịch'}` }
 export function formatRelativeDate(value: string): string {
   const elapsed = Math.max(0, Date.now() - new Date(value).getTime())
   const minutes = Math.floor(elapsed / 60_000)
@@ -35,7 +35,6 @@ export function calculateProjectStatistics(projects: readonly Project[]): Projec
 export function getRecentProjects(projects: readonly Project[], limit = 5): Project[] { return [...projects].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)).slice(0, limit) }
 export function matchesStatusFilter(status: ProjectStatus, filter: ProjectStatusFilter): boolean {
   if (filter === 'ALL') return true
-  if (filter === 'PROCESSING') return isProcessingStatus(status)
   return status === filter
 }
 export function filterProjects(projects: readonly Project[], query: string, status: ProjectStatusFilter): Project[] {
