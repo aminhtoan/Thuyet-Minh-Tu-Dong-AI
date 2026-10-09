@@ -249,6 +249,13 @@ Project screens use clearly marked development mock data. Backend project APIs a
 
 ## S24 Integration State
 
+### S24.3.4 Customer Mobile Account
+
+- Thanh tab Mobile giữ Dashboard, Projects, History và Settings, đồng thời thêm `Tài khoản` với icon outline từ thư viện hiện có.
+- Màn hình Tài khoản hiển thị tên và email thật của Customer từ `/api/auth/me`; có loading/error state và không dùng profile fixture.
+- Nút nguy hiểm `Đăng xuất` luôn hiển thị, yêu cầu xác nhận native. Logout thu hồi phiên backend khi reachable và luôn xóa phiên local; protected navigation tự đưa người dùng về Login.
+- Không có redirect thủ công trong logout, không thêm native dependency và không thay đổi Expo managed workflow.
+
 ### S24.2 Customer Web
 
 - Customer Web giữ nguyên visual shell nhưng dữ liệu runtime đến từ backend: auth, projects/media, transcript, translation, voice/TTS, processing và result/history.

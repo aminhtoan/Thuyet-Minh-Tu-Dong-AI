@@ -1,6 +1,7 @@
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import { api } from '../../lib/api';
 import type { LanguageCode } from './types';
+import { resolveUploadMimeType } from './uploadMetadata.mjs';
 
 export type UploadOptions = { projectName: string; sourceLanguage: LanguageCode; file: DocumentPickerAsset; signal: AbortSignal; onProgress: (progress: number) => void };
 type CreatedProject = { project: { id: string } };
@@ -10,7 +11,7 @@ export async function uploadProjectMedia({ projectName, sourceLanguage, file, si
   const { project } = await api<CreatedProject>('/projects', { method: 'POST', signal, body: JSON.stringify({ name: projectName, sourceLanguage }) });
   try {
     const form = new FormData();
-    form.append('file', { uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream' } as unknown as Blob);
+    form.append('file', { uri: file.uri, name: file.name, type: resolveUploadMimeType(file.name) } as unknown as Blob);
     await api(`/projects/${project.id}/media`, { method: 'POST', signal, body: form });
     await (await import('./projectRepository')).projectRepository.refresh();
     onProgress(100);

@@ -36,7 +36,7 @@ export function NewProjectScreen() {
     if (busy || status === 'success') return;
     setPickerError(null);
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: ['video/*', 'audio/*'], multiple: false, copyToCacheDirectory: false });
+      const result = await DocumentPicker.getDocumentAsync({ type: ['video/*', 'audio/*'], multiple: false, copyToCacheDirectory: true });
       if (result.canceled) return;
       const picked = result.assets?.[0];
       if (!picked) { setPickerError('Chưa chọn tệp. Vui lòng thử lại.'); return; }

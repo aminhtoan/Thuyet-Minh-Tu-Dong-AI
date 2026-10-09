@@ -18,7 +18,7 @@ export type NarrationConfig = {
   languageCode: LanguageCode;
   voiceId: string;
   speed: number;
-  // Mock revision guard; no audio path exists in the configuration sprint.
+  // Ngăn cấu hình cũ ghi đè bản dịch đã thay đổi.
   translationRevision: string;
   narrationId?: string;
 };

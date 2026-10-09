@@ -1,6 +1,7 @@
 import { api, session } from '../../lib/api';
 import type { LoginFormValues, RegisterFormValues } from './types';
-type AuthData = { user: { id: string; role: 'CUSTOMER'|'ADMIN'; fullName: string; email: string }; accessToken: string; refreshToken: string };
+export type AuthUser = { id: string; role: 'CUSTOMER'|'ADMIN'; fullName: string; email: string };
+type AuthData = { user: AuthUser; accessToken: string; refreshToken: string };
 
 export const authService = {
   async login(values: LoginFormValues): Promise<void> { const data = await api<AuthData>('/auth/login', { method: 'POST', body: JSON.stringify(values) }); if (data.user.role !== 'CUSTOMER') throw new Error('CUSTOMER_REQUIRED'); await session.set(data); },

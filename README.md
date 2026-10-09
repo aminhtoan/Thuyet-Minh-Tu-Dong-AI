@@ -1,6 +1,6 @@
 # Multilingual AI Narration System
 
-> **S24 integration status: PARTIAL toàn hệ thống.** Customer Web, Customer Mobile và Admin Web đã được nối với API thật. Mobile physical-device smoke và Admin authenticated browser smoke chưa chạy trong môi trường validation hiện tại.
+> **S24.5 integration status: PARTIAL.** Backend 118/118, Atlas health, Customer Web browser smoke và toàn bộ source/build validation đã PASS. Còn thiếu Mobile physical-device smoke, Admin authenticated browser smoke và actual protected artifact playback/download.
 
 > **S24.1 backend:** Customer Voice Catalog and the minimal secure Admin business APIs are now available. The frontend services are intentionally unchanged in S24.1 and will be connected in S24.2/S24.3.
 

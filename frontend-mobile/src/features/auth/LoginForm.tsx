@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components/common/Button';
@@ -35,7 +35,6 @@ export function LoginForm() {
     setFormError('');
     try {
       await authService.login(nextValues);
-      router.replace('/dashboard');
     } catch {
       setFormError('Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.');
     } finally {

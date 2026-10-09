@@ -23,6 +23,8 @@ There is no separate `GUEST` business actor. An unauthenticated Customer can onl
 
 Both Customer clients and the future Admin Web will use the same backend API. Customer Web and Mobile do not need identical UI components. Do not add `admin-web/` or a shared package in S6.
 
+S24.5 xác nhận cả ba client dùng API backend theo boundary hiện tại. Các khoảng trống validation môi trường còn lại là Mobile physical device, disposable Admin browser session và actual protected artifact playback; đây không phải bằng chứng thiếu API contract.
+
 ## Technology Stack and Repository Structure
 
 ```text

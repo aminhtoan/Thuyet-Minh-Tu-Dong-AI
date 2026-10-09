@@ -15,7 +15,11 @@ export function useResult(projectId: string, language?: LanguageCode) {
     resultService.getByProjectId(projectId, language).then(async value => {
       if (!active) return;
       setResult(value);
-      if (value) { downloaded = await resultService.downloadProtected(value); if (active) setLocalUri(downloaded); }
+      if (value) {
+        downloaded = await resultService.downloadProtected(value);
+        if (active) setLocalUri(downloaded);
+        else await resultService.cleanup(downloaded);
+      }
     }).catch(() => { if (active) setError('Không tải được kết quả. Vui lòng thử lại.'); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; if (downloaded) void resultService.cleanup(downloaded); };

@@ -1,5 +1,8 @@
-import { Redirect } from 'expo-router';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { colors } from '@/theme/tokens';
 
 export default function Index() {
-  return <Redirect href="/dashboard" />;
+  return <View accessibilityLabel="Đang khởi tạo phiên đăng nhập" style={styles.container}><ActivityIndicator color={colors.primary} size="large" /></View>;
 }
+
+const styles = StyleSheet.create({ container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background } });

@@ -139,3 +139,38 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - S24.2.1 hoàn tất server-side Customer Projects pagination và authenticated Chrome smoke bằng tài khoản disposable. Smoke không gọi paid AI; project test đã được cleanup.
 - Protected binary transport được xác nhận bởi frontend Bearer-to-Blob implementation và backend regression. Actual browser playback của artifact không chạy vì tài khoản disposable không có artifact và không được tạo qua paid provider trong validation.
 - Voice seed is explicit and idempotent, uses existing active languages plus validated configured OpenAI voice, and never calls a paid provider.
+
+## S24.5 Validation Snapshot (2026-10-09)
+
+- Backend 118/118 regression, Atlas health, Customer disposable browser smoke và mọi package lint/typecheck/build đã PASS.
+- Mobile source/Expo validation PASS nhưng device smoke chưa chạy do không có ADB/device. `EXPO_PUBLIC_API_BASE_URL` hiện đã được cấu hình bằng URL không dùng localhost; giá trị cụ thể không được ghi vào tài liệu.
+- Admin source/API-mapping validation PASS nhưng authenticated browser smoke chưa chạy vì không có disposable ADMIN credential được provision an toàn.
+- Actual protected artifact playback trên Web/Mobile và paid-provider end-to-end smoke chưa chạy. S24 vẫn PARTIAL; không đồng nhất build PASS với runtime PASS.
+
+## S24.3.1 Mobile Auth Guard Decision (2026-10-09)
+
+- `AuthBoundary` không được render children của pathname nguồn trong lúc đang redirect theo trạng thái SecureStore. Việc đánh dấu pathname nguồn là đã kiểm tra trước khi `router.replace(...)` commit có thể cho phép redirect cấp route chạy đồng thời và gây navigation ping-pong/maximum update depth trên React Fabric.
+- Khi redirect sang `/login` hoặc `/dashboard`, guard giữ trạng thái chờ; pathname đích sẽ được kiểm tra trong effect kế tiếp rồi mới render. Không thay đổi SecureStore, refresh rotation, Expo Router architecture hoặc API contract.
+- Source validation, Android export và Metro QR đã PASS; physical-device smoke vẫn NOT RUN do không có ADB/device trong môi trường validation.
+
+## S24.3.2 Mobile Registration Decision (2026-10-09)
+
+- Expo Go phải dùng `EXPO_PUBLIC_API_BASE_URL` trỏ tới IPv4 LAN hiện tại của máy chạy backend, cổng `8080`, hậu tố `/api`; địa chỉ mẫu trong `.env.example` không phải cấu hình runtime. `.env` local không được commit và giá trị URL cụ thể không ghi vào tài liệu.
+- Register payload giữ contract `{ fullName, email, password }`. Mobile validation đồng bộ với backend: họ tên 2–100 ký tự; mật khẩu 8–128 ký tự, có chữ hoa, chữ thường và chữ số.
+- Register UI ánh xạ lỗi an toàn: lỗi transport thành “Không kết nối được máy chủ.”; HTTP 409/`EMAIL_ALREADY_EXISTS`, HTTP 400/`VALIDATION_ERROR` và HTTP 5xx có thông báo tiếng Việt riêng. Login/logout, SecureStore, refresh rotation và `AuthBoundary` không thay đổi.
+- LAN health và invalid-register response đã được xác nhận trực tiếp; đăng ký thành công trên thiết bị vẫn NOT RUN do không có ADB/device.
+
+## S24.3.3 Mobile Navigation State Machine (2026-10-09)
+
+- Root Expo Router navigator phải luôn được mount. Auth initialization không được trả `null` thay cho `<Stack>` rồi gọi navigation API, vì điều đó cập nhật router store trong khi navigator root chưa sẵn sàng hoặc đang bị tháo/mount lại.
+- Auth route ownership chỉ thuộc `Stack.Protected` trong root layout: `loading` mở `index`, `unauthenticated` mở `login/register`, `authenticated` mở `(tabs)/projects`. Các guard loại trừ nhau và dùng snapshot ổn định từ session store.
+- `index.tsx` chỉ là initialization UI, không còn `<Redirect>`. Login không tự replace sau thành công; `session.set()` chuyển state sang authenticated và protected stack thực hiện transition. `session.clear()` từ logout hoặc refresh failure chuyển về unauthenticated.
+- Register thành công vẫn có thể replace về login vì đây là navigation trong cùng public group, không phải auth guard. Các navigation nghiệp vụ project/workflow không thay đổi.
+- Automated state-machine tests và toàn bộ source/Expo/Metro validation PASS; runtime Expo Go Android vẫn NOT RUN do không có device/ADB trong môi trường thực thi.
+
+## S24.3.4 Mobile Routes and Logout (2026-10-09)
+
+- Root `Stack.Protected` phải dùng route names đúng theo direct children Expo Router tạo ra. Khi chưa có `projects/_layout.tsx`, không khai báo `projects`; khai báo `projects/new` và từng `projects/[projectId]/*` route hiện hữu để bảo vệ toàn bộ project workflow mà không sinh warning.
+- Mobile tabs hiện giữ các tab cũ và thêm `Tài khoản`. Account đọc identity thật qua `/auth/me`; logout có native confirmation, thử revoke refresh session phía backend, rồi luôn xóa SecureStore/local auth state. `Stack.Protected` tự chuyển về Login; logout không điều hướng thủ công.
+- Mọi session mutation được serialize và có revision. Refresh chỉ được ghi token mới khi revision lúc response về vẫn là revision lúc request bắt đầu; logout/session mới làm response cũ mất hiệu lực.
+- Android report do người dùng cung cấp trước S24.3.4: startup/register/login/dashboard/projects/session restoration PASS. Source tests, Expo Doctor, Android export và Metro bundle sau thay đổi PASS, không thấy missing-route warning; device logout/relaunch smoke sau thay đổi vẫn NOT RUN.

@@ -13,11 +13,12 @@ function TabBarIcon({ name, color, size }: { name: TabIconName; color: ColorValu
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ header: () => <MobileHeader title="Người kể chuyện AI" />, tabBarActiveTintColor: colors.primary, tabBarInactiveTintColor: colors.textMuted, tabBarHideOnKeyboard: true, tabBarLabelStyle: { fontSize: 12, fontWeight: typography.weight.semibold }, tabBarItemStyle: { minHeight: 48 }, tabBarStyle: { paddingTop: 6, backgroundColor: colors.surface, borderTopColor: colors.border } }}>
+    <Tabs initialRouteName="dashboard" screenOptions={{ header: () => <MobileHeader title="Người kể chuyện AI" />, tabBarActiveTintColor: colors.primary, tabBarInactiveTintColor: colors.textMuted, tabBarHideOnKeyboard: true, tabBarLabelStyle: { fontSize: 12, fontWeight: typography.weight.semibold }, tabBarItemStyle: { minHeight: 48 }, tabBarStyle: { paddingTop: 6, backgroundColor: colors.surface, borderTopColor: colors.border } }}>
       <Tabs.Screen name="dashboard" options={{ title: 'Trang chủ', tabBarAccessibilityLabel: 'Bảng điều khiển', tabBarIcon: ({ color, size }) => <TabBarIcon name="view-dashboard-outline" color={color} size={size} /> }} />
       <Tabs.Screen name="projects" options={{ title: 'Dự án', tabBarIcon: ({ color, size }) => <TabBarIcon name="folder-outline" color={color} size={size} /> }} />
       <Tabs.Screen name="history" options={{ title: 'Lịch sử', tabBarIcon: ({ color, size }) => <TabBarIcon name="history" color={color} size={size} /> }} />
       <Tabs.Screen name="settings" options={{ title: 'Cài đặt', tabBarIcon: ({ color, size }) => <TabBarIcon name="cog-outline" color={color} size={size} /> }} />
+      <Tabs.Screen name="account" options={{ title: 'Tài khoản', tabBarIcon: ({ color, size }) => <TabBarIcon name="account-circle-outline" color={color} size={size} /> }} />
     </Tabs>
   );
 }
