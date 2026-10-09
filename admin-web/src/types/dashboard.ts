@@ -1,14 +1,14 @@
 import type { ProjectStatus, ProcessingJobStatus, ProcessingJobType } from './domain';
 export type DashboardProject = {
   id: string; name: string; userId: string; customerName: string;
-  sourceLanguage: string; targetLanguage: string; status: ProjectStatus; progress?: number; updatedAt: string;
+  sourceLanguage: string; targetLanguages: string[]; status: ProjectStatus; progress?: number; updatedAt: string;
 };
 export type DashboardJob = {
   id: string; projectId: string; projectName: string; type: ProcessingJobType;
   status: ProcessingJobStatus; progress?: number; startedAt?: string; updatedAt: string;
 };
 export type DashboardActivity = {
-  id: string; userId: string; action: string; entityType: 'Project' | 'ProcessingJob' | 'User';
+  id: string; userId: string; action: string; entityType: string;
   entityId: string; description: string; createdAt: string;
 };
 export type AdminDashboardData = {

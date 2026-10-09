@@ -1,9 +1,9 @@
 import type { ProcessingJobStatus, ProcessingJobType, ProjectStatus } from './domain';
-export type LanguageCode = 'vi' | 'en' | 'ja' | 'ko';
+export type LanguageCode = string;
 export type MediaType = 'VIDEO' | 'AUDIO';
 export interface AdminMedia { fileName: string; mediaType: MediaType; mimeType: string; sizeMb: number; duration: string }
-export interface AdminProject { id: string; userId: string; customerName: string; customerEmail: string; name: string; description: string; sourceLanguage: LanguageCode; targetLanguage: LanguageCode; mediaType: MediaType; status: ProjectStatus; progress: number; createdAt: string; updatedAt: string; media: AdminMedia }
-export interface AdminJob { id: string; projectId: string; projectName: string; userId: string; customerName: string; type: ProcessingJobType; status: ProcessingJobStatus; progress: number; errorMessage?: string; errorCode?: string; createdAt: string; startedAt?: string; completedAt?: string }
+export interface AdminProject { id: string; userId: string; customerName: string; customerEmail: string; name: string; description: string; sourceLanguage: LanguageCode; targetLanguages: LanguageCode[]; mediaType?: MediaType; status: ProjectStatus; progress: number; createdAt: string; updatedAt: string; media: AdminMedia|null }
+export interface AdminJob { id: string; projectId: string; projectName: string; userId: string; customerName: string; type: ProcessingJobType; targetLanguage?:string; status: ProcessingJobStatus; progress: number; errorMessage?: string; createdAt: string; updatedAt:string; startedAt?: string; completedAt?: string }
 export interface Pagination { page: number; limit: number; total: number; totalPages: number }
 export interface ProjectSummary { total: number; processing: number; completed: number; failed: number }
 export interface JobSummary { queued: number; processing: number; completed: number; failed: number; cancelled: number }

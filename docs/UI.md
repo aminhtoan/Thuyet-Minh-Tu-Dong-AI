@@ -258,6 +258,14 @@ Project screens use clearly marked development mock data. Backend project APIs a
 - Mobile và Admin Web không thay đổi trong S24.2.
 - S24.2.1: `/projects` có Previous/Next server-side, tổng số record/trang, URL-backed search/status/page, loading/error/empty states và reset trang khi đổi bộ lọc.
 
+## S24.4 Admin Web Integration
+
+- Giữ nguyên Admin shell, navigation, responsive layout và theme hiện có.
+- Dashboard, Customers, Projects, Jobs, Languages, Voices, Logs và Settings hiển thị dữ liệu thật từ `/api/admin/*` với loading/error/empty states.
+- Users, Projects, Jobs và Logs dùng phân trang/bộ lọc phía server theo contract backend.
+- Project hiển thị `targetLanguages[]` và source media thật; không suy diễn một target language duy nhất.
+- Retry/Cancel Job, thêm/sửa catalog và lưu Settings không hiển thị thành công giả. Các màn không có mutation backend được trình bày ở chế độ chỉ đọc.
+
 - Existing visual layouts and themes are unchanged.
 - Login/register errors now come from the sanitized backend contract; Customer and Admin application routes require an authenticated role-specific session.
 - New Project on Web/Mobile creates a real project and uploads real media. No intermediate upload percentage is fabricated.

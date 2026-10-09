@@ -1,6 +1,6 @@
 # Multilingual AI Narration System
 
-> **S24 integration status: PARTIAL toàn hệ thống.** Customer Web S24.2.1 đã hoàn tất API integration và Customer Mobile S24.3 đã được nối với API thật; các màn nghiệp vụ Admin vẫn chờ bước tích hợp riêng. Mobile chưa có physical-device smoke trong môi trường validation hiện tại.
+> **S24 integration status: PARTIAL toàn hệ thống.** Customer Web, Customer Mobile và Admin Web đã được nối với API thật. Mobile physical-device smoke và Admin authenticated browser smoke chưa chạy trong môi trường validation hiện tại.
 
 > **S24.1 backend:** Customer Voice Catalog and the minimal secure Admin business APIs are now available. The frontend services are intentionally unchanged in S24.1 and will be connected in S24.2/S24.3.
 
@@ -29,7 +29,7 @@ Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng servic
 | Thành phần | Trạng thái |
 | --- | --- |
 | Customer Web | Đã tích hợp backend cho xác thực, CRUD project, upload media, STT, Translation, Voice/TTS, Processing, Result/History và logout. |
-| Admin Web | Đã triển khai các màn hình chính từ Dashboard đến Customers, Projects, Jobs, Languages, Voices, Logs và Settings; dữ liệu và mutation là mock/in-memory. |
+| Admin Web | Đã tích hợp API thật cho Dashboard, Customers, Projects, Jobs, Languages, Voices, Logs và Settings. Chỉ khóa/mở khóa Customer là mutation được backend hỗ trợ. |
 | Customer Mobile | Đã dùng API thật cho auth, project/media, STT, translation, voice/TTS, processing và result/history; token lưu bằng Expo SecureStore. Transcript/Translation chỉ đọc vì backend chưa có update API. |
 | Backend | **S17–S20 đã triển khai.** Có auth/JWT/RBAC, Project/Media API và Speech-to-Text pipeline. |
 | MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
@@ -176,7 +176,7 @@ Các route chính:
 /settings
 ```
 
-Admin login dùng JWT thật và chỉ chấp nhận role `ADMIN`. Các màn quản trị nghiệp vụ vẫn là mock vì backend chưa có API Admin tương ứng.
+Admin login dùng JWT thật và chỉ chấp nhận role `ADMIN`. Các màn quản trị nghiệp vụ dùng `/api/admin/*`; backend RBAC là ranh giới bảo mật.
 
 ## Chạy Customer Mobile
 

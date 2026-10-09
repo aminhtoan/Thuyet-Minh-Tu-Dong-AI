@@ -1,1 +1,0 @@
-export const adminOperationsScenario:{projectMode:'success'|'error'|'empty';jobMode:'success'|'error'|'empty';latencyMs:number;failNextMutation:boolean}={projectMode:'success',jobMode:'success',latencyMs:300,failNextMutation:false};

@@ -29,7 +29,7 @@ Upload → Speech-to-Text → Edit Transcript → Translate/Edit → Select Voic
 | --- | --- | --- |
 | Customer Web | `frontend-web/` | Implemented UI; React + TypeScript + Vite |
 | Customer Mobile | `frontend-mobile/` | Implemented UI; React Native + TypeScript + Expo SDK 57 |
-| Admin Web | `admin-web/` | S12–S16 primary mock Admin screens implemented; React + TypeScript + Vite; separate app |
+| Admin Web | `admin-web/` | S24.4 API-integrated Admin client; React + TypeScript + Vite; separate app |
 | Backend | `backend/` | S17 foundation implemented; Node.js + Express.js + TypeScript + Mongoose |
 
 Customer Web and Admin Web will use one backend but remain independent applications. Do not place Admin under `frontend-web/src/admin` or treat `/admin` in Customer Web as the main Admin architecture.
@@ -132,6 +132,7 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 
 - `frontend-web` đã bỏ runtime mock khỏi các màn Customer và dùng backend cho auth, project/media, STT, translation, voice/TTS, processing, result/history.
 - `frontend-mobile` đã bỏ runtime mock khỏi các màn Customer; dùng SecureStore + refresh single-flight, API pagination/CRUD/upload, AI workflow có xác nhận và tải artifact có Bearer token vào Expo cache trước khi phát/chia sẻ.
+- `admin-web` đã bỏ production runtime mock và gọi Admin API thật cho Dashboard, Users, Projects, Jobs, Languages, Voices, Logs và Settings. Chỉ Customer status có mutation; catalog, jobs và settings giữ read-only.
 - Protected audio/video được fetch bằng Bearer token và phát qua Blob URL; không đưa token vào URL.
 - STT, Translation và TTS chỉ bắt đầu sau xác nhận rõ ràng của người dùng. Không có paid provider call trong validation tự động.
 - Transcript/Translation đang read-only vì backend chưa có update endpoint; UI không giả lập persistence.

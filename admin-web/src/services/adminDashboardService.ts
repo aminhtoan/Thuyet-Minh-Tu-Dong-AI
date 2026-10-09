@@ -1,20 +1,4 @@
-import { createAdminDashboardMock } from '../mocks/adminDashboard.mock';
-import { adminDashboardScenario } from '../mocks/adminDashboardScenario';
+import { adminApi } from '../lib/api';
 import type { AdminDashboardData } from '../types/dashboard';
-type Options = { signal?: AbortSignal; scenario?: 'success' | 'error' | 'empty'; latencyMs?: number };
-export const adminDashboardService = {
-  getDashboard({ signal, scenario = adminDashboardScenario.mode, latencyMs = adminDashboardScenario.latencyMs }: Options = {}): Promise<AdminDashboardData> {
-    return new Promise((resolve, reject) => {
-      if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
-      const delay = Number.isFinite(latencyMs) ? Math.max(0, latencyMs) : 350;
-      const abort = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(new DOMException('Aborted', 'AbortError')); };
-      const timer = setTimeout(() => {
-        signal?.removeEventListener('abort', abort);
-        if (scenario === 'error') { reject(new Error('Dashboard unavailable')); return; }
-        // Replace this local source with GET /api/admin/dashboard in future integration.
-        resolve(structuredClone(createAdminDashboardMock(Date.now(), scenario === 'empty')));
-      }, delay);
-      signal?.addEventListener('abort', abort, { once: true });
-    });
-  },
-};
+type Dto = { stats: AdminDashboardData['stats']; recentProjects: { id:string; name:string; user:{id:string;fullName:string}|null; sourceLanguage:string; targetLanguages:string[]; status:AdminDashboardData['recentProjects'][number]['status']; progress:number; updatedAt:string }[]; processingJobs:{id:string;project:{id:string;name:string}|null;type:AdminDashboardData['processingJobs'][number]['type'];status:AdminDashboardData['processingJobs'][number]['status'];progress:number;startedAt:string|null;updatedAt:string}[]; recentActivities:{id:string;actor:{id:string}|null;action:string;entityType:string;entityId:string;description:string;createdAt:string}[]; jobSummary:AdminDashboardData['jobSummary'];generatedAt:string };
+export const adminDashboardService={async getDashboard({signal}:{signal?:AbortSignal}={}):Promise<AdminDashboardData>{const d=await adminApi<Dto>('/admin/dashboard',{signal});return{...d,recentProjects:d.recentProjects.map(x=>({id:x.id,name:x.name,userId:x.user?.id??'',customerName:x.user?.fullName??'Tài khoản không còn tồn tại',sourceLanguage:x.sourceLanguage,targetLanguages:x.targetLanguages,status:x.status,progress:x.progress,updatedAt:x.updatedAt})),processingJobs:d.processingJobs.map(x=>({id:x.id,projectId:x.project?.id??'',projectName:x.project?.name??'Dự án không còn tồn tại',type:x.type,status:x.status,progress:x.progress,startedAt:x.startedAt??undefined,updatedAt:x.updatedAt})),recentActivities:d.recentActivities.map(x=>({id:x.id,userId:x.actor?.id??'',action:x.action,entityType:x.entityType,entityId:x.entityId,description:x.description,createdAt:x.createdAt}))}}};
