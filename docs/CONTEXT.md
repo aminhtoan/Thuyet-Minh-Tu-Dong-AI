@@ -173,4 +173,53 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Root `Stack.Protected` phải dùng route names đúng theo direct children Expo Router tạo ra. Khi chưa có `projects/_layout.tsx`, không khai báo `projects`; khai báo `projects/new` và từng `projects/[projectId]/*` route hiện hữu để bảo vệ toàn bộ project workflow mà không sinh warning.
 - Mobile tabs hiện giữ các tab cũ và thêm `Tài khoản`. Account đọc identity thật qua `/auth/me`; logout có native confirmation, thử revoke refresh session phía backend, rồi luôn xóa SecureStore/local auth state. `Stack.Protected` tự chuyển về Login; logout không điều hướng thủ công.
 - Mọi session mutation được serialize và có revision. Refresh chỉ được ghi token mới khi revision lúc response về vẫn là revision lúc request bắt đầu; logout/session mới làm response cũ mất hiệu lực.
-- Android report do người dùng cung cấp trước S24.3.4: startup/register/login/dashboard/projects/session restoration PASS. Source tests, Expo Doctor, Android export và Metro bundle sau thay đổi PASS, không thấy missing-route warning; device logout/relaunch smoke sau thay đổi vẫn NOT RUN.
+- Android Expo Go report do người dùng xác nhận sau S24.3.4: PASS 8/8 cho startup, missing-route warning, Account, identity thật, logout confirmation, logout về Login, relaunch logged out và login lại/Dashboard/Projects. S24.3.4 **COMPLETED**.
+
+## S24.3.5 Mobile Project/Media Smoke Decisions (2026-10-09)
+
+- Document Picker copy file được chọn vào cache trước upload để Android storage-provider URI còn đọc được ổn định. Multipart field tiếp tục là `file`; không tự đặt `Content-Type` boundary.
+- Client validation dùng filename/size/MIME, còn upload MIME được canonicalize theo extension đã chấp nhận để khớp chính xác Multer allowlist backend. Backend vẫn là nơi tái kiểm tra loại và kích thước file.
+- Protected narration/result URL chỉ là path API; Mobile tải bằng Bearer header vào Expo cache rồi mới truyền local `file://` URI cho `expo-audio` hoặc `expo-video`. Token không nằm trong URL.
+- Protected binary download có refresh-once khi 401 và cùng single-flight refresh rotation với JSON API. Partial/abandoned cache files được cleanup; download/network errors không bị trình bày thành playback thành công.
+- STT/Translation/TTS là paid operations và chỉ chạy sau confirmation. S24.3.5 source validation không gọi chúng. Existing persisted artifacts có thể dùng cho device smoke; không tạo output AI giả.
+- Customer processing API hiện đồng bộ: màn hình chờ request STT/Translation/TTS/FFmpeg thực tế hoàn tất và refresh project sau response; không có Customer job-status polling endpoint để Mobile giả lập polling.
+- Remaining Android checklist cần xác nhận thủ công: project create/upload/detail, read-only transcript/translation retrieval, voice catalog, existing generation/result state, protected audio/video playback và sharing. Source validation PASS không thay thế device PASS.
+
+## S24.3.6 Android Multipart Upload Decision (2026-10-09)
+
+- Không append React Native file descriptor `{ uri, name, type }` vào DOM `FormData` bằng ép kiểu `Blob`; Expo Go SDK 57/React Native có thể từ chối part đó với `Unsupported FormDataPart implementation` trước khi request tới backend.
+- Mobile media upload dùng native `expo-file-system/legacy.createUploadTask` + `MULTIPART`. Native transport tự tạo boundary, gửi field `file`, Bearer header và MIME backend hỗ trợ; generic JSON API client vẫn dùng cho các request còn lại và refresh session.
+- Document Picker vẫn copy vào cache; upload service tiếp tục copy sang một project-scoped `file://` URI có basename bằng filename đã sanitize. Cách này ổn định quyền đọc Android và giữ filename multipart mà không chuyển qua `Blob`/`File`.
+- Upload 401 dùng refresh rotation hiện có và retry một lần. Project được tạo trong lần thử chỉ bị xóa khi chính upload đó thất bại; nếu cleanup không thành công, ID được giữ cho nút retry nhằm tránh tạo duplicate. Không bao giờ cleanup project có sẵn ngoài flow hiện tại.
+- Source/tests/Expo/Android bundle đã PASS; physical-device MP4 upload sau sửa vẫn cần người dùng xác nhận, nên S24.3.5/S24.3.6 vẫn PARTIAL.
+
+## S24.3.7 DocumentPicker URI Lifecycle Decision (2026-10-09)
+
+- Với `copyToCacheDirectory: true`, DocumentPicker đã trả một local cache URI cho Expo APIs. Không copy mù quáng URI `file://` đó sang cache lần nữa; Android Expo Go thực tế có thể từ chối `copyAsync` dù URI DocumentPicker là nguồn dành cho immediate read.
+- Trước upload, client yêu cầu file tồn tại, không phải directory và đọc thử 1 byte bằng FileSystem. URI local hợp lệ được upload trực tiếp. Chỉ source không phải `file://` mới dùng project-scoped copy fallback, và destination được kiểm tra lại trước native multipart.
+- Direct picker cache không bị xóa khi upload thất bại/cancel để retry còn dùng được; chỉ cleanup sau upload thành công. Copied fallback cache luôn được cleanup best-effort. URI đã stale hoặc không đọc được yêu cầu người dùng chọn lại file bằng thông báo tiếng Việt cố định.
+- Native multipart field `file`, MIME/filename, Bearer refresh-once, giới hạn 500 MB và project cleanup/chống duplicate không thay đổi. Physical Android upload vẫn cần retest trước khi đánh dấu hoàn thành.
+
+## S24.3.8 Android Readability and Diagnostics Decision (2026-10-09)
+
+- Không dùng `readAsStringAsync`/Base64 probe làm điều kiện trước native upload. Việc API đọc chuỗi với partial binary options không thành công không chứng minh `createUploadTask` không thể đọc cùng local URI.
+- `getInfoAsync` là preflight duy nhất: missing/directory bị từ chối; local `file://` hợp lệ được truyền thẳng cho native multipart. Native transport là phép thử đọc/upload thực sự và lỗi của nó được phân loại riêng.
+- Development diagnostics chỉ lưu metadata an toàn: operation, URI scheme, `document-picker-cache | app-cache | outside-app-cache`, size, MIME, getInfo result, sanitized error type/message và HTTP status. Full URI, file content, Authorization/JWT và secrets không được log.
+- UI tách missing file, access denied, FileSystem incompatibility, network, HTTP và user cancellation. Retry giữ picker cache khi thất bại và project ID chỉ khi cleanup project mới tạo không thành công; không tạo duplicate hoặc xóa dữ liệu ngoài flow.
+- Automated/source/Expo bundle validation PASS; physical Android MP4 upload vẫn cần xác nhận trước khi S24.3.8 hoặc S24.3 tổng thể được xem là hoàn thành.
+
+## S24.3.9 Project-Owned Upload Materialization (2026-10-10)
+
+- Expo Go Android có thể trả DocumentPicker `file://` dưới cache của host Expo, nằm ngoài `Paths.cache` của project. Metadata API vẫn thấy file, nhưng legacy upload task có thể từ chối stream URI đó với `Location isn't readable`.
+- `Paths.cache` hiện là authority để phân loại app-controlled upload files. Source nằm ngoài cache này không được gửi thẳng tới uploader; client dùng modern SDK 57 `File.copy()` đúng một lần để materialize vào `mobile-uploads/<projectId>/<safe-original-name>`.
+- Không quay lại legacy `copyAsync` đối với source đã xác nhận thất bại. Destination được kiểm tra tồn tại và đối chiếu size với source trước native multipart. Materialized directory được cleanup best-effort sau success/failure; source picker không bị xóa.
+- Development diagnostics chỉ chứa URI category/scheme, method, size, existence, sanitized native error và HTTP status. Full local path, filename, content, Authorization và secrets không được log.
+- Backend contract, authentication refresh, field `file`, MIME, 500 MB validation và project cleanup/chống duplicate không đổi. Physical-device success vẫn là điều kiện hoàn thành.
+
+## S24.3.10 Fresh Picker Grant Strategy (2026-10-10)
+
+- `copyToCacheDirectory: true` trong Expo Go SDK 57 trên thiết bị đã trả `file://` thuộc host cache: `getInfoAsync` thấy metadata nhưng native upload và modern copy đều bị từ chối READ. Không giải quyết bằng storage permission vì source nằm trong sandbox của Expo Go host.
+- Mobile dùng `copyToCacheDirectory: false` để nhận URI do Android system picker cấp quyền, rồi materialize ngay trong cùng async selection callback bằng modern `File.copy()` vào project-owned `Paths.cache`. URI provider không bị decode/normalize/reconstruct và không được lưu vào React state.
+- Chỉ staged asset tồn tại, đúng size và nằm trong app cache mới được chọn cho upload. Permission/stale failure yêu cầu fresh picker selection; không retry lại inaccessible source. Staged file được giữ cho network/HTTP retry và cleanup khi replace/remove/unmount/success.
+- Native multipart field `file`, original name/MIME, 500 MB validation, Bearer refresh-once và project cleanup/chống duplicate được giữ nguyên. Không có full URI/token/file content trong diagnostics.
+- Nếu same-callback staging vẫn bị Expo Go host từ chối trên thiết bị, cần chạy physical smoke bằng development build để phân biệt limitation của Expo Go với application build; không được coi source/build PASS là Android upload PASS.

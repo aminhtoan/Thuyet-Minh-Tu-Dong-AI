@@ -11,8 +11,10 @@ import { ProgressBar } from '@/components/common/ProgressBar';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileScreen } from '@/components/layout/MobileScreen';
 import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, validateProjectName, type UploadStatus } from '@/features/projects/mediaUpload';
-import { uploadProjectMedia } from '@/features/projects/uploadService';
+import { ProjectUploadError, uploadProjectMedia } from '@/features/projects/uploadService';
+import { requiresFreshPickerSelection } from '@/features/projects/pickerStaging.mjs';
 import { sourceLanguageOptions } from '@/features/projects/projectUtils';
+import { stagePickerAsset } from '@/features/projects/stagePickerAsset';
 import type { LanguageCode } from '@/features/projects/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -26,32 +28,42 @@ export function NewProjectScreen() {
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const retryProjectIdRef = useRef<string | null>(null);
+  const stagedCleanupRef = useRef<(() => Promise<void>) | null>(null);
   const validation = validateMediaFile(file);
   const nameError = validateProjectName(projectName);
   const busy = status === 'validating' || status === 'uploading';
   const canUpload = !nameError && sourceLanguage && validation.valid && !busy && status !== 'success';
-  useEffect(() => () => controllerRef.current?.abort(), []);
+  useEffect(() => () => {
+    controllerRef.current?.abort();
+    void stagedCleanupRef.current?.();
+  }, []);
 
   async function chooseFile() {
     if (busy || status === 'success') return;
     setPickerError(null);
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: ['video/*', 'audio/*'], multiple: false, copyToCacheDirectory: true });
+      const result = await DocumentPicker.getDocumentAsync({ type: ['video/*', 'audio/*'], multiple: false, copyToCacheDirectory: Platform.OS !== 'android' });
       if (result.canceled) return;
       const picked = result.assets?.[0];
       if (!picked) { setPickerError('Chưa chọn tệp. Vui lòng thử lại.'); return; }
-      setFile(picked);
+      const staged = await stagePickerAsset(picked);
+      await stagedCleanupRef.current?.();
+      stagedCleanupRef.current = staged.cleanup;
+      setFile(staged.asset);
       setStatus('selected');
       setProgress(0);
       setUploadError(null);
-    } catch {
-      setPickerError('Không thể mở danh sách tệp. Vui lòng thử lại.');
+    } catch (error) {
+      setPickerError(error instanceof Error ? error.message : 'Không thể mở danh sách tệp. Vui lòng thử lại.');
     }
   }
 
   function removeFile() {
     if (busy) return;
     setFile(null);
+    void stagedCleanupRef.current?.();
+    stagedCleanupRef.current = null;
     setStatus('idle');
     setProgress(0);
     setPickerError(null);
@@ -69,12 +81,26 @@ export function NewProjectScreen() {
     controllerRef.current = controller;
     try {
       setStatus('uploading');
-      const projectId = await uploadProjectMedia({ projectName: projectName.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress });
+      const projectId = await uploadProjectMedia({ projectName: projectName.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress, retryProjectId: retryProjectIdRef.current });
+      retryProjectIdRef.current = null;
       if (!controller.signal.aborted) setStatus('success');
       if (!controller.signal.aborted) router.replace(`/projects/${projectId}`);
     } catch (error) {
       if (controller.signal.aborted) setStatus('cancelled');
-      else { setStatus('failed'); setUploadError(error instanceof Error ? error.message : 'Tải lên thất bại. Vui lòng thử lại.'); }
+      else {
+        const message = error instanceof Error ? error.message : 'Tải lên thất bại. Vui lòng thử lại.';
+        if (error instanceof ProjectUploadError) retryProjectIdRef.current = error.retryProjectId;
+        if (requiresFreshPickerSelection(message)) {
+          void stagedCleanupRef.current?.();
+          stagedCleanupRef.current = null;
+          setFile(null);
+          setStatus('idle');
+          setPickerError(message);
+        } else {
+          setStatus('failed');
+          setUploadError(message);
+        }
+      }
     } finally { if (controllerRef.current === controller) controllerRef.current = null; }
   }
 

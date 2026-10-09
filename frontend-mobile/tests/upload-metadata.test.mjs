@@ -6,6 +6,7 @@ test('Android picker MIME fallback is normalized to backend-supported media MIME
   assert.equal(resolveUploadMimeType('recording.MP3'), 'audio/mpeg');
   assert.equal(resolveUploadMimeType('voice.m4a'), 'audio/mp4');
   assert.equal(resolveUploadMimeType('clip.mov'), 'video/quicktime');
+  assert.equal(resolveUploadMimeType('android-video.MP4'), 'video/mp4');
 });
 
 test('unknown media extension remains safely unsupported', () => {
