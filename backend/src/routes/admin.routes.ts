@@ -1,0 +1,21 @@
+import { Router } from 'express';
+import * as controller from '../controllers/admin.controller.js';
+import { authenticate } from '../middleware/authenticate.middleware.js';
+import { authorize } from '../middleware/authorize.middleware.js';
+import { validate } from '../middleware/validate.middleware.js';
+import { adminIdSchema, adminJobsSchema, adminLanguagesSchema, adminLogsSchema, adminProjectsSchema, adminUsersSchema, adminUserStatusSchema, adminVoicesSchema } from '../validators/admin.validator.js';
+
+export const adminRouter = Router();
+adminRouter.use(authenticate, authorize('ADMIN'));
+adminRouter.get('/dashboard', controller.dashboard);
+adminRouter.get('/users', validate(adminUsersSchema), controller.users);
+adminRouter.get('/users/:id', validate(adminIdSchema), controller.user);
+adminRouter.patch('/users/:id/status', validate(adminUserStatusSchema), controller.updateUserStatus);
+adminRouter.get('/projects', validate(adminProjectsSchema), controller.projects);
+adminRouter.get('/projects/:id', validate(adminIdSchema), controller.project);
+adminRouter.get('/jobs', validate(adminJobsSchema), controller.jobs);
+adminRouter.get('/jobs/:id', validate(adminIdSchema), controller.job);
+adminRouter.get('/languages', validate(adminLanguagesSchema), controller.languages);
+adminRouter.get('/voices', validate(adminVoicesSchema), controller.voices);
+adminRouter.get('/logs', validate(adminLogsSchema), controller.logs);
+adminRouter.get('/settings', controller.settings);

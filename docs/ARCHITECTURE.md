@@ -222,4 +222,10 @@ Language và Voice dùng catalog mock quan hệ chung; ActivityLog là read-only
 
 The three clients now have platform-specific authenticated API clients. Customer Web and Admin Web keep token pairs in per-tab `sessionStorage`; Customer Mobile uses Expo SecureStore. Each client performs single-flight refresh rotation and retries the original request at most once.
 
-The integrated production path currently covers authentication plus Customer project creation/media upload. The remaining Customer artifact screens are not yet an end-to-end production path. Admin has real authentication only because `/api/admin/*` business resources do not exist. A Customer voice-catalog API is also required before voice selection can be backed by server data.
+The integrated frontend path currently covers authentication plus Customer project creation/media upload. The remaining Customer artifact screens and Admin management screens are not yet wired to the S24.1 APIs; this is now a frontend integration gap rather than a missing backend read API.
+
+## S24.1 Backend Read Model
+
+S24.1 adds no collections. Customer voice discovery reads active `Language` and `Voice` documents and limits results to the configured TTS provider. Admin routes build safe read DTOs from existing User, Project, Media, Translation, ProcessingJob, Language, Voice and ActivityLog collections.
+
+Admin monitoring is read-only except Customer `ACTIVE`/`BLOCKED` transitions. Blocking also deletes that Customer's refresh sessions. Projects and jobs have no Admin mutation routes, preventing the monitoring UI from bypassing pipeline invariants. Settings are a read-only projection of safe effective runtime limits and capability flags; secrets and filesystem paths remain server-only.

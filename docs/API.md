@@ -168,9 +168,44 @@ Result metadata: id, projectId, languageCode, mediaType, createdAt, availability
 
 ## S12 Admin frontend boundary
 
-Admin Web exists, but **all Admin APIs remain proposed and unimplemented**. Dashboard now reads through the S13 asynchronous mock service (src/services/adminDashboardService.ts); validateMockAdminLogin only validates and navigates. Preview routes are public; no HTTP client/call, session, JWT or RBAC. VITE_API_BASE_URL=http://localhost:8080/api is public preparation, never a secret.
+Admin Web screens still require S24.2/S24.3 client wiring, but the backend Admin APIs below are implemented in S24.1 and enforce ADMIN JWT/RBAC.
 
-Future contracts under /api/admin: GET dashboard/users/projects/jobs/languages/voices/logs/settings; GET user/project/job by ID; PATCH user status; POST/PATCH languages/voices; PATCH settings. Future backend must enforce ADMIN authorization. No Customer content-editing API is introduced.
+Implemented contracts under `/api/admin`: dashboard, paginated users/projects/jobs/logs, detail routes, Customer status update, read-only languages/voices and read-only safe settings. Language/Voice/settings writes and Project/Job mutations are intentionally not exposed because current backend does not safely support them.
+
+## S24.1 Voice Catalog and Admin API
+
+All responses use the standard success/error envelope. Query objects are strict; unknown or invalid values return `400 VALIDATION_ERROR`.
+
+### Customer Voice Catalog
+
+| Method | Route | Role | Description |
+| --- | --- | --- | --- |
+| GET | `/api/voices?language=<code>` | CUSTOMER | Active languages and active voices for the configured TTS provider. `language` is optional. |
+
+Voice DTO exposes the database `id` accepted as `voiceId` by the narration API, language metadata, provider name, display fields and optional preview URL. It does not expose `providerVoiceId`, secrets or provider payloads. Empty catalog/filter returns empty arrays.
+
+`npm run seed:voices` is an explicit idempotent development operation. It runs only for a validated OpenAI `TTS_DEFAULT_VOICE`, only when that provider has no Voice records, and only for existing active Language records. It does not call OpenAI or create languages.
+
+### Admin API
+
+Every route below requires an active `ADMIN` access JWT. Unauthenticated requests return `401`; CUSTOMER returns `403`; blocked users return `403 ACCOUNT_BLOCKED`.
+
+| Method | Route | Query/body |
+| --- | --- | --- |
+| GET | `/api/admin/dashboard` | Real customer/project/job aggregates, recent projects/jobs/activity |
+| GET | `/api/admin/users` | `page`, `limit`, `search`, `status`, `sort` |
+| GET | `/api/admin/users/:id` | Customer profile and owned projects |
+| PATCH | `/api/admin/users/:id/status` | `{ "status": "ACTIVE" | "BLOCKED" }` |
+| GET | `/api/admin/projects` | `page`, `limit`, `search`, `status`, `language`, `mediaType` |
+| GET | `/api/admin/projects/:id` | Project, owner, safe media metadata, target languages and jobs |
+| GET | `/api/admin/jobs` | `page`, `limit`, `search`, `type`, `status` |
+| GET | `/api/admin/jobs/:id` | Processing job with project/customer references |
+| GET | `/api/admin/languages` | `search`, `isActive` |
+| GET | `/api/admin/voices` | `language`, `languageId`, `provider`, `isActive` |
+| GET | `/api/admin/logs` | `page`, `limit`, `search`, `role`, `entityType`, `action`, `days` |
+| GET | `/api/admin/settings` | Read-only effective safe configuration |
+
+Blocking a Customer revokes all refresh sessions. Status changes cannot alter roles or Admin accounts. No route exposes password/refresh hashes, JWT/provider/database credentials, storage paths, raw provider payloads, or destructive cross-project mutation. Settings report only safe effective limits/capability flags and return `editable: false`.
 
 ## S13 Admin Dashboard contract — PROPOSED / NOT IMPLEMENTED
 

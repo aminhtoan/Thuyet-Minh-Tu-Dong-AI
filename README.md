@@ -1,6 +1,17 @@
 # Multilingual AI Narration System
 
-> **S24 integration status: PARTIAL.** Customer Web/Mobile authentication and project/media creation use the real backend; Admin authentication is real. Project browsing and the Customer AI/result screens still use existing mock services, and Admin management remains mock because the required Admin APIs do not yet exist. Do not treat those screens as production data.
+> **S24 integration status: PARTIAL.** Customer Web/Mobile authentication and project/media creation use the real backend; Admin authentication is real. Project browsing, Customer AI/result screens and Admin management screens still use existing mock services. S24.1 now provides the missing backend read APIs; frontend wiring remains for S24.2/S24.3. Do not treat mock screens as production data.
+
+> **S24.1 backend:** Customer Voice Catalog and the minimal secure Admin business APIs are now available. The frontend services are intentionally unchanged in S24.1 and will be connected in S24.2/S24.3.
+
+Voice catalog development seed (optional, explicit and idempotent):
+
+```powershell
+cd C:\cnpm\multilingual-ai-narration\backend
+npm run seed:voices
+```
+
+The command requires valid `TTS_PROVIDER`, `TTS_DEFAULT_VOICE` and existing active Language records. It does not call a paid AI API.
 
 **Hệ thống thuyết minh tự động đa ngôn ngữ**
 

@@ -116,6 +116,17 @@ S24 Full Frontend / Backend Integration.
 - Customer Mobile: same real authentication flow, refresh token stored with `expo-secure-store`, protected navigation, and real project creation + media upload. Physical devices must set `EXPO_PUBLIC_API_BASE_URL` to a reachable LAN address.
 - Admin Web: real ADMIN login/me/logout client and ADMIN route guard. Management screens remain explicitly mock because the backend has no admin business APIs.
 - Still not integrated: real project list/detail/edit/delete UI, transcript/translation/narration/processing/result screens, protected binary playback/download, Customer voice catalog, and Admin dashboard/users/projects/jobs/languages/voices/logs/settings.
-- Contract blockers: no Customer voice-catalog endpoint; no Admin business endpoints; editor save/update endpoints are absent. No endpoint was invented and no paid AI request was made.
+- S24.1 resolved the Customer voice-catalog and Admin monitoring API blockers. Editor save/update endpoints remain absent; no endpoint was invented and no paid AI request was made.
 - Validation (2026-10-08): backend 101/101 tests PASS; backend lint/typecheck/build PASS; health PASS with Atlas `database: connected`; Customer Web lint/typecheck/build PASS; Admin Web lint/typecheck/build and 1/1 test PASS; Mobile lint/typecheck PASS; Expo Doctor 21/21 PASS.
 - S24 status: **PARTIAL**. Next work must close the API gaps and replace the remaining mock services before S24 can be marked complete.
+
+## S24.1 — Missing Backend APIs
+
+- Customer active Voice Catalog: implemented with CUSTOMER JWT and safe DTOs.
+- Admin dashboard, users/status, projects, jobs, languages, voices, logs and read-only settings: implemented with ADMIN JWT/RBAC.
+- No database redesign, fake production rows, destructive Project/Job Admin mutations or paid AI calls.
+- New S24.1 suite: 17 tests PASS (16 behavioral subtests plus parent), including auth/RBAC, blocked accounts, empty catalog, pagination/filter/search, safe DTOs, status validation, refresh revocation, no privilege escalation and no destructive mutation.
+- Full regression: 118 passed, 0 failed, 0 skipped (baseline 101 + 17 S24.1 tests).
+- `npm run lint`, `npm run typecheck`, `npm run build`: PASS.
+- MongoDB Atlas runtime and `GET /api/health` with `database: connected`: PASS on 2026-10-09.
+- S24.1 status: **COMPLETED**. Next: S24.2 Customer Web Integration.

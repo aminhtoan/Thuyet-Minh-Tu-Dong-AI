@@ -120,3 +120,11 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Customer project creation and multipart media upload now call the real backend. Fetch does not expose portable upload progress here, so the UI does not invent intermediate percentages.
 - `VITE_API_BASE_URL` defaults to `http://localhost:8080/api` for local web development. Mobile has no localhost fallback for physical devices; configure `EXPO_PUBLIC_API_BASE_URL` with the computer's reachable LAN address.
 - S24 remains partial: current backend lacks Customer voice discovery and all Admin management APIs, while several frontend editor services still use mock/in-memory data. Paid provider smoke was not run.
+
+## S24.1 Backend API Decisions (2026-10-09)
+
+- Customer `GET /api/voices` and the minimal `/api/admin/*` read/monitoring API are implemented with backend JWT/RBAC and strict validation.
+- Project target language is represented as `targetLanguages[]`, derived from persisted ready Translations; no single target language is invented.
+- Admin can only change CUSTOMER status. Blocking revokes refresh sessions; Admin roles/status cannot be changed through this API.
+- Languages, voices and safe runtime settings are read-only. Existing Admin mock create/edit/retry/cancel controls must be disabled or omitted during frontend integration unless a later backend scope explicitly adds safe mutations.
+- Voice seed is explicit and idempotent, uses existing active languages plus validated configured OpenAI voice, and never calls a paid provider.
