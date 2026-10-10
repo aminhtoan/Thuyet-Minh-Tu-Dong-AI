@@ -271,3 +271,13 @@ S24 Full Frontend / Backend Integration.
 - Nếu fresh staging bị permission denied/stale, source không được lưu hoặc retry; UI yêu cầu chọn lại. Khi đổi/xóa file hoặc unmount, staged directory được cleanup. Upload failure giữ staged app-cache URI cho retry; project cleanup/chống duplicate không đổi.
 - Không thêm `READ_MEDIA_VIDEO`, broad storage permission hay FormData/Blob workaround. Nếu Expo Go vẫn từ chối fresh provider grant trên thiết bị, bước tiếp theo là xác nhận bằng development build vì Expo Go host sở hữu sandbox/permission khác application binary.
 - Regression tests: **29/29 PASS**; lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.408 modules). Physical Android upload sau S24.3.10: **NOT RUN**, nên trạng thái **PARTIAL**.
+
+## S24.3.11.1 — Mobile Project UI Polish
+
+- Danh sách dự án đã được tối ưu cho màn hình Android hẹp: tiêu đề/card xuống dòng có kiểm soát, tên dự án hiển thị tối đa hai dòng và metadata không ép badge trạng thái ra ngoài màn hình.
+- Bộ lọc trạng thái giữ dạng cuộn ngang, có padding hai đầu và vùng chạm tối thiểu 44 px. Phân trang tách thông tin trang khỏi hai nút điều hướng cân bằng, tránh wrap xen kẽ.
+- Màn Chi tiết dự án căn nút quay lại độc lập với tiêu đề, cho tên/trạng thái xuống dòng, phân bố lựa chọn ngôn ngữ theo chiều rộng và xếp thao tác chính theo chiều dọc.
+- Màn Bản ghi dùng nhãn trạng thái tiếng Việt chuẩn (`NOT_STARTED` → `Chưa bắt đầu`), xử lý header/status responsive, phân biệt loại phương tiện chưa xác định và chỉ hiện hành động tạo bản ghi khi có media nguồn.
+- Touch target nút cỡ nhỏ được nâng lên tối thiểu 44 px. Navigation, backend contract và luồng Android upload S24.3.10 không thay đổi.
+- Validation (2026-10-10): Mobile tests **29/29 PASS**; lint PASS; typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.408 modules). Không gọi paid AI API.
+- Physical Android UI verification: **NOT RUN**, chờ người dùng xác nhận trên thiết bị. S24.3.11.1 giữ trạng thái **PARTIAL** đến khi có xác nhận runtime UI.

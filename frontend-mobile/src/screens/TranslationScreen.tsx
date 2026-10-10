@@ -50,7 +50,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
     </View><Button size="sm" variant="ghost" disabled={editor.busy} onPress={backToTranscript}>Quay lại bản ghi</Button></View>
     <Text style={styles.note}>So sánh nội dung gốc và kiểm tra từng đoạn đã dịch.</Text>
     <WorkflowSteps current="translation" />
-    <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status.replace('_', ' ')}</Badge>
+    <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status}</Badge>
     {editor.status === 'FAILED' && <Card><ErrorState
       title={editor.failedAction === 'save' ? 'Không thể lưu bản dịch' : editor.failedAction === 'load' ? 'Không thể tải bản dịch' : 'Không thể dịch bản ghi'}
       description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
@@ -116,9 +116,9 @@ const styles = StyleSheet.create({
   sourceLanguage: { color: colors.textPrimary, fontSize: typography.size.lg, fontWeight: '600' },
   languageCard: { gap: spacing.sm },
   languageOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  languageOption: { minHeight: 64, minWidth: 88, justifyContent: 'center', padding: spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md },
+  languageOption: { minHeight: 64, minWidth: 112, flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md },
   selectedLanguage: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
-  languageText: { color: colors.textPrimary, fontSize: typography.size.md, fontWeight: '600' },
+  languageText: { color: colors.textPrimary, fontSize: typography.size.md, fontWeight: '600', textAlign: 'center' },
   disabled: { opacity: 0.65 },
   loading: { gap: spacing.md, alignItems: 'center' },
   actions: { gap: spacing.md, marginTop: spacing.md },

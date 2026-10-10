@@ -19,7 +19,7 @@ export function Button({ children, variant = 'primary', size = 'md', loading = f
 
 const styles = StyleSheet.create({
   base: { position: 'relative', minWidth: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1, borderColor: 'transparent', borderRadius: radius.md, paddingHorizontal: spacing.md },
-  sm: { minHeight: 40 }, md: { minHeight: 48 }, lg: { minHeight: 54, paddingHorizontal: spacing.lg },
+  sm: { minHeight: 44 }, md: { minHeight: 48 }, lg: { minHeight: 54, paddingHorizontal: spacing.lg },
   primary: { backgroundColor: colors.primary }, primaryPressed: { backgroundColor: colors.primaryPressed },
   secondary: { backgroundColor: colors.surface, borderColor: colors.border }, secondaryPressed: { backgroundColor: colors.surfaceSecondary },
   ghost: { backgroundColor: 'transparent' }, ghostPressed: { backgroundColor: colors.primaryLight },

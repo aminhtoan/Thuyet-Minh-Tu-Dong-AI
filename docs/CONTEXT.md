@@ -223,3 +223,11 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Chỉ staged asset tồn tại, đúng size và nằm trong app cache mới được chọn cho upload. Permission/stale failure yêu cầu fresh picker selection; không retry lại inaccessible source. Staged file được giữ cho network/HTTP retry và cleanup khi replace/remove/unmount/success.
 - Native multipart field `file`, original name/MIME, 500 MB validation, Bearer refresh-once và project cleanup/chống duplicate được giữ nguyên. Không có full URI/token/file content trong diagnostics.
 - Nếu same-callback staging vẫn bị Expo Go host từ chối trên thiết bị, cần chạy physical smoke bằng development build để phân biệt limitation của Expo Go với application build; không được coi source/build PASS là Android upload PASS.
+
+## S24.3.11.1 Mobile Project UI Decision (2026-10-10)
+
+- Mobile project list ưu tiên bố cục co giãn cho Android hẹp: status filter là horizontal scroll có padding an toàn; pagination luôn có dòng thông tin riêng và hai nút điều hướng cùng hàng.
+- Project card, Project Detail và Transcript header cho phép nội dung dài xuống dòng mà không che badge hay thao tác. Nút nhỏ và chip có vùng chạm tối thiểu 44 px; lựa chọn ngôn ngữ tự phân bố theo chiều rộng khả dụng.
+- Badge bản ghi nhận mã trạng thái nguyên bản để `getDisplayStatus` ánh xạ `NOT_STARTED` thành `Chưa bắt đầu`; không biến mã thành `NOT STARTED` trước khi ánh xạ.
+- Transcript chỉ cho phép bắt đầu STT khi có metadata media nguồn. Đây là kiểm tra hiển thị/an toàn phía client, không thay đổi API hay tự gọi paid provider.
+- S24.3.10 Android upload implementation, auth/navigation, Backend, Customer Web và Admin Web không thay đổi. Source/Expo/Android export PASS; physical Android UI verification vẫn **NOT RUN**.
