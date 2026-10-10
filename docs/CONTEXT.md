@@ -222,7 +222,7 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Mobile dùng `copyToCacheDirectory: false` để nhận URI do Android system picker cấp quyền, rồi materialize ngay trong cùng async selection callback bằng modern `File.copy()` vào project-owned `Paths.cache`. URI provider không bị decode/normalize/reconstruct và không được lưu vào React state.
 - Chỉ staged asset tồn tại, đúng size và nằm trong app cache mới được chọn cho upload. Permission/stale failure yêu cầu fresh picker selection; không retry lại inaccessible source. Staged file được giữ cho network/HTTP retry và cleanup khi replace/remove/unmount/success.
 - Native multipart field `file`, original name/MIME, 500 MB validation, Bearer refresh-once và project cleanup/chống duplicate được giữ nguyên. Không có full URI/token/file content trong diagnostics.
-- Nếu same-callback staging vẫn bị Expo Go host từ chối trên thiết bị, cần chạy physical smoke bằng development build để phân biệt limitation của Expo Go với application build; không được coi source/build PASS là Android upload PASS.
+- Người dùng đã xác nhận same-callback staging và physical Android MP4 upload sau S24.3.10: **PASS** trên Expo Go. Giữ nguyên chiến lược này; không quay lại host-cache URI hoặc FormData/Blob.
 
 ## S24.3.11.1 Mobile Project UI Decision (2026-10-10)
 
@@ -231,3 +231,21 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Badge bản ghi nhận mã trạng thái nguyên bản để `getDisplayStatus` ánh xạ `NOT_STARTED` thành `Chưa bắt đầu`; không biến mã thành `NOT STARTED` trước khi ánh xạ.
 - Transcript chỉ cho phép bắt đầu STT khi có metadata media nguồn. Đây là kiểm tra hiển thị/an toàn phía client, không thay đổi API hay tự gọi paid provider.
 - S24.3.10 Android upload implementation, auth/navigation, Backend, Customer Web và Admin Web không thay đổi. Source/Expo/Android export PASS; physical Android UI verification vẫn **NOT RUN**.
+
+## S24.3.11.2 Mobile Project Detail Decisions (2026-10-10)
+
+- Project update lấy response thật từ `PATCH /projects/:id`, enrich và thay đúng entry trong repository cache. Detail subscribe cache này thay vì giữ bản sao local độc lập; Projects page reload khi focus để đồng bộ dữ liệu server sau khi quay lại.
+- Project edit contract phía Mobile khớp backend: `name` trim, bắt buộc và tối đa 150; `description` trim và tối đa 1.000; `sourceLanguage` chỉ nhận code có trong catalog Mobile. Save dùng synchronous ref gate để ngăn hai request đồng thời trước khi state `saving` kịp render.
+- Update không tạo project, không tự thay status và không can thiệp upload/cleanup S24.3.10. Server response là nguồn sự thật cho status và persisted fields.
+- Workflow route tiếp tục truyền project ID qua params. STT/Translation/TTS chỉ chạy sau hành động/confirmation hiện có; mở màn hình không tự gọi paid provider. UPLOADED project có prerequisite/empty states cho các bước chưa sẵn sàng.
+- Media nguồn chỉ expose metadata qua authenticated ownership-checked API; hiện không có backend source-media streaming route. Không thêm public/raw URL hoặc playback giả. Protected narration/result vẫn dùng Bearer download vào cache và local playback.
+- Automated/source/Expo export validation PASS; người dùng đã xác nhận Physical Android Project Detail functional test **PASS 7/7**, nên S24.3.11.2 **COMPLETED**.
+
+## S24.3.12 Mobile STT Workflow Decisions (2026-10-10)
+
+- STT backend là synchronous request: `POST /projects/:id/transcription` giữ request đến khi provider và transaction hoàn tất. Project status vẫn chuyển `TRANSCRIBING` ngay từ đầu; Mobile hiển thị trạng thái local trong request và poll `GET /projects/:id` mỗi 2,5 giây chỉ khi mở lại một project đang `TRANSCRIBING`.
+- Không có automatic paid request: mount chỉ GET transcript/project. POST cần native confirmation; cancellation không phải lỗi. Client ref gate và backend atomic status guard cùng ngăn duplicate submission.
+- Backend cho phép start/retry từ `UPLOADED`, `FAILED`, `TRANSCRIBED`; `TRANSCRIBING` trả 409. Success tạo/cập nhật transcript trong transaction rồi chuyển `TRANSCRIBED`; provider failure chuyển `FAILED`, giữ response sanitized và không xóa transcript thành công cũ trước khi có transaction mới.
+- Transcript segment response có stable database `id`, zero-based `index`, optional-safe numeric timestamps và text. Mobile fallback key chỉ hỗ trợ response cũ; timestamp chỉ render khi start/end đều tồn tại.
+- Mobile STT request dùng Bearer/refresh-once từ API client, timeout 5 phút và thông báo lỗi tiếng Việt. Sau POST thực sự, project repository luôn refresh để phản ánh `TRANSCRIBED` hoặc `FAILED`.
+- Regression chỉ dùng mock provider và test-owned records/files có cleanup; không gọi OpenAI/Whisper thật và không sửa project development hiện có. Physical Android STT vẫn **NOT RUN**.

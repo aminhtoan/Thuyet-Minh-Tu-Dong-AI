@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { transcriptService } from './transcriptService';
 import { getSegmentErrors, hasTranscriptChanges } from './transcriptUtils';
 import type { Transcript, TranscriptStatus } from './types';
+import { runTranscriptRequestOnce, transcriptErrorMessage } from './transcriptWorkflow.mjs';
 
 type FailedAction = 'load' | 'generate' | 'save' | null;
 
@@ -17,6 +18,7 @@ export function useTranscriptEditor(projectId: string) {
   const [error, setError] = useState<string | null>(null);
   const [failedAction, setFailedAction] = useState<FailedAction>(null);
   const operationRef = useRef<AbortController | null>(null);
+  const generateLockRef = useRef({ current: false });
   const dirty = hasTranscriptChanges(draft, saved);
   const segmentErrors = draft ? getSegmentErrors(draft.segments) : {};
   const hasInvalidSegments = !draft?.segments.length || Object.keys(segmentErrors).length > 0;
@@ -56,25 +58,29 @@ export function useTranscriptEditor(projectId: string) {
 
   async function generate() {
     if (busy) return;
-    operationRef.current?.abort();
-    const controller = new AbortController();
-    operationRef.current = controller;
-    setStatus('GENERATING');
-    setError(null);
-    setFailedAction(null);
-    try {
-      const result = await transcriptService.generateTranscript(projectId, { signal: controller.signal });
-      if (controller.signal.aborted) return;
-      setDraft(result);
-      setSaved(copyTranscript(result));
-      setGeneratedBaseline(copyTranscript(result));
-      setStatus('SAVED');
-    } catch (cause) {
-      if (controller.signal.aborted) return;
-      setError(cause instanceof Error ? cause.message : 'Không thể tạo bản ghi.');
-      setFailedAction('generate');
-      setStatus('FAILED');
-    }
+    await runTranscriptRequestOnce(generateLockRef.current, async () => {
+      operationRef.current?.abort();
+      const controller = new AbortController();
+      operationRef.current = controller;
+      setStatus('GENERATING');
+      setError(null);
+      setFailedAction(null);
+      try {
+        const result = await transcriptService.generateTranscript(projectId, { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        setDraft(result);
+        setSaved(copyTranscript(result));
+        setGeneratedBaseline(copyTranscript(result));
+        setStatus('SAVED');
+      } catch (cause) {
+        if (controller.signal.aborted) return;
+        const message = transcriptErrorMessage(cause);
+        if (!message) { setStatus(draft ? 'SAVED' : 'NOT_STARTED'); return; }
+        setError(message);
+        setFailedAction('generate');
+        setStatus('FAILED');
+      }
+    });
   }
 
   function updateSegment(segmentId: string, text: string) {

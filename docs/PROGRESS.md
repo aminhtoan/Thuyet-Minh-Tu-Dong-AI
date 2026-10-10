@@ -270,7 +270,7 @@ S24 Full Frontend / Backend Integration.
 - Picker Android hiện yêu cầu URI provider trực tiếp bằng `copyToCacheDirectory: false` và materialize ngay trong callback chọn file, khi grant của system picker còn fresh. Exact picker URI chỉ được truyền vào một lần `File.copy()`; React state chỉ nhận URI mới dưới `Paths.cache/picker-uploads/...` sau khi destination tồn tại và đúng size.
 - Nếu fresh staging bị permission denied/stale, source không được lưu hoặc retry; UI yêu cầu chọn lại. Khi đổi/xóa file hoặc unmount, staged directory được cleanup. Upload failure giữ staged app-cache URI cho retry; project cleanup/chống duplicate không đổi.
 - Không thêm `READ_MEDIA_VIDEO`, broad storage permission hay FormData/Blob workaround. Nếu Expo Go vẫn từ chối fresh provider grant trên thiết bị, bước tiếp theo là xác nhận bằng development build vì Expo Go host sở hữu sandbox/permission khác application binary.
-- Regression tests: **29/29 PASS**; lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.408 modules). Physical Android upload sau S24.3.10: **NOT RUN**, nên trạng thái **PARTIAL**.
+- Regression tests: **29/29 PASS**; lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.408 modules). Người dùng đã xác nhận physical Android MP4 upload sau S24.3.10: **PASS**.
 
 ## S24.3.11.1 — Mobile Project UI Polish
 
@@ -281,3 +281,26 @@ S24 Full Frontend / Backend Integration.
 - Touch target nút cỡ nhỏ được nâng lên tối thiểu 44 px. Navigation, backend contract và luồng Android upload S24.3.10 không thay đổi.
 - Validation (2026-10-10): Mobile tests **29/29 PASS**; lint PASS; typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.408 modules). Không gọi paid AI API.
 - Physical Android UI verification: **NOT RUN**, chờ người dùng xác nhận trên thiết bị. S24.3.11.1 giữ trạng thái **PARTIAL** đến khi có xác nhận runtime UI.
+
+## S24.3.11.2 — Mobile Project Detail Functional Test
+
+- Project Detail cập nhật tên, mô tả và ngôn ngữ nguồn qua đúng `PATCH /api/projects/:id`. Validation Mobile nay khớp backend: tên bắt buộc, tối đa 150 ký tự; mô tả tối đa 1.000 ký tự; ngôn ngữ phải thuộc catalog Mobile đang hỗ trợ.
+- Save có khóa đồng bộ độc lập với React render để chặn double-tap tạo hai PATCH đồng thời. UI phân biệt thông báo thành công/lỗi và vô hiệu hóa form/action trong lúc lưu.
+- Repository dùng project DTO do PATCH trả về, enrich lại media/translation metadata và thay đúng cache entry theo ID. `useProject` theo dõi trực tiếp repository snapshot nên Detail/header nhận giá trị persisted mới; status từ backend được giữ nguyên và không tạo project mới.
+- Danh sách server-side tự reload khi màn Projects được focus lại, vì vậy quay về từ Detail sẽ lấy tên/trạng thái mới từ backend thay vì giữ page snapshot cũ.
+- Source review xác nhận Transcript/Translation/Voice/Result giữ nguyên `projectId`, không tự gọi paid AI. UPLOADED project mở Transcript với empty state và chỉ gọi STT sau thao tác xác nhận của người dùng; Translation/Voice/Result hiển thị prerequisite/empty state tương ứng.
+- Media nguồn hiện chỉ có API metadata có JWT/ownership; backend chưa cung cấp endpoint stream/download source media nên không thêm playback giả. Narration/result hiện tiếp tục tải protected artifact bằng Bearer vào Expo cache, refresh-once khi 401 và chỉ phát local URI.
+- Regression tests bổ sung cho validation/normalize, duplicate-save gate và cache replacement không tạo duplicate/không đổi status. Validation (2026-10-10): Mobile tests **33/33 PASS**; lint PASS; typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.409 modules); `git diff --check` PASS.
+- Không gọi paid AI và không mutate/xóa project Atlas hiện có. Người dùng đã xác nhận Physical Android Project Detail functional test **PASS 7/7**; S24.3.11.2 **COMPLETED**.
+
+## S24.3.12 — Mobile STT Workflow Validation
+
+- Contract xác nhận: `POST /api/projects/:id/transcription` chạy đồng bộ và trả `{ project: { id, status: "TRANSCRIBED" }, transcript }`; `GET /api/projects/:id/transcript` trả transcript persisted. JWT CUSTOMER và project ownership bắt buộc; generic API client refresh-once khi HTTP 401.
+- Backend chuyển nguyên tử `UPLOADED | FAILED | TRANSCRIBED → TRANSCRIBING`; request trùng khi đang chạy trả 409 `TRANSCRIPTION_ALREADY_RUNNING`. Thành công lưu transcript/segments, job COMPLETED và project TRANSCRIBED; provider failure giữ lỗi client an toàn, job/project FAILED và cho phép retry. Existing transcript chỉ được thay trong transaction thành công.
+- Backend transcript segment DTO bổ sung `id` thật để khớp key/alignment Mobile; `index`, `startTime`, `endTime`, `text` giữ nguyên. Backend regression dùng mock STT xác nhận lifecycle, concurrency, retry, ownership, safe errors và persistence.
+- Mobile không POST khi mở màn hình. Confirmation là bắt buộc; hủy giữ `NOT_STARTED`/transcript hiện có thay vì chuyển FAILED. Synchronous ref gate ngăn double-tap trước khi React render; backend atomic status tiếp tục là lớp chống duplicate thứ hai.
+- Trong request đồng bộ, UI hiển thị `TRANSCRIBING`. Nếu app mở lại khi project đang xử lý, màn hình poll project metadata mỗi 2,5 giây bằng GET, không hiện action tạo thêm, và tự tải transcript khi status thành `TRANSCRIBED`. Không có polling endpoint/job giả.
+- Request STT có timeout client 5 phút, refresh-once qua API client, thông báo tiếng Việt cho timeout/401/network/already-running/missing media và retry theo backend contract. Project cache được refresh sau mọi POST thực sự, kể cả failure; confirmation cancellation không refresh hoặc gọi API.
+- Mapper transcript chấp nhận segments thiếu an toàn, tạo fallback key chỉ khi server cũ thiếu ID và chỉ hiển thị timestamp khi cả start/end hợp lệ. UI dùng nhãn trạng thái tiếng Việt.
+- Validation (2026-10-10): backend transcription tests **10/10 PASS** với provider mock và test-owned Atlas data cleanup; backend lint/typecheck/build PASS. Mobile tests **38/38 PASS**; lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.410 modules); `git diff --check` PASS.
+- Real Whisper/OpenAI call: **NOT RUN**. Physical Android STT smoke: **NOT RUN**. S24.3.12 status **PARTIAL**; source/mock validation không chứng minh real paid-provider/device end-to-end.

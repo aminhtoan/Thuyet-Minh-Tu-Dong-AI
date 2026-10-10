@@ -6,7 +6,9 @@ import type { TranscriptSegment } from './types';
 type Props = { segment: TranscriptSegment; error?: string; disabled: boolean; onChange: (id: string, text: string) => void };
 
 export function TranscriptSegmentEditor({ segment, error, disabled, onChange }: Props) {
-  return <View style={[styles.card, error && styles.invalid]}><View style={styles.meta}><Text style={styles.number}>#{String(segment.sequence).padStart(2, '0')}</Text><Text style={styles.time}>{formatTimestamp(segment.startTime)} → {formatTimestamp(segment.endTime)}</Text></View><TextInput accessibilityLabel={`Nội dung đoạn ${segment.sequence}, từ ${formatTimestamp(segment.startTime)} đến ${formatTimestamp(segment.endTime)}`} accessibilityHint={error} multiline numberOfLines={4} textAlignVertical="top" autoCapitalize="none" value={segment.text} onChangeText={(text) => onChange(segment.id, text)} editable={!disabled} style={[styles.input, error && styles.inputInvalid]} />{error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}</View>;
+  const hasTimestamp = Number.isFinite(segment.startTime) && Number.isFinite(segment.endTime);
+  const number = segment.sequence + 1;
+  return <View style={[styles.card, error && styles.invalid]}><View style={styles.meta}><Text style={styles.number}>#{String(number).padStart(2, '0')}</Text>{hasTimestamp && <Text style={styles.time}>{formatTimestamp(segment.startTime)} → {formatTimestamp(segment.endTime)}</Text>}</View><TextInput accessibilityLabel={hasTimestamp ? `Nội dung đoạn ${number}, từ ${formatTimestamp(segment.startTime)} đến ${formatTimestamp(segment.endTime)}` : `Nội dung đoạn ${number}`} accessibilityHint={error} multiline numberOfLines={4} textAlignVertical="top" autoCapitalize="none" value={segment.text} onChangeText={(text) => onChange(segment.id, text)} editable={!disabled} style={[styles.input, error && styles.inputInvalid]} />{error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}</View>;
 }
 
 const styles = StyleSheet.create({

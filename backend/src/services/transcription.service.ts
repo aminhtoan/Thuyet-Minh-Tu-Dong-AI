@@ -20,7 +20,7 @@ const serialize = async (projectId: string) => {
   if (!transcript) throw new AppError(404, 'TRANSCRIPT_NOT_FOUND', 'Không tìm thấy bản ghi.');
   const segments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 });
   return { id: transcript._id.toString(), projectId, language: transcript.languageCode, fullText: transcript.fullText,
-    segments: segments.map((s) => ({ index: s.sequence - 1, startTime: s.startTime, endTime: s.endTime, text: s.text })),
+    segments: segments.map((s) => ({ id: s._id.toString(), index: s.sequence - 1, startTime: s.startTime, endTime: s.endTime, text: s.text })),
     createdAt: transcript.createdAt, updatedAt: transcript.updatedAt };
 };
 

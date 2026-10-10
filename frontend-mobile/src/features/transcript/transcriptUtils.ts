@@ -1,7 +1,7 @@
 import type { Transcript, TranscriptSegment } from './types';
 
-export function formatTimestamp(seconds: number): string {
-  const total = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+export function formatTimestamp(seconds?: number): string {
+  const total = typeof seconds === 'number' && Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor((total % 3600) / 60);
   const remaining = total % 60;
