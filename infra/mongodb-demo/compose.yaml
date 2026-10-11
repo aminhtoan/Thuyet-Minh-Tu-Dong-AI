@@ -1,0 +1,37 @@
+name: narration-ui-demo
+services:
+  mongodb:
+    image: mongo:8.0.17
+    container_name: narration-ui-demo-mongodb
+    command: ["mongod", "--auth", "--bind_ip_all"]
+    ports:
+      - "127.0.0.1:27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: demo-root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo-root-password
+      MONGO_INITDB_DATABASE: multilingual_ai_narration_ui_demo
+    secrets:
+      - mongo-root-password
+      - mongo-app-password
+    volumes:
+      - demo-data:/data/db
+      - ./init-demo.js:/docker-entrypoint-initdb.d/init-demo.js:ro
+      - ./healthcheck.js:/opt/demo/healthcheck.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--norc", "--file", "/opt/demo/healthcheck.js"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [demo-local]
+secrets:
+  mongo-root-password:
+    file: ./secrets/mongo-root-password.txt
+  mongo-app-password:
+    file: ./secrets/mongo-app-password.txt
+volumes:
+  demo-data:
+    name: narration-ui-demo-mongodb-data
+networks:
+  demo-local:
+    internal: true

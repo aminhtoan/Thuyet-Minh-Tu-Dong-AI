@@ -8,6 +8,7 @@ web-build/
 backend/uploads/
 
 # Environment files (examples remain tracked)
+infra/mongodb-demo/secrets/
 .env
 .env.*
 !.env.example

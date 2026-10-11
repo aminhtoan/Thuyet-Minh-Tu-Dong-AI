@@ -1,5 +1,58 @@
 # Project Progress
 
+## S25.7.6.4 — History final UI polish
+
+- SOURCE VALIDATION PASS: numeric pagination/current page/ellipsis động + summary; bỏ demo note lặp dưới badge, banner giải thích đầy đủ; padding bảng 8px/dòng ngắn 68px.
+- Giữ History filter/10 records/page/API full-page loader/routes/auth/demo flag/fixtures. Không sửa màn khác, Backend/DB/Docker/Mobile/Admin; không paid AI/seed/cleanup/commit/push.
+- Web tests 53/53 PASS, lint/typecheck/build và git diff --check PASS; build warning dynamic import cũ. Browser visual/interaction responsive NOT RUN; chờ người dùng duyệt.
+
+## S25.7.6.3 — History UI and demo fixtures
+
+- SOURCE VALIDATION PASS, browser visual/interaction NOT RUN. History 5-column table theo createdAt, Vietnamese language labels, horizontal/vertical borders, compact rows/name disclosure và vùng scroll responsive.
+- VITE_HISTORY_DEMO=true + DEV, mặc định OFF và độc lập Project List flag; 20 fixture không artifact, trạng thái giả lập và không business action. API OFF giữ useCompleteHistory full-page loader và Project Detail route; không sửa Project List/Backend/DB/Mobile/Admin/Docker.
+- Filter AND/Enter reset, 10 dòng/page, tổng thực và current page primary; empty/loading/error giữ rõ. Web tests 51/51 PASS, lint/typecheck/build và git diff --check PASS; dynamic import warning cũ không lỗi. Không commit/push/paid AI; chờ duyệt.
+
+## S25.7.4.12.1 — Project List UI polish
+
+- SOURCE VALIDATION PASS; browser visual/interaction NOT RUN. Banner demo gọn; caption trùng ẩn trực quan đúng semantic; nhãn ngôn ngữ tiếng Việt; table gọn/tên hai dòng + focus disclosure; pagination summary và số trang primary.
+- Giữ 20 fixture/flag DEV mặc định OFF; mô phỏng trạng thái ghi rõ không có tệp thật; không business links/API list trong demo. API OFF vẫn loader/routes/auth thật, không chỉnh Backend/DB/Docker/Mobile/Admin/màn khác.
+- Web tests 48/48 PASS; lint/typecheck/build PASS; git diff --check PASS. Build có cảnh báo dynamic import cũ, không lỗi. Không commit/push/AI call; chờ duyệt responsive và UI thực tế.
+
+## S25.7.4.11 — Frontend Demo Fixtures (No Docker)
+
+- Chuẩn bị fixture 20 Project chỉ trong Customer Web Project List, explicit VITE_PROJECT_LIST_DEMO=true + DEV, mặc định OFF/Production không bật. Nhãn demo rõ và chặn business links; không ghi DB/seed/cleanup/AI.
+- Demo dùng cùng filter/sort/client pagination; API loader chỉ mount ở nhánh OFF. Không sửa Backend/Mobile/Admin/Docker/auth. Vẫn cần session Customer hiện có; không giả login và không fixture Dashboard/History.
+- Runtime/browser NOT RUN, chờ duyệt. Tests bổ sung guard flag, fixture shape, filter/date/sort/pagination và chặn route/API trong nhánh demo. Không commit/push.
+- Validation: Web tests 45/45 PASS; lint/typecheck/production build và git diff --check PASS. Build giữ cảnh báo dynamic import hiện có (không lỗi). Áp dụng UI UX Pro Max về nhãn dữ liệu mô phỏng và trạng thái read-only; không redesign.
+
+## S25.7.4.10 — Docker MongoDB Demo preparation
+
+- Chuẩn bị `infra/mongodb-demo/`: Compose mongo:8.0.17, loopback 27018, volume/network/container riêng, auth + app readWrite user + authenticated healthcheck. Secrets file mount gitignored, không dùng credential Atlas.
+- Backend launcher/config mẫu riêng 8081, Web env hướng 8081 với origin 5175. Backend guard kiểm tra Local endpoint và config; không sửa backend/.env/schema/API/UI.
+- Docker Desktop installed; CLI 28.5.2, Compose 2.40.3, Engine unavailable/service stopped. Không khởi động Docker/container/pull image, không seed/cleanup. Runtime isolation/auth chưa xác minh.
+- Chờ người dùng mở Docker Desktop, tạo Local secrets và phê duyệt up. Không commit; hướng dẫn start/stop giữ volume tại infra/mongodb-demo/README.md.
+
+## S25.7.4.9 — Local MongoDB Development preparation
+
+- Community Server chưa phát hiện trong PATH/vị trí mặc định/process; Docker Desktop có, CLI 28.5.2 nhưng Engine unavailable/service stopped. Không có local listener 27017/27018 theo netstat.
+- Đề xuất Local `_ui_demo` khớp seed allowlist, backend riêng 8081/Web 5175; template và checklist auth/endpoint/proxy verification ở `docs/LOCAL_DEVELOPMENT.md`.
+- Chưa xác minh cách ly Production/auth Local, chưa kết nối hoặc tạo dữ liệu, không khởi động/cài phần mềm, không chạy seed/cleanup. Chờ người dùng duyệt thiết lập Local.
+
+## S25.7.4.8 — Development database safety audit
+
+- Hoàn tất audit cấu hình/source, chưa xác minh cách ly hạ tầng/quyền. Đề xuất `multilingual_ai_narration_dev` trên deployment và credential riêng, không quyền ghi Production.
+- Script hiện allowlist `_ui_demo`, chưa đổi sang `_dev`; phải đồng bộ sau khi duyệt. NODE_ENV/tên Database không đủ chứng minh cách ly. Cleanup có race check/delete; không chạy với writer đồng thời.
+- Hướng dẫn chuyển backend/Web sang bản sao + cấu hình/cổng/origin riêng trong `docs/DEMO_PROJECTS.md`. Không sửa application/schema/API.
+- Pure tests 2/2 PASS; không kết nối, seed, cleanup hoặc tạo Atlas resource. Có thể cho phép seed: NO, chờ xác nhận đích/quyền và phê duyệt. Không commit.
+
+## S25.7.4.7 — Demo projects development only
+
+- Script và hướng dẫn: `backend/src/scripts/seed-demo-projects.ts`, `docs/DEMO_PROJECTS.md`. **Seed/cleanup NOT RUN**, không kết nối hoặc ghi Atlas trong bước này.
+- Chưa xác minh Database test tách biệt. Guard bắt buộc NODE_ENV development/test, URI riêng DEMO_MONGODB_URI, database allowlist và xác nhận rõ ràng; không load/fallback backend/.env.
+- Chuẩn bị 20 DRAFT (thay phân bổ trạng thái dự kiến vì không được giả mạo media/jobs/results). Tài khoản CUSTOMER demo riêng, ID ổn định, marker/owner kiểm soát seed/cleanup; cleanup từ chối dữ liệu liên quan và không xóa tài khoản/tệp.
+- Kiểm tra UI với dữ liệu seed và database idempotence/cleanup runtime NOT RUN. Chờ người dùng xác nhận đích và cho phép chạy; không commit.
+- Validation: tests thuần `node --import tsx --test tests/demo-projects.test.ts` 2/2 PASS (guard môi trường/Database và 20 record schema/API-valid); backend lint/typecheck/build và git diff --check PASS. Không chạy backend regression/database runtime trong bước chuẩn bị này.
+
 ## Current Sprint
 
 S23 FFmpeg / Media Processing
@@ -421,6 +474,12 @@ S24 Full Frontend / Backend Integration.
 - Route `/projects/new` có heading/mô tả lớn trong Header và liên kết quay lại danh sách cạnh Profile. Nội dung gồm ba card: chi tiết dự án, phương tiện, tải lên.
 - Mô tả dùng textarea giữ giới hạn hiện có 1000 ký tự; upload hiển thị guidance, trạng thái chưa chọn và metadata/preview thật. Giữ upload handler, multipart, validation, retry/cancellation và success flow; không gọi AI trả phí.
 - Chờ người dùng duyệt giao diện và kiểm tra responsive/interaction trên trình duyệt. Không commit.
+
+## S25.7.4.6 — Project List phương án A
+
+- PARTIAL: hoàn thành source UI/filter/sort/table; browser visual/interaction verification NOT RUN.
+- API data thật đọc đủ pages; lọc AND tên/ngày tạo/trạng thái, sort toàn tập và phân trang 10 dòng. Giữ routes và không đổi backend/API.
+- Web tests 41/41 PASS, lint/typecheck/build PASS. Không paid AI, không sửa Mobile/Admin, không commit. Chờ duyệt; dataset lớn và thay đổi đồng thời là giới hạn của full-fetch/offset API.
 
 ## S25.7.6 — Customer Web History Professional Table
 

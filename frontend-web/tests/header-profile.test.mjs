@@ -34,7 +34,7 @@ test('project list keeps its local search while the header search is route-aware
   assert.match(topbar, /useLocation\(\)/);
   assert.match(topbar, /isProjectsPage = pathname === '\/projects'/);
   assert.match(topbar, /\{!isProjectsPage && !isNewProjectPage && !isHistoryPage && <form className="topbar__search"/);
-  assert.match(projects, /<ProjectFilters query=\{query\} status=\{status\}/);
+  assert.match(projects, /className="project-list-search"/);
 });
 
 test('project list moves its semantic heading into the route-aware topbar', async () => {

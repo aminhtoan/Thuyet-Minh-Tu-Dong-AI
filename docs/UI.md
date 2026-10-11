@@ -704,7 +704,47 @@ UI state dùng các nhãn: `NOT_STARTED` → **Chưa bắt đầu**, `LOADING` �
 - Giữ label, lỗi gần trường, focus ring và trạng thái disabled/loading; không thêm panel mẹo. Textarea giữ giới hạn 1000 ký tự hiện có.
 - Source validation PASS; browser visual/interaction smoke NOT RUN. Chờ người dùng duyệt, chưa đối chiếu ảnh minh họa cuối cùng.
 
+## S25.7.4.6 — Project List phương án A
+
+### S25.7.4.12.1 — Compact table polish
+
+- Giữ Header/Sidebar/Profile, filter hai hàng và logic thật/demo. Banner demo rút gọn theo copy đã yêu cầu; badge demo có chú thích “Giả lập · Không có tệp thật”, thao tác chỉ nhãn trung tính, không workflow.
+- Caption semantic giữ cho screen reader nhưng ẩn trực quan bằng CSS scoped: sửa tiêu đề trùng do lớp sr-only trước đây chưa có style. Không xóa title Header.
+- Table padding 10px dọc, dòng ngắn khoảng 68px; tên tối đa hai dòng, title đầy đủ và focus mở toàn bộ tên. Ngôn ngữ dùng nhãn Tiếng Việt/Anh/Nhật/Hàn; ngôn ngữ khác Intl.DisplayNames vi hoặc fallback code, không đổi dữ liệu/API. Ngày dùng dd/MM/yyyy khi có createdAt hợp lệ.
+- Pagination vẫn 10 dòng, clamp về trang có dữ liệu; summary Hiển thị x–y / tổng dự án và số trang hiện tại nền primary. Trên mobile filter xếp dọc, bảng cuộn trong vùng có focus, không cố định chiều cao nội dung dài.
+- Tests/source validation PASS; browser responsive 1440/768/375, Enter/focus/interaction thực tế NOT RUN. Không thay global tokens hoặc UI màn khác; chờ duyệt.
+
+### S25.7.4.11 — Frontend fixture mode
+
+- Chỉ Project List: `VITE_PROJECT_LIST_DEMO=true` **và** Vite DEV; mặc định OFF. Production build không bật kể cả flag=true.
+- Development terminal tại frontend-web: `$env:VITE_PROJECT_LIST_DEMO = 'true'` rồi `npm run dev`. Tắt bằng `Remove-Item Env:VITE_PROJECT_LIST_DEMO` và restart Vite. Không đổi .env/API.
+- 20 fixture riêng, 4 DRAFT/3 UPLOADED/5 processing/6 COMPLETED/2 FAILED; các trạng thái chỉ mô phỏng UI, không media URL/transcript/translation/result/progress giả. Nhãn Dữ liệu demo và giải thích rõ; tên/thao tác demo không liên kết workflow.
+- API loader không mount ở nhánh demo. Demo OFF giữ loader/API/error/retry hiện có. Search/date/status/sort và phân trang 10 dòng dùng cùng logic trên toàn bộ fixture, không ghi DB. Auth guard và Header/session thật không bị thay thế: vẫn cần phiên Customer hợp lệ để mở route; đây không phải chế độ offline toàn ứng dụng. Dashboard/History vẫn dùng dữ liệu thật, không nhận fixture.
+- Browser visual/interaction verification NOT RUN; source tests không thay thế duyệt giao diện.
+
+- Card lọc hai hàng desktop: tìm kiếm + thời gian; trạng thái + sắp xếp + Tìm kiếm. Gap 16px, control tối thiểu 48px; mobile xếp dọc.
+- Submit bằng Enter/nút, lọc AND theo tên không phân biệt hoa/thường/dấu, trạng thái và ngày tạo local. Sáu lựa chọn thời gian, bốn kiểu sắp xếp toàn tập; không nút xóa bộ lọc.
+- Bảng semantic sáu cột, liên kết dùng Project Detail/workflow hiện có, badge dictionary; màn hình hẹp cuộn trong vùng bảng có thể focus. Empty phân biệt chưa có dữ liệu và không có kết quả, không CTA.
+- API chưa hỗ trợ ngày/sort: đọc toàn bộ các trang thật trước lọc/sort và phân trang client 10 dòng. Không coi 100 bản ghi đầu là toàn bộ. Dataset lớn có thể chậm; offset pagination không cung cấp snapshot khi dữ liệu thay đổi đồng thời.
+- Header/Profile/Sidebar và các màn hình khác giữ nguyên. Browser visual/responsive verification NOT RUN, chờ người dùng duyệt.
+
 ## S25.7.6 — Customer Web History Professional Table
+
+### S25.7.6.4 — Final compact polish
+
+- Numeric pagination động: trang trước, các số trang, trang sau; current primary/white + aria-current, nhãn keyboard/focus. Tập nhiều trang giữ đầu/cuối/lân cận và dấu …; không hardcode 2 trang. Summary tổng riêng, giữ 10 bản ghi/trang/full-data filter/reset/clamp.
+- Bỏ mô tả giả lập lặp từng badge; banner demo nói rõ dữ liệu mô phỏng, không có kết quả AI thật và không thực hiện nghiệp vụ. Chỉ xem demo vẫn là nhãn, không đổi fixture/flag/auth/API.
+- Table padding dọc 8px, dòng ngắn 68px, giữ border/name two-line/focus disclosure; pagination flex wrap và target nút số tối thiểu 44px. Không chỉnh Header/Sidebar/bộ lọc/màn khác.
+- Source validation PASS, browser 1440/768/375 và thao tác click/keyboard thực tế NOT RUN; chờ duyệt. Quy tắc này thay mô tả phụ dưới badge của S25.7.6.3.
+
+### S25.7.6.3 — History UI and frontend demo (current behavior)
+
+- Bảng semantic 5 cột: tên, ngôn ngữ tiếng Việt, ngày tạo createdAt dd/MM/yyyy (thiếu/invalid dùng —), trạng thái, thao tác. Không coi updatedAt là thời điểm hoàn thành. Xem chi tiết giữ route Project Detail; không thêm Xem kết quả khi chưa xác minh artifact.
+- Border ngang/dọc 1px theo token #E2E8F0, header nền nhẹ, dòng ngắn khoảng 68px, tên hai dòng/title/focus mở đầy đủ. Tablet/mobile cuộn trong vùng bảng, không chuyển thành card. Header/Sidebar/Profile không đổi.
+- Filter tên case-insensitive hiện có, thời gian theo createdAt local và status AND; Enter/submit reset trang 1, full API pages rồi client pagination 10 dòng; summary tổng và trang primary. Không thêm reset/CTA/stats. Tìm không dấu chưa được mở rộng ở History; giữ behavior API-mode hiện có.
+- VITE_HISTORY_DEMO=true + Vite DEV, mặc định OFF/Production không bật, độc lập VITE_PROJECT_LIST_DEMO. 20 fixture tái sử dụng generator nhưng ID History riêng; ghi Giả lập, không media/result, demo action nhãn Chỉ xem demo, API list loader không mount. Vẫn cần auth/session thật, không bypass login.
+- Bật trong terminal frontend-web: `$env:VITE_HISTORY_DEMO = 'true'` rồi `npm run dev`; tắt bằng `Remove-Item Env:VITE_HISTORY_DEMO` rồi restart Vite. OFF dùng nguyên API loader/route/error/retry; không DB/AI calls trong tests.
+- Source tests/lint/typecheck/build PASS; browser 1440/768/375 và interaction thực tế NOT RUN. Các ghi chú 6 cột/card/mobile/giới hạn 100 ở phần lịch sử bên dưới là snapshot cũ, được thay bởi behavior này.
 
 S25.7.6.1: bộ lọc riêng History có tên, thời gian theo `createdAt` với ranh giới ngày local, trạng thái, submit/Enter và reset. Loader riêng đọc đủ API pages trước khi lọc client-side; phân trang 10 kết quả từ tập đã lọc, không thay service chung. Responsive controls xuống hàng; ngày tùy chọn dùng native date inputs. Browser verification NOT RUN.
 
