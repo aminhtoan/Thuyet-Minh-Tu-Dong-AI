@@ -28,3 +28,12 @@ test('Project lists retain filters and server pagination during UI polish', asyn
     assert.match(source, /Xóa bộ lọc/);
   }
 });
+
+test('Web project empty states direct creation to the sidebar and distinguish filtered results', async () => {
+  const source = await readFile(new URL('../src/pages/ProjectsPlaceholder.tsx', import.meta.url), 'utf8');
+  assert.match(source, /<Icon name="projects" width="44"/);
+  assert.match(source, /filtered \? 'Không tìm thấy dự án' : 'Chưa có dự án'/);
+  assert.match(source, /Chưa có dự án nào\. Chọn “Tạo thuyết minh” trong menu bên trái để bắt đầu\./);
+  assert.match(source, /filtered && <button[^>]*>Xóa bộ lọc<\/button>/);
+  assert.equal((source.match(/to="\/projects\/new"/g) ?? []).length, 0);
+});

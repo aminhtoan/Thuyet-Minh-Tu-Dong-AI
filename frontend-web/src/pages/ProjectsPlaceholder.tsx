@@ -1,16 +1,25 @@
 import { ProjectListHeader } from '../features/projects/ProjectListHeader';
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { Card } from '../components/common/Card'
-import { EmptyState } from '../components/common/EmptyState'
 import { ErrorState } from '../components/common/ErrorState'
+import { Icon } from '../components/common/Icon'
 import { Spinner } from '../components/common/Spinner'
-import { PageHeader } from '../components/layout/PageHeader'
 import { ProjectCard } from '../features/projects/ProjectCard'
 import { ProjectFilters } from '../features/projects/ProjectFilters'
 import type { ProjectStatus, ProjectStatusFilter } from '../features/projects/types'
 import { useProjectPage } from '../features/projects/useProjects'
 
 const projectStatuses = new Set<ProjectStatus>(['DRAFT', 'UPLOADED', 'TRANSCRIBING', 'TRANSCRIBED', 'TRANSLATING', 'TRANSLATED', 'GENERATING_AUDIO', 'PROCESSING_VIDEO', 'COMPLETED', 'FAILED'])
+
+function ProjectsEmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => void }) {
+  const titleId = filtered ? 'projects-no-results-title' : 'projects-empty-title'
+  return <section className={`projects-empty${filtered ? ' projects-empty--filtered' : ''}`} aria-labelledby={titleId}>
+    <span className="projects-empty__icon" aria-hidden="true"><Icon name="projects" width="44" /></span>
+    <h2 id={titleId}>{filtered ? 'Không tìm thấy dự án' : 'Chưa có dự án'}</h2>
+    <p>{filtered ? 'Hãy điều chỉnh từ khóa hoặc bộ lọc trạng thái.' : 'Chưa có dự án nào. Chọn “Tạo thuyết minh” trong menu bên trái để bắt đầu.'}</p>
+    {filtered && <button className="button button--secondary button--md" type="button" onClick={onClear}>Xóa bộ lọc</button>}
+  </section>
+}
 
 export function ProjectsPlaceholder() {
   const [params, setParams] = useSearchParams()
@@ -33,10 +42,9 @@ export function ProjectsPlaceholder() {
 
   return (
     <>
-      <PageHeader title="Dự án của tôi" description="Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn." actions={<Link className="button button--primary button--md" to="/projects/new">Tạo thuyết minh</Link>} />
       <Card className="projects-panel" padding="sm">
         <ProjectFilters query={query} status={status} onQueryChange={setQuery} onStatusChange={setStatus} />
-        {isLoading ? <div className="project-loading" role="status"><Spinner size="lg" label="Đang tải dự án" /><p>Đang tải dự án...</p></div> : error ? <ErrorState title="Không thể tải dự án" description={error} onRetry={reload} /> : projects.length > 0 ? <><div className="project-list"><ProjectListHeader />{projects.map((project) => <ProjectCard key={project.id} project={project} />)}</div><nav className="project-pagination" aria-label="Phân trang dự án"><button className="button button--secondary button--sm" type="button" disabled={pagination.page <= 1} onClick={() => updateParams({ page: pagination.page - 1 })}>Trang trước</button><span aria-live="polite">Trang {pagination.page} / {Math.max(1, pagination.totalPages)} · {pagination.total} dự án</span><button className="button button--secondary button--sm" type="button" disabled={pagination.page >= pagination.totalPages} onClick={() => updateParams({ page: pagination.page + 1 })}>Trang sau</button></nav></> : !hasActiveFilters ? <EmptyState title="Chưa có dự án" description="Hãy tạo dự án thuyết minh đa ngôn ngữ đầu tiên." action={<Link className="button button--primary button--md" to="/projects/new">Tạo thuyết minh</Link>} /> : <EmptyState title="Không tìm thấy dự án" description="Hãy điều chỉnh từ khóa hoặc bộ lọc trạng thái." action={<button className="button button--secondary button--md" type="button" onClick={() => setParams({}, { replace: true })}>Xóa bộ lọc</button>} />}
+        {isLoading ? <div className="project-loading" role="status"><Spinner size="lg" label="Đang tải dự án" /><p>Đang tải dự án...</p></div> : error ? <ErrorState title="Không thể tải dự án" description={error} onRetry={reload} /> : projects.length > 0 ? <><div className="project-list"><ProjectListHeader />{projects.map((project) => <ProjectCard key={project.id} project={project} />)}</div><nav className="project-pagination" aria-label="Phân trang dự án"><button className="button button--secondary button--sm" type="button" disabled={pagination.page <= 1} onClick={() => updateParams({ page: pagination.page - 1 })}>Trang trước</button><span aria-live="polite">Trang {pagination.page} / {Math.max(1, pagination.totalPages)} · {pagination.total} dự án</span><button className="button button--secondary button--sm" type="button" disabled={pagination.page >= pagination.totalPages} onClick={() => updateParams({ page: pagination.page + 1 })}>Trang sau</button></nav></> : <ProjectsEmptyState filtered={hasActiveFilters} onClear={() => setParams({}, { replace: true })} />}
       </Card>
     </>
   )

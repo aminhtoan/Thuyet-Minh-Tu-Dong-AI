@@ -1,16 +1,78 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { authService } from '../../features/auth/authService';
+import { getProfileIdentity } from '../../features/auth/profileIdentity.mjs';
+import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
 import { Icon } from '../common/Icon';
+
 type TopbarProps = { title: string; onMenuClick: () => void; sidebarOpen: boolean };
+type HeaderUser = { id: string; fullName: string; email: string; role: string };
+
 export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
   const [query, setQuery] = useState('');
+  const [user, setUser] = useState<HeaderUser | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
-  return <header className="topbar">
-    <div className="topbar__context"><button className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button><span className="topbar__title">{title}</span></div>
-    <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
+  const { pathname } = useLocation();
+  const profileId = useId();
+  const profileRootRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+  const logoutLock = useRef(false);
+  const identity = getProfileIdentity(user);
+  const isProjectsPage = pathname === '/projects';
+
+  useEffect(() => {
+    let active = true;
+    void authService.me().then(({ user: currentUser }) => { if (active) setUser(currentUser); }).catch(() => { /* The account page retains retry/error details. */ });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    function closeOnPointerDown(event: PointerEvent) { if (!profileRootRef.current?.contains(event.target as Node)) setProfileOpen(false); }
+    function closeOnEscape(event: KeyboardEvent) { if (event.key === 'Escape') { setProfileOpen(false); profileButtonRef.current?.focus(); } }
+    document.addEventListener('pointerdown', closeOnPointerDown);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => { document.removeEventListener('pointerdown', closeOnPointerDown); document.removeEventListener('keydown', closeOnEscape); };
+  }, [profileOpen]);
+
+  function openProfile() {
+    setProfileOpen(true);
+    requestAnimationFrame(() => profileRootRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
+  }
+
+  function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const items = [...event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const next = event.key === 'ArrowDown' ? (current + 1) % items.length : event.key === 'ArrowUp' ? (current - 1 + items.length) % items.length : event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : -1;
+    if (next >= 0) { event.preventDefault(); items[next]?.focus(); }
+  }
+
+  async function logout() {
+    if (logoutLock.current || !window.confirm(confirmationMessages.logout)) return;
+    logoutLock.current = true;
+    setLoggingOut(true);
+    try { await authService.logout(); navigate('/login', { replace: true }); }
+    catch { setLoggingOut(false); logoutLock.current = false; }
+  }
+
+  return <header className={`topbar${isProjectsPage ? ' topbar--projects' : ''}`}>
+    <div className="topbar__context"><button className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button>{isProjectsPage ? <div className="topbar__page-heading"><h1>Dự án của tôi</h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn.</p></div> : <span className="topbar__title">{title}</span>}</div>
+    {!isProjectsPage && <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
       <Icon name="search" width="17" /><input aria-label="Tìm kiếm dự án toàn ứng dụng" placeholder="Tìm kiếm dự án..." value={query} onChange={event => setQuery(event.target.value)} />
       <button type="submit" aria-label="Tìm dự án"><Icon name="arrow" width="16" /></button>
-    </form>
-    <button className="topbar__user" type="button" aria-label="Mở tài khoản" onClick={() => navigate('/settings')}><span className="topbar__avatar" aria-hidden="true">U</span><span>Tài khoản</span></button>
+    </form>}
+    <div className="topbar-profile" ref={profileRootRef}>
+      <button ref={profileButtonRef} className="topbar-profile__trigger" type="button" aria-label={`Mở menu tài khoản của ${identity.name}`} aria-haspopup="menu" aria-expanded={profileOpen} aria-controls={profileId} onClick={() => profileOpen ? setProfileOpen(false) : openProfile()} onKeyDown={(event) => { if (!profileOpen && (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openProfile(); } }}>
+        <span className="topbar-profile__avatar" aria-hidden="true">{identity.initial}</span><span className="topbar-profile__copy"><strong title={identity.name}>{identity.name}</strong><small>Người dùng</small></span><Icon className={`topbar-profile__chevron${profileOpen ? ' topbar-profile__chevron--open' : ''}`} name="chevronDown" width="16" />
+      </button>
+      {profileOpen && <div id={profileId} className="topbar-profile__menu" role="menu" aria-label="Menu tài khoản" onKeyDown={handleMenuKeyDown}>
+        <div className="topbar-profile__summary"><span className="topbar-profile__avatar" aria-hidden="true">{identity.initial}</span><span><strong title={identity.name}>{identity.name}</strong>{identity.email && <small title={identity.email}>{identity.email}</small>}</span></div>
+        <div className="topbar-profile__divider" />
+        <Link className="topbar-profile__item" role="menuitem" to="/settings" onClick={() => setProfileOpen(false)}>Thông tin tài khoản</Link>
+        <button className="topbar-profile__item topbar-profile__item--danger" role="menuitem" type="button" disabled={loggingOut} onClick={() => void logout()}>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</button>
+      </div>}
+    </div>
   </header>;
 }
