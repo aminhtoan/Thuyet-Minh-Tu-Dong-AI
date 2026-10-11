@@ -377,3 +377,20 @@ S24 Full Frontend / Backend Integration.
 - Project Detail Web/Mobile có status badge, mô tả, metadata phương tiện, WorkflowSteps, edit validation, save success/error và action tiếp tục theo trạng thái. Web bổ sung synchronous save lock; Mobile tiếp tục dùng `runProjectSaveOnce`. Không thêm source-media playback vì backend chưa có endpoint tương ứng.
 - Regression tests: Web **14/14 PASS**, Mobile **54/54 PASS**. Web lint/typecheck/build PASS; Mobile lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (**1.414 modules**); `git diff --check` PASS.
 - Không sửa Backend/Admin/database/API/routes, không gọi paid AI và không thay Android upload transport. S24.3.12.2 vẫn **POSTPONED**.
+
+## S25.7 — AI Workflow Screens Web/Mobile UI Polish
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-11; browser visual smoke và physical Android visual smoke **NOT RUN**.
+- Transcript Web/Mobile giữ read-only theo API hiện tại, trình bày metadata nguồn, timestamp/segment, loading/processing/error/retry và confirmation STT có sẵn. Copy Web không còn quảng bá chỉnh sửa hoặc “bản ghi mẫu”.
+- Translation và Voice/TTS dùng nhãn trạng thái tiếng Việt từ dictionary chung thay vì enum kỹ thuật; giữ target/voice catalog thật, empty/filter/error states, confirmation trả phí và duplicate-submit guard trong service. Không thêm editor, sample hoặc preview URL giả.
+- Generate/Processing hiển thị trạng thái tổng và từng stage bằng tiếng Việt; chỉ render progress do snapshot thực sự cung cấp, giữ nguyên polling/session/timeout/state transition hiện có.
+- Result có badge hoàn thành, metadata dễ đọc, nhãn accessibility cho media Web và feedback lỗi native share trên Mobile. Web vẫn phát/tải Blob URL nội bộ; Mobile vẫn phát/chia sẻ local cache tải bằng Bearer, không lộ protected URL/token.
+- Regression tests: Web **18/18 PASS**, Mobile **58/58 PASS**. Web lint/typecheck/build PASS; Mobile lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (**1.414 modules**); `git diff --check` PASS.
+- Không gọi paid AI, không chạy STT/Translation/TTS job, không sửa Backend/Admin/database/API. S24.3.12.2 tiếp tục **POSTPONED**.
+
+## S25.7.1 — Minimal Customer Web Login UI Polish
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-11; browser visual verification **NOT RUN** vì browser runtime không khả dụng.
+- Giữ nguyên bố cục hai cột, nền navy, brand/slogan/waveform và form đăng nhập. Login-only CSS giảm heading, cân spacing/form width, xử lý desktop thấp và mobile 320–375px bằng `100svh` mà không tác động Register.
+- Login giữ API/JWT/refresh/navigation/validation/loading và synchronous duplicate-submit lock. Error mapping an toàn phân biệt 401, validation, network/timeout và 5xx mà không hiển thị chi tiết nội bộ.
+- Web tests **21/21 PASS**; lint/typecheck/build PASS; `git diff --check` PASS. Không sửa Mobile/Admin/Backend/database/API.

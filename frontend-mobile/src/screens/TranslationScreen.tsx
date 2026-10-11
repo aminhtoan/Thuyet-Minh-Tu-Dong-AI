@@ -16,6 +16,7 @@ import { languageNames } from '@/features/projects/projectUtils';
 import type { LanguageCode, Project } from '@/features/projects/types';
 import { TranslationSegmentCard } from '@/features/translation/TranslationSegmentCard';
 import { useTranslationEditor } from '@/features/translation/useTranslationEditor';
+import { translationStatusLabels } from '@/localization/statusLabels.mjs';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export function TranslationScreen({ projectId, language }: { projectId: string; language?: string }) {
@@ -50,7 +51,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
     </View><Button size="sm" variant="ghost" disabled={editor.busy} onPress={backToTranscript}>Quay lại bản ghi</Button></View>
     <Text style={styles.note}>So sánh nội dung gốc và kiểm tra từng đoạn đã dịch.</Text>
     <WorkflowSteps current="translation" />
-    <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status}</Badge>
+    <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{translationStatusLabels[editor.status]}</Badge>
     {editor.status === 'FAILED' && <Card><ErrorState
       title={editor.failedAction === 'save' ? 'Không thể lưu bản dịch' : editor.failedAction === 'load' ? 'Không thể tải bản dịch' : 'Không thể dịch bản ghi'}
       description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
@@ -81,7 +82,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       action={<Button onPress={backToTranscript}>Quay lại bản ghi</Button>} /></Card> : null;
 
   const footer = editor.draft && sourceVisible ? <Card style={styles.actions}>
-    <Text accessibilityLiveRegion="polite" style={styles.label}>Bản dịch được lưu trên máy chủ. Chỉnh sửa hiện chưa được hỗ trợ.</Text>
+    <Text accessibilityLiveRegion="polite" style={styles.label}>Bản dịch được lưu trên máy chủ và hiện ở chế độ chỉ đọc.</Text>
     <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onPress={() => { if (editor.targetLanguage) router.replace({ pathname: '/projects/[projectId]/voice', params: { projectId: project.id, language: editor.targetLanguage } }); }}>Tiếp tục chọn giọng đọc</Button>
     <Text style={styles.note}>Hãy lưu mọi thay đổi bản dịch trước khi chọn giọng đọc thuyết minh.</Text>
   </Card> : null;

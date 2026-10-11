@@ -303,3 +303,11 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Android DocumentPicker staging, app-owned cache, native multipart field `file`, Bearer refresh-once, retry/cleanup và duplicate prevention là regression boundary, không được thay bằng FormData/Blob.
 - Project Detail chỉ hiển thị source-media metadata từ API; không tạo public/raw URL hoặc playback khi backend chưa có source-media endpoint. Workflow action tiếp tục dùng trạng thái dự án để mở bước hiện có và không tự kích hoạt paid AI.
 - Source validation: Web 14/14 tests + lint/typecheck/build; Mobile 54/54 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules; `git diff --check` PASS. Browser/device visual smoke NOT RUN.
+
+## S25.7 AI Workflow UI Decisions (2026-10-11)
+
+- Sáu bước chuẩn tiếp tục là Tải lên → Bản ghi → Bản dịch → Giọng đọc → Tạo thuyết minh → Kết quả. Web/Mobile dùng cùng dictionary tiếng Việt cho editor và processing status; backend enum giữ nguyên.
+- Transcript và Translation là read-only vì backend chưa có update API. Các nút tạo STT/dịch/TTS vẫn gọi service hiện có với confirmation trả phí và guard chống gửi trùng; mở màn hình không tự POST.
+- Voice preview chỉ khả dụng khi catalog API trả `previewUrl`; không tạo sample hay public URL giả. Empty catalog/filter và preview failure đều giữ feedback/retry tương ứng.
+- Processing chỉ hiển thị phần trăm khi snapshot/stage có progress thật; không thay polling interval, timeout hoặc lifecycle. Result Web dùng protected Blob URL trong bộ nhớ; Mobile dùng Bearer download vào cache và native share, với lỗi share hiển thị bằng tiếng Việt.
+- Validation: Web 18/18 tests + lint/typecheck/build; Mobile 58/58 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules; `git diff --check` PASS. Browser/device visual smoke NOT RUN; paid-provider smoke NOT RUN.

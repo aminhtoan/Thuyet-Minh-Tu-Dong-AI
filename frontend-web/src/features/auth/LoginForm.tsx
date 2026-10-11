@@ -7,6 +7,7 @@ import { authService } from './authService'
 import { PasswordField } from './PasswordField'
 import type { FormErrors, LoginFormValues } from './types'
 import { validateLogin } from './validation'
+import { getLoginErrorMessage } from './loginError.mjs'
 
 const initialValues: LoginFormValues = { email: '', password: '' }
 
@@ -40,8 +41,8 @@ export function LoginForm() {
     try {
       await authService.login(nextValues)
       navigate((location.state as { returnUrl?: string } | null)?.returnUrl ?? '/dashboard', { replace: true })
-    } catch {
-      setFormError('Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.')
+    } catch (error) {
+      setFormError(getLoginErrorMessage(error))
     } finally {
       submitLock.current = false
       setSubmitting(false)

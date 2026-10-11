@@ -13,6 +13,7 @@ import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
 import { TranslationSegmentRow } from '../features/translation/TranslationSegmentRow';
 import { useTranslationEditor } from '../features/translation/useTranslationEditor';
+import { translationStatusLabels } from '../localization/statusLabels.mjs';
 import '../styles/translation.css';
 
 export function TranslationPage() {
@@ -46,7 +47,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
     <PageHeader title="Bản dịch" description="So sánh bản ghi gốc và kiểm tra từng phân đoạn đã dịch."
       actions={<Button variant="secondary" disabled={editor.busy} onClick={backToTranscript}>Quay lại bản ghi</Button>} />
     <div className="translation-heading"><div><span className="translation-label">KHÔNG GIAN DỰ ÁN</span><h2>{project.name}</h2></div>
-      <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status}</Badge>
+      <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{translationStatusLabels[editor.status]}</Badge>
     </div>
     <WorkflowSteps current="translation" />
     {editor.status === 'LOADING' && <Card className="translation-loading"><Spinner label="Đang tải bản dịch" /><p role="status">Đang tải bản ghi và bản dịch...</p></Card>}
@@ -83,7 +84,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
         })}
       </div>
       {editor.draft && <Card className="translation-actions">
-        <p role="status">Bản dịch được lưu trên máy chủ. Chỉnh sửa bản dịch hiện chưa được hỗ trợ.</p>
+        <p role="status">Bản dịch được lưu trên máy chủ và hiện ở chế độ chỉ đọc.</p>
         {editor.invalid && <p className="translation-error" role="alert">Hãy bổ sung các bản dịch còn trống trước khi lưu.</p>}
         <div className="translation-action-buttons">
           <Button variant="secondary" disabled={!editor.canReset} onClick={editor.reset}>Đặt lại thay đổi</Button>

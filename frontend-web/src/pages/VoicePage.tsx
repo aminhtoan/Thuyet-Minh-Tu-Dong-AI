@@ -14,6 +14,7 @@ import type { LanguageCode, Project } from '../features/projects/types';
 import { VoiceCard } from '../features/voice/VoiceCard';
 import { useVoiceEditor } from '../features/voice/useVoiceEditor';
 import { formatSpeed, MAX_SPEED, MIN_SPEED, voiceFilters } from '../features/voice/voiceUtils';
+import { voiceStatusLabels } from '../localization/statusLabels.mjs';
 import '../styles/voice.css';
 
 export function VoicePage() {
@@ -44,7 +45,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
   return <>
     <PageHeader title="Giọng đọc và thuyết minh" description="Chọn giọng đọc và thiết lập cách đọc cho nội dung đã dịch."
       actions={<Button variant="secondary" disabled={editor.busy} onClick={backToTranslation}>Quay lại bản dịch</Button>} />
-    <div className="voice-heading"><h2>{project.name}</h2><Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status}</Badge></div>
+    <div className="voice-heading"><h2>{project.name}</h2><Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{voiceStatusLabels[editor.status]}</Badge></div>
     <WorkflowSteps current="voice" />
     {editor.status === 'LOADING' && <Card className="voice-loading"><Spinner label="Đang tải giọng đọc" /><p role="status">Đang tải danh sách giọng đọc và cấu hình...</p></Card>}
     {editor.status === 'FAILED' && <Card><ErrorState title={editor.failedAction === 'save' ? 'Không thể lưu cấu hình' : 'Không thể tải giọng đọc'} description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}

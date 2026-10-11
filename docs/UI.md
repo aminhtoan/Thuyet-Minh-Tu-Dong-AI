@@ -645,3 +645,34 @@ UI state dùng các nhãn: `NOT_STARTED` → **Chưa bắt đầu**, `LOADING` �
 ### Runtime validation gap
 
 - Browser visual smoke: **NOT RUN**. Physical Android visual smoke: **NOT RUN**. Build/export và source tests không thay thế kiểm tra giao diện trên runtime thật.
+
+## S25.7 — AI Workflow Screens
+
+### Parity checklist
+
+| Màn hình | Nội dung và action chuẩn |
+|---|---|
+| Bản ghi | Metadata nguồn, segment/timestamp chỉ đọc, confirmation STT, processing/error/retry |
+| Bản dịch | Ngôn ngữ nguồn/đích, nội dung song song chỉ đọc, confirmation dịch, prerequisite rõ ràng |
+| Giọng đọc | Catalog thật, filter/chọn/preview theo khả năng API, cấu hình đã chọn, confirmation TTS |
+| Tạo thuyết minh | Tóm tắt workflow, confirmation, trạng thái tổng/stage, progress thật, failure/retry/result |
+| Kết quả | Metadata hoàn thành, protected playback, Web download, Mobile native share, retry/error |
+
+### Quy tắc trạng thái và an toàn
+
+- Badge luôn dùng nhãn tiếng Việt chung; không hiển thị trực tiếp `SAVED`, `WAITING`, `PROCESSING`, `COMPLETED` hoặc enum kỹ thuật khác.
+- Transcript/Translation không hiển thị control chỉnh sửa khi chưa có update API. Action AI chỉ chạy sau confirmation hiện có; mount/navigation không tự kích hoạt request trả phí.
+- Voice preview chỉ bật khi backend cung cấp URL an toàn trong DTO. Không dựng audio/sample/preview giả.
+- Progress tổng và stage chỉ hiển thị khi processing snapshot có số liệu. Không nội suy hoặc mô phỏng phần trăm trong UI.
+- Protected artifact không được đưa token vào URL: Web dùng Blob URL được tải bằng Bearer; Mobile dùng file cache nội bộ cho expo-audio/expo-video/expo-sharing.
+
+### Runtime validation gap
+
+- Browser visual smoke: **NOT RUN**. Physical Android visual smoke: **NOT RUN**. Real paid STT/Translation/TTS: **NOT RUN**; S24.3.12.2 vẫn POSTPONED.
+
+## S25.7.1 — Minimal Login Polish
+
+- Customer Web Login giữ nguyên hai cột: brand navy bên trái và form sáng bên phải. Không thêm illustration, animation, gradient, Remember Me hoặc Quên mật khẩu.
+- CSS polish được scope bằng `.login-page`, nên Register giữ nguyên presentation. Desktop dùng heading/line-height tiết chế và form tối đa 27rem; tablet cân lại tỷ lệ cột; dưới 720px ưu tiên form một cột; 320–375px giảm padding/radius an toàn.
+- Viewport dùng `100svh` cho Login để tránh cuộn ngoài ý muốn trên trình duyệt mobile. Focus, error, hover, disabled/loading và target tối thiểu 44px tiếp tục kế thừa design system.
+- Browser visual verification vẫn **NOT RUN**; source responsive rules không thay thế duyệt giao diện thật.

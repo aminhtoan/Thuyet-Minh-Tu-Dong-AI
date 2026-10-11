@@ -17,6 +17,7 @@ import type { LanguageCode, Project } from '@/features/projects/types';
 import { VoiceCard } from '@/features/voice/VoiceCard';
 import { useVoiceEditor } from '@/features/voice/useVoiceEditor';
 import { formatSpeed, speedPresets, voiceFilters } from '@/features/voice/voiceUtils';
+import { voiceStatusLabels } from '@/localization/statusLabels.mjs';
 import { colors, spacing, typography } from '@/theme/tokens';
 
 export function VoiceScreen({ projectId, language }: { projectId: string; language?: string }) {
@@ -50,7 +51,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
     <Text style={styles.projectName}>{project.name}</Text>
     <Text style={styles.note}>Chọn giọng đọc và thiết lập cách đọc cho nội dung đã dịch.</Text>
     <WorkflowSteps current="voice" />
-    <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{editor.status}</Badge>
+    <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{voiceStatusLabels[editor.status]}</Badge>
     {editor.status === 'FAILED' && <Card><ErrorState title={editor.failedAction === 'save' ? 'Không thể lưu cấu hình' : 'Không thể tải giọng đọc'} description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
     {showConfiguration && editor.translation && <>
       <Card style={styles.summary}><Text style={styles.label}>Ngôn ngữ thuyết minh</Text>

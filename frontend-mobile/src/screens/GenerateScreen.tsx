@@ -22,6 +22,7 @@ import { useProcessing } from '@/features/processing/useProcessing';
 import { formatSpeed } from '@/features/voice/voiceUtils';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { getDisplayStatus } from '@/utils/displayLabels';
+import { processingStatusLabels } from '@/localization/statusLabels.mjs';
 
 export function GenerateScreen({ projectId, language }: { projectId: string; language?: string }) {
   const { project, isLoading, error } = useProject(projectId);
@@ -49,7 +50,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <MobileScreen title="Tạo thuyết minh" description="Kiểm tra cấu hình trước khi bắt đầu xử lý."
         action={<Button variant="ghost" size="sm" disabled={busy} onPress={() => edit('voice')}>Quay lại cấu hình giọng đọc</Button>}>
-        <View style={styles.heading}><Text style={styles.projectName}>{project.name}</Text><Badge variant="info">SẴN SÀNG</Badge></View>
+        <View style={styles.heading}><Text style={styles.projectName}>{project.name}</Text><Badge variant={snapshot?.status === 'COMPLETED' ? 'success' : snapshot?.status === 'FAILED' ? 'error' : 'info'}>{snapshot ? processingStatusLabels[snapshot.status] : 'Đang tải'}</Badge></View>
         <WorkflowSteps current="generate" />
         {processing.loadStatus === 'LOADING' && <Card style={styles.center}><Spinner label="Đang tải cấu hình tạo thuyết minh" /><Text style={styles.note}>Đang tải cấu hình đã lưu...</Text></Card>}
         {processing.loadStatus === 'FAILED' && <Card><ErrorState title="Không thể tải cấu hình tạo thuyết minh" description={processing.error ?? 'Vui lòng thử lại.'} onRetry={processing.reload} /></Card>}
@@ -79,7 +80,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
           </Card>
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>{snapshot.status === 'COMPLETED' ? 'Xử lý hoàn tất' : snapshot.status === 'FAILED' ? 'Xử lý thất bại' : snapshot.status === 'CANCELLED' ? 'Đã hủy xử lý' : 'Quy trình xử lý'}</Text>
-            <Badge variant={snapshot.status === 'COMPLETED' ? 'success' : snapshot.status === 'FAILED' ? 'error' : 'info'}>{snapshot.status}</Badge>
+            <Badge variant={snapshot.status === 'COMPLETED' ? 'success' : snapshot.status === 'FAILED' ? 'error' : 'info'}>{processingStatusLabels[snapshot.status]}</Badge>
             <Text style={styles.note}>Trạng thái dự án: {getDisplayStatus(getProjectStatus(snapshot, project.mediaType ?? 'AUDIO'))}</Text>
             <ProgressBar value={snapshot.progress} label="Tiến độ xử lý tổng thể" />
             <Text accessibilityLiveRegion="polite" style={styles.message}>{snapshot.message}</Text>

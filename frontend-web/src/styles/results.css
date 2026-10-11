@@ -1,5 +1,7 @@
 .result-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-block: 24px; }
 .result-layout > * { min-width: 0; }
+.result-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.result-heading h2, .result-heading p { margin-top: 0; }
 .result-metadata { display: grid; gap: 14px; }
 .result-metadata div { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
 .result-metadata dd { margin: 0; overflow-wrap: anywhere; }

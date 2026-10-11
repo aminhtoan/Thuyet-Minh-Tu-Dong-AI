@@ -5,6 +5,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 import { clampProgress } from './processingUtils';
 import type { ProcessingStage as Stage } from './types';
+import { processingStatusLabels } from '@/localization/statusLabels.mjs';
 
 export function ProcessingStage({ stage }: { stage: Stage }) {
   const active = stage.status === 'PROCESSING';
@@ -12,7 +13,7 @@ export function ProcessingStage({ stage }: { stage: Stage }) {
     <View style={styles.heading}>
       {active ? <Spinner label={'Đang xử lý ' + stage.title} /> : <Text style={styles.icon}>{stage.status === 'COMPLETED' ? '✓' : stage.status === 'FAILED' ? '!' : stage.status === 'CANCELLED' ? '×' : '○'}</Text>}
       <Text style={styles.title}>{stage.title}</Text>
-      <Badge variant={stage.status === 'COMPLETED' ? 'success' : stage.status === 'FAILED' ? 'error' : active ? 'info' : 'default'}>{stage.status}</Badge>
+      <Badge variant={stage.status === 'COMPLETED' ? 'success' : stage.status === 'FAILED' ? 'error' : active ? 'info' : 'default'}>{processingStatusLabels[stage.status]}</Badge>
     </View>
     {stage.description && <Text style={styles.note}>{stage.description}</Text>}
     {stage.progress !== undefined && <ProgressBar value={clampProgress(stage.progress)} label={stage.title} />}

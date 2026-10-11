@@ -35,7 +35,7 @@ function TranscriptWorkspace({ project }: { project: Project }) {
   const retry = editor.failedAction === 'load' ? editor.retryLoad : editor.failedAction === 'save' ? editor.saveTranscript : editor.generate
 
   return <>
-    <PageHeader title="Bản ghi" description="Kiểm tra và chỉnh sửa từng phân đoạn có mốc thời gian trước khi dịch." actions={<Link className="button button--secondary button--md" to="/projects">Quay lại dự án</Link>} />
+    <PageHeader title="Bản ghi" description="Xem từng phân đoạn có mốc thời gian trước khi dịch." actions={<Link className="button button--secondary button--md" to="/projects">Quay lại dự án</Link>} />
     <div className="transcript-intro"><div><span className="transcript-eyebrow">KHÔNG GIAN DỰ ÁN</span><h2>{project.name}</h2><p>Ngôn ngữ nguồn: {languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()} · Bản ghi được lưu trên máy chủ.</p></div><Badge variant={stage === 'TRANSCRIBED' ? 'success' : stage === 'FAILED' ? 'error' : 'info'}>{projectStatusLabels[stage]}</Badge></div>
     <WorkflowSteps current="transcript" />
     <div className="transcript-layout">
@@ -43,10 +43,10 @@ function TranscriptWorkspace({ project }: { project: Project }) {
       <Card padding="lg" className="transcript-editor"><div className="transcript-editor__heading"><div><h2>Các phân đoạn bản ghi</h2><p>{editor.draft ? `${editor.draft.segments.length} phân đoạn có mốc thời gian` : 'Tạo bản ghi để bắt đầu kiểm tra.'}</p></div><Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{transcriptStatusLabels[editor.status]}</Badge></div>
         {editor.status === 'LOADING' && <div className="transcript-centered" role="status"><Spinner size="lg" label="Đang tải bản ghi" /><p>Đang tải bản ghi...</p></div>}
         {editor.status === 'GENERATING' && <div className="transcript-centered" role="status"><Spinner size="lg" label="Đang tạo bản ghi" /><h3>Đang chuyển giọng nói thành văn bản...</h3><p>Vui lòng giữ trang mở trong khi máy chủ xử lý tệp phương tiện.</p></div>}
-        {editor.status === 'NOT_STARTED' && <EmptyState title="Chưa có bản ghi" description={canGenerate ? 'Phương tiện đã sẵn sàng để tạo bản ghi mẫu.' : 'Hãy tải phương tiện lên trước khi tạo bản ghi.'} action={canGenerate ? <Button onClick={editor.generate}>Tạo bản ghi</Button> : undefined} />}
+        {editor.status === 'NOT_STARTED' && <EmptyState title="Chưa có bản ghi" description={canGenerate ? 'Phương tiện đã sẵn sàng để tạo bản ghi bằng dịch vụ nhận dạng giọng nói.' : 'Hãy tải phương tiện lên trước khi tạo bản ghi.'} action={canGenerate ? <Button onClick={editor.generate}>Tạo bản ghi</Button> : undefined} />}
         {editor.status === 'FAILED' && <ErrorState title={editor.failedAction === 'save' ? 'Không thể lưu bản ghi' : editor.failedAction === 'load' ? 'Không thể tải bản ghi' : 'Không thể tạo bản ghi'} description={editor.error ?? 'Vui lòng thử lại.'} onRetry={retry} retryLabel="Thử lại" />}
         {editor.draft && editor.draft.segments.length > 0 && editor.status !== 'LOADING' && editor.status !== 'GENERATING' && <div className="transcript-segment-list" aria-label="Các phân đoạn bản ghi">{editor.draft.segments.map((segment) => <TranscriptSegmentEditor key={segment.id} segment={segment} error={editor.segmentErrors[segment.id]} disabled onChange={editor.updateSegment} />)}</div>}
-        {editor.draft && editor.draft.segments.length === 0 && <EmptyState title="Không có phân đoạn bản ghi" description="Tạo bản ghi mẫu mới để bắt đầu." action={<Button onClick={editor.generate}>Tạo bản ghi</Button>} />}
+        {editor.draft && editor.draft.segments.length === 0 && <EmptyState title="Không có phân đoạn bản ghi" description="Thử tạo lại bản ghi từ phương tiện nguồn." action={<Button onClick={editor.generate}>Tạo lại bản ghi</Button>} />}
         {editor.draft && <div className="transcript-actions"><div className="transcript-actions__status" role="status">Bản ghi được lưu trên máy chủ. Chỉnh sửa bản ghi hiện chưa được hỗ trợ.</div><div className="transcript-actions__next"><Button variant="secondary" disabled={!canContinue} onClick={() => navigate(`/projects/${project.id}/translation`)}>Tiếp tục đến bản dịch</Button><span>{canContinue ? 'Bản ghi sẵn sàng để dịch.' : 'Bản ghi chưa sẵn sàng.'}</span></div></div>}
       </Card>
     </div>
