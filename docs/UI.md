@@ -277,3 +277,347 @@ Project screens use clearly marked development mock data. Backend project APIs a
 - Login/register errors now come from the sanitized backend contract; Customer and Admin application routes require an authenticated role-specific session.
 - New Project on Web/Mobile creates a real project and uploads real media. No intermediate upload percentage is fabricated.
 - Screens whose services are still mock remain integration gaps and must not be treated as production data.
+
+## S25.1 — Customer Web UI Audit and Design Plan
+
+Phạm vi audit ngày 2026-10-10 chỉ gồm `frontend-web`. Đây là kế hoạch cải thiện giao diện; chưa có component, style, route, API hay hành vi ứng dụng nào được thay đổi trong S25.1. Các mô tả mock ở những mục lịch sử phía trên đã lỗi thời tại một số nơi; trạng thái tích hợp hiện hành được ghi trong `docs/CONTEXT.md` và `docs/PROGRESS.md`.
+
+### Route và màn hình hiện có
+
+| Route thực tế | Màn hình | Trạng thái UI hiện tại |
+| --- | --- | --- |
+| `/` | Điều hướng vào ứng dụng | Chuyển đến `/dashboard`; chưa có Landing/Home công khai. |
+| `/login`, `/register` | Đăng nhập, đăng ký | Có split layout, validation, loading và lỗi từ API. |
+| `/dashboard` | Bảng điều khiển | Có hero, quick actions, dự án gần đây, thống kê và hoạt động gần đây. |
+| `/projects` | Danh sách dự án | Có tìm kiếm, lọc trạng thái, phân trang server-side, loading/error/empty. |
+| `/projects/new` | Tạo dự án và tải phương tiện | Một luồng ba bước; Upload Media không phải route riêng. |
+| `/projects/:projectId` | Chi tiết dự án | Có sửa tên, mô tả, ngôn ngữ nguồn, tiếp tục workflow và xóa. |
+| `/projects/:projectId/transcript` | Bản ghi | Có metadata, trạng thái STT, segments và prerequisite/error state; chỉnh sửa đang read-only theo API hiện tại. |
+| `/projects/:projectId/translation` | Bản dịch | Có chọn ngôn ngữ đích, so sánh segments, trạng thái dịch; chỉnh sửa đang read-only theo API hiện tại. |
+| `/projects/:projectId/voice` | Giọng đọc | Có catalog, bộ lọc, cấu hình được backend hỗ trợ và empty/error state. |
+| `/projects/:projectId/generate` | Tạo thuyết minh/xử lý | Có bước xác nhận, tiến trình, polling/trạng thái lỗi và điều hướng đến kết quả. |
+| `/projects/:projectId/result` | Kết quả/xuất | Có metadata, protected playback/download qua Blob URL và trạng thái chưa sẵn sàng. |
+| `/history` | Lịch sử | Có danh sách, tìm kiếm/lọc và mở lại workflow/kết quả. |
+| `/settings` | Tài khoản/Cài đặt | Hiện chỉ đọc tên, email, vai trò và đăng xuất; chưa có API cập nhật hồ sơ/mật khẩu. |
+| `*` | Không tìm thấy | Có màn hình 404 nhưng nội dung còn hoàn toàn bằng tiếng Anh. |
+
+Tên file `*Placeholder.tsx` là di sản đặt tên, không đồng nghĩa màn hình chỉ là placeholder. Dashboard, Projects, New Project, History, Login, Register và Settings đều đang render chức năng thật ở mức được mô tả trên.
+
+### Màn hình thiếu hoặc chưa hoàn chỉnh trong phạm vi hiện tại
+
+- Chưa có Landing/Home công khai. Việc thêm Landing cần một quyết định route rõ ràng vì `/` hiện thuộc luồng vào Dashboard; không tự tạo route hoặc nội dung marketing trong đợt polish.
+- Upload Media đã tồn tại bên trong `/projects/new`; không tạo `/upload` riêng và không tách business flow.
+- Profile/Settings chỉ có thông tin tài khoản và đăng xuất. Không thiết kế nút lưu hồ sơ, đổi mật khẩu, gói thuê bao hoặc tùy chọn hệ thống khi backend chưa hỗ trợ.
+- Transcript và Translation hiển thị dữ liệu thật nhưng không được trình bày như editor có thể lưu cho đến khi có update API.
+- Source media chỉ có metadata vì backend chưa có protected source-media playback endpoint; không hiển thị player giả hoặc URL storage.
+- Voice preview chỉ khả dụng khi catalog trả về preview an toàn. Empty catalog phải tiếp tục là trạng thái hợp lệ.
+
+### Vấn đề UI/UX chính đã xác nhận
+
+1. **Ngôn ngữ chưa thống nhất:** `/projects/new` còn các chuỗi như `Project name`, `Source language`, `Browse Files`, `Change`, `Remove`, `Upload & Continue`, `Validating`; Translation còn thông báo reset tiếng Anh; 404 còn `Page not found`/`Go back`; workflow/status vẫn có nhãn kỹ thuật như `SAVED`, `WAITING`, `PROCESSING`, `Upload`, `Video Processing`; `Customer`, `Backend`, `Metadata` xuất hiện trong copy hướng người dùng.
+2. **Hệ token chưa đủ chặt:** token nền tảng đã có nhưng CSS màn hình vẫn chứa nhiều màu, kích thước, radius và khoảng cách hard-code; `--font-size-sm` và `--font-size-md` cùng là `0.875rem`, làm giảm phân cấp; một số nội dung chỉ 9–11px, khó đọc ở mật độ màn hình cao.
+3. **Form không đồng nhất:** Project Detail dùng input/select/textarea thô bên trong class của auth form; New Project trộn `Input`, select tùy biến và button copy tiếng Anh; feedback thành công/lỗi chưa có một pattern chung.
+4. **Trạng thái kỹ thuật lộ ra UI:** nhiều Badge render trực tiếp enum backend và dùng `replace('_', ' ')` thay vì nhãn tiếng Việt tập trung. Điều này tạo copy không đồng nhất giữa Project Card, Transcript, Translation, Voice và Generate.
+5. **Shell/accessibility:** `aria-label` của sidebar, overlay và menu còn tiếng Anh; chưa có skip link; chưa có cơ chế đưa focus/announce khi đổi route; nút tài khoản chỉ hiện chữ `U` thay vì dữ liệu người dùng; overlay đóng sidebar có label tiếng Anh.
+6. **Điều hướng workflow:** PageHeader, nút quay lại và WorkflowSteps có thứ bậc/hình thức khác nhau theo màn hình; breadcrumb/project context chưa nhất quán. Quick action Transcript/Translation/Voice đều đưa về Projects nhưng chưa giải thích rõ bước chọn dự án.
+7. **Responsive:** shell có breakpoint tốt ở 1023/640px, các workspace chính có breakpoint riêng; tuy nhiên topbar search cạnh avatar/menu dễ chật ở 320–375px, action group dài có thể wrap thiếu trật tự, bảng giả bằng CSS Grid cần thứ tự đọc rõ khi chuyển card, và các toolbar/bộ lọc cần kiểm tra touch target 44px.
+8. **Loading/empty/error:** component dùng chung đã có nhưng cách đặt trong trang chưa nhất quán; một số loading state thiếu khung/bối cảnh trang, Result “chưa sẵn sàng” chưa dùng EmptyState, và Project Detail không có success feedback rõ ràng sau lưu.
+9. **Semantic/accessibility:** danh sách dự án là CSS Grid dạng bảng chứ không phải bảng semantic; có thể giữ card-list responsive nhưng header `aria-hidden` không cung cấp quan hệ cột cho assistive technology. Các confirm dùng `window.confirm`, không đồng nhất giao diện và khó quản lý focus. Icon phương tiện trong Transcript dùng ký tự `▶`/`♫` thay vì Icon component hiện có.
+10. **Copy và naming:** tiêu đề `Dự án`/`Dự án mới` chưa hoàn toàn khớp navigation `Dự án của tôi`/`Tạo thuyết minh`; thuật ngữ nên cố định: “Giọng đọc”, “Phương tiện”, “Bản ghi”, “Bản dịch”, “Tạo thuyết minh”, “Kết quả”.
+
+### Design system đề xuất
+
+Giữ hướng visual đã được duyệt: AI SaaS sáng, nền trắng/xám rất nhạt, primary xanh indigo và accent tím; không redesign cấu trúc hay thay theme.
+
+**Màu sắc**
+
+- Primary: `#5850EC`; hover: `#4538CF`; soft: `#F0EEFF`.
+- Accent: `#794CFF`; soft: `#EEE9FF`. Gradient chỉ dùng cho hero/chi tiết trang trí.
+- Background: `#F7F8FD`; surface: `#FFFFFF`; secondary surface: `#F4F5FB`; border: `#E9ECF5`.
+- Text primary: `#182044`; secondary: `#606B8B`; muted: `#737F9B`.
+- Semantic success/warning/error/info tiếp tục dùng token hiện có. Mỗi trạng thái phải có chữ/icon, không chỉ dựa vào màu.
+
+**Typography**
+
+- Giữ font stack Inter/system hiện có; không thêm font dependency.
+- Đề xuất scale: 12px caption, 14px body nhỏ, 16px body mặc định, 18/20px section heading, 24–30px page heading, 32–40px hero.
+- Body line-height 1.5–1.6; heading 1.2–1.3. Hạn chế nội dung chức năng dưới 12px.
+
+**Spacing, radius và elevation**
+
+- Dùng lưới 4px: 4, 8, 12, 16, 24, 32, 48.
+- Control cao tối thiểu 40px desktop và vùng tương tác tối thiểu 44×44px ở viewport cảm ứng.
+- Radius: 6px cho phần tử nhỏ, 10px control/card nhỏ, 12px card chính, 20px hero; pill chỉ cho badge/chip.
+- Shadow nhẹ cho surface nổi; trạng thái phân cấp chủ yếu bằng border, spacing và nền.
+
+**Component rules**
+
+- Một hệ Button/Input/Select/Textarea thống nhất với default, hover, focus, disabled, loading và error.
+- Chuẩn hóa PageHeader gồm title, description, breadcrumb/context và action area responsive.
+- Badge nhận status domain và tự ánh xạ nhãn tiếng Việt; không render enum trực tiếp.
+- EmptyState/ErrorState/LoadingState giữ cùng chiều rộng, icon, heading, copy và CTA.
+- Modal/Dialog dùng cho xác nhận thao tác tốn phí hoặc phá hủy, quản lý focus và Escape; chỉ triển khai khi bước code được duyệt.
+- WorkflowSteps là nguồn điều hướng ngữ cảnh duy nhất của quy trình và phải hiển thị tên bước tiếng Việt ở mọi breakpoint.
+
+**Responsive và accessibility**
+
+- Desktop từ 1200px, tablet 768–1199px, mobile browser 320–767px; kiểm tra ít nhất 1440, 1024, 768, 375 và 320px.
+- Desktop giữ sidebar; tablet/mobile dùng drawer hiện tại. Ở mobile, topbar ưu tiên menu + context, search có thể chiếm hàng riêng thay vì co quá nhỏ.
+- Không tạo horizontal page overflow. Table/list dài được cuộn trong vùng chứa hoặc chuyển thành card có nhãn trường rõ ràng.
+- Thêm skip link, focus-visible rõ, focus sau route change, `aria-live` cho tác vụ bất đồng bộ, label tiếng Việt và thứ tự tab hợp lý.
+- Tôn trọng `prefers-reduced-motion`; không dùng animation để truyền đạt trạng thái duy nhất.
+
+### Checklist cải thiện theo màn hình
+
+1. **Landing/Home:** hiện chưa có route. Trước khi triển khai, quyết định có giữ `/` → `/dashboard` hay tạo landing công khai. Nếu được duyệt, chỉ mô tả năng lực thật, CTA đến Login/Register, không quảng bá tính năng/gói chưa có backend.
+2. **Login/Register (`/login`, `/register`):** giữ split layout; cân lại headline trên tablet, chuẩn hóa mobile brand với waveform brand, Việt hóa toàn bộ aria/copy, rà autocomplete/error announcement và trạng thái submit.
+3. **Dashboard (`/dashboard`):** giữ nguyên bố cục hero/quick actions/grid; thống nhất tên action với route, tăng cỡ chữ phụ quá nhỏ, ánh xạ status tiếng Việt và làm rõ rằng action workflow cần chọn dự án.
+4. **Project List (`/projects`):** giữ pagination API và URL filters; chuẩn hóa title “Dự án của tôi”, status label, row/card semantic; bảo đảm header cột không truncate, pagination và filters không tràn ở 320px.
+5. **Create Project (`/projects/new`):** Việt hóa toàn bộ form, validation, file card, progress và fallback error; dùng chung form controls; giữ create→upload và cleanup hiện tại, không thay contract.
+6. **Project Detail (`/projects/:projectId`):** dùng form component chuẩn, thêm success feedback không gây nhảy layout, hiển thị status/media bằng nhãn tiếng Việt, tách action nguy hiểm, giữ update/delete API hiện có.
+7. **Upload Media:** tiếp tục là bước trong `/projects/new`; làm rõ accept/500 MB, drag/drop, preview, cancel/retry và progress. Không tạo màn hình/route/business flow riêng.
+8. **Transcript (`/projects/:projectId/transcript`):** hiển thị trạng thái STT tiếng Việt, CTA xác nhận rõ chi phí/xử lý, dùng Icon component, phân biệt chưa có/đang xử lý/thất bại/đã có transcript; giữ read-only và không tạo save giả.
+9. **Translation (`/projects/:projectId/translation`):** Việt hóa confirm/reset/status, làm rõ prerequisite và hành động gọi dịch, giữ paired segments dễ đọc ở desktop và xếp dọc trên mobile; không bật edit/save khi API chưa hỗ trợ.
+10. **Voice/Narration (`/projects/:projectId/voice`):** thống nhất “Giọng đọc”, phân cấp catalog/filter/config, đảm bảo empty catalog và unavailable preview rõ ràng, chỉ cho cấu hình backend thật hỗ trợ.
+11. **Result/Export (`/projects/:projectId/result`, `/history`):** dùng EmptyState cho chưa có kết quả, giữ protected Blob playback/download, hiển thị metadata và lỗi tải nhất quán; History dùng cùng card/status/pagination pattern khi backend contract cho phép.
+12. **Profile/Settings (`/settings`):** đổi copy `Customer`/role enum sang nhãn thân thiện, hiển thị avatar initials thực, thêm xác nhận đăng xuất và trạng thái lỗi an toàn. Không thêm edit profile/password/subscription khi chưa có API.
+
+Ngoài danh sách trên, `/projects/:projectId/generate` cần được polish cùng nhóm Voice/Result: Việt hóa stage/status, giữ bước xác nhận trước paid processing, làm rõ polling/retry và không mô phỏng thành công. Trang `*` cần được Việt hóa đầy đủ và có CTA an toàn về Dashboard/Dự án thay vì chỉ phụ thuộc lịch sử trình duyệt.
+
+### Thứ tự triển khai đề xuất
+
+1. **Nền tảng:** chốt token, typography, status/copy dictionary tiếng Việt và audit accessibility dùng chung.
+2. **Shell:** Sidebar, Topbar, responsive drawer, PageHeader, skip link và route focus.
+3. **Shared states/forms:** Button, Input, Select, Textarea, Badge, Dialog, loading/empty/error/success.
+4. **Auth và 404:** bề mặt độc lập, ít rủi ro regression.
+5. **Projects core:** Project List → Create/Upload → Project Detail; ưu tiên luồng CRUD/upload thật.
+6. **Workflow:** Transcript → Translation → Voice → Generate → Result; triển khai theo dependency và giữ confirmation paid action.
+7. **Dashboard, History, Settings:** tái sử dụng component đã ổn định, loại bỏ copy/status riêng lẻ.
+8. **Responsive/a11y regression:** kiểm tra bàn phím, screen reader labels, 1440/1024/768/375/320px, sau đó lint/typecheck/build và browser smoke không gọi paid AI.
+
+### S25.1 bổ sung — Yêu cầu nhất quán Customer Web/Mobile
+
+Customer Web và Customer Mobile dùng cùng domain, backend data và API contract. Hai nền tảng không cần bố cục giống nhau, nhưng phải thống nhất năng lực, thứ tự hành trình, thuật ngữ, trạng thái, mức độ xác nhận và kết quả của thao tác. Khác biệt chỉ được giữ khi có lý do nền tảng rõ ràng.
+
+#### Ma trận parity theo màn hình
+
+| Nhóm màn hình/hành trình | Customer Web | Customer Mobile | Parity và khoảng trống |
+| --- | --- | --- | --- |
+| Entry/Landing | `/` chuyển tới `/dashboard`; không có landing công khai | `index` là màn khởi tạo phiên, `Stack.Protected` chọn auth/app | Cùng không có landing marketing. Giữ như hiện tại đến khi có quyết định sản phẩm chung. |
+| Login/Register | `/login`, `/register`; form, validation, refresh session | `login`, `register`; form native, validation, SecureStore | Chức năng chính khớp. Copy lỗi và quy tắc validation phải dùng cùng wording/contract. |
+| Dashboard | Hero, quick actions, 4 thống kê, recent projects, activity | 4 thống kê và recent projects | Core data khớp; Mobile thiếu quick actions/activity, nhưng không bắt buộc sao chép hero. Cần quyết định action tối thiểu chung. |
+| Project List | Search/status/server pagination; table-card responsive | Search/status/server pagination; FlatList, chip cuộn ngang | Chức năng khớp. Label title/CTA/filter và status đang chưa hoàn toàn đồng nhất. |
+| Create + Upload | `/projects/new`; drag/drop, file input, preview | `projects/new`; DocumentPicker, app-cache preparation, native multipart | Business flow/API khớp. Giữ drag/drop cho Web và picker native cho Mobile; Web còn nhiều copy tiếng Anh. |
+| Project Detail | Sửa tên/mô tả/ngôn ngữ, xóa, mở workflow | Cùng chức năng; success feedback, validation và native delete dialog rõ hơn | Mobile đang hoàn thiện hơn về feedback/validation. Web cần đạt cùng hành vi, không đổi contract. |
+| Transcript/STT | Metadata, confirmation paid action, status/segments, retry, read-only | Cùng API/lifecycle; timeout, polling và duplicate guard đã được củng cố | Cần rà parity timeout/polling/double-submit và cùng nhãn trạng thái. Real device/provider smoke vẫn hoãn. |
+| Translation | Chọn target, confirmation, paired segments, retry, read-only | Cùng chức năng trên FlatList/native dialog | Core khớp. Web còn confirm/reset copy tiếng Anh; pattern dialog khác nền tảng nhưng nội dung/quyết định phải giống. |
+| Voice/TTS | Catalog/filter/config, confirmation paid action, preview khi có | Cùng catalog/config/confirmation, UI touch-first | Core khớp. Phải thống nhất thuật ngữ “Giọng đọc”, empty catalog, preview unavailable và speed 1.0x do backend. |
+| Generate/Processing | Review checkbox, start, progress, retry, result navigation | Cùng hành trình trên màn hình cuộn | Core khớp. Nhãn stage/status kỹ thuật còn khác nhau; không được tự tạo success trên một nền tảng. |
+| Result/Export | Protected fetch → Blob URL, browser audio/video, download | Protected fetch → app cache, expo-audio/video, native share | Kết quả và bảo mật khớp; download Web và share sheet Mobile là khác biệt nền tảng hợp lệ. |
+| History | Project/result history, local search/filter | Cùng dữ liệu và card/filter native | Gần parity; cần đồng nhất scope “lịch sử dự án” và trạng thái empty/filter. |
+| Account/Settings | `/settings` gộp identity và logout | `account` có identity/logout; `settings` là placeholder riêng | Lệch IA rõ ràng. Không thêm setting giả; ưu tiên gộp hoặc định nghĩa vai trò hai tab để tránh tab rỗng. |
+| Not Found/Invalid route | Có 404 riêng, hiện còn tiếng Anh | Expo Router chưa có màn hình not-found chuyên biệt trong inventory hiện tại | Mobile thiếu fallback tương đương; chỉ bổ sung khi triển khai mà không phát sinh nghiệp vụ. |
+
+#### Hành trình Customer dùng chung
+
+1. Khởi tạo phiên → chưa đăng nhập thì Login/Register, đã đăng nhập thì Dashboard.
+2. Dashboard/Projects → Tạo dự án → nhập metadata → chọn và tải một video/audio.
+3. Project Detail/List → mở Bản ghi; chỉ bắt đầu STT sau xác nhận paid action.
+4. Có Bản ghi → chọn ngôn ngữ và xác nhận tạo Bản dịch.
+5. Có Bản dịch → chọn Giọng đọc; xác nhận TTS trước khi tạo narration.
+6. Kiểm tra cấu hình → xác nhận tạo thuyết minh → theo dõi processing.
+7. Hoàn thành → Result → phát và tải xuống/chia sẻ protected artifact.
+8. Projects/History cho phép mở lại đúng bước dựa trên trạng thái backend; Account cho phép đăng xuất và xóa phiên an toàn.
+
+Mọi bước phải giữ nguyên `projectId`, target language và ownership. Không nền tảng nào được tự gọi STT/Translation/TTS khi mở màn hình; không dùng mock runtime để bù một API chưa có; refresh-once, lỗi 401 và dữ liệu sau reload phải có cùng ý nghĩa.
+
+#### Thuật ngữ và trạng thái chuẩn
+
+Tên điều hướng/action ưu tiên dùng chung: **Bảng điều khiển**, **Dự án của tôi**, **Tạo thuyết minh**, **Lịch sử**, **Tài khoản**; “Cài đặt” chỉ dùng khi có tùy chọn thật. Thuật ngữ workflow: **Phương tiện**, **Bản ghi**, **Bản dịch**, **Giọng đọc**, **Tạo thuyết minh**, **Kết quả**. Không dùng “Giọng nói” cho TTS UI và không hiển thị `Customer`, `Backend`, enum hoặc internal stage trong copy hướng người dùng.
+
+| ProjectStatus | Nhãn tiếng Việt chuẩn |
+| --- | --- |
+| `DRAFT` | Bản nháp |
+| `UPLOADED` | Đã tải lên |
+| `TRANSCRIBING` | Đang tạo bản ghi |
+| `TRANSCRIBED` | Đã tạo bản ghi |
+| `TRANSLATING` | Đang dịch |
+| `TRANSLATED` | Đã dịch |
+| `GENERATING_AUDIO` | Đang tạo giọng đọc |
+| `PROCESSING_VIDEO` | Đang xử lý video |
+| `COMPLETED` | Hoàn thành |
+| `FAILED` | Thất bại |
+
+UI state dùng các nhãn: `NOT_STARTED` → **Chưa bắt đầu**, `LOADING` → **Đang tải**, `READY` → **Sẵn sàng**, `SAVING` → **Đang lưu**, `SAVED` → **Đã lưu**, `WAITING` → **Chờ xử lý**, `PROCESSING` → **Đang xử lý**, `CANCELLED` → **Đã hủy**. Mapping phải tập trung ở mỗi client và có cùng output; không dùng phép thay `_` bằng khoảng trắng trực tiếp trong component.
+
+#### Unified design system
+
+- **Brand:** tên “Người kể chuyện AI”, waveform/AI narration motif, nền sáng và indigo/violet. Cùng logo concept và tone copy, không bắt buộc cùng kích thước/layout.
+- **Color contract:** primary `#5850EC`, primary pressed/hover `#4538CF`, primary soft `#F0EEFF`, accent `#794CFF`, accent soft `#EEE9FF`, background `#F7F8FD`, surface `#FFFFFF`, secondary surface `#F4F5FB`, text `#182044/#606B8B/#737F9B`, border `#E9ECF5`. Semantic colors success/warning/error/info dùng cùng giá trị hiện có. Mobile đang dùng primary `#2563EB` và cần được đưa về contract này ở bước implementation.
+- **Typography:** cùng hierarchy tương đương: caption 12, supporting 14, body 16, section 18/20, page 24–30, hero 32–40; Web dùng px/rem, Mobile dùng density-independent units. Giữ system/Inter stack phù hợp nền tảng.
+- **Spacing:** thang 4/8/12/16/24/32/48; không yêu cầu cùng số cột nhưng cùng nhịp dọc và mật độ thông tin.
+- **Radius:** 6 nhỏ, 10 control/card nhỏ, 12 card chính, 20 hero, full cho chip/badge/avatar. Mobile token hiện có 8px cho cả `md/lg` cần được rà ở implementation.
+- **Behavior:** Button có primary/secondary/ghost/danger và loading/disabled; form có label/helper/error/required; Badge luôn có text; async state có loading/empty/error/retry; destructive/paid action luôn xác nhận; success/error feedback được announce.
+- **Touch/keyboard:** Mobile tối thiểu 44×44px, hỗ trợ keyboard avoidance và native back; Web có focus-visible, tab order, Enter/Space, pointer hover và shortcut chỉ khi discoverable.
+
+#### Quy tắc riêng theo nền tảng
+
+**Web**
+
+- Giữ sidebar, sticky topbar, desktop multi-column và drawer ở viewport nhỏ.
+- Giữ drag-and-drop, file input và browser preview trong Create Project; vẫn phải có browse button dùng bàn phím được.
+- Dùng dialog Web quản lý focus cho paid/destructive confirmation thay cho copy khác biệt; giữ browser download cho result.
+- Table/list có thể rộng hơn nhưng phải chuyển sang card có nhãn rõ ở mobile-browser, không tạo horizontal page overflow.
+
+**Mobile**
+
+- Giữ Expo Router protected stack, bottom tabs, native back và single-column/FlatList.
+- Giữ DocumentPicker, file URI preparation và native multipart đã PASS trên Android; không thay bằng FormData/Blob Web.
+- Giữ native Alert cho confirmation, app cache cho protected media, expo-audio/video và native share sheet.
+- Hạn chế số tab trực tiếp; không giữ tab Settings rỗng cạnh Account. Chip ngang phải cuộn được và control có touch target tối thiểu 44px.
+
+#### Khác biệt cần xử lý theo ưu tiên
+
+**P0 — tính đúng và hành trình**
+
+1. Không đụng tới Android upload/project editing đã PASS; tạo regression gate trước mọi token/component migration.
+2. Đồng bộ exact `ProjectStatus`/UI-state label; Web hiện gom nhiều trạng thái thành “Đang xử lý”, còn Mobile có mapping chi tiết.
+3. Sửa WorkflowSteps Mobile đang có state Result ở index 5 nhưng mảng chỉ render 5 bước, vì vậy không hiển thị chip “Kết quả”.
+4. Rà parity confirmation, duplicate prevention, timeout/polling và retry cho STT/Translation/TTS/processing mà không gọi paid provider.
+
+**P1 — navigation, copy và feedback**
+
+5. Thống nhất tên Dashboard/Projects/Create trên sidebar, tabs, PageHeader và CTA.
+6. Giải quyết `Settings` placeholder + `Account` trên Mobile so với `/settings` gộp trên Web; không tạo setting backend giả.
+7. Việt hóa Web New Project, Translation confirmation/reset, 404, aria-label và mọi stage/status còn tiếng Anh.
+8. Đưa Web Project Detail lên parity với Mobile về validation, success feedback và destructive confirmation.
+
+**P2 — visual/component consistency**
+
+9. Đồng bộ color/radius/typography tokens, brand icon và semantic tone giữa hai client.
+10. Chuẩn hóa Button/Form/Badge/Empty/Error/Loading/WorkflowSteps behavior; implementation vẫn tách theo React DOM và React Native.
+11. Cân nhắc quick actions tối thiểu trên Mobile và not-found fallback; không sao chép hero/activity nếu không cải thiện hành trình.
+12. Chạy responsive/a11y/browser/device regression riêng cho từng nền tảng; visual similarity không thay thế functional runtime validation.
+
+## S25.2 — P0 Cross-platform Foundation
+
+### Unified status dictionary đã triển khai
+
+- Web và Mobile có dictionary cùng cấu trúc cho `ProjectStatus`, Transcript, Translation, Voice/TTS và Processing. Backend enum/API payload giữ nguyên; chỉ display label được chuyển sang tiếng Việt.
+- Project filter, Project badge và các Badge workflow lấy nhãn từ dictionary thay vì tự ánh xạ hoặc render enum. Web nay phân biệt đầy đủ: Bản nháp, Đã tải lên, Đang tạo bản ghi, Đã tạo bản ghi, Đang dịch, Đã dịch, Đang tạo giọng đọc, Đang xử lý video, Hoàn thành và Thất bại.
+- UI states dùng chung: Đang tải, Chưa bắt đầu, Đang tạo bản ghi, Đang dịch, Sẵn sàng, Đang lưu, Đã lưu, Chờ xử lý, Đang khởi tạo, Đang xử lý, Hoàn thành, Thất bại và Đã hủy.
+- Web processing stage titles đã đổi sang Tải lên, Bản ghi, Bản dịch, Cấu hình giọng đọc, Tạo giọng đọc và Xử lý video/âm thanh.
+
+### Mobile WorkflowSteps
+
+- Thứ tự chuẩn gồm đúng 6 bước: Tải lên → Bản ghi → Bản dịch → Giọng đọc → Tạo thuyết minh → Kết quả.
+- Component Mobile hiển thị rõ completed/current/locked, có accessibility label cho từng bước và state selected/disabled.
+- Trên màn hình hẹp, stepper cuộn ngang thay vì ép wrap làm đảo nhịp đọc. Route, permission và workflow action không thay đổi.
+
+### Regression boundary
+
+- Không thay DocumentPicker staging, app-controlled cache, native multipart field `file`, MIME/filename, cleanup, retry-project hoặc Project Detail update behavior.
+- Regression suite bao phủ picker staging/permission/stale URI, native multipart/Bearer/no manual boundary, refresh chỉ một lần sau HTTP 401, upload cleanup/retry không tạo project trùng, validation/edit cache synchronization và duplicate-save gate.
+- Cross-platform tests khóa completeness của dictionary, exact Vietnamese parity và sáu workflow labels theo đúng thứ tự.
+
+### Parity còn lại sau P0
+
+- Account/Settings information architecture, navigation wording và token màu/radius vẫn chờ P1/P2.
+- Web New Project, Translation confirm/reset, 404 và một số copy kỹ thuật chưa được polish toàn bộ trong S25.2.
+- Browser visual/runtime và Android physical-device verification chưa chạy trong S25.2; source tests/build/export không thay thế runtime verification.
+- S24.3.12.2 real Whisper vẫn POSTPONED.
+
+## S25.3 — P1 Navigation & Interaction Parity
+
+### Điều hướng chuẩn
+
+| Ý nghĩa | Web | Mobile |
+|---|---|---|
+| Tổng quan | Bảng điều khiển | Bảng điều khiển |
+| Danh sách dự án | Dự án của tôi | Dự án của tôi |
+| Luồng tạo/upload | Tạo thuyết minh | Tạo thuyết minh |
+| Lịch sử | Lịch sử | Lịch sử |
+| Phiên người dùng | Tài khoản | Tài khoản |
+
+- Web giữ sidebar/topbar, `/projects`, `/projects/new`, `/history`, `/settings` và active-state theo route chính xác.
+- Mobile giữ bottom tabs/native stack. Chỉ Tài khoản là destination hiển thị; Settings cũ là alias tương thích và không tạo tab trùng lặp.
+
+### Account và phản hồi
+
+- Account hiển thị dữ liệu phiên thật: họ tên, email, vai trò Khách hàng; có loading, error, retry và logout confirmation.
+- Không cung cấp profile edit, password change, avatar upload hay setting chưa có API.
+- Logout Web điều hướng về Login sau khi xóa phiên; Mobile không ép `router.replace`, để auth state và `Stack.Protected` quyết định.
+
+### Quy tắc form và confirmation
+
+- Login/Register dùng cùng validation tiếng Việt và chặn double-submit bằng khóa đồng bộ kết hợp disabled/loading.
+- STT, Translation và TTS phải xác nhận rõ đây có thể là tác vụ AI tính phí. Hủy confirmation không gọi API và không đổi workflow state.
+- Web dùng confirmation guard hiện có; Mobile dùng native Alert. Mọi lỗi tải account đều có retry, mọi thao tác bận có disabled/loading rõ ràng.
+
+### Phần còn lại cho P2
+
+- Đồng bộ visual tokens màu, typography, radius và trạng thái component mà không ép Web/Mobile có layout giống nhau.
+- Chạy browser responsive/keyboard/a11y smoke và physical Android visual smoke; source test/build/export không thay thế runtime verification.
+
+## S25.4 — Unified Visual Design System
+
+### Token chuẩn
+
+| Nhóm | Giá trị chuẩn |
+|---|---|
+| Primary | `#5850EC` |
+| Accent | `#794CFF` |
+| Background | `#F8FAFC` |
+| Surface | `#FFFFFF` |
+| Text primary | `#0F172A` |
+| Text secondary / muted | `#475569` / `#64748B` |
+| Border | `#E2E8F0` |
+| Spacing | 4, 8, 16, 24, 32, 48px |
+| Radius | 6, 10, 12, 20px và full |
+
+- Success, warning, error và info luôn dùng cùng semantic meaning; badge không truyền đạt trạng thái chỉ bằng màu.
+- Web dùng CSS variables; Mobile dùng `theme/tokens.ts`. Hai implementation độc lập theo nền tảng nhưng được regression test để giữ palette parity.
+
+### Chuẩn component
+
+- **Button:** tối thiểu 44px, primary/secondary/ghost/danger, loading khóa tương tác, pressed/hover/focus/disabled khác biệt rõ.
+- **Input/Select/Textarea:** cao tối thiểu 48px, label/helper/error liên kết accessibility, focus ring indigo, disabled surface trung tính.
+- **Card:** surface trắng, border nhẹ, radius 12px, shadow tiết chế; interactive card chỉ nâng nhẹ khi hover/focus trên Web.
+- **Badge:** pill nhỏ, luôn có text, semantic background nhạt và foreground đủ tương phản.
+- **Loading/Progress/Empty/Error:** nội dung tiếng Việt, live/accessibility role phù hợp, retry action dùng Button chuẩn.
+- **PageHeader/MobileScreen:** hierarchy title/description/action tương đồng; action Web wrap ở màn hình hẹp, Mobile giữ single-column và safe area.
+- Customer hiện không có custom Dialog dùng chung. Confirmation giữ browser guard/native Alert hiện hữu; chưa thêm UI library.
+
+### Parity và giới hạn
+
+- Cùng màu nhận diện, hierarchy, status semantics, terminology và icon meaning; navigation/file picker vẫn theo quy ước riêng của Web/Mobile.
+- Không redesign từng trang trong S25.4. Screen-level density/spacing, responsive visual QA, browser keyboard/contrast và Android device visual QA là bước tiếp theo.
+- Source/build/export PASS không được xem là browser hoặc physical-device visual PASS.
+
+## S25.5 — Dashboard & Project List Polish
+
+### Information hierarchy dùng chung
+
+1. Welcome/page heading và CTA **Tạo thuyết minh**.
+2. Thống kê dự án từ repository/API thật: Tổng số dự án, Hoàn thành, Đang xử lý, Thất bại.
+3. Quick actions chỉ trỏ tới destination đang hỗ trợ.
+4. Dự án gần đây hoặc danh sách dự án, với status/language/action cùng ý nghĩa.
+5. Loading, error/retry, empty và filtered-empty giữ nguyên page context.
+
+### Dashboard
+
+- Web giữ hero và bốn workflow shortcuts hiện hữu. Mobile dùng hai shortcut trực tiếp phù hợp touch/small screen: Tạo thuyết minh và Dự án của tôi.
+- Mobile không thay toàn màn hình bằng loading/error; welcome, statistics và actions vẫn ổn định, phần recent projects chịu async state.
+- Không thêm growth, duration, activity API hoặc metric chưa tồn tại. Mọi count derive từ project data thật đã tải.
+
+### Project List
+
+- Cả hai nền tảng dùng title **Dự án của tôi**, CTA **Tạo thuyết minh**, search theo tên, exact status filter và server pagination.
+- Search/filter reset page về 1. Mobile giữ `useFocusEffect` reload để phản ánh Project Detail edit khi quay lại.
+- Web chuyển project row thành card flow ở màn hẹp; pagination dùng hai cột nút và dòng thông tin riêng, sau đó co về một cột nội dung ở 360px.
+- Mobile giữ filter chips cuộn ngang, action target tối thiểu 44px, accessible project/action labels và live page information.
+
+### Runtime validation gap
+
+- Browser visual smoke **NOT RUN** vì Chrome automation không khả dụng trong môi trường hiện tại.
+- Physical Android visual smoke **NOT RUN** vì không có `adb` khả dụng. Source tests/build/export không thay thế hai kiểm tra này.

@@ -24,7 +24,7 @@ export function Button({
       aria-busy={loading}
       {...props}
     >
-      {loading && <span className="button__spinner"><Spinner size="sm" label="Loading" /></span>}
+      {loading && <span className="button__spinner"><Spinner size="sm" label="Đang tải" /></span>}
       <span>{children}</span>
     </button>
   )

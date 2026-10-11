@@ -5,7 +5,7 @@
 .upload-section-heading p { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .upload-step { display: grid; flex: 0 0 auto; width: 2rem; height: 2rem; place-items: center; border-radius: var(--radius-md); color: var(--color-primary); background: var(--color-primary-light); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); }
 .upload-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
-.upload-select { width: 100%; min-height: 2.75rem; padding: 0 0.85rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary); }
+.upload-select { width: 100%; min-height: 3rem; padding: 0 0.85rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text-primary); }
 .upload-select:focus-visible { border-color: var(--color-primary); }
 .upload-dropzone { display: grid; justify-items: center; gap: var(--space-sm); padding: var(--space-xl) var(--space-md); border: 1.5px dashed var(--color-primary); border-radius: var(--radius-lg); background: var(--color-primary-light); text-align: center; transition: border-color 160ms, background-color 160ms; }
 .upload-dropzone--active { border-color: var(--color-primary); background: var(--color-primary-light); }

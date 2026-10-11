@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react'
+import { getDisplayStatus } from '../../utils/displayLabels'
 
 type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
   variant?: 'default' | 'info' | 'success' | 'warning' | 'error'
@@ -6,5 +7,6 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
 }
 
 export function Badge({ variant = 'default', className = '', children, ...props }: BadgeProps) {
-  return <span className={`badge badge--${variant} ${className}`.trim()} {...props}>{children}</span>
+  const label = typeof children === 'string' ? getDisplayStatus(children) : children
+  return <span className={`badge badge--${variant} ${className}`.trim()} {...props}>{label}</span>
 }

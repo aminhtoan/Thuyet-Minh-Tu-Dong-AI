@@ -41,8 +41,13 @@ input {
 }
 
 :focus-visible {
-  outline: 3px solid rgb(37 99 235 / 28%);
+  outline: 3px solid rgb(88 80 236 / 28%);
   outline-offset: 2px;
+}
+
+::selection {
+  color: var(--color-text-primary);
+  background: var(--color-accent-light);
 }
 
 h1,

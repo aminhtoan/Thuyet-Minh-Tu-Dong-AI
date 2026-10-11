@@ -13,22 +13,22 @@ type Props = {
 export function TranslationSegmentRow({ source, translation, error, disabled, onChange }: Props) {
   const inputId = 'translation-' + source.id;
   return (
-    <article className="translation-segment" aria-label={'Segment ' + source.sequence}>
+    <article className="translation-segment" aria-label={'Đoạn ' + source.sequence}>
       <div className="translation-segment__meta">
         <span>#{String(source.sequence).padStart(2, '0')}</span>
         <span>{formatTimestamp(source.startTime)} → {formatTimestamp(source.endTime)}</span>
       </div>
       <div className="translation-segment__columns">
-        <div className="translation-original"><span className="translation-label">Original</span><p>{source.text}</p></div>
+        <div className="translation-original"><span className="translation-label">Bản gốc</span><p>{source.text}</p></div>
         <div className="translation-target">
-          <label className="translation-label" htmlFor={translation ? inputId : undefined}>Translation</label>
+          <label className="translation-label" htmlFor={translation ? inputId : undefined}>Bản dịch</label>
           {translation ? <>
-            <textarea id={inputId} aria-label={'Translation for segment ' + source.sequence}
+            <textarea id={inputId} aria-label={'Bản dịch cho đoạn ' + source.sequence}
               value={translation.translatedText} disabled={disabled} rows={3}
               aria-invalid={Boolean(error)} aria-describedby={error ? inputId + '-error' : undefined}
               onChange={(event) => onChange(translation.id, event.target.value)} />
             {error && <p id={inputId + '-error'} className="translation-error" role="alert">{error}</p>}
-          </> : <p className="translation-placeholder">Translation will appear here.</p>}
+          </> : <p className="translation-placeholder">Bản dịch sẽ hiển thị tại đây.</p>}
         </div>
       </div>
     </article>

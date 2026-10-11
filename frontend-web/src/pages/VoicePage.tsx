@@ -74,7 +74,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
         <input id="speech-speed" type="range" min={MIN_SPEED} max={MAX_SPEED} step={0.1} value={editor.draft.speed} disabled
           aria-valuetext={formatSpeed(editor.draft.speed)} onChange={(event) => editor.updateConfig({ speed: Number(event.target.value) })} />
         <div className="voice-speed-limits"><span>0.5x</span><span>1.0x mặc định</span><span>2.0x</span></div>
-        <p className="voice-note">Backend hiện hỗ trợ tốc độ đọc cố định 1.0x.</p>
+        <p className="voice-note">Máy chủ hiện hỗ trợ tốc độ đọc cố định 1.0x.</p>
       </Card>
       <Card className="voice-configuration"><h2>Cấu hình thuyết minh</h2>
         <dl><div><dt>Ngôn ngữ</dt><dd>{languageNames[editor.draft.languageCode]}</dd></div><div><dt>Giọng đọc</dt><dd>{editor.selectedVoice?.name ?? 'Chưa chọn'}</dd></div><div><dt>Tốc độ</dt><dd>{formatSpeed(editor.draft.speed)}</dd></div></dl>

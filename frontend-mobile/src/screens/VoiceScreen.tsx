@@ -83,7 +83,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
           disabled accessibilityLabel={'Tốc độ giọng đọc ' + formatSpeed(speed)}
           accessibilityState={{ selected: editor.draft?.speed === speed, disabled: editor.busy }}
           onPress={() => editor.updateConfig({ speed })}>{formatSpeed(speed)}</Button>)}
-      </View><Text style={styles.note}>Backend hiện hỗ trợ tốc độ đọc cố định 1.0x.</Text>
+      </View><Text style={styles.note}>Máy chủ hiện hỗ trợ tốc độ đọc cố định 1.0x.</Text>
     </Card>
     <Card style={styles.summary}><Text style={styles.sectionTitle}>Cấu hình thuyết minh</Text>
       <Text style={styles.description}>Ngôn ngữ: {languageNames[editor.draft.languageCode]}</Text>

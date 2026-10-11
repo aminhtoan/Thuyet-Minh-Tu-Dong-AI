@@ -21,10 +21,10 @@ const styles = StyleSheet.create({
   base: { position: 'relative', minWidth: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1, borderColor: 'transparent', borderRadius: radius.md, paddingHorizontal: spacing.md },
   sm: { minHeight: 44 }, md: { minHeight: 48 }, lg: { minHeight: 54, paddingHorizontal: spacing.lg },
   primary: { backgroundColor: colors.primary }, primaryPressed: { backgroundColor: colors.primaryPressed },
-  secondary: { backgroundColor: colors.surface, borderColor: colors.border }, secondaryPressed: { backgroundColor: colors.surfaceSecondary },
+  secondary: { backgroundColor: colors.surface, borderColor: colors.border }, secondaryPressed: { backgroundColor: colors.surfaceSecondary, borderColor: colors.primary },
   ghost: { backgroundColor: 'transparent' }, ghostPressed: { backgroundColor: colors.primaryLight },
-  danger: { backgroundColor: colors.error }, dangerPressed: { backgroundColor: '#A91F1F' },
-  disabled: { opacity: 0.52 }, spinner: {},
+  danger: { backgroundColor: colors.error }, dangerPressed: { backgroundColor: '#991B1B' },
+  disabled: { opacity: 0.5 }, spinner: {},
   label: { fontSize: typography.size.md, fontWeight: typography.weight.semibold },
   primaryLabel: { color: colors.white }, secondaryLabel: { color: colors.textPrimary }, ghostLabel: { color: colors.primary }, dangerLabel: { color: colors.white },
 });

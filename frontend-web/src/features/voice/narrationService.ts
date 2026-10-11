@@ -5,6 +5,8 @@ import type { RequestOptions } from './types';
 import { voiceService } from './voiceService';
 import { translationRevision, validateNarrationConfig } from './voiceUtils';
 import type { NarrationConfig } from './types';
+import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
+import { requireConfirmation } from '../../utils/confirmationGuard.mjs';
 
 type NarrationDto = { id: string; translationId: string; targetLanguage: string; voice: { id: string; name: string }; speed: number };
 
@@ -21,11 +23,11 @@ export const narrationService = {
     const translation = await translationService.getSavedTranslation(projectId, config.languageCode, { signal: options.signal });
     if (!translation || config.projectId !== projectId || config.translationId !== translation.id ||
         config.translationRevision !== translationRevision(translation)) {
-      throw new Error('The saved translation changed or is unavailable. Return to Translation and reopen Voice.');
+      throw new Error('Bản dịch đã thay đổi hoặc không còn khả dụng. Hãy quay lại Bản dịch rồi mở lại Giọng đọc.');
     }
     const error = validateNarrationConfig(config, voices);
     if (error) throw new Error(error);
-    if (!window.confirm('Tạo âm thanh thuyết minh bằng giọng đọc đã chọn? Thao tác này có thể sử dụng dịch vụ AI tính phí.')) throw new DOMException('Đã hủy', 'AbortError');
+    requireConfirmation(window.confirm, confirmationMessages.narration);
     const response = await api<{ narration: NarrationDto }>(`/projects/${projectId}/narrations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: config.languageCode, voiceId: config.voiceId }) });
     return { ...config, speed: response.narration.speed, narrationId: response.narration.id };
   },

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../../components/common/Button'
 import { InlineMessage } from '../../components/common/InlineMessage'
@@ -18,6 +18,7 @@ export function LoginForm() {
   const [errors, setErrors] = useState<FormErrors<LoginFormValues>>({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const submitLock = useRef(false)
 
   function updateField(field: keyof LoginFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -27,11 +28,13 @@ export function LoginForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitLock.current) return
     const nextValues = { ...values, email: values.email.trim() }
     const nextErrors = validateLogin(nextValues)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
+    submitLock.current = true
     setSubmitting(true)
     setFormError('')
     try {
@@ -40,6 +43,7 @@ export function LoginForm() {
     } catch {
       setFormError('Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.')
     } finally {
+      submitLock.current = false
       setSubmitting(false)
     }
   }

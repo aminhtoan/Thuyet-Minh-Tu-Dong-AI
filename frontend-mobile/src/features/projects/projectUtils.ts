@@ -1,4 +1,5 @@
 import { languages } from './languages';
+import { projectStatusLabels } from '../../localization/statusLabels.mjs';
 import type { LanguageCode, Project, ProjectStatistics, ProjectStatus, ProjectStatusFilter } from './types';
 
 export const languageNames = Object.fromEntries(languages.map(({ code, name }) => [code, name])) as Record<LanguageCode, string>;
@@ -6,14 +7,7 @@ export const sourceLanguageOptions = languages.map(({ code, name }) => ({ value:
 const processingStatuses = new Set<ProjectStatus>(['UPLOADED', 'TRANSCRIBING', 'TRANSCRIBED', 'TRANSLATING', 'TRANSLATED', 'GENERATING_AUDIO', 'PROCESSING_VIDEO']);
 
 export function isProcessingStatus(status: ProjectStatus): boolean { return processingStatuses.has(status); }
-export function getProjectStatusLabel(status: ProjectStatus): string {
-  const labels: Record<ProjectStatus, string> = {
-    DRAFT: 'Bản nháp', UPLOADED: 'Đã tải lên', TRANSCRIBING: 'Đang tạo bản ghi', TRANSCRIBED: 'Đã tạo bản ghi',
-    TRANSLATING: 'Đang dịch', TRANSLATED: 'Đã dịch', GENERATING_AUDIO: 'Đang tạo giọng đọc',
-    PROCESSING_VIDEO: 'Đang xử lý video', COMPLETED: 'Hoàn thành', FAILED: 'Thất bại',
-  };
-  return labels[status];
-}
+export function getProjectStatusLabel(status: ProjectStatus): string { return projectStatusLabels[status]; }
 export function getProjectStatusVariant(status: ProjectStatus): 'default' | 'info' | 'success' | 'error' { if (status === 'COMPLETED') return 'success'; if (status === 'FAILED') return 'error'; if (isProcessingStatus(status)) return 'info'; return 'default'; }
 export function formatLanguagePair(project: Project): string { return `${languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()} → ${project.targetLanguage ? (languageNames[project.targetLanguage] ?? project.targetLanguage.toUpperCase()) : '—'}`; }
 export function formatRelativeDate(value: string): string { const elapsed = Math.max(0, Date.now() - new Date(value).getTime()); const minutes = Math.floor(elapsed / 60_000); if (minutes < 1) return 'Vừa xong'; if (minutes < 60) return `${minutes} phút trước`; const hours = Math.floor(minutes / 60); if (hours < 24) return `${hours} giờ trước`; if (hours < 48) return 'Hôm qua'; return new Intl.DateTimeFormat('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)); }

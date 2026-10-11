@@ -304,3 +304,67 @@ S24 Full Frontend / Backend Integration.
 - Mapper transcript chấp nhận segments thiếu an toàn, tạo fallback key chỉ khi server cũ thiếu ID và chỉ hiển thị timestamp khi cả start/end hợp lệ. UI dùng nhãn trạng thái tiếng Việt.
 - Validation (2026-10-10): backend transcription tests **10/10 PASS** với provider mock và test-owned Atlas data cleanup; backend lint/typecheck/build PASS. Mobile tests **38/38 PASS**; lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (1.410 modules); `git diff --check` PASS.
 - Real Whisper/OpenAI call: **NOT RUN**. Physical Android STT smoke: **NOT RUN**. S24.3.12 status **PARTIAL**; source/mock validation không chứng minh real paid-provider/device end-to-end.
+
+## S24.3.12.2 — Real Mobile Whisper STT Validation
+
+- **POSTPONED** theo quyết định hiện tại. Chưa thực hiện real paid OpenAI/Whisper call và chưa xác nhận STT end-to-end trên thiết bị Android.
+- Việc hoãn không thay đổi kết quả source/mock validation của S24.3.12 và không được diễn giải là runtime PASS.
+
+## S25.1 — Customer Web UI Audit and Design Plan
+
+- **COMPLETED (AUDIT/PLAN ONLY)** ngày 2026-10-10.
+- Đã đối chiếu toàn bộ route, page, layout, component dùng chung và CSS trong `frontend-web` với trạng thái tích hợp/API hiện tại.
+- Đã lập inventory route thực tế, xác định màn hình thiếu/chưa hoàn chỉnh, vấn đề localization, token, form, responsive, navigation, accessibility và loading/empty/error state.
+- Đã bổ sung vào `docs/UI.md` design tokens đề xuất, checklist 12 nhóm màn hình và thứ tự triển khai. Kế hoạch giữ `/projects/new` là luồng Create + Upload hiện có, không phát sinh route hoặc business flow giả.
+- Không chỉnh sửa source Customer Web, Backend, Mobile hoặc Admin; không thay API/database; không gọi paid AI API.
+- Bước đề xuất tiếp theo: triển khai foundation/tokens/localization và shared components trước, sau đó polish shell và từng workflow theo thứ tự trong `docs/UI.md`.
+- Bổ sung cross-platform audit ngày 2026-10-10: đã đối chiếu route/screen, navigation, form, validation, confirmation, async states, project lifecycle và protected-result behavior giữa `frontend-web` và `frontend-mobile`.
+- `docs/UI.md` nay có feature parity matrix, shared Customer journey, canonical Vietnamese labels/statuses, unified Web/Mobile token contract, platform-specific rules và backlog P0/P1/P2.
+- Khoảng trống nổi bật: Mobile tách Account khỏi Settings placeholder trong khi Web gộp; Mobile WorkflowSteps chưa render nhãn Kết quả; Web còn copy/status tiếng Anh và Project Detail feedback yếu hơn Mobile; brand primary token chưa đồng nhất.
+- Trạng thái S25.1 vẫn **COMPLETED (AUDIT/PLAN ONLY)**. Chưa sửa UI/source; Android upload và project editing đã xác nhận không thay đổi. S24.3.12.2 tiếp tục **POSTPONED**.
+
+## S25.2 — P0 Cross-platform Foundation and Regression Guard
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-10; browser runtime và physical Android runtime **NOT RUN**.
+- Web/Mobile dùng dictionary nhãn tiếng Việt đồng nhất cho toàn bộ 10 `ProjectStatus` cùng Transcript, Translation, Voice/TTS và Processing states; backend enum/API contract không đổi.
+- Web project badge/filter/detail và generic Badge không còn hiển thị/gom sai enum kỹ thuật. Processing stage titles được Việt hóa.
+- Mobile WorkflowSteps đã có đủ 6 bước, gồm “Kết quả”, cuộn ngang trên màn hình hẹp và phân biệt completed/current/locked bằng visual + accessibility state.
+- Không thay implementation Android DocumentPicker staging/native multipart hoặc Project Detail editing. Bổ sung guard refresh-once cho native upload mà không đổi flow thành công.
+- Tests: Web **2/2 PASS**; Mobile **42/42 PASS**. Mobile suite tiếp tục bao phủ staging, field `file`, Bearer, retry/cleanup, list-cache sync và duplicate-save, đồng thời thêm refresh-once/status/workflow parity.
+- Web lint/typecheck/build PASS. Mobile lint/typecheck PASS. Expo Doctor **21/21 PASS**. Android Hermes export PASS (1.412 modules). `git diff --check` PASS.
+- Không sửa Backend/Admin/database, không gọi paid AI và không thay dữ liệu dự án. S24.3.12.2 vẫn **POSTPONED**.
+- Còn lại cho P1: Account/Settings IA, navigation/copy tiếng Việt, Web form/confirmation feedback; cho P2: color/radius/typography tokens và shared component visual behavior.
+
+## S25.3 — P1 Web/Mobile Navigation and Interaction Parity
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-10; browser runtime và physical Android runtime **NOT RUN**.
+- Web/Mobile dùng cùng nhãn điều hướng: **Bảng điều khiển**, **Dự án của tôi**, **Tạo thuyết minh**, **Lịch sử**, **Tài khoản**. Web giữ sidebar/topbar và route hiện có; Mobile giữ bottom tabs, ẩn tab Settings trùng lặp nhưng route cũ vẫn hiển thị màn Tài khoản để không làm hỏng deep link.
+- Account Web/Mobile hiển thị họ tên, email, vai trò Khách hàng từ phiên thật; có loading, error, retry và logout confirmation. Không thêm profile editing, password/avatar hoặc setting giả. Mobile tiếp tục để `Stack.Protected` tự chuyển về Login sau logout.
+- Chuỗi người dùng còn sót trong New Project, media validation, Transcript, Translation, Voice/TTS, Result, processing, 404 và accessibility được Việt hóa. Thuật ngữ hiển thị dùng “máy chủ” thay cho “backend”; API identifiers và enum không đổi.
+- Confirmation trả phí cho STT, Translation và TTS dùng cùng nội dung cảnh báo trên Web/Mobile; Web dùng confirmation guard, Mobile giữ native Alert. Hủy confirmation không gọi API. Login/Register dùng validation parity và synchronous submit lock để chặn double-submit trước khi state kịp render.
+- Regression tests: Web **7/7 PASS**; Mobile **47/47 PASS**, bao gồm navigation/account destination, confirmation cancellation, validation parity, auth duplicate-submit và toàn bộ boundary upload/project editing cũ.
+- Web lint/typecheck/build PASS. Mobile lint/typecheck PASS. Expo Doctor **21/21 PASS**. Android Hermes export PASS (**1.414 modules**). Không gọi paid AI API, không sửa Backend/Admin/database và không thay implementation Android upload.
+- Browser verification: **NOT RUN**. Physical Android verification: **NOT RUN**. S24.3.12.2 real Whisper tiếp tục **POSTPONED**.
+- Còn lại cho P2: đồng bộ visual tokens/component behavior và chạy responsive/a11y/browser/device visual regression thực tế.
+
+## S25.4 — P2 Unified Web & Mobile Visual Design System
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-10; browser visual smoke và physical Android visual smoke **NOT RUN**.
+- Web/Mobile dùng cùng visual identity: primary `#5850EC`, accent `#794CFF`, background `#F8FAFC`, surface `#FFFFFF`, text chính `#0F172A`; semantic success/warning/error/info giữ ý nghĩa thống nhất. Spacing theo bội số 4px, radius chuẩn 6/10/12/20/full và shadow nhẹ.
+- Web shared styles được polish cho Button, Input, select, textarea, Card, Badge, Progress, Spinner, Empty/Error State và PageHeader: control tối thiểu 44–48px, focus ring indigo, hover/pressed/disabled rõ ràng, action header wrap ở màn hình hẹp.
+- Mobile tokens chuyển từ blue cũ sang indigo/violet chuẩn. Button giữ touch target tối thiểu 44px, pressed/disabled state thống nhất; Input có focused/error/disabled border rõ ràng; Card/Badge/Progress/feedback kế thừa palette/radius/elevation mới. Không import CSS Web vào React Native.
+- Không có shared custom Dialog hiện hữu trong Customer Web/Mobile; confirmation architecture S25.3 được giữ nguyên (browser confirm guard và native Alert), không thêm UI library hoặc thay đổi business flow.
+- Bổ sung token regression test hai chiều. Web tests **9/9 PASS**, lint/typecheck/build PASS. Mobile tests **49/49 PASS**, lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (**1.414 modules**); `git diff --check` PASS.
+- Không sửa Backend/Admin/database/API/routes; không thay Android picker/native upload, JWT refresh, Project Detail, workflow permission hay protected media. Không gọi paid AI API; S24.3.12.2 tiếp tục **POSTPONED**.
+- Còn lại: screen-level spacing/density polish, browser responsive/keyboard/contrast visual smoke và physical Android visual smoke trên thiết bị thật.
+
+## S25.5 — Dashboard & Project List Web/Mobile UI Polish
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-10. Browser visual smoke và physical Android visual smoke **NOT RUN**.
+- Web Dashboard giữ hero đã duyệt, chuẩn hóa CTA “Tạo thuyết minh”, quick actions, zero/loading/error/retry và recent projects. Thống kê tiếp tục được tính duy nhất từ project repository/API hiện có; không thêm metric hoặc fixture giả.
+- Mobile Dashboard giữ hierarchy tương đương Web: welcome, bốn thống kê thật, hai quick actions được hỗ trợ (Tạo thuyết minh/Dự án của tôi), recent projects và loading/error/retry/empty state mà không che mất toàn bộ header.
+- Web Project List đổi title/CTA theo canonical terminology, giữ search/status/server pagination, thêm live pagination status và responsive card/pagination layout cho 600/420/360px, bao phủ mục tiêu 375/320px ở source CSS.
+- Mobile Project List luôn giữ page heading, search và filter khi loading/error; giữ page reset khi search/filter, focus reload/cache synchronization, server pagination và bổ sung accessibility label cho pagination/project actions.
+- Regression tests bổ sung khóa real repository usage, supported quick actions, filter/page reset và focus reload. Web **11/11 PASS**; Mobile **51/51 PASS**. Web lint/typecheck/build PASS; Mobile lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (**1.414 modules**); `git diff --check` PASS.
+- Browser visual smoke: **NOT RUN** vì browser automation báo Chrome không khả dụng. Physical Android visual smoke: **NOT RUN** vì `adb` không có trong môi trường/PATH. Không claim runtime PASS.
+- Không sửa Backend/Admin/database/API, Android upload, JWT refresh, Project Detail hay AI workflows; không gọi paid AI API. S24.3.12.2 tiếp tục **POSTPONED**.

@@ -10,7 +10,7 @@ type StatCardProps = {
 
 export function StatCard({ label, value, tone = 'default' }: StatCardProps) {
   return (
-    <Card padding="sm" style={styles.card}>
+    <Card padding="sm" accessibilityLabel={`${label}: ${value}`} style={styles.card}>
       <View style={[styles.indicator, styles[tone]]} />
       <Text style={styles.label}>{label}</Text>
       <Text style={styles.value}>{value}</Text>
@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingLeft: 18,
     borderRadius: radius.md,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     gap: 4,
   },
   indicator: {
@@ -56,13 +56,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
   },
   label: {
-    color: '#64748B',
+    color: colors.textMuted,
     fontSize: 12.5,
     fontWeight: typography.weight.semibold,
     letterSpacing: 0.15,
   },
   value: {
-    color: '#0F172A',
+    color: colors.textPrimary,
     fontSize: 28,
     fontWeight: typography.weight.bold,
     lineHeight: 32,

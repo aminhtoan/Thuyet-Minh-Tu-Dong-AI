@@ -1,5 +1,5 @@
-import { PlaceholderScreen } from '@/components/layout/PlaceholderScreen';
+import { AccountScreen } from './AccountScreen';
 
 export function SettingsScreen() {
-  return <PlaceholderScreen title="Cài đặt" description="Tùy chọn ứng dụng sẽ được triển khai sau." />;
+  return <AccountScreen />;
 }

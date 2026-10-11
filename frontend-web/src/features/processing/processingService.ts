@@ -10,7 +10,7 @@ export const processingService = {
     const mediaType = context.project.mediaType ?? 'AUDIO';
     const config = { ...context.config };
     let snapshot = createInitialSnapshot(projectId, mediaType);
-    snapshot = { ...snapshot, message: 'Kiểm tra cấu hình rồi bắt đầu xử lý.', stages: snapshot.stages.map((stage) => stage.id === 'narration' ? { ...stage, status: 'COMPLETED', progress: 100, description: 'Âm thanh thuyết minh đã được backend tạo.' } : stage) };
+    snapshot = { ...snapshot, message: 'Kiểm tra cấu hình rồi bắt đầu xử lý.', stages: snapshot.stages.map((stage) => stage.id === 'narration' ? { ...stage, status: 'COMPLETED', progress: 100, description: 'Âm thanh thuyết minh đã được máy chủ tạo.' } : stage) };
     let disposed = false;
 
     const emit = () => { if (!disposed) onUpdate(copySnapshot(snapshot)); };
@@ -24,7 +24,7 @@ export const processingService = {
         if (mediaType === 'AUDIO') {
           snapshot = { ...snapshot, status: 'COMPLETED', progress: 100, currentStage: null, completedAt: new Date().toISOString(), message: 'Âm thanh thuyết minh đã sẵn sàng.', stages: snapshot.stages.map((stage) => stage.id === 'media' ? { ...stage, status: 'COMPLETED', progress: 100, description: 'Không cần ghép video cho dự án âm thanh.' } : stage) }; emit(); return;
         }
-        snapshot = { ...snapshot, status: 'PROCESSING', progress: 50, currentStage: 'media', startedAt: new Date().toISOString(), message: 'Backend đang ghép âm thanh thuyết minh vào video...', stages: snapshot.stages.map((stage) => stage.id === 'media' ? { ...stage, status: 'PROCESSING', progress: 0 } : stage) }; emit();
+        snapshot = { ...snapshot, status: 'PROCESSING', progress: 50, currentStage: 'media', startedAt: new Date().toISOString(), message: 'Máy chủ đang ghép âm thanh thuyết minh vào video...', stages: snapshot.stages.map((stage) => stage.id === 'media' ? { ...stage, status: 'PROCESSING', progress: 0 } : stage) }; emit();
         const response = await api<{ result: { id: string }; idempotent: boolean }>(`/projects/${projectId}/process`, { method: 'POST', body: JSON.stringify({ narrationId: latest.config.narrationId }) });
         snapshot = { ...snapshot, runId: response.result.id, status: 'COMPLETED', progress: 100, currentStage: null, completedAt: new Date().toISOString(), message: response.idempotent ? 'Kết quả video đã tồn tại và sẵn sàng.' : 'Video thuyết minh đã được tạo thành công.', stages: snapshot.stages.map((stage) => stage.id === 'media' ? { ...stage, status: 'COMPLETED', progress: 100 } : stage) };
         await projectRepository.refresh(); emit();

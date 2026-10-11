@@ -1,4 +1,5 @@
 import { languages } from './languages';
+import { projectStatusLabels } from '../../localization/statusLabels.mjs'
 import type { LanguageCode, Project, ProjectStatistics, ProjectStatus, ProjectStatusFilter } from './types'
 
 export const languageNames = Object.fromEntries(languages.map(({ code, name }) => [code, name])) as Record<LanguageCode, string>;
@@ -6,12 +7,7 @@ export const sourceLanguageOptions = languages.map(({ code, name }) => ({ value:
 const processingStatuses = new Set<ProjectStatus>(['UPLOADED', 'TRANSCRIBING', 'TRANSCRIBED', 'TRANSLATING', 'TRANSLATED', 'GENERATING_AUDIO', 'PROCESSING_VIDEO'])
 
 export function isProcessingStatus(status: ProjectStatus): boolean { return processingStatuses.has(status) }
-export function getProjectStatusLabel(status: ProjectStatus): 'Draft' | 'Processing' | 'Completed' | 'Failed' {
-  if (status === 'DRAFT') return 'Draft'
-  if (status === 'COMPLETED') return 'Completed'
-  if (status === 'FAILED') return 'Failed'
-  return 'Processing'
-}
+export function getProjectStatusLabel(status: ProjectStatus): string { return projectStatusLabels[status] }
 export function getProjectStatusVariant(status: ProjectStatus): 'default' | 'info' | 'success' | 'error' {
   if (status === 'COMPLETED') return 'success'
   if (status === 'FAILED') return 'error'

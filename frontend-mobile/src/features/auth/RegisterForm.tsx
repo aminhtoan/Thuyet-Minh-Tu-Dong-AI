@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components/common/Button';
 import { InlineMessage } from '@/components/common/InlineMessage';
@@ -26,6 +26,7 @@ export function RegisterForm() {
   const [errors, setErrors] = useState<FormErrors<RegisterFormValues>>({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
 
   function updateField(field: keyof RegisterFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -34,11 +35,13 @@ export function RegisterForm() {
   }
 
   async function handleSubmit() {
+    if (submitLock.current) return;
     const nextValues = { ...values, fullName: values.fullName.trim(), email: values.email.trim() };
     const nextErrors = validateRegister(nextValues);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
+    submitLock.current = true;
     setSubmitting(true);
     setFormError('');
     try {
@@ -47,6 +50,7 @@ export function RegisterForm() {
     } catch (error) {
       setFormError(registerErrorMessage(error));
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   }

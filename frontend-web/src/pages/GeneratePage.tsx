@@ -17,6 +17,7 @@ import { ProcessingStage } from '../features/processing/ProcessingStage';
 import { getSimulatedProjectStatus } from '../features/processing/processingUtils';
 import { useProcessing } from '../features/processing/useProcessing';
 import { formatSpeed } from '../features/voice/voiceUtils';
+import { getDisplayStatus } from '../utils/displayLabels';
 import '../styles/processing.css';
 
 export function GeneratePage() {
@@ -85,7 +86,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
       <Card className="processing-panel">
         <div className="processing-panel__heading"><h2>{snapshot.status === 'COMPLETED' ? 'Xử lý hoàn tất' : snapshot.status === 'FAILED' ? 'Xử lý thất bại' : snapshot.status === 'CANCELLED' ? 'Đã hủy xử lý' : 'Quy trình xử lý'}</h2>
           <Badge variant={snapshot.status === 'COMPLETED' ? 'success' : snapshot.status === 'FAILED' ? 'error' : 'info'}>{snapshot.status}</Badge></div>
-        <p className="processing-note">Trạng thái dự án: {getSimulatedProjectStatus(snapshot, project.mediaType ?? 'AUDIO')}</p>
+        <p className="processing-note">Trạng thái dự án: {getDisplayStatus(getSimulatedProjectStatus(snapshot, project.mediaType ?? 'AUDIO'))}</p>
         <ProgressBar value={snapshot.progress} label="Tiến độ xử lý tổng thể" />
         <p className="processing-message" role="status">{snapshot.message}</p>
         <ol className="processing-stages" aria-label="Các giai đoạn xử lý">{snapshot.stages.map((stage) => <ProcessingStage key={stage.id} stage={stage} />)}</ol>

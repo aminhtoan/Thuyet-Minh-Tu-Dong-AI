@@ -36,7 +36,7 @@ export function useTranscriptEditor(projectId: string) {
       setStatus(result ? 'SAVED' : 'NOT_STARTED')
     }).catch((cause: unknown) => {
       if (controller.signal.aborted) return
-      setError(cause instanceof Error ? cause.message : 'Unable to load transcript.')
+      setError(cause instanceof Error ? cause.message : 'Không thể tải bản ghi.')
       setFailedAction('load')
       setStatus('FAILED')
     })
@@ -71,7 +71,7 @@ export function useTranscriptEditor(projectId: string) {
       setStatus('SAVED')
     } catch (cause) {
       if (controller.signal.aborted) return
-      setError(cause instanceof Error ? cause.message : 'Unable to generate transcript.')
+      setError(cause instanceof Error ? cause.message : 'Không thể tạo bản ghi.')
       setFailedAction('generate')
       setStatus('FAILED')
     }
@@ -98,7 +98,7 @@ export function useTranscriptEditor(projectId: string) {
       setStatus('SAVED')
     } catch (cause) {
       if (controller.signal.aborted) return
-      setError(cause instanceof Error ? cause.message : 'Unable to save transcript.')
+      setError(cause instanceof Error ? cause.message : 'Không thể lưu bản ghi.')
       setFailedAction('save')
       setStatus('FAILED')
     }

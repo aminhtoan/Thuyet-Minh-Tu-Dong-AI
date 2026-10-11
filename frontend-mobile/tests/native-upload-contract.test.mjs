@@ -7,6 +7,7 @@ import {
   MEDIA_UPLOAD_FIELD,
   safeUploadFileName,
 } from '../src/features/projects/nativeUploadContract.mjs';
+import { shouldRetryNativeUpload } from '../src/features/projects/nativeUploadRetry.mjs';
 
 test('native multipart contract preserves field, MIME and Bearer authentication without a FormData body', () => {
   const contract = createNativeUploadContract({ token: 'test-access-token', mimeType: 'video/mp4' });
@@ -43,4 +44,11 @@ test('Android cache filename keeps a valid selected MP4 filename', () => {
 test('native upload accepts a stable cache URI and rejects an unresolved Android content URI', () => {
   assert.equal(isNativeUploadFileUri('file:///data/user/0/host.exp.exponent/cache/mobile-uploads/video.mp4'), true);
   assert.equal(isNativeUploadFileUri('content://com.android.providers.media.documents/document/video%3A42'), false);
+});
+
+test('native upload refreshes only once after HTTP 401', () => {
+  assert.equal(shouldRetryNativeUpload(401, true, true), true);
+  assert.equal(shouldRetryNativeUpload(401, false, true), false);
+  assert.equal(shouldRetryNativeUpload(401, true, false), false);
+  assert.equal(shouldRetryNativeUpload(500, true, true), false);
 });

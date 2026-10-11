@@ -67,7 +67,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
         </Pressable>)}
       </View>
       <Text style={styles.note}>Chọn ngôn ngữ để tạo hoặc mở lại bản dịch đã lưu.</Text>
-      <Text style={styles.note}>Bản dịch được tạo và lưu bởi backend.</Text>
+      <Text style={styles.note}>Bản dịch được tạo và lưu trên máy chủ.</Text>
       {!editor.draft && <Button loading={editor.status === 'TRANSLATING'} disabled={editor.busy || editor.status === 'FAILED'} onPress={editor.translate}>Dịch</Button>}
     </Card>}
     {editor.status === 'TRANSLATING' && <Card style={styles.loading}><Spinner label="Đang dịch bản ghi" />
@@ -81,7 +81,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       action={<Button onPress={backToTranscript}>Quay lại bản ghi</Button>} /></Card> : null;
 
   const footer = editor.draft && sourceVisible ? <Card style={styles.actions}>
-    <Text accessibilityLiveRegion="polite" style={styles.label}>Bản dịch được lưu bởi backend. Chỉnh sửa hiện chưa được hỗ trợ.</Text>
+    <Text accessibilityLiveRegion="polite" style={styles.label}>Bản dịch được lưu trên máy chủ. Chỉnh sửa hiện chưa được hỗ trợ.</Text>
     <Button variant="secondary" disabled={!editor.saved || editor.dirty || editor.invalid || editor.busy || editor.status === 'FAILED'} onPress={() => { if (editor.targetLanguage) router.replace({ pathname: '/projects/[projectId]/voice', params: { projectId: project.id, language: editor.targetLanguage } }); }}>Tiếp tục chọn giọng đọc</Button>
     <Text style={styles.note}>Hãy lưu mọi thay đổi bản dịch trước khi chọn giọng đọc thuyết minh.</Text>
   </Card> : null;

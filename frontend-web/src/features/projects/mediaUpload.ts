@@ -31,14 +31,14 @@ export function formatFileSize(bytes: number): string {
 
 export function validateMediaFile(file: MediaFile | null): { valid: true; mediaType: MediaType } | { valid: false; error: string } {
   if (!file) return { valid: false, error: 'Hãy chọn một tệp video hoặc âm thanh.' }
-  if (!file.name?.trim()) return { valid: false, error: 'File name is unavailable.' }
+  if (!file.name?.trim()) return { valid: false, error: 'Không có tên tệp.' }
   const mediaType = getMediaType(file)
-  if (!mediaType) return { valid: false, error: 'Unsupported file format. Use MP4, MOV, WEBM, MP3, WAV or M4A.' }
-  if (typeof file.size !== 'number' || !Number.isFinite(file.size) || file.size <= 0) return { valid: false, error: 'File size is unavailable or empty.' }
-  if (file.size > MAX_MEDIA_FILE_SIZE) return { valid: false, error: 'File exceeds the 500 MB limit.' }
+  if (!mediaType) return { valid: false, error: 'Định dạng tệp không được hỗ trợ. Hãy dùng MP4, MOV, WEBM, MP3, WAV hoặc M4A.' }
+  if (typeof file.size !== 'number' || !Number.isFinite(file.size) || file.size <= 0) return { valid: false, error: 'Không xác định được dung lượng hoặc tệp đang trống.' }
+  if (file.size > MAX_MEDIA_FILE_SIZE) return { valid: false, error: 'Tệp vượt quá giới hạn 500 MB.' }
   return { valid: true, mediaType }
 }
 
 export function validateProjectName(name: string): string | null {
-  return name.trim().length >= 3 ? null : 'Project name must be at least 3 characters.'
+  return name.trim().length >= 3 ? null : 'Tên dự án phải có ít nhất 3 ký tự.'
 }

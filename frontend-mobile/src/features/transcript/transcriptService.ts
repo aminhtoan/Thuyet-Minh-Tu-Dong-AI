@@ -1,5 +1,6 @@
 import { ApiError, api } from '../../lib/api';
 import { confirmAction } from '../../lib/confirm';
+import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
 import { projectRepository } from '../projects/projectRepository';
 import type { Transcript } from './types';
 import { confirmTranscriptRequest, mapTranscriptDto } from './transcriptWorkflow.mjs';
@@ -18,6 +19,6 @@ function timedSignal(parent?: AbortSignal) {
 }
 export const transcriptService = {
   async getTranscript(projectId: string, options: Options = {}) { try { const response = await api<{ transcript: TranscriptDto }>(`/projects/${projectId}/transcript`, { signal: options.signal }); return mapTranscriptDto(response.transcript); } catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error; } },
-  async generateTranscript(projectId: string, options: Options = {}) { return confirmTranscriptRequest(() => confirmAction('Tạo bản ghi', 'Bắt đầu chuyển giọng nói thành văn bản? Thao tác này có thể sử dụng dịch vụ AI tính phí.'), async () => { const timed = timedSignal(options.signal); try { const response = await api<{ transcript: TranscriptDto }>(`/projects/${projectId}/transcription`, { method: 'POST', signal: timed.signal }); return mapTranscriptDto(response.transcript); } catch (error) { if (timed.timedOut()) throw new TranscriptTimeoutError(); throw error; } finally { timed.cleanup(); await projectRepository.refresh(); } }); },
-  async saveTranscript(_projectId?: string, _draft?: Transcript, _options?: Options) { throw new Error('Backend chưa hỗ trợ chỉnh sửa bản ghi.'); },
+  async generateTranscript(projectId: string, options: Options = {}) { return confirmTranscriptRequest(() => confirmAction('Tạo bản ghi', confirmationMessages.transcript), async () => { const timed = timedSignal(options.signal); try { const response = await api<{ transcript: TranscriptDto }>(`/projects/${projectId}/transcription`, { method: 'POST', signal: timed.signal }); return mapTranscriptDto(response.transcript); } catch (error) { if (timed.timedOut()) throw new TranscriptTimeoutError(); throw error; } finally { timed.cleanup(); await projectRepository.refresh(); } }); },
+  async saveTranscript(_projectId?: string, _draft?: Transcript, _options?: Options) { throw new Error('Máy chủ chưa hỗ trợ chỉnh sửa bản ghi.'); },
 };

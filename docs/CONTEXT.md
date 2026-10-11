@@ -113,6 +113,24 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - No secrets in client code or Git; backend must revalidate files and enforce access.
 - TypeScript strict, reusable components, explicit loading/error/empty states, and honest validation reporting.
 
+## S25.1 Customer Web/Mobile UI Consistency Decision (2026-10-10)
+
+- Customer Web và Customer Mobile phải dùng cùng backend data/API contract, project lifecycle, paid-action confirmation, terminology và outcome. Layout được phép khác theo nền tảng nhưng phải tạo cảm giác cùng một sản phẩm.
+- Shared journey chuẩn: Auth → Dashboard/Projects → Create + Upload → Transcript → Translation → Voice/TTS → Generate/Processing → Result → History/Account. Không client nào tự gọi paid AI khi mở màn hình hoặc tạo fake success để lấp API thiếu.
+- Web giữ sidebar, keyboard/mouse, drag-and-drop và browser download. Mobile giữ Expo Router/tabs, touch target, DocumentPicker/native multipart, app-cache protected playback và native sharing.
+- Android upload và Project Detail đã PASS trên thiết bị là regression boundary: không thay transport/file lifecycle hoặc hành vi editing chỉ để đồng nhất visual.
+- Canonical Vietnamese status/terminology và unified token contract được định nghĩa tại `docs/UI.md`. Các client vẫn có implementation riêng phù hợp React DOM/React Native.
+- Audit xác nhận các parity gap cần xử lý sau: Web/Mobile token primary khác nhau; navigation Account/Settings khác nhau; Web còn English/internal enum copy; Mobile WorkflowSteps chưa render bước Kết quả; một số feedback/validation/confirmation chưa cùng mức độ.
+- S25.1 chỉ audit/documentation. Backend, database và API contract không đổi; S24.3.12.2 real Mobile Whisper validation vẫn **POSTPONED**.
+
+## S25.2 Cross-platform Foundation Decision (2026-10-10)
+
+- Web và Mobile giữ implementation riêng nhưng cùng một canonical Vietnamese display dictionary cho Project/Transcript/Translation/Voice/Processing state. Backend enum values không được dịch hoặc thay đổi trong request/response.
+- ProjectStatus phải hiển thị chi tiết, không gom `UPLOADED`, `TRANSCRIBING`, `TRANSCRIBED`, `TRANSLATING`, `TRANSLATED`, `GENERATING_AUDIO` và `PROCESSING_VIDEO` thành một nhãn “Đang xử lý”.
+- Workflow UI chuẩn có 6 bước theo thứ tự Tải lên, Bản ghi, Bản dịch, Giọng đọc, Tạo thuyết minh, Kết quả. Mobile dùng horizontal scroll để bảo toàn thứ tự trên màn hình hẹp.
+- Android upload staging/native multipart và Project Detail editing là protected regression boundary. S25.2 chỉ thêm test/decision guard cho Bearer + refresh-once, cleanup/retry, cache synchronization và duplicate-save; không thay transport đã PASS vật lý.
+- Source validation S25.2 PASS nhưng browser smoke và physical Android smoke chưa chạy; không suy diễn runtime PASS. S24.3.12.2 vẫn POSTPONED và không có paid AI call.
+
 ## S24 Integration Decisions (2026-10-08)
 
 - Web sessions use per-tab `sessionStorage`; Mobile stores the token pair with Expo SecureStore. All clients use one refresh request at a time, rotate the pair, retry a failed request once, and clear the session when refresh fails.
@@ -249,3 +267,31 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Transcript segment response có stable database `id`, zero-based `index`, optional-safe numeric timestamps và text. Mobile fallback key chỉ hỗ trợ response cũ; timestamp chỉ render khi start/end đều tồn tại.
 - Mobile STT request dùng Bearer/refresh-once từ API client, timeout 5 phút và thông báo lỗi tiếng Việt. Sau POST thực sự, project repository luôn refresh để phản ánh `TRANSCRIBED` hoặc `FAILED`.
 - Regression chỉ dùng mock provider và test-owned records/files có cleanup; không gọi OpenAI/Whisper thật và không sửa project development hiện có. Physical Android STT vẫn **NOT RUN**.
+
+## S25.3 Customer Navigation and Interaction Decisions (2026-10-10)
+
+- Canonical Customer navigation labels trên Web/Mobile là: Bảng điều khiển, Dự án của tôi, Tạo thuyết minh, Lịch sử và Tài khoản. Route/Expo Router architecture không đổi.
+- Web tiếp tục dùng `/settings` cho màn Tài khoản. Mobile chỉ hiển thị một tab Tài khoản; tab Settings placeholder bị ẩn, còn route cũ delegate sang Account để giữ tương thích điều hướng hiện có.
+- Account chỉ hiển thị dữ liệu phiên/API đang hỗ trợ: họ tên, email, vai trò và logout. Không giả lập profile edit, password, avatar hoặc system setting. Loading/error/retry và logout confirmation là bắt buộc.
+- Paid STT/Translation/TTS action luôn cần confirmation nhất quán; cancel không được gọi API. Web dùng browser confirmation guard hiện có, Mobile giữ native Alert. Auth forms có synchronous ref lock bên cạnh loading state để chống double-submit.
+- Copy Customer ưu tiên tiếng Việt; thuật ngữ người dùng dùng “máy chủ”, “giọng đọc” và dictionary status thống nhất, trong khi technical/API identifiers giữ nguyên.
+- S25.3 source validation PASS: Web 7/7 tests + lint/typecheck/build; Mobile 47/47 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules. Browser và physical Android runtime **NOT RUN**. Android upload implementation không đổi; S24.3.12.2 vẫn POSTPONED.
+
+## S25.4 Customer Visual System Decisions (2026-10-10)
+
+- Canonical visual tokens cho cả Web/Mobile: primary `#5850EC`, accent `#794CFF`, background `#F8FAFC`, surface trắng, text chính `#0F172A`; spacing 4px scale; radius 6/10/12/20/full; shadow dùng sắc `#0F172A` với opacity thấp.
+- Web tiếp tục dùng CSS variables và CSS modules hiện có; Mobile tiếp tục dùng React Native `StyleSheet`/theme tokens. Không tạo shared runtime package và không đưa browser CSS vào React Native.
+- Button có primary/secondary/ghost/danger, touch/click target tối thiểu 44px, hover/pressed/disabled/loading rõ ràng. Input/select/textarea có min-height 48px, focus/error/disabled state. Card/Badge/Progress/Empty/Error/PageHeader dùng cùng hierarchy và semantic colors.
+- Customer chưa có shared custom Dialog thực tế. Paid/destructive confirmation tiếp tục dùng guard/browser confirmation trên Web và native Alert trên Mobile; không thêm dependency chỉ để thay đổi presentation trong bước design-system.
+- Token tests khóa palette và minimum interaction sizes giữa hai nền tảng. Validation: Web 9/9 tests + lint/typecheck/build; Mobile 49/49 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules.
+- Browser/physical-device visual smoke **NOT RUN**. Business logic, route, backend/API, native upload, auth refresh và protected media không đổi. S24.3.12.2 vẫn POSTPONED.
+
+## S25.5 Dashboard and Project List Decisions (2026-10-10)
+
+- Dashboard/Web và Mobile cùng ưu tiên: welcome → statistics → supported quick actions → recent projects. Statistics chỉ derive từ project repository/API hiện có; không tạo analytics hoặc số liệu giả.
+- Canonical CTA là “Tạo thuyết minh”; danh sách là “Dự án của tôi”. Web giữ bốn workflow shortcuts hiện hữu, Mobile cung cấp hai destination trực tiếp phù hợp màn hình nhỏ: create và project list.
+- Loading/error/empty không được làm mất context điều hướng. Dashboard Mobile vẫn giữ statistics/actions; Projects Mobile vẫn giữ heading/search/filter trong khi phần danh sách hiển thị loading/error/retry.
+- Project list hai nền tảng tiếp tục dùng server-side pagination và reset page về 1 khi search/status đổi. Mobile tiếp tục reload khi focus để đồng bộ cache sau Project Detail; không thay repository contract.
+- Web responsive card/pagination có breakpoint 600/420/360px, tránh horizontal page overflow ở 375/320px. Mobile action/filter/pagination có target tối thiểu 44px, accessibility labels và text wrapping.
+- Source validation: Web 11/11 tests + lint/typecheck/build; Mobile 51/51 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules. Browser NOT RUN (Chrome automation unavailable), physical Android NOT RUN (`adb` unavailable).
+- Không thay backend/API/data, native upload, auth refresh, Project Detail hoặc AI workflow. S24.3.12.2 vẫn POSTPONED.

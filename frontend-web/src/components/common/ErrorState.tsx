@@ -7,7 +7,7 @@ type ErrorStateProps = {
   retryLabel?: string
 }
 
-export function ErrorState({ title, description, onRetry, retryLabel = 'Try again' }: ErrorStateProps) {
+export function ErrorState({ title, description, onRetry, retryLabel = 'Thử lại' }: ErrorStateProps) {
   return (
     <section className="state state--error" aria-labelledby="error-state-title" role="alert">
       <span className="state__icon" aria-hidden="true">!</span>

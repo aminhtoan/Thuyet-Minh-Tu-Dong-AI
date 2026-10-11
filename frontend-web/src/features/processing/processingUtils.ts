@@ -17,12 +17,12 @@ export function createInitialSnapshot(projectId: string, mediaType: MediaType): 
     message: 'Kiểm tra cấu hình đã lưu rồi bắt đầu xử lý.',
     error: null, startedAt: null, completedAt: null,
     stages: [
-      { id: 'upload', title: 'Upload', status: 'COMPLETED' },
-      { id: 'transcript', title: 'Transcript', status: 'COMPLETED' },
-      { id: 'translation', title: 'Translation', status: 'COMPLETED' },
-      { id: 'voice', title: 'Voice Configuration', status: 'COMPLETED' },
-      { id: 'narration', title: 'Narration Generation', status: 'WAITING', progress: 0 },
-      { id: 'media', title: mediaType === 'VIDEO' ? 'Video Processing' : 'Audio Processing', status: 'WAITING', progress: 0 },
+      { id: 'upload', title: 'Tải lên', status: 'COMPLETED' },
+      { id: 'transcript', title: 'Bản ghi', status: 'COMPLETED' },
+      { id: 'translation', title: 'Bản dịch', status: 'COMPLETED' },
+      { id: 'voice', title: 'Cấu hình giọng đọc', status: 'COMPLETED' },
+      { id: 'narration', title: 'Tạo giọng đọc', status: 'WAITING', progress: 0 },
+      { id: 'media', title: mediaType === 'VIDEO' ? 'Xử lý video' : 'Xử lý âm thanh', status: 'WAITING', progress: 0 },
     ],
   };
 }

@@ -10,6 +10,7 @@ import { languages } from '../features/projects/languages';
 import { projectAction } from '../features/projects/projectAction';
 import { projectRepository } from '../features/projects/projectRepository';
 import { useProject } from '../features/projects/useProjects';
+import { getProjectStatusLabel } from '../features/projects/projectUtils';
 
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -38,7 +39,7 @@ export function ProjectDetailPage() {
       <label>Tên dự án<input value={name} maxLength={150} required onChange={(event) => setName(event.target.value)} /></label>
       <label>Mô tả<textarea value={description} maxLength={1000} rows={4} onChange={(event) => setDescription(event.target.value)} /></label>
       <label>Ngôn ngữ nguồn<select value={sourceLanguage} onChange={(event) => setSourceLanguage(event.target.value)}>{languages.map((language) => <option key={language.code} value={language.code}>{language.nativeName}</option>)}</select></label>
-      <p>Trạng thái: {project.status} · Phương tiện: {project.mediaName ?? 'Chưa tải lên'}</p>
+      <p>Trạng thái: {getProjectStatusLabel(project.status)} · Phương tiện: {project.mediaName ?? 'Chưa tải lên'}</p>
       {formError && <p role="alert">{formError}</p>}
       <div className="voice-actions"><Button type="submit" loading={saving}>Lưu thay đổi</Button><Link className="button button--secondary button--md" to={`/projects/${project.id}/${action.step}${project.targetLanguage ? `?language=${project.targetLanguage}` : ''}`}>Tiếp tục quy trình</Link><Button type="button" variant="secondary" disabled={saving} onClick={() => void remove()}>Xóa dự án</Button></div>
     </form></Card></>;

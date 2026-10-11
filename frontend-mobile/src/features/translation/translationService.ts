@@ -1,5 +1,6 @@
 import { ApiError, api } from '../../lib/api';
 import { confirmAction } from '../../lib/confirm';
+import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
 import { projectRepository } from '../projects/projectRepository';
 import type { LanguageCode } from '../projects/types';
 import type { Transcript } from '../transcript/types';
@@ -11,6 +12,6 @@ const map = (value: TranslationDto, transcript: Transcript): Translation => ({ i
 export const translationService = {
   async getSavedTranslation(projectId: string, target?: LanguageCode, options: Options = {}) { const transcript = await (await import('../transcript/transcriptService')).transcriptService.getTranscript(projectId, options); if (!transcript) return null; const response = await api<{ translations: TranslationDto[] }>(`/projects/${projectId}/translations`, { signal: options.signal }); const selected = [...response.translations].filter((item) => !target || item.targetLanguage === target).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]; return selected ? map(selected, transcript) : null; },
   async get(projectId: string, target: LanguageCode, options: Options = {}) { const transcript = await (await import('../transcript/transcriptService')).transcriptService.getTranscript(projectId, options); if (!transcript) return null; try { const response = await api<{ translation: TranslationDto }>(`/projects/${projectId}/translations/${encodeURIComponent(target)}`, { signal: options.signal }); return map(response.translation, transcript); } catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error; } },
-  async translate(projectId: string, transcript: Transcript, target: LanguageCode, options: Options = {}) { if (!await confirmAction('Dịch bản ghi', `Bắt đầu dịch sang ${target.toUpperCase()}? Thao tác này có thể sử dụng dịch vụ AI tính phí.`)) throw new Error('Đã hủy thao tác.'); const response = await api<{ translation: TranslationDto }>(`/projects/${projectId}/translations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: target }) }); await projectRepository.refresh(); return map(response.translation, transcript); },
-  async save(_projectId?: string, _draft?: Translation, _options?: Options) { throw new Error('Backend chưa hỗ trợ chỉnh sửa bản dịch.'); },
+  async translate(projectId: string, transcript: Transcript, target: LanguageCode, options: Options = {}) { if (!await confirmAction('Dịch bản ghi', confirmationMessages.translation(target))) throw new Error('Đã hủy thao tác.'); const response = await api<{ translation: TranslationDto }>(`/projects/${projectId}/translations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: target }) }); await projectRepository.refresh(); return map(response.translation, transcript); },
+  async save(_projectId?: string, _draft?: Translation, _options?: Options) { throw new Error('Máy chủ chưa hỗ trợ chỉnh sửa bản dịch.'); },
 };

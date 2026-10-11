@@ -4,6 +4,8 @@ import { projectRepository } from '../projects/projectRepository';
 import { transcriptService } from '../transcript/transcriptService';
 import type { Transcript } from '../transcript/types';
 import type { Translation } from './types';
+import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
+import { requireConfirmation } from '../../utils/confirmationGuard.mjs';
 
 type Options = { signal?: AbortSignal };
 type TranslationDto = { id: string; projectId: string; sourceLanguage: string; targetLanguage: string; fullText: string; segments: Array<{ index: number; sourceSegmentId: string; text: string }>; createdAt: string; updatedAt: string };
@@ -22,9 +24,9 @@ export const translationService = {
     catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error }
   },
   async translate(projectId: string, _transcript: Transcript, target: LanguageCode, options: Options = {}): Promise<Translation> {
-    if (!window.confirm(`Bắt đầu dịch sang ${target.toUpperCase()}? Thao tác này có thể sử dụng dịch vụ AI tính phí.`)) throw new DOMException('Đã hủy', 'AbortError');
+    requireConfirmation(window.confirm, confirmationMessages.translation(target));
     const response = await api<{ translation: TranslationDto }>(`/projects/${projectId}/translations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: target }) });
     await projectRepository.refresh(); return map(projectId, response.translation, options);
   },
-  async save(_projectId: string, _draft: Translation, _options: Options = {}): Promise<Translation> { throw new Error('Backend chưa hỗ trợ lưu chỉnh sửa bản dịch.'); },
+  async save(_projectId: string, _draft: Translation, _options: Options = {}): Promise<Translation> { throw new Error('Máy chủ chưa hỗ trợ lưu chỉnh sửa bản dịch.'); },
 };

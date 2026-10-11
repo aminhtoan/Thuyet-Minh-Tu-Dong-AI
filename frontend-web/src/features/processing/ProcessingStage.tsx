@@ -8,7 +8,7 @@ export function ProcessingStage({ stage }: { stage: Stage }) {
   const active = stage.status === 'PROCESSING';
   return <li className={'processing-stage processing-stage--' + stage.status.toLowerCase()}>
     <span className="processing-stage__icon" aria-hidden={!active}>
-      {active ? <Spinner label={stage.title + ' processing'} /> : stage.status === 'COMPLETED' ? '✓' : stage.status === 'FAILED' ? '!' : stage.status === 'CANCELLED' ? '×' : '○'}
+      {active ? <Spinner label={'Đang xử lý ' + stage.title} /> : stage.status === 'COMPLETED' ? '✓' : stage.status === 'FAILED' ? '!' : stage.status === 'CANCELLED' ? '×' : '○'}
     </span>
     <div className="processing-stage__body">
       <div className="processing-stage__heading"><h3>{stage.title}</h3>

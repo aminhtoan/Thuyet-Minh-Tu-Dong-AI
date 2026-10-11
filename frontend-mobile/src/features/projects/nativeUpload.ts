@@ -3,6 +3,7 @@ import { Paths } from 'expo-file-system';
 import { env } from '../../config/env';
 import { ApiError, refreshSession, session } from '../../lib/api';
 import { createNativeUploadContract, invokeNativeUpload, isNativeUploadFileUri } from './nativeUploadContract.mjs';
+import { shouldRetryNativeUpload } from './nativeUploadRetry.mjs';
 import { describeUploadUri, safeUploadError, uploadDiagnostic } from './uploadDiagnostics';
 
 type ErrorEnvelope = { success: false; error: { code: string; message: string } };
@@ -52,7 +53,10 @@ export async function uploadNativeMedia(input: NativeUploadInput, retry = true):
     const response = await task.uploadAsync();
     if (!response || input.signal.aborted) throw new Error('UPLOAD_CANCELLED');
     uploadDiagnostic('native-upload:response', { ...location, status: response.status, mimeType: input.mimeType });
-    if (response.status === 401 && retry && await refreshSession()) return uploadNativeMedia(input, false);
+    if (response.status === 401 && retry) {
+      const refreshed = await refreshSession();
+      if (shouldRetryNativeUpload(response.status, retry, refreshed)) return uploadNativeMedia(input, false);
+    }
     if (response.status < 200 || response.status >= 300) throw responseError(response.status, response.body);
     input.onProgress(100);
   } catch (error) {

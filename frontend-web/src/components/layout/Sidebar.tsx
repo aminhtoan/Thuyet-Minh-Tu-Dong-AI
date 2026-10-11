@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom'
 import { Icon, type IconName } from '../common/Icon'
+import { navigationLabels } from '../../localization/navigationLabels.mjs'
 
 type SidebarProps = { open: boolean; onNavigate: () => void }
 type NavigationItem = { label: string; to: string; icon: IconName; end?: boolean }
 
 const primaryItems: NavigationItem[] = [
-  { label: 'Bảng điều khiển', to: '/dashboard', icon: 'dashboard' },
-  { label: 'Dự án của tôi', to: '/projects', icon: 'projects', end: true },
-  { label: 'Tạo thuyết minh', to: '/projects/new', icon: 'mic' },
-  { label: 'Lịch sử', to: '/history', icon: 'history' },
+  { label: navigationLabels.dashboard, to: '/dashboard', icon: 'dashboard' },
+  { label: navigationLabels.projects, to: '/projects', icon: 'projects', end: true },
+  { label: navigationLabels.create, to: '/projects/new', icon: 'mic' },
+  { label: navigationLabels.history, to: '/history', icon: 'history' },
 ]
 
 function SidebarLink({ item, onNavigate }: { item: NavigationItem; onNavigate: () => void }) {
@@ -17,10 +18,10 @@ function SidebarLink({ item, onNavigate }: { item: NavigationItem; onNavigate: (
 
 export function Sidebar({ open, onNavigate }: SidebarProps) {
   return (
-    <aside id="app-sidebar" className={`sidebar${open ? ' sidebar--open' : ''}`} aria-label="Main navigation">
+    <aside id="app-sidebar" className={`sidebar${open ? ' sidebar--open' : ''}`} aria-label="Điều hướng chính">
       <NavLink to="/dashboard" className="sidebar__brand" onClick={onNavigate}><span className="sidebar__mark"><Icon name="wave" width="30" /></span><span>Người kể chuyện AI<small>Thuyết minh đa ngôn ngữ</small></span></NavLink>
       <nav className="sidebar__nav">{primaryItems.map((item) => <SidebarLink key={item.to} item={item} onNavigate={onNavigate} />)}</nav>
-      <div className="sidebar__bottom"><div className="sidebar__help"><strong>Sáng tạo không giới hạn</strong><p>Khám phá quy trình thuyết minh đa ngôn ngữ.</p></div><SidebarLink item={{ label: 'Cài đặt', to: '/settings', icon: 'settings' }} onNavigate={onNavigate} /></div>
+      <div className="sidebar__bottom"><div className="sidebar__help"><strong>Sáng tạo không giới hạn</strong><p>Khám phá quy trình thuyết minh đa ngôn ngữ.</p></div><SidebarLink item={{ label: navigationLabels.account, to: '/settings', icon: 'settings' }} onNavigate={onNavigate} /></div>
     </aside>
   )
 }
