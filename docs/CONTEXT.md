@@ -295,3 +295,11 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Web responsive card/pagination có breakpoint 600/420/360px, tránh horizontal page overflow ở 375/320px. Mobile action/filter/pagination có target tối thiểu 44px, accessibility labels và text wrapping.
 - Source validation: Web 11/11 tests + lint/typecheck/build; Mobile 51/51 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules. Browser NOT RUN (Chrome automation unavailable), physical Android NOT RUN (`adb` unavailable).
 - Không thay backend/API/data, native upload, auth refresh, Project Detail hoặc AI workflow. S24.3.12.2 vẫn POSTPONED.
+
+## S25.6 Create, Upload and Detail Decisions (2026-10-11)
+
+- Create Project Web/Mobile dùng cùng payload `{ name, description, sourceLanguage }` đã được backend hỗ trợ; tên và ngôn ngữ là bắt buộc, mô tả tùy chọn. Không thêm field hoặc API contract mới.
+- Browser `fetch` multipart hiện không cung cấp progress event thật trong client hiện tại, vì vậy Web hiển thị loading không xác định thay vì phần trăm giả. Mobile tiếp tục hiển thị progress do native upload callback cung cấp thực sự.
+- Android DocumentPicker staging, app-owned cache, native multipart field `file`, Bearer refresh-once, retry/cleanup và duplicate prevention là regression boundary, không được thay bằng FormData/Blob.
+- Project Detail chỉ hiển thị source-media metadata từ API; không tạo public/raw URL hoặc playback khi backend chưa có source-media endpoint. Workflow action tiếp tục dùng trạng thái dự án để mở bước hiện có và không tự kích hoạt paid AI.
+- Source validation: Web 14/14 tests + lint/typecheck/build; Mobile 54/54 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules; `git diff --check` PASS. Browser/device visual smoke NOT RUN.

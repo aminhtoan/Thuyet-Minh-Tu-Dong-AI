@@ -6,7 +6,7 @@ import { executeProjectUpload } from './projectUploadFlow.mjs';
 import { prepareUploadFile } from './prepareUploadFile';
 import { resolveUploadMimeType } from './uploadMetadata.mjs';
 
-export type UploadOptions = { projectName: string; sourceLanguage: LanguageCode; file: DocumentPickerAsset; signal: AbortSignal; onProgress: (progress: number) => void; retryProjectId?: string | null };
+export type UploadOptions = { projectName: string; description: string; sourceLanguage: LanguageCode; file: DocumentPickerAsset; signal: AbortSignal; onProgress: (progress: number) => void; retryProjectId?: string | null };
 type CreatedProject = { project: { id: string } };
 type UploadFlowResult = { ok: true; projectId: string } | { ok: false; error: unknown; retryProjectId: string | null };
 
@@ -14,9 +14,9 @@ export class ProjectUploadError extends Error {
   public constructor(message: string, public readonly retryProjectId: string | null) { super(message); }
 }
 
-export async function uploadProjectMedia({ projectName, sourceLanguage, file, signal, onProgress, retryProjectId }: UploadOptions): Promise<string> {
+export async function uploadProjectMedia({ projectName, description, sourceLanguage, file, signal, onProgress, retryProjectId }: UploadOptions): Promise<string> {
   onProgress(0);
-  const project = { name: projectName, sourceLanguage };
+  const project = { name: projectName, description, sourceLanguage };
   const result = await executeProjectUpload(
     { project, retryProjectId },
     {

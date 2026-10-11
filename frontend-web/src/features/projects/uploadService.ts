@@ -1,12 +1,12 @@
 import { api } from '../../lib/api'
 import type { LanguageCode } from './types'
 
-export type UploadOptions = { projectName: string; sourceLanguage: LanguageCode; file: File; signal: AbortSignal; onProgress: (progress: number) => void }
+export type UploadOptions = { projectName: string; description: string; sourceLanguage: LanguageCode; file: File; signal: AbortSignal; onProgress: (progress: number) => void }
 type CreatedProject = { project: { id: string } }
 
-export async function uploadProjectMedia({ projectName, sourceLanguage, file, signal, onProgress }: UploadOptions): Promise<void> {
+export async function uploadProjectMedia({ projectName, description, sourceLanguage, file, signal, onProgress }: UploadOptions): Promise<void> {
   onProgress(0)
-  const { project } = await api<CreatedProject>('/projects', { method: 'POST', signal, body: JSON.stringify({ name: projectName, sourceLanguage }) })
+  const { project } = await api<CreatedProject>('/projects', { method: 'POST', signal, body: JSON.stringify({ name: projectName, description, sourceLanguage }) })
   try {
     const form = new FormData()
     form.append('file', file)

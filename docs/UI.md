@@ -621,3 +621,27 @@ UI state dùng các nhãn: `NOT_STARTED` → **Chưa bắt đầu**, `LOADING` �
 
 - Browser visual smoke **NOT RUN** vì Chrome automation không khả dụng trong môi trường hiện tại.
 - Physical Android visual smoke **NOT RUN** vì không có `adb` khả dụng. Source tests/build/export không thay thế hai kiểm tra này.
+
+## S25.6 — Create Project, Upload Media & Project Detail
+
+### Parity checklist đã triển khai
+
+| Hành vi | Web | Mobile |
+|---|---|---|
+| Tạo dự án | Tên, mô tả, ngôn ngữ nguồn | Tên, mô tả, ngôn ngữ nguồn |
+| Validation | Inline, required, giới hạn ký tự | Inline, required, giới hạn ký tự |
+| Chọn tệp | File picker và drag/drop hiện có | Native DocumentPicker và staging hiện có |
+| Tiến trình upload | Loading không xác định, không giả phần trăm | Progress thật từ native upload callback |
+| Khôi phục lỗi | Hủy, retry, chọn tệp khác | Hủy, retry, fresh selection khi URI hết quyền |
+| Detail | Badge, metadata, workflow, edit/save | Badge, metadata, workflow, edit/save |
+
+### Quy tắc trình bày
+
+- Create giữ ba khu vực rõ ràng: thông tin dự án, tệp phương tiện và hành động tải lên. Control có focus/touch target tối thiểu 44px; action không bị cắt ở 320–375px.
+- Tên tệp dài phải wrap; thông tin loại/dung lượng không làm tràn card. Web preview dùng nhãn accessibility tiếng Việt; Mobile không thay native transport đã kiểm chứng.
+- Project Detail đặt trạng thái cạnh tiêu đề, WorkflowSteps cuộn ngang trên Mobile và responsive trên Web; metadata dùng nhãn–giá trị rõ ràng. Save có disabled/loading, success/error live feedback và chống gửi trùng.
+- Chỉ action phù hợp trạng thái được dùng làm CTA tiếp tục. Bước khóa vẫn là presentation, không tự gọi STT/Translation/TTS. Không hiển thị source-media playback khi API chưa hỗ trợ.
+
+### Runtime validation gap
+
+- Browser visual smoke: **NOT RUN**. Physical Android visual smoke: **NOT RUN**. Build/export và source tests không thay thế kiểm tra giao diện trên runtime thật.

@@ -368,3 +368,12 @@ S24 Full Frontend / Backend Integration.
 - Regression tests bổ sung khóa real repository usage, supported quick actions, filter/page reset và focus reload. Web **11/11 PASS**; Mobile **51/51 PASS**. Web lint/typecheck/build PASS; Mobile lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (**1.414 modules**); `git diff --check` PASS.
 - Browser visual smoke: **NOT RUN** vì browser automation báo Chrome không khả dụng. Physical Android visual smoke: **NOT RUN** vì `adb` không có trong môi trường/PATH. Không claim runtime PASS.
 - Không sửa Backend/Admin/database/API, Android upload, JWT refresh, Project Detail hay AI workflows; không gọi paid AI API. S24.3.12.2 tiếp tục **POSTPONED**.
+
+## S25.6 — Create Project, Upload Media & Project Detail UI Polish
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-11; browser visual smoke và physical Android visual smoke **NOT RUN**.
+- Create Project Web/Mobile nay dùng cùng các trường backend hỗ trợ: tên bắt buộc, mô tả tùy chọn và ngôn ngữ nguồn bắt buộc; có inline validation, disabled/loading state, giới hạn ký tự và bố cục phù hợp màn hình hẹp/keyboard.
+- Upload Web giữ browser multipart hiện có và dùng trạng thái tải không xác định thay vì phần trăm giả; giữ chọn lại, hủy, retry, lỗi và success feedback. Mobile giữ nguyên DocumentPicker staging, native multipart, Bearer refresh-once, progress thật, retry/cleanup và chống duplicate project đã physical PASS.
+- Project Detail Web/Mobile có status badge, mô tả, metadata phương tiện, WorkflowSteps, edit validation, save success/error và action tiếp tục theo trạng thái. Web bổ sung synchronous save lock; Mobile tiếp tục dùng `runProjectSaveOnce`. Không thêm source-media playback vì backend chưa có endpoint tương ứng.
+- Regression tests: Web **14/14 PASS**, Mobile **54/54 PASS**. Web lint/typecheck/build PASS; Mobile lint/typecheck PASS; Expo Doctor **21/21 PASS**; Android Hermes export PASS (**1.414 modules**); `git diff --check` PASS.
+- Không sửa Backend/Admin/database/API/routes, không gọi paid AI và không thay Android upload transport. S24.3.12.2 vẫn **POSTPONED**.

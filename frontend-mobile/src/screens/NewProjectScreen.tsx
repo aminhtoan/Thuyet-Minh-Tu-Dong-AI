@@ -20,7 +20,9 @@ import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export function NewProjectScreen() {
   const [projectName, setProjectName] = useState('');
+  const [description, setDescription] = useState('');
   const [nameTouched, setNameTouched] = useState(false);
+  const [languageTouched, setLanguageTouched] = useState(false);
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode | null>(null);
   const [file, setFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [status, setStatus] = useState<UploadStatus>('idle');
@@ -72,6 +74,7 @@ export function NewProjectScreen() {
 
   async function startUpload() {
     setNameTouched(true);
+    setLanguageTouched(true);
     const result = validateMediaFile(file);
     if (nameError || !sourceLanguage || !result.valid || !file || busy) return;
     setStatus('validating');
@@ -81,7 +84,7 @@ export function NewProjectScreen() {
     controllerRef.current = controller;
     try {
       setStatus('uploading');
-      const projectId = await uploadProjectMedia({ projectName: projectName.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress, retryProjectId: retryProjectIdRef.current });
+      const projectId = await uploadProjectMedia({ projectName: projectName.trim(), description: description.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress, retryProjectId: retryProjectIdRef.current });
       retryProjectIdRef.current = null;
       if (!controller.signal.aborted) setStatus('success');
       if (!controller.signal.aborted) router.replace(`/projects/${projectId}`);
@@ -113,8 +116,10 @@ export function NewProjectScreen() {
         <Card style={styles.section}>
           <View style={styles.heading}><Text style={styles.step}>01</Text><View style={styles.headingText}><Text style={styles.sectionTitle}>Thông tin dự án</Text><Text style={styles.muted}>Đặt tên dự án và chọn ngôn ngữ được sử dụng trong phương tiện.</Text></View></View>
           <Input label="Tên dự án" required placeholder="Ví dụ: Giới thiệu sản phẩm" value={projectName} onChangeText={setProjectName} onBlur={() => setNameTouched(true)} maxLength={100} returnKeyType="done" error={nameTouched ? nameError ?? undefined : undefined} helperText="Có ít nhất 3 ký tự." editable={!busy && status !== 'success'} />
+          <Input label="Mô tả" placeholder="Mô tả ngắn về nội dung dự án" value={description} onChangeText={setDescription} maxLength={1000} multiline numberOfLines={3} style={styles.multiline} editable={!busy && status !== 'success'} />
           <Text style={styles.fieldLabel}>Ngôn ngữ nguồn <Text style={styles.required}>*</Text></Text>
           <View style={styles.languageRow}>{sourceLanguageOptions.map(({ value, label }) => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`Ngôn ngữ nguồn ${label}`} accessibilityState={{ selected: sourceLanguage === value, disabled: busy || status === 'success' }} disabled={busy || status === 'success'} onPress={() => setSourceLanguage(value)} style={[styles.languageChip, sourceLanguage === value && styles.languageChipSelected]}><Text style={[styles.languageText, sourceLanguage === value && styles.languageTextSelected]}>{label}</Text></Pressable>)}</View>
+          {languageTouched && !sourceLanguage && <Text accessibilityRole="alert" style={styles.error}>Vui lòng chọn ngôn ngữ nguồn.</Text>}
         </Card>
         <Card style={styles.section}>
           <View style={styles.heading}><Text style={styles.step}>02</Text><View style={styles.headingText}><Text style={styles.sectionTitle}>Tệp phương tiện</Text><Text style={styles.muted}>MP4, MOV, WEBM, MP3, WAV, M4A · tối đa {formatFileSize(MAX_MEDIA_FILE_SIZE)}</Text></View></View>
@@ -152,6 +157,7 @@ const styles = StyleSheet.create({
   languageChipSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   languageText: { color: colors.textSecondary, fontSize: typography.size.sm },
   languageTextSelected: { color: colors.primary, fontWeight: typography.weight.semibold },
+  multiline: { minHeight: 88, paddingTop: spacing.sm, textAlignVertical: 'top' },
   pickerZone: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xl, paddingHorizontal: spacing.md, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.surfaceSecondary },
   pickerTitle: { color: colors.textPrimary, fontSize: typography.size.md, fontWeight: typography.weight.semibold },
   fileCard: { gap: spacing.sm, padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surfaceSecondary },

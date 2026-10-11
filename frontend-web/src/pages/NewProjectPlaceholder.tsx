@@ -4,7 +4,7 @@ import { Button } from '../components/common/Button'
 import { Icon } from '../components/common/Icon'
 import { Card } from '../components/common/Card'
 import { Input } from '../components/common/Input'
-import { ProgressBar } from '../components/common/ProgressBar'
+import { Spinner } from '../components/common/Spinner'
 import { PageHeader } from '../components/layout/PageHeader'
 import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, validateProjectName, type UploadStatus } from '../features/projects/mediaUpload'
 import { uploadProjectMedia } from '../features/projects/uploadService'
@@ -14,11 +14,13 @@ import '../styles/upload.css'
 
 export function NewProjectPlaceholder() {
   const [projectName, setProjectName] = useState('')
+  const [description, setDescription] = useState('')
   const [nameTouched, setNameTouched] = useState(false)
+  const [languageTouched, setLanguageTouched] = useState(false)
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode | ''>('')
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<UploadStatus>('idle')
-  const [progress, setProgress] = useState(0)
+  const [, setProgress] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -84,6 +86,7 @@ export function NewProjectPlaceholder() {
   }
   async function startUpload() {
     setNameTouched(true)
+    setLanguageTouched(true)
     const result = validateMediaFile(file && { name: file.name, size: file.size, mimeType: file.type })
     if (nameError || !sourceLanguage || !result.valid || !file || busy) return
     setStatus('validating')
@@ -93,7 +96,7 @@ export function NewProjectPlaceholder() {
     controllerRef.current = controller
     try {
       setStatus('uploading')
-      await uploadProjectMedia({ projectName: projectName.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress })
+      await uploadProjectMedia({ projectName: projectName.trim(), description: description.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress })
       if (!controller.signal.aborted) setStatus('success')
     } catch (error) {
       if (controller.signal.aborted) setStatus('cancelled')
@@ -109,7 +112,8 @@ export function NewProjectPlaceholder() {
         <div className="upload-section-heading"><span className="upload-step">01</span><div><h2>Chi tiết dự án</h2><p>Đặt tên dự án và chọn ngôn ngữ được sử dụng trong phương tiện gốc.</p></div></div>
         <div className="upload-fields">
           <Input label="Tên dự án" required maxLength={100} placeholder="Ví dụ: Giới thiệu sản phẩm" value={projectName} onChange={(event) => setProjectName(event.target.value)} onBlur={() => setNameTouched(true)} error={nameTouched ? nameError ?? undefined : undefined} helperText="Có ít nhất 3 ký tự." disabled={busy || status === 'success'} />
-          <div className="field"><label className="field__label" htmlFor="source-language">Ngôn ngữ nguồn <span className="field__required" aria-hidden="true">*</span></label><select id="source-language" className="upload-select" value={sourceLanguage} onChange={(event) => setSourceLanguage(event.target.value as LanguageCode | '')} disabled={busy || status === 'success'} required><option value="">Chọn ngôn ngữ</option>{sourceLanguageOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><p className="field__message">Ngôn ngữ được sử dụng trong phương tiện gốc.</p></div>
+          <Input label="Mô tả" maxLength={1000} placeholder="Mô tả ngắn về nội dung dự án" value={description} onChange={(event) => setDescription(event.target.value)} disabled={busy || status === 'success'} />
+          <div className="field upload-field--full"><label className="field__label" htmlFor="source-language">Ngôn ngữ nguồn <span className="field__required" aria-hidden="true">*</span></label><select id="source-language" className="upload-select" value={sourceLanguage} onBlur={() => setLanguageTouched(true)} onChange={(event) => setSourceLanguage(event.target.value as LanguageCode | '')} disabled={busy || status === 'success'} required aria-invalid={languageTouched && !sourceLanguage} aria-describedby="source-language-message"><option value="">Chọn ngôn ngữ</option>{sourceLanguageOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><p id="source-language-message" className={languageTouched && !sourceLanguage ? 'field__message field__message--error' : 'field__message'}>{languageTouched && !sourceLanguage ? 'Vui lòng chọn ngôn ngữ nguồn.' : 'Ngôn ngữ được sử dụng trong phương tiện gốc.'}</p></div>
         </div>
       </Card>
       <Card padding="lg" className="upload-form-card">
@@ -120,13 +124,13 @@ export function NewProjectPlaceholder() {
         </div> : <div className={`upload-file${validation.valid ? '' : ' upload-file--invalid'}`}>
           <div className="upload-file__head"><span className="upload-file__type">{validation.valid ? validation.mediaType === 'VIDEO' ? 'Video' : 'Âm thanh' : 'Tệp không hợp lệ'}</span><div className="upload-file__actions"><Button type="button" size="sm" variant="secondary" disabled={busy || status === 'success'} onClick={() => inputRef.current?.click()}>Thay đổi</Button><Button type="button" size="sm" variant="ghost" disabled={busy || status === 'success'} onClick={removeFile}>Xóa</Button></div></div>
           <strong className="upload-file__name">{file.name}</strong><span className="upload-file__size">{formatFileSize(file.size)}</span>
-          {validation.valid && previewUrl && (validation.mediaType === 'VIDEO' ? <video className="upload-preview" src={previewUrl} controls preload="metadata" aria-label="Selected video preview" /> : <audio className="upload-preview" src={previewUrl} controls preload="metadata" aria-label="Selected audio preview" />)}
+          {validation.valid && previewUrl && (validation.mediaType === 'VIDEO' ? <video className="upload-preview" src={previewUrl} controls preload="metadata" aria-label="Xem trước video đã chọn" /> : <audio className="upload-preview" src={previewUrl} controls preload="metadata" aria-label="Nghe thử âm thanh đã chọn" />)}
         </div>}
         {file && !validation.valid && <p className="upload-error" role="alert">{validation.error}</p>}
       </Card>
       <Card padding="lg" className="upload-form-card upload-action-card">
         <div className="upload-section-heading"><span className="upload-step">03</span><div><h2>Tải lên</h2><p>Dự án và tệp phương tiện sẽ được lưu trên máy chủ.</p></div></div>
-        {status === 'uploading' && <div className="upload-feedback"><ProgressBar value={progress} label="Đang tải phương tiện lên" /><Button type="button" variant="secondary" onClick={cancelUpload}>Hủy tải lên</Button></div>}
+        {status === 'uploading' && <div className="upload-feedback" role="status"><Spinner label="Đang tải phương tiện lên máy chủ" /><p>Vui lòng giữ trang này mở cho đến khi hoàn tất.</p><Button type="button" variant="secondary" onClick={cancelUpload}>Hủy tải lên</Button></div>}
         {status === 'cancelled' && <div className="upload-feedback" role="status"><strong>Đã hủy tải lên</strong><p>Tệp vẫn đang được chọn. Bạn có thể thử lại khi sẵn sàng.</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Thử lại</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Chọn tệp khác</Button></div></div>}
         {status === 'failed' && <div className="upload-feedback" role="alert"><strong>Tải lên thất bại</strong><p>{uploadError ?? 'Không thể tải tệp phương tiện lên.'}</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Thử lại</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Chọn tệp khác</Button></div></div>}
         {status === 'success' && <div className="upload-feedback upload-feedback--success" role="status"><strong>Tải lên hoàn tất</strong><p>Dự án và tệp phương tiện đã được lưu.</p><Link className="button button--primary button--md" to="/projects">Tiếp tục đến dự án</Link></div>}
