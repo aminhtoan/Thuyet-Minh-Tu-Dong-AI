@@ -697,3 +697,19 @@ UI state dùng các nhãn: `NOT_STARTED` → **Chưa bắt đầu**, `LOADING` �
 - Customer Web Sidebar dùng nền navy `#111C32`, đồng bộ cột thương hiệu Login/Register. Brand màu trắng, subtitle slate sáng và waveform nằm trong khối primary.
 - Navigation giữ nguyên route và cấu trúc; hover dùng lớp trắng trong suốt, active dùng primary trong suốt với chỉ báo violet bên trái. Focus ring và touch target 44px được giữ rõ trên nền tối.
 - Tài khoản tiếp tục neo ở đáy, ngăn với navigation bằng đường viền tối giản. Không thêm card quảng bá hoặc chức năng mới.
+## S25.7.5 — Tạo thuyết minh Customer Web
+
+- Header riêng `/projects/new`: tiêu đề/mô tả lớn, liên kết về danh sách và Profile hiện có; không có search hoặc tiêu đề trùng trong nội dung.
+- Ba card trắng: chi tiết dự án (tên/mô tả hai cột, ngôn ngữ bên dưới), phương tiện (dropzone tím nhạt, metadata/preview thật), tải lên (heading trái/action phải). Mobile Web chuyển form/action sang một cột.
+- Giữ label, lỗi gần trường, focus ring và trạng thái disabled/loading; không thêm panel mẹo. Textarea giữ giới hạn 1000 ký tự hiện có.
+- Source validation PASS; browser visual/interaction smoke NOT RUN. Chờ người dùng duyệt, chưa đối chiếu ảnh minh họa cuối cùng.
+
+## S25.7.6 — Customer Web History Professional Table
+
+S25.7.6.1: bộ lọc riêng History có tên, thời gian theo `createdAt` với ranh giới ngày local, trạng thái, submit/Enter và reset. Loader riêng đọc đủ API pages trước khi lọc client-side; phân trang 10 kết quả từ tập đã lọc, không thay service chung. Responsive controls xuống hàng; ngày tùy chọn dùng native date inputs. Browser verification NOT RUN.
+
+- Header riêng `/history` có tiêu đề lớn và mô tả, giữ Profile; không search/tiêu đề trùng hoặc CTA tạo mới.
+- Bảng semantic có tên dự án, loại phương tiện (thiếu metadata hiển thị chưa có phương tiện), ngôn ngữ, thời điểm cập nhật, trạng thái chi tiết và liên kết Project Detail. Không coi thời điểm cập nhật là thời điểm tạo kết quả.
+- Search/filter vẫn chạy theo logic hiện tại; tablet cuộn trong vùng bảng, dưới 600px hàng trình bày như card. Empty/loading/error tách biệt, retry và xóa bộ lọc giữ nguyên.
+- History dùng project repository hiện có, không API lịch sử riêng hay pagination riêng; dữ liệu hiện bị giới hạn 100 dự án từ repository. Không hiển thị tổng hoặc phân trang giả.
+- Source validation PASS; browser visual/interaction smoke NOT RUN, chờ duyệt.

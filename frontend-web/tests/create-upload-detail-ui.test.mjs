@@ -8,7 +8,7 @@ const uploadSource = await readFile(new URL('../src/features/projects/uploadServ
 
 test('create project validates required fields and sends supported description', () => {
   assert.match(createSource, /Vui lòng chọn ngôn ngữ nguồn/);
-  assert.match(createSource, /label="Mô tả"/);
+  assert.match(createSource, /htmlFor="project-description">Mô tả/);
   assert.match(uploadSource, /JSON\.stringify\(\{ name: projectName, description, sourceLanguage \}\)/);
 });
 

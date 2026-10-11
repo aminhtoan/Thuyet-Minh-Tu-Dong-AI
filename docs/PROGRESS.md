@@ -415,3 +415,18 @@ S24 Full Frontend / Backend Integration.
 - Sidebar Customer Web đổi sang navy `#111C32` đồng bộ Login/Register; brand, hover, active, focus và khu vực Tài khoản được tinh chỉnh cho nền tối.
 - Route, active-state logic, responsive drawer và authentication không đổi. Browser visual verification **NOT RUN**.
 - Web tests **29/29 PASS**; lint/typecheck/build PASS; `git diff --check` PASS.
+## S25.7.5 — Customer Web Create Narration UI
+
+- PARTIAL — source validation ngày 2026-10-11: Web tests 36/36 PASS; lint, typecheck, production build PASS. Browser visual/interaction smoke NOT RUN; ảnh minh họa cuối cùng không được đính kèm trong phiên này.
+- Route `/projects/new` có heading/mô tả lớn trong Header và liên kết quay lại danh sách cạnh Profile. Nội dung gồm ba card: chi tiết dự án, phương tiện, tải lên.
+- Mô tả dùng textarea giữ giới hạn hiện có 1000 ký tự; upload hiển thị guidance, trạng thái chưa chọn và metadata/preview thật. Giữ upload handler, multipart, validation, retry/cancellation và success flow; không gọi AI trả phí.
+- Chờ người dùng duyệt giao diện và kiểm tra responsive/interaction trên trình duyệt. Không commit.
+
+## S25.7.6 — Customer Web History Professional Table
+
+S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/Enter, reset về trang 1; loader riêng History đọc đầy đủ API pages và client pagination 10 kết quả. Source lint/typecheck/build PASS; browser verification NOT RUN. Không đổi Backend/Header/Profile/API. Việc tải metadata toàn bộ history có thể tốn thời gian với dataset lớn; pagination theo offset không bảo đảm snapshot nếu dữ liệu thay đổi đồng thời.
+
+- PARTIAL ngày 2026-10-11: UI/source hoàn tất; browser visual/interaction smoke NOT RUN.
+- Header riêng Lịch sử, semantic table sáu cột từ dữ liệu thật, ngày giờ vi-VN, dictionary trạng thái, Project Detail link, empty/loading/error và responsive card/scroll. Bỏ các CTA tạo mới.
+- Không đổi service/API/search/filter nghiệp vụ. Giới hạn sẵn có: repository đọc tối đa 100 dự án, History chưa có pagination riêng; không suy diễn tổng bản ghi.
+- Web tests 36/36 PASS; lint/typecheck/build PASS. Không gọi paid AI, không commit; chờ người dùng duyệt.

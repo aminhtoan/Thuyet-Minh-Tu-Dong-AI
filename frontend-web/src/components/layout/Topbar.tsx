@@ -21,6 +21,8 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
   const logoutLock = useRef(false);
   const identity = getProfileIdentity(user);
   const isProjectsPage = pathname === '/projects';
+  const isNewProjectPage = pathname === '/projects/new';
+  const isHistoryPage = pathname === '/history';
 
   useEffect(() => {
     let active = true;
@@ -57,9 +59,12 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
     catch { setLoggingOut(false); logoutLock.current = false; }
   }
 
-  return <header className={`topbar${isProjectsPage ? ' topbar--projects' : ''}`}>
+  return <header className={`topbar${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}`}>
     <div className="topbar__context"><button className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button>{isProjectsPage ? <div className="topbar__page-heading"><h1>Dự án của tôi</h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn.</p></div> : <span className="topbar__title">{title}</span>}</div>
-    {!isProjectsPage && <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
+    {isNewProjectPage && <div className="topbar__create-heading"><h1>Tạo thuyết minh</h1><p>Thêm thông tin và chọn video hoặc âm thanh để bắt đầu.</p></div>}
+    {isHistoryPage && <div className="topbar__history-heading"><h1>Lịch sử</h1><p>Theo dõi các dự án và mở lại kết quả đã tạo.</p></div>}
+    {isNewProjectPage && <Link className="button button--secondary button--md topbar__create-back" to="/projects"><Icon name="arrow" width="16" />Về danh sách dự án</Link>}
+    {!isProjectsPage && !isNewProjectPage && !isHistoryPage && <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
       <Icon name="search" width="17" /><input aria-label="Tìm kiếm dự án toàn ứng dụng" placeholder="Tìm kiếm dự án..." value={query} onChange={event => setQuery(event.target.value)} />
       <button type="submit" aria-label="Tìm dự án"><Icon name="arrow" width="16" /></button>
     </form>}
