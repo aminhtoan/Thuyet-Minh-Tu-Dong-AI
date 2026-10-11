@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 const email = z.string().trim().email('Email không hợp lệ.').max(254).transform((value) => value.toLowerCase());
+export const profileNameSchema = z.object({
+  body: z.object({
+    fullName: z.string().trim().min(2, 'Họ và tên phải có ít nhất 2 ký tự.').max(100, 'Họ và tên không được vượt quá 100 ký tự.'),
+  }).strict(),
+});
 const password = z
   .string()
   .min(8, 'Mật khẩu phải có ít nhất 8 ký tự.')

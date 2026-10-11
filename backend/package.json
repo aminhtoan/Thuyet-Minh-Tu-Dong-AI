@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src tests --max-warnings=0",
     "test": "node --import tsx --test --test-concurrency=1 tests/auth.test.ts tests/project-media.test.ts tests/transcription.test.ts tests/translation.test.ts tests/tts.test.ts tests/media-processing.test.ts tests/admin-api.test.ts",
+    "test:profile": "node --import tsx --test tests/profile-name.test.ts",
     "seed:admin": "tsx src/scripts/seed-admin.ts",
     "seed:voices": "tsx src/scripts/seed-voice-catalog.ts"
   },

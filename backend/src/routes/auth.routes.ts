@@ -4,7 +4,7 @@ import * as authController from '../controllers/auth.controller.js';
 import { authenticate } from '../middleware/authenticate.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { errorResponse } from '../utils/api-response.js';
-import { loginSchema, refreshTokenSchema, registerSchema } from '../validators/auth.validator.js';
+import { loginSchema, refreshTokenSchema, registerSchema, profileNameSchema } from '../validators/auth.validator.js';
 
 const authRateLimiter: RequestHandler = rateLimit({
   windowMs: 15 * 60 * 1_000,
@@ -22,3 +22,4 @@ authRouter.post('/login', authRateLimiter, validate(loginSchema), authController
 authRouter.post('/refresh', authRateLimiter, validate(refreshTokenSchema), authController.refresh);
 authRouter.post('/logout', validate(refreshTokenSchema), authController.logout);
 authRouter.get('/me', authenticate, authController.me);
+authRouter.patch('/me', authenticate, validate(profileNameSchema), authController.updateMe);

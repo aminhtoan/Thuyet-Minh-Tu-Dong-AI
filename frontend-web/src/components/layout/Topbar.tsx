@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../../features/auth/authService';
+import { subscribeProfileUpdates } from '../../features/auth/profileUpdate.mjs';
 import { getProfileIdentity } from '../../features/auth/profileIdentity.mjs';
 import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
 import { Icon } from '../common/Icon';
@@ -23,11 +24,14 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
   const isProjectsPage = pathname === '/projects';
   const isNewProjectPage = pathname === '/projects/new';
   const isHistoryPage = pathname === '/history';
+  const isAccountPage = pathname === '/settings';
 
   useEffect(() => {
     let active = true;
-    void authService.me().then(({ user: currentUser }) => { if (active) setUser(currentUser); }).catch(() => { /* The account page retains retry/error details. */ });
-    return () => { active = false; };
+    let updated = false;
+    const unsubscribe = subscribeProfileUpdates((currentUser) => { updated = true; if (active) setUser(currentUser); });
+    void authService.me().then(({ user: currentUser }) => { if (active && !updated) setUser(currentUser); }).catch(() => { /* The account page retains retry/error details. */ });
+    return () => { active = false; unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -59,12 +63,13 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
     catch { setLoggingOut(false); logoutLock.current = false; }
   }
 
-  return <header className={`topbar${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}`}>
+  return <header className={`topbar${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}${isAccountPage ? ' topbar--account' : ''}`}>
     <div className="topbar__context"><button className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button>{isProjectsPage ? <div className="topbar__page-heading"><h1>Dự án của tôi</h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn.</p></div> : <span className="topbar__title">{title}</span>}</div>
     {isNewProjectPage && <div className="topbar__create-heading"><h1>Tạo thuyết minh</h1><p>Thêm thông tin và chọn video hoặc âm thanh để bắt đầu.</p></div>}
     {isHistoryPage && <div className="topbar__history-heading"><h1>Lịch sử</h1><p>Theo dõi các dự án và mở lại kết quả đã tạo.</p></div>}
     {isNewProjectPage && <Link className="button button--secondary button--md topbar__create-back" to="/projects"><Icon name="arrow" width="16" />Về danh sách dự án</Link>}
-    {!isProjectsPage && !isNewProjectPage && !isHistoryPage && <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
+    {isAccountPage && <div className="topbar__account-heading"><h1>Tài khoản</h1><p>Quản lý thông tin cá nhân của bạn.</p></div>}
+    {!isProjectsPage && !isNewProjectPage && !isHistoryPage && !isAccountPage && <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
       <Icon name="search" width="17" /><input aria-label="Tìm kiếm dự án toàn ứng dụng" placeholder="Tìm kiếm dự án..." value={query} onChange={event => setQuery(event.target.value)} />
       <button type="submit" aria-label="Tìm dự án"><Icon name="arrow" width="16" /></button>
     </form>}

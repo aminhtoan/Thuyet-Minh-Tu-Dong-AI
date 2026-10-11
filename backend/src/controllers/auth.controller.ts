@@ -27,3 +27,9 @@ export const me: RequestHandler = (request, response) => {
   if (!request.user) throw new AppError(401, 'AUTH_REQUIRED', 'Yêu cầu xác thực.');
   response.json(successResponse({ user: request.user }));
 };
+
+export const updateMe: RequestHandler = async (request, response) => {
+  if (!request.user) throw new AppError(401, 'AUTH_REQUIRED', 'Yêu cầu xác thực.');
+  const user = await authService.updateDisplayName(request.user.id, (request.body as { fullName: string }).fullName);
+  response.json(successResponse({ user }));
+};

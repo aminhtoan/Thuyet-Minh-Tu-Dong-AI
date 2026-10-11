@@ -1,5 +1,26 @@
 # UI Specification
 
+## S25.7.7.12 — Final Account spacing (hiện tại)
+
+- Card max-width840→820px, padding desktop32→24px dọc/32px ngang; content margin24→20/padding-top24→16; rows16→14px, hàng Email padding-bottom8px. Mục tiêu giảm chiều cao khoảng10–15% bằng spacing, chưa đo browser. Không fixed height/clip/giảm chữ hoặc touch target.
+- Nút Chỉnh sửa align-self:flex-start ngang đầu identity/name trên desktop; giữ outline/focus/min-height44px. Mobile vẫn button xuống hàng và thông tin stacked, long text wrap; margin8 + main padding24 giữ offset32px desktop.
+- Không đổi Account component, edit/save/cancel/API/auth/dropdown/logout hoặc layout chung. Giữ việc bỏ thông báo “Đã cập nhật họ và tên” theo yêu cầu riêng trước bước này; lỗi vẫn hiển thị. Browser1440/768/375 NOT RUN; source validation ghi tại PROGRESS.
+
+## S25.7.7.11 — Account Profile SaaS Modern (hiện tại)
+
+- Giữ một card trắng 840px/radius16/padding32; card cách Header32px bằng main padding24 + margin8 (mobile16+8). Avatar80px, tên24–28px/email/badge role thật gộp đầu card; nút Chỉnh sửa outline primary bên phải, focus rõ và không icon.
+- Badge nền #EDE9FE/chữ #4338CA/border #A5A0FA, padding6/12. Hai hàng semantic dl Họ và tên/Email có divider, padding dọc16px, không ô nền xám hay hàng role trùng. Mobile label trên/value dưới, button xuống hàng, email/tên dài wrap.
+- Giữ nguyên API/authService/updateName/subscription Header, validation2–100/trim, double-submit/loading/Hủy/error/success. Success chỉ sau response thành công, không có sẵn lúc mở trang. Không thay Backend/Header/Sidebar/auth/logout hoặc API contract.
+- UI UX Pro Max áp dụng hierarchy/grouping/focus/form semantics; browser edit/save/cancel/logout/responsive1440/768/375 NOT RUN, không ghi thử Database. Source validation ghi tại PROGRESS.
+
+## S25.7.7.9 — Chỉnh sửa họ và tên Customer Web
+
+- Giữ card compact S25.7.7.8; thêm Chỉnh sửa cạnh giá trị Họ và tên. Form inline có label/autofill/focus, Lưu thay đổi/Hủy, loading/disabled, feedback success/status và lỗi/alert. Không card/banner mới; email/role chỉ đọc, logout vẫn trong Profile dropdown.
+- Tên trim/2–100 ký tự như backend, hỗ trợ tiếng Việt; validate blur, chặn tên sai và double-submit. Hủy chỉ bỏ draft; API lỗi giữ tên cũ. Chỉ cập nhật UI sau response thành công.
+- Không có Auth Context trong Web hiện tại: dùng authService + subscription profile in-memory để Header cập nhật tên/avatar/dropdown; response GET khởi tạo cũ không ghi đè update mới. Account cập nhật state từ safe user trả về; reload gọi GET `/auth/me`.
+- UI UX Pro Max áp dụng form onSubmit, label/focus/error recovery và controls wrap nhỏ; không thay layout trang khác, session/JWT hoặc tokens.
+- Browser edit/cancel/reload/logout/responsive NOT RUN; không ghi thử Atlas. Source tests không thay thế runtime persistence.
+
 ## Design
 
 - Modern AI SaaS
@@ -753,3 +774,52 @@ S25.7.6.1: bộ lọc riêng History có tên, thời gian theo `createdAt` vớ
 - Search/filter vẫn chạy theo logic hiện tại; tablet cuộn trong vùng bảng, dưới 600px hàng trình bày như card. Empty/loading/error tách biệt, retry và xóa bộ lọc giữ nguyên.
 - History dùng project repository hiện có, không API lịch sử riêng hay pagination riêng; dữ liệu hiện bị giới hạn 100 dự án từ repository. Không hiển thị tổng hoặc phân trang giả.
 - Source validation PASS; browser visual/interaction smoke NOT RUN, chờ duyệt.
+
+## S25.7.7.1 — Customer Web Tài khoản
+
+- Route `/settings` dùng Header lớn “Tài khoản”, subtitle “Quản lý thông tin cá nhân và phiên đăng nhập.” và Profile hiện có; không search hoặc tiêu đề lặp trong nội dung. Chỉ áp dụng thay đổi Header cho route này.
+- Nội dung tối đa 960px, hai card trắng/border/shadow nhẹ: Hồ sơ cá nhân (avatar chữ đầu, họ tên/email/role thật, chỉ đọc) và Bảo mật và phiên đăng nhập (shield-check, đăng xuất). Không thêm đổi mật khẩu, 2FA hoặc chỉnh hồ sơ.
+- Giữ logout confirmation/service/lock và điều hướng hiện tại. Semantic section/dl, nút 44px/focus; hai cột thông tin chuyển một cột trên màn nhỏ, email/tên dài wrap, Header cho phép xuống hàng. Không thay tokens/Sidebar/màn khác.
+- Source tests 55/55 và lint/typecheck/build PASS. Browser visual, dữ liệu phiên/đăng xuất thực tế và responsive 1440/768/375 NOT RUN; chờ người dùng duyệt.
+
+## S25.7.7.3 — Account refinement (thay thế bố cục S25.7.7.1)
+
+- Header giữ “Tài khoản”/Profile, subtitle “Quản lý thông tin cá nhân của bạn.” Không search hoặc tiêu đề trùng.
+- Một card căn giữa max-width 960px. Avatar Primary 64px và tên/email/badge vai trò theo `authService.me()`/profileIdentity; divider trước “Thông tin cá nhân”. Semantic dl với Họ và tên/Email/Vai trò, vùng nền nhạt chỉ đọc, không input giả hoặc chức năng sửa.
+- Grid 2 cột desktop, 1 cột dưới 480px; summary min-width 0 và wrap tên/email dài. Giữ tokens, border/shadow nhẹ, loading/error/retry.
+- Đã bỏ card Bảo mật và phiên đăng nhập và logout trong card; logout vẫn truy cập từ Profile dropdown, logic không đổi.
+- Tests 55/55, lint/typecheck/build/diff check PASS. Browser responsive 1440/768/375, dữ liệu phiên và logout thực tế NOT RUN; chờ người dùng duyệt. Không commit/push.
+
+## S25.7.7.4 — Modern Account Profile UI (snapshot trước S25.7.7.5)
+
+- Giữ Header “Tài khoản”/subtitle/Profile, không search/tiêu đề lặp. Banner lavender gradient nhẹ token primary-light/background, radius 16px/border nhẹ/padding 32px; avatar Primary 80px cạnh tên/email/badge role từ tài khoản thật.
+- Card Thông tin cá nhân riêng bên dưới, icon user outline trang trí aria-hidden, dl chỉ đọc gồm Họ và tên/Email/Vai trò. Không card Thông tin tài khoản/Bảo mật, không thống kê/CTA/sửa hồ sơ hoặc logout nội dung. Đăng xuất chỉ qua Profile dropdown hiện có, logic giữ nguyên.
+- Max-width 960px/căn giữa/gap 24px; grid desktop 2 cột, dưới 480px 1 cột, banner mobile dọc, tablet/mobile giảm padding 24/20px; tên/email dài wrap. Giữ semantic color tokens, loading/error/retry.
+- Tests 55/55 và lint/typecheck/build/diff check PASS; browser visual/data/logout responsive 1440/768/375 NOT RUN. Chờ người dùng duyệt; không commit/push.
+
+## S25.7.7.5 — Account single profile card (snapshot trước Phương án B)
+
+- Route `/settings` → SettingsPlaceholder → AccountProfile: chỉ một section/card, max-width 880px căn giữa; cover lavender 150px, avatar Primary 88px chồng ranh giới 44px, nội dung trắng với tên/email/badge role một lần. Cover không chứa identity.
+- Không còn banner riêng/card con/dl/ô giống input/icon trang trí. API chỉ có tên/email/role nên không thêm divider hoặc mục Thông tin cá nhân trống. Dữ liệu lấy từ authService.me/profileIdentity hiện có; không thay API/auth/logout.
+- Xóa CSS banner/fields cũ; selector mới account-profile scoped. Tablet padding 24px, mobile 20px/cover 140px, tên/email wrap. Header/Sidebar/Profile dropdown giữ nguyên, logout chỉ trong dropdown.
+- Tests 57/57 PASS (có React-rendered markup assertions, không coi là DOM runtime); lint/typecheck/build/diff check PASS. Browser DOM/visual/responsive 1440/768/375 và logout thực tế NOT RUN. Chờ người dùng duyệt; không commit/push.
+
+## S25.7.7.6 — Account Phương án B (snapshot trước compact)
+
+- Một card max-width1000px/margin-top32px/border/radius16/shadow nhẹ/overflow hidden. Cover gradient lavender min-height300px, 2 đường cong pseudo-element opacity .08 không animation và không icon. Avatar116px viền trắng4px, tên26–30px/email16px/role badge căn giữa.
+- Phần trắng padding32px, Thông tin cá nhân22px và 3 hàng Họ và tên/Email/Vai trò, semantic dl không input/icon. Hàng min-height60px/nền background/radius12/gap12, label trái/value phải. Lặp ba giá trị giữa cover và rows là yêu cầu Phương án B, thay quy tắc S25.7.7.5.
+- Tablet padding24px; mobile cover min-height270px/avatar92px/padding20px, hàng label trên/value dưới. Min-height cho phép nội dung dài tăng chiều cao; wrap tên/email. Route `/settings` vẫn SettingsPlaceholder/AccountProfile, Header/Sidebar và logout qua dropdown không đổi.
+- Tests57/57/lint/typecheck/build/diff check PASS. Browser visual/1440/768/375 và logout thực tế NOT RUN; chưa đối chiếu ảnh minh họa trực tiếp. Chờ duyệt, không commit/push.
+
+### S25.7.7.7 — Account layout correction
+
+- Sóng bị clip ngay cover bằng overflow hidden, không vượt sang phần trắng; nội dung/avatar layer1/flex-shrink0 trong normal flow, không margin âm. Theo UI UX Pro Max giữ containment/layering và tránh cắt nội dung dài bằng min-height.
+- Card margin desktop0 vì main có padding-top24px; mobile dưới480 margin8+main padding16=24px. Header chung không sửa. Ba hàng vẫn grid/align center/min-height60/padding ngang24; mobile stacked labels, tên/email wrap.
+- Tests58/58/lint/typecheck/build/diff check PASS. Browser avatar/Header/clip/responsive1440/768/375/logout NOT RUN; source checks không chứng minh runtime PASS. Không commit/push; chờ duyệt.
+
+## S25.7.7.8 — Account compact (bố cục hiện tại)
+
+- Một card trắng max-width840px/padding32px/border/radius16/shadow nhẹ; bỏ hoàn toàn cover/gradient/sóng/pseudo-elements/chiều cao cover. Summary avatar80px bên trái + tên/email/badge thật bên phải gap24px, không center toàn card.
+- Divider nhẹ, Thông tin cá nhân và semantic dl grid2 cột desktop/1 mobile. Label trên, giá trị ngay dưới gap6px; field gap20px/nền background/padding16px, không input/icon hoặc value căn mép phải.
+- Tablet card padding24px/mobile20px; summary wrap khi thiếu chỗ, tên/email overflow-wrap:anywhere. Giữ Header/Sidebar/auth/load/retry/logout dropdown. Card offset dùng main padding24px; mobile16+margin8px.
+- Tests58/58/lint/typecheck/build/diff check PASS; browser1440/768/375/dữ liệu phiên/logout NOT RUN. Chờ người dùng duyệt, không commit/push.

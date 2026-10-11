@@ -35,6 +35,16 @@ export interface TokenPair {
 
 const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
+export const updateDisplayName = async (userId: string, fullName: string): Promise<SafeUser> => {
+  const user = await User.findOneAndUpdate(
+    { _id: userId, status: 'ACTIVE' },
+    { $set: { fullName } },
+    { returnDocument: 'after', runValidators: true },
+  );
+  if (!user) throw new AppError(401, 'INVALID_TOKEN', 'Tài khoản không còn khả dụng.');
+  return serializeUser(user);
+};
+
 export const serializeUser = (user: UserDocument & { _id: Types.ObjectId }): SafeUser => ({
   id: user._id.toString(),
   fullName: user.fullName,

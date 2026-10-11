@@ -33,7 +33,7 @@ test('project list keeps its local search while the header search is route-aware
   const projects = await readFile(new URL('../src/pages/ProjectsPlaceholder.tsx', import.meta.url), 'utf8');
   assert.match(topbar, /useLocation\(\)/);
   assert.match(topbar, /isProjectsPage = pathname === '\/projects'/);
-  assert.match(topbar, /\{!isProjectsPage && !isNewProjectPage && !isHistoryPage && <form className="topbar__search"/);
+  assert.match(topbar, /\{!isProjectsPage && !isNewProjectPage && !isHistoryPage && !isAccountPage && <form className="topbar__search"/);
   assert.match(projects, /className="project-list-search"/);
 });
 

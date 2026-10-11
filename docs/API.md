@@ -11,6 +11,7 @@ Backend hiện triển khai:
 - `POST /api/auth/refresh` — rotation access/refresh token.
 - `POST /api/auth/logout` — revoke refresh session.
 - `GET /api/auth/me` — thông tin user hiện tại, yêu cầu access token.
+- `PATCH /api/auth/me` — cập nhật riêng `fullName` của tài khoản đã xác thực (S25.7.7.9).
 - Customer Project CRUD và source Media subresource dưới `/api/projects`.
 - `POST /api/projects/:id/transcription` và `GET /api/projects/:id/transcript`.
 
@@ -62,6 +63,9 @@ S18 triển khai access JWT, refresh JWT có persistent hashed session, authenti
 | `POST` | `/api/auth/refresh` | `{ refreshToken }` | `200`, rotated token pair | `400`, `401 INVALID_TOKEN`, `403 ACCOUNT_BLOCKED` |
 | `POST` | `/api/auth/logout` | `{ refreshToken }` | `200`; idempotent revoke | `400 VALIDATION_ERROR` |
 | `GET` | `/api/auth/me` | `Authorization: Bearer <accessToken>` | `200`, safe current user | `401 AUTH_REQUIRED/INVALID_TOKEN/TOKEN_EXPIRED`, `403 ACCOUNT_BLOCKED` |
+| `PATCH` | `/api/auth/me` | Bearer JWT + strict JSON `{ "fullName": "Nguyễn Ánh" }` | `200`, `{ user: safeUser }` trong success envelope | `400 VALIDATION_ERROR`, `401 AUTH_REQUIRED/INVALID_TOKEN/TOKEN_EXPIRED`, `403 ACCOUNT_BLOCKED`, `500 INTERNAL_SERVER_ERROR` |
+
+S25.7.7.9: tên trim đầu/cuối, dài 2–100 ký tự theo JavaScript string length, hỗ trợ tiếng Việt; mọi trường dư (userId/id/email/role/password…) bị từ chối. ID luôn lấy từ user do authentication middleware xác minh. Chỉ `$set.fullName` trên user ACTIVE, Mongoose tự cập nhật timestamp; không đổi email/role/password/schema/session. GET `/auth/me` sau reload đọc lại Database. Không tạo `/users/me` trùng; phần đề xuất dưới đây là kế hoạch lịch sử, không phải endpoint đã triển khai. Kiểm thử mới dùng model mock, không ghi Atlas.
 
 Password yêu cầu 8–128 ký tự, có chữ hoa, chữ thường và chữ số. Email được trim/lowercase. Public registration luôn tạo `CUSTOMER / ACTIVE`; field `role` dư không thể tạo Admin. Sai email và sai password cùng trả generic `INVALID_CREDENTIALS`.
 
