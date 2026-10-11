@@ -33,6 +33,9 @@ const storage = multer.diskStorage({
 });
 
 export const uploadMedia = multer({
+  // Web/native clients send UTF-8 filename bytes in multipart headers.
+  // Decode once at the parser boundary; never reinterpret an existing Unicode name.
+  defParamCharset: 'utf8',
   storage,
   limits: { fileSize: Math.floor(env.maxUploadSizeMb * 1024 * 1024), files: 1 },
   fileFilter(_request, file, callback) {

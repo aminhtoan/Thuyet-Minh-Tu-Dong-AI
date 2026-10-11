@@ -1,5 +1,12 @@
 # Project Progress
 
+## S25.7.8.1 — Vietnamese upload filename encoding
+
+- Root cause tái hiện bằng HTTP multipart thật: Multer mặc định defParamCharset=latin1 giải mã filename UTF-8 thành mojibake trước mediaService.upload. Frontend FormData không chuyển đổi tên; Media.originalName lưu giá trị nhận được, API/UI chỉ đọc lại.
+- Chỉ đổi upload middleware sang defParamCharset=utf8; không chuyển latin1→UTF8 trên chuỗi đã giải mã, không sửa storage UUID/path/schema/API/UI. Charset khai báo rõ vẫn do parser xử lý.
+- test:filename không connect DB: model mock + Mongoose validation, upload file synthetic vào mkdtemp riêng; cleanup chỉ thư mục test. 11/11 PASS gồm baseline lỗi cũ, ASCII/4 tên yêu cầu/Unicode/ký tự tổ hợp/literal Ã©/MP4 và explicit charset; API reload trả đúng originalName, storage metadata không lộ. Backend lint/typecheck/build và git diff --check PASS. Browser upload/reload/detail và Atlas persistence NOT RUN; bộ regression DB cũ không chạy vì chưa xác minh DB test riêng.
+- Dữ liệu cũ không sửa tự động. Phương án: người dùng xác nhận tên gốc cho từng Media ID, backup/dry-run rồi chỉ cập nhật originalName với điều kiện giá trị cũ khớp; tuyệt đối giữ fileName/storagePath/projectId. Không tự suy đoán từ pattern mojibake (có thể là tên hợp lệ); migration cần phê duyệt riêng. Không commit/push/paid AI hoặc ghi Atlas.
+
 ## S25.7.7.12 — Final Account UI polish
 
 - CSS-only layout: max-width840→820px; padding dọc32→24, content margin20/padding-top16, rows14 và cuối Email8px. Mục tiêu giảm chiều cao10–15% bằng khoảng trắng, không ép height hoặc che nội dung; chưa đo thực tế browser.

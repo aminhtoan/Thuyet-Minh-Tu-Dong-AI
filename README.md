@@ -1,305 +1,99 @@
-# Multilingual AI Narration System
+# Người kể chuyện AI
 
-> **S24.5 integration status: PARTIAL.** Backend 118/118, Atlas health, Customer Web browser smoke và toàn bộ source/build validation đã PASS. Còn thiếu Mobile physical-device smoke, Admin authenticated browser smoke và actual protected artifact playback/download.
+## Hệ thống thuyết minh đa ngôn ngữ
 
-> **S24.1 backend:** Customer Voice Catalog and the minimal secure Admin business APIs are now available. The frontend services are intentionally unchanged in S24.1 and will be connected in S24.2/S24.3.
-
-Voice catalog development seed (optional, explicit and idempotent):
-
-```powershell
-cd C:\cnpm\multilingual-ai-narration\backend
-npm run seed:voices
-```
-
-The command requires valid `TTS_PROVIDER`, `TTS_DEFAULT_VOICE` and existing active Language records. It does not call a paid AI API.
-
-**Hệ thống thuyết minh tự động đa ngôn ngữ**
-
-Repository hiện cung cấp ba ứng dụng frontend cho quy trình:
-
-```text
-Media → Speech-to-Text → Transcript → Translation
-→ Voice / Text-to-Speech → Media Processing → Result
-```
-
-Các màn hình và luồng frontend hiện vẫn dùng dữ liệu cùng service mô phỏng. Backend đã có foundation, MongoDB Atlas, auth/JWT/RBAC và pipeline xử lý đến Result, nhưng frontend chưa tích hợp API.
-
-## Trạng thái hiện tại
-
-| Thành phần | Trạng thái |
-| --- | --- |
-| Customer Web | Đã tích hợp backend cho xác thực, CRUD project, upload media, STT, Translation, Voice/TTS, Processing, Result/History và logout. |
-| Admin Web | Đã tích hợp API thật cho Dashboard, Customers, Projects, Jobs, Languages, Voices, Logs và Settings. Chỉ khóa/mở khóa Customer là mutation được backend hỗ trợ. |
-| Customer Mobile | Đã dùng API thật cho auth, project/media, STT, translation, voice/TTS, processing và result/history; token lưu bằng Expo SecureStore. Transcript/Translation chỉ đọc vì backend chưa có update API. |
-| Backend | **S17–S20 đã triển khai.** Có auth/JWT/RBAC, Project/Media API và Speech-to-Text pipeline. |
-| MongoDB | **MongoDB Atlas đã kết nối và runtime validation PASS.** Development database là `multilingual_ai_narration`; frontend chưa dùng persistence phía server. |
-| Authentication / JWT / RBAC | **Đã triển khai ở backend và đã nối vào ba frontend.** Route guard phía client hỗ trợ UX; backend RBAC vẫn là ranh giới bảo mật. |
-| AI và media | STT, Translation, TTS và FFmpeg/media-processing backend đã tích hợp; frontend chưa kết nối API thật. |
-
-Mock frontend không phải security boundary, không ngăn đăng nhập thật và không tạo file audio/video kết quả thực. Dữ liệu in-memory có thể mất khi reload ứng dụng.
-
-## Chức năng frontend hiện có
-
-### Customer Web và Mobile
-
-- Login/Register mô phỏng, Dashboard, danh sách và lịch sử dự án.
-- Tạo dự án, chọn media và upload mô phỏng.
-- Transcript Editor và Translation Editor theo segment.
-- Chọn giọng đọc, tốc độ và preview mô phỏng.
-- Generate/Processing mô phỏng với trạng thái, retry và cancel.
-- Result metadata và History trong phiên; chưa có binary để preview/download thật.
-
-### Admin Web
-
-- Dashboard tổng quan.
-- Quản lý Customer: tìm kiếm, lọc, chi tiết, khóa/mở khóa mô phỏng.
-- Theo dõi Project và Processing Job; retry/cancel job mô phỏng.
-- Quản lý Language và Voice; không hard-delete dữ liệu quan hệ.
-- Activity Logs chỉ đọc.
-- System Settings mô phỏng, không chứa hoặc hiển thị secret.
+Dự án môn Công nghệ phần mềm hỗ trợ người dùng quản lý dự án âm thanh/video và thực hiện quy trình tạo thuyết minh đa ngôn ngữ: tải tệp → chuyển giọng nói thành văn bản → dịch → chọn giọng đọc → tạo âm thanh → xử lý phương tiện → xem kết quả.
 
 ## Công nghệ sử dụng
 
-### Frontend hiện tại
+| Thành phần | Công nghệ |
+| --- | --- |
+| Web khách hàng | React.js, TypeScript, Vite |
+| Ứng dụng di động | React Native, Expo, Expo Router, TypeScript |
+| Web quản trị | React.js, TypeScript, Vite |
+| Máy chủ | Node.js, Express, TypeScript |
+| Cơ sở dữ liệu | MongoDB, Mongoose; môi trường hiện tại sử dụng MongoDB Atlas |
+| Xử lý âm thanh/video | Bộ tích hợp OpenAI và FFmpeg/FFprobe |
 
-- **Customer Web:** React, TypeScript, Vite.
-- **Admin Web:** React, TypeScript, Vite.
-- **Customer Mobile:** React Native, TypeScript, Expo SDK 57, Expo Router.
+## Chức năng chính
 
-### Backend hiện tại
+- Đăng ký, đăng nhập và đăng xuất; xác thực JWT và phân quyền phía máy chủ.
+- Bảng điều khiển, quản lý dự án, tìm kiếm, lọc và phân trang.
+- Tạo thuyết minh: tạo dự án, tải âm thanh/video, xem bản ghi/bản dịch, chọn giọng đọc và theo dõi xử lý.
+- Lịch sử dự án và xem kết quả khi đã có dữ liệu xử lý thực tế.
+- Quản lý tài khoản: xem thông tin và chỉnh sửa họ tên trên Web khách hàng.
+- Quản trị: xem tổng quan, người dùng, dự án, tác vụ, ngôn ngữ, giọng đọc, nhật ký và cấu hình an toàn; khóa/mở khóa tài khoản khách hàng.
 
-- Node.js, Express.js, TypeScript.
-- MongoDB và Mongoose.
-- bcrypt password hashing, access/refresh JWT, refresh-session revocation và RBAC.
+Bản ghi và bản dịch hiện chỉ đọc. Luồng AI đã có mã tích hợp, nhưng cần cấu hình dịch vụ bên ngoài và chưa được xác minh đầy đủ từ đầu đến cuối trên mọi nền tảng. Không coi giao diện hoặc dữ liệu demo là kết quả AI thật.
 
-### Backend dự kiến tiếp theo
-
-- Speech-to-Text và transcript generation.
-
-### Xử lý dự kiến
-
-- Speech-to-Text.
-- Translation.
-- Text-to-Speech.
-- FFmpeg media processing.
-
-Các provider AI, queue và worker cụ thể chưa được lựa chọn hoặc tích hợp.
-
-## Cấu trúc dự án
+## Cấu trúc thư mục
 
 ```text
 multilingual-ai-narration/
-├── frontend-web/          # Customer Web
-├── frontend-mobile/       # Customer Mobile (Expo)
-├── admin-web/             # Admin Web độc lập
-├── backend/               # Backend foundation (Express + TypeScript + Mongoose)
-├── docs/
-│   ├── CONTEXT.md
-│   ├── PROGRESS.md
-│   ├── UI.md
-│   ├── API.md
-│   └── ARCHITECTURE.md
-├── .gitignore
-├── .gitattributes
+├── frontend-web/       # Web khách hàng
+├── frontend-mobile/    # Ứng dụng di động
+├── admin-web/          # Web quản trị
+├── backend/            # Máy chủ và API
+├── docs/               # Tài liệu dự án
 └── README.md
 ```
 
-`backend/` là package độc lập được tạo ở S17. Admin Web là một ứng dụng riêng, không nằm trong router của Customer Web.
+## Hướng dẫn chạy
 
-## Yêu cầu môi trường
+Cần Node.js và npm; phiên bản Node.js ghi trong `.nvmrc` là `22.23.3`. Mỗi ứng dụng cài dependencies riêng. Chạy các khối lệnh dưới đây từ thư mục gốc, trong các terminal riêng.
 
-- Node.js.
-- npm.
-- FFmpeg và FFprobe trong PATH để chạy media processing.
-- Git.
-- Trình duyệt hiện đại.
-- VS Code hoặc editor tương đương được khuyến nghị.
-- Expo Go tương thích với Expo SDK 57 nếu kiểm thử trên điện thoại thật.
+### Cấu hình môi trường
 
-Repository hiện không khai báo một phiên bản Node.js bắt buộc cụ thể. Nên dùng phiên bản Node.js còn được hỗ trợ và tương thích với Vite/Expo đang được khóa trong từng `package.json`.
+Tạo `.env` từ `.env.example` của từng ứng dụng nếu chưa có; không ghi đè cấu hình đang sử dụng.
 
-## Chạy Customer Web
+- Máy chủ: cấu hình `MONGODB_URI`, hai JWT secret khác nhau, thời hạn token và `CORS_ORIGINS`. Cấu hình khóa/provider AI khi cần chạy AI; cài FFmpeg và FFprobe trong PATH hoặc chỉ định đường dẫn trong `.env` nếu xử lý video.
+- Web khách hàng và Web quản trị: đặt `VITE_API_BASE_URL` tới máy chủ, thông thường `http://localhost:8080/api`.
+- Di động: đặt `EXPO_PUBLIC_API_BASE_URL` tới địa chỉ LAN của máy tính và giữ hậu tố `/api`. Không dùng `localhost` trên điện thoại thật.
+
+Không commit `.env`, mật khẩu, chuỗi kết nối thật hoặc khóa API. Không đưa secrets vào biến môi trường công khai của frontend. Web quản trị cần tài khoản có vai trò `ADMIN` được cấp qua cơ chế quản trị hiện có, không qua đăng ký khách hàng.
+
+### Máy chủ
 
 ```powershell
-cd C:\cnpm\multilingual-ai-narration\frontend-web
+cd backend
 npm install
 npm run dev
 ```
 
-Vite sẽ in URL phát triển, thông thường là `http://localhost:5173`.
+API mặc định: `http://localhost:8080/api`. Máy chủ chỉ khởi động sau khi kết nối MongoDB thành công; kiểm tra tại `/api/health`.
 
-Các lệnh hiện có:
-
-```powershell
-npm run lint
-npm run typecheck
-npm run build
-npm run preview
-```
-
-Sau khi build, dùng `npm run preview`; không cần cài hoặc gọi `vite` global.
-
-## Chạy Admin Web
-
-```powershell
-cd C:\cnpm\multilingual-ai-narration\admin-web
-npm install
-npm run dev
-```
-
-Admin Web dùng `http://localhost:5174` với strict port.
-
-Các lệnh hiện có:
-
-```powershell
-npm run lint
-npm run typecheck
-npm test
-npm run build
-npm run preview
-```
-
-Các route chính:
-
-```text
-/login
-/dashboard
-/users
-/users/:userId
-/projects
-/projects/:projectId
-/jobs
-/jobs/:jobId
-/languages
-/voices
-/logs
-/settings
-```
-
-Admin login dùng JWT thật và chỉ chấp nhận role `ADMIN`. Các màn quản trị nghiệp vụ dùng `/api/admin/*`; backend RBAC là ranh giới bảo mật.
-
-## Chạy Customer Mobile
-
-```powershell
-cd C:\cnpm\multilingual-ai-narration\frontend-mobile
-npm install
-npx expo start
-```
-
-Expo development server sẽ hiển thị QR code. Trên điện thoại Android có Expo Go tương thích SDK 57, kết nối điện thoại và máy tính cùng mạng LAN rồi quét QR để mở ứng dụng.
-
-Nếu thiết bị không kết nối được qua LAN:
-
-```powershell
-npx expo start --tunnel
-```
-
-Tunnel cần Internet và có thể yêu cầu `@expo/ngrok`. Expo Go từ iOS App Store có thể không hỗ trợ SDK 57; khi đó cần Expo Go tương thích hoặc development build phù hợp.
-
-Các scripts Mobile hiện có:
-
-```powershell
-npm start
-npm run android
-npm run ios
-npm run web
-npm run lint
-npm run typecheck
-```
-
-Entry point hiện tại là `expo-router/entry`. Điện thoại thật không thể dùng `localhost` của máy tính làm API host; đặt `EXPO_PUBLIC_API_BASE_URL` thành địa chỉ LAN có thể truy cập, ví dụ `http://192.168.1.100:8080/api`.
-
-## Chạy Backend
-
-Backend dùng MongoDB Atlas và cần file environment cục bộ chứa URI hợp lệ:
-
-```powershell
-cd C:\cnpm\multilingual-ai-narration\backend
-npm install
-Copy-Item .env.example .env
-npm run dev
-```
-
-Mặc định API dùng `http://localhost:8080/api`. Kiểm tra health tại `GET /api/health`; trường `database` phản ánh trạng thái Mongoose thật. Không commit `.env` và không đưa `MONGODB_URI` hoặc secret vào frontend.
-
-Ngoài Atlas URI, `.env` phải có hai JWT secret khác nhau, thời hạn access/refresh và các biến `ADMIN_SEED_*` nếu chạy seed. Dùng placeholder trong `.env.example`; không commit giá trị thật.
-
-Các lệnh kiểm tra:
-
-```powershell
-npm run lint
-npm run typecheck
-npm run build
-npm test
-npm run seed:admin
-npm start
-```
-
-Auth, Project/Media, transcription, translation, TTS và Result routes đã có. Media processing đọc `FFMPEG_PATH`, `FFPROBE_PATH`, `FFMPEG_TIMEOUT_MS`; mặc định gọi binary trong PATH. Kiểm tra bằng `ffmpeg -version` và `ffprobe -version`. Queue/worker và frontend integration chưa có.
-
-## Cổng phát triển
-
-| Dịch vụ | Địa chỉ | Trạng thái |
-| --- | --- | --- |
-| Customer Web | `http://localhost:5173` | Hiện có |
-| Admin Web | `http://localhost:5174` | Hiện có |
-| Backend API | `http://localhost:8080/api` | Foundation hiện có; chỉ listen sau khi kết nối MongoDB |
-| MongoDB Atlas | Database `multilingual_ai_narration` | Đã xác nhận kết nối runtime |
-
-## Kiểm tra và build
-
-Mỗi ứng dụng có dependencies và scripts riêng; chạy lệnh trong đúng thư mục ứng dụng.
-
-Customer Web:
+### Web khách hàng
 
 ```powershell
 cd frontend-web
-npm run lint
-npm run typecheck
-npm run build
+npm install
+npm run dev
 ```
 
-Admin Web:
+Mở địa chỉ Vite in ra trong terminal, thường là `http://localhost:5173`.
+
+### Web quản trị
 
 ```powershell
 cd admin-web
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm install
+npm run dev
 ```
 
-Customer Mobile:
+Địa chỉ phát triển: `http://localhost:5174`.
+
+### Ứng dụng di động
 
 ```powershell
 cd frontend-mobile
-npm run lint
-npm run typecheck
+npm install
+npm start
 ```
 
-Admin browser regression script `node scripts/verify-browser.mjs` cần Admin Vite server tại `127.0.0.1:5174` và một Chrome instance riêng bật remote debugging tại `127.0.0.1:9223`; đây là script hỗ trợ phát triển, không phải lệnh bắt buộc để chạy ứng dụng.
+Quét QR bằng Expo Go tương thích với phiên bản Expo của dự án. Điện thoại và máy tính nên cùng mạng LAN. Nếu không kết nối được qua LAN, có thể thử `npx expo start --tunnel`; API máy chủ vẫn phải truy cập được từ điện thoại.
 
-## Backend hiện tại và API tương lai
+## Trạng thái dự án
 
-Foundation, auth, Project/Media, STT, Translation, TTS và final Result processing endpoints đã có. Frontend integration vẫn chưa triển khai.
+Dự án đang phát triển và kiểm thử. Ba ứng dụng đã tích hợp API; một số luồng Android đã được kiểm thử trên thiết bị thật. Các chức năng AI phụ thuộc cấu hình, dịch vụ bên ngoài và có thể phát sinh chi phí. Kiểm thử Whisper thực tế đang hoãn; các kiểm tra chưa thực hiện không được xem là đã hoàn thành.
 
-- S17: Backend Foundation với Node.js, Express, TypeScript, MongoDB và Mongoose — đã hoàn thành trong code.
-- S18: Authentication, JWT và backend-enforced RBAC — đã hoàn thành trong backend; frontend chưa tích hợp.
-- S19: Project + Media API — đã hoàn thành trong backend; frontend chưa tích hợp.
-- S20: Speech-to-Text — implementation/tests hoàn tất; real provider smoke chưa chạy do thiếu API key.
-- S21: Translation theo segment, nhiều target language, persistence, retry/concurrency protection — đã hoàn thành trong backend.
-- S22: Text-to-Speech, Narration persistence, protected audio và ProcessingJob TTS — đã hoàn thành trong backend.
-- S23: FFmpeg / Media Processing và protected Result delivery — đã triển khai; cần cài `ffmpeg` và `ffprobe` để chạy thật.
-- S24: Full Frontend / Backend Integration.
-
-Secret như `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, API keys và provider credentials phải nằm ở backend environment/secret management; không đưa vào frontend hoặc Admin Settings.
-
-## Tài liệu
-
-- [Bối cảnh và trạng thái hệ thống](docs/CONTEXT.md)
-- [Tiến độ hiện tại](docs/PROGRESS.md)
-- [Đặc tả UI](docs/UI.md)
-- [API đề xuất](docs/API.md)
-- [Kiến trúc và roadmap](docs/ARCHITECTURE.md)
-
-Các tài liệu trên là nguồn chi tiết. `docs/PROGRESS.md` phản ánh sprint thực tế; `docs/ARCHITECTURE.md` mô tả kiến trúc mục tiêu và phải được đọc cùng cảnh báo về những phần chưa triển khai.
+Xem [tiến độ](docs/PROGRESS.md), [đặc tả giao diện](docs/UI.md), [API](docs/API.md) và [kiến trúc](docs/ARCHITECTURE.md) để biết chi tiết.
