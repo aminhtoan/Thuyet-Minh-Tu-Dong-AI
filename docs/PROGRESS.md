@@ -394,3 +394,10 @@ S24 Full Frontend / Backend Integration.
 - Giữ nguyên bố cục hai cột, nền navy, brand/slogan/waveform và form đăng nhập. Login-only CSS giảm heading, cân spacing/form width, xử lý desktop thấp và mobile 320–375px bằng `100svh` mà không tác động Register.
 - Login giữ API/JWT/refresh/navigation/validation/loading và synchronous duplicate-submit lock. Error mapping an toàn phân biệt 401, validation, network/timeout và 5xx mà không hiển thị chi tiết nội bộ.
 - Web tests **21/21 PASS**; lint/typecheck/build PASS; `git diff --check` PASS. Không sửa Mobile/Admin/Backend/database/API.
+
+## S25.7.2 — Minimal Customer Web Register UI Polish
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-11; browser visual verification **NOT RUN**.
+- Register dùng wrapper/CSS riêng `.register-page`, đồng bộ typography, brand spacing và form width 27rem với Login đã duyệt nhưng không thay Login. Giữ đủ họ tên, email, mật khẩu, xác nhận mật khẩu, hai visibility control, submit và link quay lại Login.
+- Giảm form gap, heading/footer margin và padding dọc; dùng `100svh` cho viewport thường, breakpoint chiều cao thấp cho desktop và cuộn tự nhiên khi nội dung thực sự vượt viewport. Không dùng overflow để che nội dung.
+- Web tests **24/24 PASS**; lint/typecheck/build PASS; `git diff --check` PASS. API/validation/JWT/double-submit/navigation giữ nguyên; không sửa Mobile/Admin/Backend/database.

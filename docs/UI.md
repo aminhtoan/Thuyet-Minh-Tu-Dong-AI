@@ -676,3 +676,10 @@ UI state dùng các nhãn: `NOT_STARTED` → **Chưa bắt đầu**, `LOADING` �
 - CSS polish được scope bằng `.login-page`, nên Register giữ nguyên presentation. Desktop dùng heading/line-height tiết chế và form tối đa 27rem; tablet cân lại tỷ lệ cột; dưới 720px ưu tiên form một cột; 320–375px giảm padding/radius an toàn.
 - Viewport dùng `100svh` cho Login để tránh cuộn ngoài ý muốn trên trình duyệt mobile. Focus, error, hover, disabled/loading và target tối thiểu 44px tiếp tục kế thừa design system.
 - Browser visual verification vẫn **NOT RUN**; source responsive rules không thay thế duyệt giao diện thật.
+
+## S25.7.2 — Minimal Register Polish
+
+- Customer Web Register dùng cùng brand navy, typography, visual waveform và form width với Login đã duyệt; không tạo branding hoặc illustration riêng.
+- `.register-page` scope độc lập giữ Login không đổi. Form bốn trường dùng spacing 14px, heading/footer 16px và padding dọc co giãn để vừa desktop thông thường; viewport thấp giảm thêm spacing nhưng vẫn cuộn tự nhiên nếu cần.
+- Dưới 720px ưu tiên form một cột; dưới 360px giảm padding/radius mà không cắt input, nút hoặc liên kết Đăng nhập. Focus/error/loading/disabled và keyboard navigation kế thừa component hiện có.
+- Browser visual verification **NOT RUN**; cần người dùng duyệt tại 1440/1024/768/375/320px.
