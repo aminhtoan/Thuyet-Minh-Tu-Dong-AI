@@ -683,3 +683,17 @@ UI state dùng các nhãn: `NOT_STARTED` → **Chưa bắt đầu**, `LOADING` �
 - `.register-page` scope độc lập giữ Login không đổi. Form bốn trường dùng spacing 14px, heading/footer 16px và padding dọc co giãn để vừa desktop thông thường; viewport thấp giảm thêm spacing nhưng vẫn cuộn tự nhiên nếu cần.
 - Dưới 720px ưu tiên form một cột; dưới 360px giảm padding/radius mà không cắt input, nút hoặc liên kết Đăng nhập. Focus/error/loading/disabled và keyboard navigation kế thừa component hiện có.
 - Browser visual verification **NOT RUN**; cần người dùng duyệt tại 1440/1024/768/375/320px.
+
+## S25.7.3 — Customer Web Dashboard
+
+- Dashboard giữ nhận diện sáng tối giản, hero gradient và minh họa CSS hiện có; bốn lối tắt dùng đúng route thật và không tự kích hoạt tác vụ AI.
+- Sidebar bỏ hoàn toàn thẻ quảng bá, giữ Tài khoản ở đáy. Recent Projects chỉ hiển thị tên, thời điểm cập nhật, ngôn ngữ nguồn, trạng thái và link chi tiết từ API.
+- Biểu đồ “Số dự án theo ngày” dùng `createdAt` thật trong 7 ngày gần nhất. Khi response phân trang không chứa toàn bộ dữ liệu, UI hiển thị trạng thái chưa đủ dữ liệu thay vì nội suy; các thống kê phân loại cũng hiển thị `—` trong trường hợp này.
+- Hoạt động gần đây được ghi rõ là cập nhật trạng thái dự án, không giả làm activity log. Responsive rules hỗ trợ desktop, tablet và mobile 320–375px; bảng chuyển sang layout gọn trên màn hình hẹp.
+- Browser visual verification: **NOT RUN**; source responsive rules không thay thế kiểm tra trình duyệt thật.
+
+### S25.7.3.2 — Sidebar navy
+
+- Customer Web Sidebar dùng nền navy `#111C32`, đồng bộ cột thương hiệu Login/Register. Brand màu trắng, subtitle slate sáng và waveform nằm trong khối primary.
+- Navigation giữ nguyên route và cấu trúc; hover dùng lớp trắng trong suốt, active dùng primary trong suốt với chỉ báo violet bên trái. Focus ring và touch target 44px được giữ rõ trên nền tối.
+- Tài khoản tiếp tục neo ở đáy, ngăn với navigation bằng đường viền tối giản. Không thêm card quảng bá hoặc chức năng mới.

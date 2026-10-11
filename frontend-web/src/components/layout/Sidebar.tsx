@@ -21,7 +21,7 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
     <aside id="app-sidebar" className={`sidebar${open ? ' sidebar--open' : ''}`} aria-label="Điều hướng chính">
       <NavLink to="/dashboard" className="sidebar__brand" onClick={onNavigate}><span className="sidebar__mark"><Icon name="wave" width="30" /></span><span>Người kể chuyện AI<small>Thuyết minh đa ngôn ngữ</small></span></NavLink>
       <nav className="sidebar__nav">{primaryItems.map((item) => <SidebarLink key={item.to} item={item} onNavigate={onNavigate} />)}</nav>
-      <div className="sidebar__bottom"><div className="sidebar__help"><strong>Sáng tạo không giới hạn</strong><p>Khám phá quy trình thuyết minh đa ngôn ngữ.</p></div><SidebarLink item={{ label: navigationLabels.account, to: '/settings', icon: 'settings' }} onNavigate={onNavigate} /></div>
+      <div className="sidebar__bottom"><SidebarLink item={{ label: navigationLabels.account, to: '/settings', icon: 'settings' }} onNavigate={onNavigate} /></div>
     </aside>
   )
 }

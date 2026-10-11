@@ -4,7 +4,7 @@ import type { Project, ProjectPagination, ProjectStatus } from './types';
 export function useProjects() {
   const state = useSyncExternalStore(projectRepository.subscribe, projectRepository.getState, projectRepository.getState);
   useEffect(() => { void projectRepository.refresh(); }, []);
-  return { projects: state.projects, isLoading: state.loading, error: state.error, reload: projectRepository.refresh };
+  return { projects: state.projects, pagination: state.pagination, isLoading: state.loading, error: state.error, reload: projectRepository.refresh };
 }
 
 export function useProjectPage(input: { page: number; limit: number; search?: string; status?: ProjectStatus }) {

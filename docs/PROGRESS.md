@@ -401,3 +401,17 @@ S24 Full Frontend / Backend Integration.
 - Register dùng wrapper/CSS riêng `.register-page`, đồng bộ typography, brand spacing và form width 27rem với Login đã duyệt nhưng không thay Login. Giữ đủ họ tên, email, mật khẩu, xác nhận mật khẩu, hai visibility control, submit và link quay lại Login.
 - Giảm form gap, heading/footer margin và padding dọc; dùng `100svh` cho viewport thường, breakpoint chiều cao thấp cho desktop và cuộn tự nhiên khi nội dung thực sự vượt viewport. Không dùng overflow để che nội dung.
 - Web tests **24/24 PASS**; lint/typecheck/build PASS; `git diff --check` PASS. API/validation/JWT/double-submit/navigation giữ nguyên; không sửa Mobile/Admin/Backend/database.
+
+## S25.7.3 — Customer Web Dashboard Redesign
+
+- **COMPLETED (SOURCE VALIDATION)** ngày 2026-10-11; browser visual verification **NOT RUN**.
+- Dashboard Customer Web đã được polish theo phong cách tối giản: sidebar sạch, hero cân đối, bốn quick actions, recent projects từ API, biểu đồ 7 ngày và bốn metric trạng thái.
+- Chart và metric phân loại chỉ dùng dataset đầy đủ theo pagination metadata; nếu thiếu trang, UI báo chưa đủ dữ liệu/hiển thị `—`, không suy diễn hoặc tạo số liệu giả. Tổng dự án dùng `pagination.total` thật khi có.
+- Empty/loading/error/activity states dùng dữ liệu thật; activity được mô tả chính xác là cập nhật trạng thái dự án. Không sửa Login/Register, Mobile, Admin, Backend, database hay API contract.
+- Web tests **28/28 PASS**; lint/typecheck/build PASS; browser visual verification **NOT RUN**.
+
+## S25.7.3.2 — Customer Web Sidebar Navy Theme
+
+- Sidebar Customer Web đổi sang navy `#111C32` đồng bộ Login/Register; brand, hover, active, focus và khu vực Tài khoản được tinh chỉnh cho nền tối.
+- Route, active-state logic, responsive drawer và authentication không đổi. Browser visual verification **NOT RUN**.
+- Web tests **29/29 PASS**; lint/typecheck/build PASS; `git diff --check` PASS.

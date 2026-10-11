@@ -3,8 +3,8 @@ import type { LanguageCode, MediaType, Project, ProjectPagination, ProjectStatus
 type ProjectDto = { id: string; name: string; description?: string; sourceLanguage: LanguageCode; status: ProjectStatus; progress: number; createdAt: string; updatedAt: string };
 type MediaDto = { originalName: string; mediaType: MediaType; fileSize: number; duration: number | null };
 type TranslationDto = { targetLanguage: LanguageCode; updatedAt: string };
-type State = { projects: readonly Project[]; loading: boolean; error: string | null };
-let state: State = { projects: [], loading: true, error: null };
+type State = { projects: readonly Project[]; pagination: ProjectPagination | null; loading: boolean; error: string | null };
+let state: State = { projects: [], pagination: null, loading: true, error: null };
 let activeLoad: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((listener) => listener());
@@ -16,7 +16,7 @@ async function enrich(project: ProjectDto): Promise<Project> {
   const latest = [...translations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
   return { ...project, progress: project.progress || undefined, targetLanguage: latest?.targetLanguage, mediaType: media?.mediaType, mediaName: media?.originalName, mediaSize: media?.fileSize, durationSeconds: media?.duration ?? undefined };
 }
-async function load() { setState({ loading: true, error: null }); try { const response = await api<{ projects: ProjectDto[] }>('/projects?page=1&limit=100'); setState({ projects: await Promise.all(response.projects.map(enrich)), loading: false }); } catch (error) { setState({ loading: false, error: error instanceof ApiError ? error.message : 'Không thể kết nối đến máy chủ.' }); } }
+async function load() { setState({ loading: true, error: null }); try { const response = await api<{ projects: ProjectDto[]; pagination?: ProjectPagination }>('/projects?page=1&limit=100'); setState({ projects: await Promise.all(response.projects.map(enrich)), pagination: response.pagination ?? null, loading: false }); } catch (error) { setState({ loading: false, error: error instanceof ApiError ? error.message : 'Không thể kết nối đến máy chủ.' }); } }
 export const projectRepository = {
   getState: () => state,
   getAll: () => state.projects,

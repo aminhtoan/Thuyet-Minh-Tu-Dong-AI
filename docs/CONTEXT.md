@@ -311,3 +311,9 @@ S9–S16.5 frontend scope đã hoàn thành. Backend pipeline đến Result đã
 - Voice preview chỉ khả dụng khi catalog API trả `previewUrl`; không tạo sample hay public URL giả. Empty catalog/filter và preview failure đều giữ feedback/retry tương ứng.
 - Processing chỉ hiển thị phần trăm khi snapshot/stage có progress thật; không thay polling interval, timeout hoặc lifecycle. Result Web dùng protected Blob URL trong bộ nhớ; Mobile dùng Bearer download vào cache và native share, với lỗi share hiển thị bằng tiếng Việt.
 - Validation: Web 18/18 tests + lint/typecheck/build; Mobile 58/58 tests + lint/typecheck; Expo Doctor 21/21; Android Hermes export 1.414 modules; `git diff --check` PASS. Browser/device visual smoke NOT RUN; paid-provider smoke NOT RUN.
+
+## S25.7.3 Customer Web Dashboard Decisions (2026-10-11)
+
+- Dashboard không có analytics endpoint riêng. Repository giữ pagination metadata của `GET /projects`; total dùng `pagination.total`, còn chart 7 ngày và các count theo trạng thái chỉ được tính khi page đã tải chứa toàn bộ dataset.
+- Nếu tổng số dự án vượt số item đã tải, UI chủ động báo chưa đủ dữ liệu thay vì coi 100 item đầu là toàn bộ tài khoản. Recent Projects và activity vẫn là presentation từ project API thật, không phải audit log.
+- Sidebar bỏ promotional card; route/auth/topbar/API không đổi. Login/Register đã duyệt không bị chỉnh sửa. Browser visual smoke vẫn **NOT RUN**.
