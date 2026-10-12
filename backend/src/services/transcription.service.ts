@@ -10,6 +10,7 @@ import { AppError } from '../utils/app-error.js';
 import { resolveStoredFile } from '../utils/file.js';
 import { getSttProvider } from './stt/stt.service.js';
 import { OpenAiSttError } from './stt/openai-stt.provider.js';
+import { GeminiSttError } from './stt/gemini-stt.provider.js';
 import { env } from '../config/env.js';
 
 const log = async (userId: string, action: string, entityId: Types.ObjectId) => {
@@ -62,10 +63,21 @@ export const transcribe = async (projectId: string, userId: string) => {
     if (env.nodeEnv === 'development' && error instanceof OpenAiSttError) {
       console.error('STT provider diagnostic:', error.diagnostics);
     }
-    const code = error instanceof Error && ['STT_NOT_CONFIGURED', 'STT_FILE_TOO_LARGE', 'STT_TIMEOUT', 'STT_INVALID_RESPONSE'].includes(error.message) ? error.message : 'STT_PROVIDER_ERROR';
+    if (env.nodeEnv === 'development' && error instanceof GeminiSttError) {
+      console.error('STT provider diagnostic:', { provider: 'gemini', code: error.code, httpStatus: error.httpStatus });
+    }
+    const code = error instanceof GeminiSttError ? error.code : error instanceof Error && ['STT_NOT_CONFIGURED', 'STT_FILE_TOO_LARGE', 'STT_TIMEOUT', 'STT_INVALID_RESPONSE'].includes(error.message) ? error.message : 'STT_PROVIDER_ERROR';
     await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]);
     void log(userId, 'TRANSCRIPTION_FAILED', project._id);
-    const status = code === 'STT_NOT_CONFIGURED' ? 503 : code === 'STT_FILE_TOO_LARGE' ? 413 : 502;
-    throw new AppError(status, code, code === 'STT_NOT_CONFIGURED' ? 'Dịch vụ chuyển giọng nói thành văn bản chưa được cấu hình.' : 'Không thể chuyển giọng nói thành văn bản.');
+    const status = ['STT_NOT_CONFIGURED', 'STT_INVALID_KEY', 'STT_MODEL_UNAVAILABLE'].includes(code) ? 503 : code === 'STT_FILE_TOO_LARGE' ? 413 : code === 'STT_QUOTA_EXCEEDED' ? 429 : code === 'STT_INVALID_FILE' ? 422 : 502;
+    const messages: Record<string, string> = {
+      STT_NOT_CONFIGURED: 'Dịch vụ chuyển giọng nói thành văn bản chưa được cấu hình.',
+      STT_INVALID_KEY: 'Khóa dịch vụ chuyển giọng nói thành văn bản không hợp lệ.',
+      STT_MODEL_UNAVAILABLE: 'Model chuyển giọng nói thành văn bản không khả dụng hoặc chưa được cấp quyền.',
+      STT_QUOTA_EXCEEDED: 'Dịch vụ chuyển giọng nói thành văn bản đã hết hạn mức hoặc bị giới hạn yêu cầu.',
+      STT_INVALID_FILE: 'Tệp âm thanh/video không hợp lệ hoặc không thể xử lý.',
+      STT_NO_SPEECH: 'Không nhận diện được lời nói trong tệp.',
+    };
+    throw new AppError(status, code, messages[code] ?? 'Không thể chuyển giọng nói thành văn bản.');
   }
 };

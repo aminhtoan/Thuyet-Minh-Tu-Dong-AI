@@ -14,10 +14,14 @@
     "test": "node --import tsx --test --test-concurrency=1 tests/auth.test.ts tests/project-media.test.ts tests/transcription.test.ts tests/translation.test.ts tests/tts.test.ts tests/media-processing.test.ts tests/admin-api.test.ts",
     "test:profile": "node --import tsx --test tests/profile-name.test.ts",
     "test:filename": "node --import tsx --test tests/filename-encoding.test.ts",
+    "test:stt-debug": "node --import tsx --test tests/stt-debug.test.ts",
+    "test:gemini": "node --import tsx --test tests/gemini-stt.test.ts tests/stt-debug.test.ts",
+    "test:source-media": "node --import tsx --test tests/source-media.test.ts",
     "seed:admin": "tsx src/scripts/seed-admin.ts",
     "seed:voices": "tsx src/scripts/seed-voice-catalog.ts"
   },
   "dependencies": {
+    "@google/genai": "2.28.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

@@ -6,28 +6,37 @@
 .transcript-media, .transcript-editor { min-width: 0; }
 .transcript-media { display: grid; gap: var(--space-md); }
 .transcript-media h2, .transcript-editor h2 { margin: 0; font-size: var(--font-size-lg); }
-.transcript-media__icon { display: grid; min-height: 12rem; place-items: center; border-radius: var(--radius-lg); color: #dbeafe; background: #172c4d; font-size: 3rem; }
 .transcript-media strong { overflow-wrap: anywhere; }
 .transcript-media p { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
-.transcript-media__note { padding: var(--space-md); border-radius: var(--radius-md); color: var(--color-text-secondary); background: var(--color-surface-secondary); font-size: var(--font-size-sm); }
+.source-player { display: grid; gap: var(--space-sm); min-width: 0; }
+.source-player__audio-heading { display: flex; align-items: center; gap: 12px; color: var(--color-text-primary); font-weight: var(--font-weight-semibold); }
+.source-player__audio-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--radius-md); color: var(--color-primary); background: var(--color-primary-light); }
+.source-player:has(audio) { padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-secondary); }
+.source-player audio, .source-player video { width: 100%; max-width: 100%; border-radius: var(--radius-md); }
+.source-player__video { aspect-ratio: 16 / 9; object-fit: contain; background: var(--color-text-primary); }
+.transcript-segment__playing { color: var(--color-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.transcript-segment__seek { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; min-height: 44px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-primary); background: var(--color-surface); cursor: pointer; text-align: left; font-size: var(--font-size-sm); }
+.transcript-segment__seek:hover:not(:disabled) { background: var(--color-primary-light); border-color: var(--color-primary); }
+.transcript-segment__seek:focus-visible, .source-player audio:focus-visible, .source-player video:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.transcript-segment__seek:disabled { opacity: .5; cursor: not-allowed; }
 .transcript-editor { display: grid; gap: var(--space-lg); }
 .transcript-editor__heading { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); }
 .transcript-editor__heading p { margin: var(--space-xs) 0 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .transcript-centered { display: grid; justify-items: center; gap: var(--space-md); padding: var(--space-2xl) var(--space-md); text-align: center; color: var(--color-text-secondary); }
 .transcript-centered h3, .transcript-centered p { margin: 0; }
 .transcript-segment-list { display: grid; max-height: 34rem; overflow-y: auto; gap: var(--space-md); padding-right: var(--space-xs); }
-.transcript-segment { display: grid; gap: var(--space-sm); padding: var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-secondary); }
+.transcript-segment { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-secondary); }
+.transcript-segment--active { border-color: var(--color-primary); background: var(--color-primary-light); }
 .transcript-segment--invalid { border-color: var(--color-error); background: var(--color-error-light); }
-.transcript-segment__meta { display: flex; justify-content: space-between; gap: var(--space-sm); color: var(--color-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
-.transcript-segment label { color: var(--color-text-secondary); font-size: 0.75rem; font-weight: var(--font-weight-semibold); }
-.transcript-segment textarea { width: 100%; min-height: 5rem; resize: vertical; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-surface); line-height: var(--line-height-normal); }
-.transcript-segment textarea:focus { border-color: var(--color-primary); outline: 3px solid rgb(88 80 236 / 14%); }
-.transcript-segment textarea[aria-invalid='true'] { border-color: var(--color-error); }
+.transcript-segment__header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.transcript-segment__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--color-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
+.transcript-segment__text { min-width: 0; color: var(--color-text-primary); font-size: 1rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+.transcript-segment__text:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
 .transcript-segment__error { margin: 0; color: var(--color-error); font-size: var(--font-size-sm); }
 .transcript-actions { display: grid; gap: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border); }
 .transcript-actions__status { color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
 .transcript-actions__error { display: block; color: var(--color-error); font-weight: var(--font-weight-medium); }
 .transcript-actions__buttons { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 .transcript-actions__next { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); color: var(--color-text-muted); font-size: var(--font-size-sm); }
-@media (max-width: 900px) { .transcript-layout { grid-template-columns: 1fr; }.transcript-media__icon { min-height: 8rem; } }
+@media (max-width: 900px) { .transcript-layout { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .transcript-intro { flex-direction: column; }.transcript-segment-list { max-height: none; overflow: visible; }.transcript-actions__buttons .button { flex: 1 1 10rem; } }

@@ -1,5 +1,24 @@
 # UI Specification
 
+## S25.7.8.10 — Bản ghi: compact read-only presentation
+
+- Giữ layout hai cột; native audio/video controls được giữ để bảo vệ hành vi playback đã xác nhận. Audio có icon sóng âm, container nền nhẹ; không thêm custom progress/volume hoặc autoplay.
+- Segment padding12px và gap8px; số thứ tự/timestamp cùng header, nút Play icon16px với target44px, có focus và accessible label. Nội dung là vùng văn bản chỉ đọc tự co, chọn/copy được, giữ xuống dòng và wrap từ dài; không textarea/input giả hay chức năng lưu.
+- Timestamp mm:ss.SSS, highlight chỉ khi phát trong khoảng start<=time<end; seeked đồng bộ ngay, pause/ended bỏ highlight, không auto-scroll. Màu active nằm sau rule nền trong CSS để không bị ghi đè. Mobile header wrap và hai cột chuyển một cột theo breakpoint hiện có.
+- UI UX Pro Max áp dụng readable text, visible focus, touch target và feedback không phụ thuộc màu. Mục tiêu compact bằng spacing/natural-height, chưa đo tỷ lệ giảm20–30% trên browser. Browser visual sau polish NOT RUN; giữ nguyên transcript/provider/API/DB và các màn hình khác.
+
+## S25.7.8.9 — Player phương tiện nguồn
+
+- Transcript giữ hai cột: card nguồn có nút tải được bảo vệ, HTML5 audio/video native controls/play/pause/volume/seek; không autoplay. Video contain16:9 responsive, audio full-width; filename/metadata thật giữ nguyên. Loading/auth/network/404/unsupported/codec errors bằng tiếng Việt, retry download hoặc reload player tùy lỗi.
+- Button “Phát từ …” trong mỗi cụm có accessible label/focus/44px, disabled trước metadata; seek đúng startTime và play có xử lý rejection. Active theo start<=currentTime<end, chỉ khi phát; nhãn “Đang phát” và viền primary/lavender, không tự scroll và không sửa transcript. Khoảng nghỉ không highlight.
+- UI UX Pro Max dùng native controls/click-to-play/focus/nhãn không phụ thuộc màu. Authenticated blob + cleanup/abort, không query token/public URL. Chưa có progressive download; cần chờ tải đầy đủ, video lớn có chi phí bộ nhớ. Browser E2E NOT RUN; mock tests không chứng minh playback thực tế.
+
+## S25.7.8.8 — Bản ghi: cụm hiển thị và giây lẻ
+
+- Chỉ lớp hiển thị Web gộp word-like segments: dấu kết câu/pause0.6s, tối đa18 từ/8s/120 ký tự; phrase đã có giữ riêng. Không thay nguyên bản editor.draft/API, transcript lưu hoặc dữ liệu Translation/TTS.
+- Mỗi cụm dùng startTime từ word đầu/endTime word cuối và nội dung đúng thứ tự. Reject timeline invalid/overlap, không sort hoặc tạo mốc giả. Hiển thị mm:ss.SSS (phút:giây.mili giây) với nhãn giải thích; không đổi helper timestamp màn Bản dịch.
+- Heading cho biết số cụm hiển thị và số segments gốc; label phân đoạn tiếng Việt. Giữ read-only/actions/auth, chưa thêm playback phương tiện nguồn. Browser NOT RUN; không gọi AI/ghi Database.
+
 ## S25.7.7.12 — Final Account spacing (hiện tại)
 
 - Card max-width840→820px, padding desktop32→24px dọc/32px ngang; content margin24→20/padding-top24→16; rows16→14px, hàng Email padding-bottom8px. Mục tiêu giảm chiều cao khoảng10–15% bằng spacing, chưa đo browser. Không fixed height/clip/giảm chữ hoặc touch target.

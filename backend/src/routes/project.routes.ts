@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as mediaController from '../controllers/media.controller.js';
+import { streamSourceMedia } from '../controllers/source-media.controller.js';
 import * as projectController from '../controllers/project.controller.js';
 import * as transcriptionController from '../controllers/transcription.controller.js';
 import * as translationController from '../controllers/translation.controller.js';
@@ -24,6 +25,7 @@ projectRouter.patch('/:id', validate(updateProjectSchema), projectController.upd
 projectRouter.delete('/:id', validate(projectIdSchema), projectController.remove);
 projectRouter.post('/:id/media', requireProjectOwner, uploadMedia, mediaController.upload);
 projectRouter.get('/:id/media', requireProjectOwner, mediaController.get);
+projectRouter.get('/:id/media/file', requireProjectOwner, streamSourceMedia);
 projectRouter.delete('/:id/media', requireProjectOwner, mediaController.remove);
 projectRouter.post('/:id/transcription', requireProjectOwner, transcriptionController.start);
 projectRouter.get('/:id/transcript', requireProjectOwner, transcriptionController.get);

@@ -1,5 +1,13 @@
 # API Status and Conventions
 
+## S25.7.8.9 — File phương tiện nguồn (Implemented)
+
+- `GET /api/projects/:id/media/file` và HEAD: Bearer access JWT, CUSTOMER, user ACTIVE và ownership theo middleware hiện có. Không ký URL/token query hoặc public uploads. Trả đúng file Media hiện tại theo DB, không nhận storage path từ client; kiểm tra path containment và realpath để chặn symlink ra ngoài uploads.
+- Chỉ MP3 `audio/mpeg` và MP4 `video/mp4`. `200` full streaming, `Content-Length`, `Accept-Ranges: bytes`, `Cache-Control: private, no-store`, `nosniff`. Single Range `bytes=start-end`, `start-`, `-suffix` trả206/Content-Range; end quá size được clamp, range sai hoặc multi-range trả416/`bytes */size`. HEAD trả metadata full, không body. Node createReadStream, dừng khi client disconnect; không đọc full file vào RAM server.
+- Lỗi chuẩn401 auth,403 role/blocked,404 PROJECT_NOT_FOUND/MEDIA_NOT_FOUND/MEDIA_FILE_MISSING,400 ID không hợp lệ,415 UNSUPPORTED_MEDIA_TYPE. Không trả filename nội bộ/path/token. Không ghi Database/schema/transcript.
+- Web gọi endpoint bằng apiBlob (Bearer + refresh-once hiện có), rồi phát từ object URL cục bộ; không dùng API URL trực tiếp trong HTML src. Tải toàn bộ tệp khi người dùng nhấn tải, không progressive streaming trên Web; browser seek trong blob đã tải, nên file lớn cần bộ nhớ/thời gian tương ứng. URL revoke + abort khi unmount, không cache persistent.
+- Tests dùng route/auth thật, Mongoose mocks và fixture byte trong temp riêng; không kết nối Atlas hoặc gọi AI. Browser playback/E2E chưa chạy.
+
 ## Current: S23 FFmpeg / Media Processing
 
 Backend hiện triển khai:
@@ -16,6 +24,27 @@ Backend hiện triển khai:
 - `POST /api/projects/:id/transcription` và `GET /api/projects/:id/transcript`.
 
 ## Transcription API (Implemented)
+
+### S25.7.8.4 — Provider Gemini
+
+Endpoint và success DTO không đổi: `POST /api/projects/:id/transcription` (Bearer CUSTOMER + ownership, không body), `GET /api/projects/:id/transcript`. Gemini là default khi thiếu `STT_PROVIDER`; đặt `STT_PROVIDER=gemini`, `GEMINI_API_KEY` chỉ tại backend, `GEMINI_STT_MODEL=gemini-3.5-transcribe`. `.env` hiện có không tự ghi đè; `STT_PROVIDER=openai` vẫn giữ Whisper với `OPENAI_API_KEY`/`STT_MODEL` riêng. Translation/TTS không chuyển provider.
+
+- SDK `@google/genai` 2.28.0: Files API + Interactions transcription verbatim/word timestamps, language hint `vi-VN`; không dịch hoặc smart formatting, không tự fallback model. Kiểm tra model bằng SDK models.get với cùng key trước khi upload. Chưa xác minh quyền model trên key thật vì chưa được duyệt gọi API.
+- MP3 gửi trực tiếp; MP4/video và audio MP4 tách WAV tạm bằng FFmpeg, FFprobe xác nhận có audio và thời lượng. Giới hạn ứng dụng bảo thủ: nguồn/audio tạm tối đa500MiB và nguồn tối đa1 giờ (không phải tuyên bố giới hạn của Gemini). Dùng path nội bộ đã kiểm tra ownership; không đổi storage file hoặc schema.
+- Mỗi word annotation thật thành một segment (`start_offset/end_offset` giây → `startTime/endTime`, sequence1-based); từ chối thiếu/âm/đảo chiều/chồng lấn hoặc vượt thời lượng, không sort/clip/suy diễn timestamps. Nếu không có lời nói hoặc annotations hợp lệ, không lưu transcript. Không thể bảo đảm độ chính xác nhận dạng chỉ bằng validation cấu trúc.
+- Deadline SDK120s; không tự retry transcription; kiểm tra Files ACTIVE, cleanup remote file do request tạo và thư mục WAV tạm riêng. Remote cleanup là best effort (Files có cơ chế hết hạn). Không log key/URI/file content/raw response; development log chỉ provider/code/httpStatus. `store:false` cho interaction.
+
+| Lỗi mới | HTTP | Ý nghĩa |
+| --- | --- | --- |
+| `STT_INVALID_KEY` | 503 | Key bị provider từ chối |
+| `STT_MODEL_UNAVAILABLE` | 503 | Model không hỗ trợ/cấu hình sai hoặc không có quyền |
+| `STT_QUOTA_EXCEEDED` | 429 | Quota hoặc rate limit |
+| `STT_INVALID_FILE` | 422 | Không đọc/probe/extract được, thiếu audio hoặc vượt thời lượng ứng dụng |
+| `STT_NO_SPEECH` | 502 | Không có lời nói trong output |
+
+Các lỗi cũ giữ: thiếu key503 `STT_NOT_CONFIGURED`, file quá lớn413, timeout/response/provider error502. Retry thất bại không ghi đè transcript/segments cũ; project/job vẫn ghi FAILED. Không có fake transcript trong runtime.
+
+Nguồn: [Audio transcription chính thức](https://ai.google.dev/gemini-api/docs/transcribe), [SDK Google Gen AI](https://github.com/googleapis/js-genai). Source/mock tests không thay thế real-provider validation.
 
 Hai route yêu cầu JWT, role `CUSTOMER` và ownership. POST xử lý đồng bộ: Media → ProcessingJob → STT provider → Transcript/segments. Allowed states: `UPLOADED`, `FAILED` và `TRANSCRIBED`. Lifecycle: `UPLOADED → TRANSCRIBING → TRANSCRIBED`; failure → `FAILED`; atomic state claim chặn request trùng.
 

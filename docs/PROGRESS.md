@@ -1,5 +1,34 @@
 # Project Progress
 
+## S25.7.8.10 — Transcript UI/UX final polish
+
+- Source implemented; runtime PARTIAL, chờ người dùng duyệt. Giữ hai cột và native audio/video controls; bổ sung icon sóng âm và container audio gọn. Không thay transport/auth/provider/grouping/API/Database.
+- Segment padding 16→12px, header số thứ tự/timestamp và nút Play gọn; thay textarea disabled bằng văn bản chỉ đọc có thể chọn/copy, chiều cao tự nhiên. Giữ mm:ss.SSS, focus/target44px, responsive wrapping. Sửa thứ tự CSS để active border/background không bị rule nền ghi đè; seeked cập nhật highlight ngay, pause/ended bỏ highlight, không auto-scroll.
+- Web tests84/84 PASS; lint/typecheck/build và git diff --check PASS. Build còn warning dynamic import có sẵn. Ba regression tests mới kiểm tra DOM render, seek chính xác/disabled và CSS/native-control boundaries; không thay cho browser E2E.
+- Người dùng xác nhận trước polish: MP3 playback và seek00:06.700 hoạt động. Browser visual/E2E sau polish NOT RUN; MP4 runtime chưa xác minh trong bước này. Không gọi AI, không ghi Atlas, không commit/push.
+
+## S25.7.8.9 — Source Media Player
+
+- SOURCE IMPLEMENTED / runtime PARTIAL: GET/HEAD source media file với JWT CUSTOMER ACTIVE/ownership, MIME MP3/MP4, Range206/416/suffix/open-ended, stream/abort/cache-private/path + realpath containment. Chỉ đọc file/metadata, không DB writes/schema changes/public uploads/query JWT.
+- Web authenticated apiBlob + refresh-once hiện có, object URL native controls và cleanup/abort, tải theo thao tác (không autoplay). Transcript cụm có button seek/focus44px/ready guard; highlight theo currentTime và nhãn Đang phát, không scroll/transcript mutation/Gemini calls. Giữ hai cột/themes/AI/Translation/TTS/Mobile/Admin.
+- Backend streaming tests14/14 PASS với route/auth thật + DB mocks/file fixtures; Web81/81 PASS gồm seek/play mocks, highlight, single-flight/error/retry/cleanup. Backend/Web lint/typecheck/build và git diff --check PASS; build warning dynamic import cũ. Browser E2E playback MP3/MP4/seek/refresh NOT RUN: chưa có browser session kiểm thử đã xác thực và không provision account/ghi Atlas trong bước này. Bytes HTTP/source tests không chứng minh codec/browser playback; regression DB cũ không chạy.
+- Giới hạn: Web tải full blob trước phát, video lớn dùng bộ nhớ tương ứng; server vẫn streaming/Range. Không ghi Atlas, AI calls0, không commit/push; chờ duyệt.
+
+## S25.7.8.8 — Transcript display grouping
+
+- Customer Web display-only projection: nhóm word-like segments theo kết câu hoặc pause>=0.6s; giới hạn18 từ/8s/120 ký tự, giữ nguyên thứ tự/từ và start đầu/end cuối. Phrase/sentence có sẵn không gộp thêm. Không sửa provider/API/DB/schema/dữ liệu transcript21 segments người dùng báo đã lưu, không gọi lại Gemini.
+- Timestamp riêng màn Bản ghi dạng mm:ss.SSS, ví dụ00:00.120→00:00.480, không cắt phần giây lẻ; helper Translation cũ không đổi. Timestamp lỗi/overlap không sort/clip/tạo giả mà hiển thị lỗi và retry load bằng GET. Số cụm hiển thị và số segment gốc ghi rõ.
+- Unit tests grouping/punctuation/pause/order/immutable data/long runs/timestamps và integration source-boundary: Web74/74 PASS; lint/typecheck/build/git diff --check PASS (warning dynamic import có sẵn). Browser và dữ liệu dự án thật NOT RUN. UI UX Pro Max dùng derived data không effect/state sync; không thêm source playback, không ghi Atlas/paid AI/commit/push.
+
+## S25.7.8.4 — Gemini STT integration
+
+- Kiểm tra flags cuối lượt: Gemini selected=true, key PRESENT; không sửa `.env` thật hoặc gọi Google. Regression profile/filename mock19/19 PASS (ngoài42 Gemini/STT tests).
+
+- IMPLEMENTED / runtime PARTIAL: thêm Google Gen AI SDK2.28.0, Gemini default và `.env.example`; giữ OpenAI explicit, API success DTO/controller/ownership/transaction/schema/frontend/Mobile/Admin/Translation/TTS không đổi. `.env` thật không sửa; cần người dùng cấu hình GEMINI_API_KEY/STT_PROVIDER/GEMINI_STT_MODEL.
+- Model chuyên dụng gemini-3.5-transcribe theo tài liệu Google: Interactions verbatim/word timestamps/vi-VN; model access check trước upload, Files API/ACTIVE/cleanup, MP4 tách WAV và probe bằng FFmpeg, MP3 trực tiếp. Giới hạn ứng dụng500MiB/1 giờ. Timestamps thật map từng word; reject thiếu/âm/đảo thứ tự/chồng/vượt duration, không giả tạo.
+- Phân biệt missing/invalid key, model permission, quota, invalid media, no speech, timeout/invalid response. Development chỉ log provider/code/status, không retry paid generation; preserve transcript cũ nếu lỗi. Không ghi Atlas hoặc gọi Gemini thật.
+- Gemini + STT integration mock42/42 PASS; FFmpeg/FFprobe9.0.2 đã chạy extraction synthetic MP4 thật (Gemini mock), cleanup tệp test PASS. Backend lint/typecheck/build/diff check PASS. npm install báo audit0 vulnerabilities; SDK deprecated dependency warning node-domexception không gây lỗi. GEMINI_API_KEY hiện PRESENT (không in/kiểm tra key thật); GEMINI_STT_MODEL chưa đặt, dùng default. Real Gemini/model availability với key thật/browser STT E2E NOT RUN; chỉ chứng minh source/mock. Bộ regression có ghi Atlas không chạy. Không commit/push; chờ duyệt.
+
 ## S25.7.8.1 — Vietnamese upload filename encoding
 
 - Root cause tái hiện bằng HTTP multipart thật: Multer mặc định defParamCharset=latin1 giải mã filename UTF-8 thành mojibake trước mediaService.upload. Frontend FormData không chuyển đổi tên; Media.originalName lưu giá trị nhận được, API/UI chỉ đọc lại.
