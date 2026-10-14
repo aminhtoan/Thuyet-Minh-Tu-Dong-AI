@@ -7,14 +7,16 @@ import { ErrorState } from '../components/common/ErrorState';
 import { Spinner } from '../components/common/Spinner';
 import { WorkflowSteps } from '../components/common/WorkflowSteps';
 import { PageHeader } from '../components/layout/PageHeader';
-import { isLanguageCode } from '../features/projects/languages';
 import { useProject } from '../features/projects/useProjects';
 import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
 import { TranslationSegmentRow } from '../features/translation/TranslationSegmentRow';
 import { useTranslationEditor } from '../features/translation/useTranslationEditor';
+import { buildTranslationPresentation } from '../features/translation/translationPresentation.mjs';
+import { translationLanguageLabel } from '../features/translation/translationLanguages.mjs';
 import { translationStatusLabels } from '../localization/statusLabels.mjs';
 import '../styles/translation.css';
+import { GroupTranslationWorkspace } from '../features/translation/GroupTranslationWorkspace';
 
 export function TranslationPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -29,7 +31,8 @@ export function TranslationPage() {
       <Link to="/projects" className="button button--secondary button--md">Quay lại dự án</Link>
     </Card>
   </>;
-  const preferredTarget = language && isLanguageCode(language) ? language : project.targetLanguage ?? '';
+  const preferredTarget = language?.trim().toLowerCase() || (project.targetLanguage ?? '');
+  if (import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true') return <GroupTranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
   return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
 }
 
@@ -40,7 +43,8 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
     if (editor.dirty && !window.confirm('Hủy các thay đổi bản dịch chưa lưu và quay lại Bản ghi?')) return;
     navigate('/projects/' + project.id + '/transcript');
   }
-  const translationBySource = new Map(editor.draft?.segments.map((segment) => [segment.transcriptSegmentId, segment]));
+  const matchesSource = !editor.draft || (editor.draft.projectId === project.id && editor.draft.sourceLanguage === editor.transcript?.languageCode && editor.draft.targetLanguage === editor.targetLanguage && editor.draft.sourceRevision === editor.transcript?.updatedAt);
+  const presentation = buildTranslationPresentation(editor.transcript?.segments ?? [], matchesSource ? editor.draft?.segments : []);
   const sourceLanguage = editor.transcript?.languageCode ?? project.sourceLanguage;
   const showSource = editor.transcript && editor.status !== 'LOADING';
   return <>
@@ -59,37 +63,40 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       action={<Button onClick={backToTranscript}>Quay lại bản ghi</Button>} /></Card>}
     {showSource && <div className="translation-workspace">
       <Card className="translation-language-card">
-        <div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{languageNames[sourceLanguage]}</p></div>
+        <div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{translationLanguageLabel({ code: sourceLanguage, name: languageNames[sourceLanguage] ?? sourceLanguage, nativeName: '' })}</p></div>
         <div className="translation-language-field">
           <label htmlFor="target-language">Ngôn ngữ đích</label>
           <select id="target-language" value={editor.targetLanguage ?? ''} disabled={!editor.canChangeTarget}
-            aria-describedby="translation-language-help"
-            onChange={(event) => { if (isLanguageCode(event.target.value)) editor.changeTarget(event.target.value); }}>
+            aria-describedby="translation-language-help translation-language-status"
+            onChange={(event) => editor.changeTarget(event.target.value)}>
+            <option value="" disabled>Chọn ngôn ngữ cần dịch</option>
             {editor.targetChoices.map((language) => <option key={language.code} value={language.code}>
-              {language.name === language.nativeName ? language.name : language.name + ' (' + language.nativeName + ')'}
+              {translationLanguageLabel(language)}
             </option>)}
           </select>
         </div>
-        {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
+        {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={!editor.targetLanguage || editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
         <p id="translation-language-help" className="translation-note">Chọn ngôn ngữ để tạo hoặc mở lại bản dịch đã lưu.</p>
+        <p id="translation-language-status" className="translation-note" role="status">{editor.languageStatus === 'LOADING' ? 'Đang tải danh sách ngôn ngữ...' : editor.languageStatus === 'ERROR' ? 'Không thể tải danh sách ngôn ngữ. Chọn Thử lại để tải lại.' : editor.languageStatus === 'EMPTY' ? 'Chưa có ngôn ngữ đích được cấu hình. Vui lòng liên hệ quản trị viên để bổ sung ngôn ngữ được hỗ trợ.' : `${editor.targetChoices.length} ngôn ngữ đích khả dụng.`}</p>
         <p className="translation-note">Bản dịch được tạo bởi dịch vụ trên máy chủ và lưu theo dự án.</p>
       </Card>
-      {editor.status === 'TRANSLATING' && <Card className="translation-loading"><Spinner label="Đang dịch bản ghi" /><p role="status">Đang tạo bản dịch {editor.targetLanguage ? languageNames[editor.targetLanguage] : ''}...</p></Card>}
-      {!editor.draft && editor.status === 'NOT_STARTED' && <p className="translation-note" role="status">Chưa có bản dịch đã lưu cho ngôn ngữ và bản ghi này. Chọn Dịch để bắt đầu.</p>}
+      {editor.status === 'TRANSLATING' && <Card className="translation-loading"><Spinner label="Đang dịch bằng AI" /><p role="status">Đang dịch bằng AI...</p></Card>}
+      {!editor.draft && editor.status === 'NOT_STARTED' && <p className="translation-note" role="status">{editor.targetLanguage ? 'Chưa có bản dịch cho ngôn ngữ đã chọn.' : 'Chọn ngôn ngữ cần dịch để bắt đầu.'}</p>}
+      {presentation.notice && <p className="translation-note" role="status">{presentation.notice}</p>}
+      <p className="translation-note">{presentation.rows.length} cụm hiển thị · {editor.transcript?.segments.length ?? 0} phân đoạn gốc · Thời gian phút:giây.mili giây</p>
       <div className="translation-segments" aria-label="Phân đoạn gốc và phân đoạn đã dịch">
-        {editor.transcript?.segments.map((source) => {
-          const translation = translationBySource.get(source.id);
+        {presentation.rows.map(({ source, translation }) => {
           return <TranslationSegmentRow key={source.id} source={source} translation={translation}
-            error={translation ? editor.errors[translation.id] : undefined} disabled onChange={editor.updateSegment} />;
+            error={translation ? editor.errors[translation.id] : undefined} />;
         })}
       </div>
       {editor.draft && <Card className="translation-actions">
-        <p role="status">Bản dịch được lưu trên máy chủ và hiện ở chế độ chỉ đọc.</p>
+        <p role="status">Bản dịch đã được lưu trên máy chủ và hiện ở chế độ chỉ đọc.</p>
         {editor.invalid && <p className="translation-error" role="alert">Hãy bổ sung các bản dịch còn trống trước khi lưu.</p>}
         <div className="translation-action-buttons">
           <Button variant="secondary" disabled={!editor.canReset} onClick={editor.reset}>Đặt lại thay đổi</Button>
           <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onClick={editor.save}>Lưu bản dịch</Button>
-          <Button variant="secondary" disabled={!editor.saved || editor.busy || editor.status === 'FAILED'} onClick={() => navigate('/projects/' + project.id + '/voice?language=' + editor.targetLanguage)}>Tiếp tục đến giọng đọc</Button>
+          <Button variant="secondary" disabled={!editor.saved || editor.busy || editor.status === 'FAILED' || Boolean(presentation.notice)} onClick={() => navigate('/projects/' + project.id + '/voice?language=' + editor.targetLanguage)}>Tiếp tục đến giọng đọc</Button>
         </div>
         <p className="translation-note">{editor.saved ? 'Đặt lại sẽ khôi phục bản dịch đã lưu gần nhất.' : 'Đặt lại sẽ hủy bản dịch chưa lưu để bạn bắt đầu lại hoặc đổi ngôn ngữ.'}</p>
         <p className="translation-note">Hãy lưu mọi thay đổi bản dịch trước khi chọn giọng đọc thuyết minh.</p>

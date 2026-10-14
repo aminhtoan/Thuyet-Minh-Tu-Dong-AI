@@ -1,5 +1,5 @@
 import type { LanguageCode } from '../projects/types';
-import type { Translation } from '../translation/types';
+import type { SavedTranslation } from '../translation/translationService';
 import type { NarrationConfig, Voice, VoiceFilter } from './types';
 
 export const MIN_SPEED = 0.5;
@@ -21,10 +21,10 @@ export function isValidSpeed(speed: number): boolean {
 export function formatSpeed(speed: number): string {
   return (Number.isInteger(speed) ? speed.toFixed(1) : String(speed)) + 'x';
 }
-export function translationRevision(translation: Translation): string {
-  return JSON.stringify([translation.id, translation.sourceRevision, translation.targetLanguage, translation.segments]);
+export function translationRevision(translation: SavedTranslation): string {
+  return JSON.stringify([translation.id, translation.sourceRevision, translation.targetLanguage, 'groups' in translation ? translation.groups : translation.segments]);
 }
-export function createNarrationConfig(translation: Translation): NarrationConfig {
+export function createNarrationConfig(translation: SavedTranslation): NarrationConfig {
   return { projectId: translation.projectId, translationId: translation.id, languageCode: translation.targetLanguage,
     voiceId: '', speed: 1, translationRevision: translationRevision(translation) };
 }

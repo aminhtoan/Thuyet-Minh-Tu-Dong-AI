@@ -16,9 +16,13 @@
     "test:filename": "node --import tsx --test tests/filename-encoding.test.ts",
     "test:stt-debug": "node --import tsx --test tests/stt-debug.test.ts",
     "test:gemini": "node --import tsx --test tests/gemini-stt.test.ts tests/stt-debug.test.ts",
+    "test:gemini-translation": "node --import tsx --test tests/gemini-translation.test.ts tests/translation-mock.test.ts",
+    "test:group-translation": "node --import tsx --test tests/group-translation.test.ts tests/gemini-translation.test.ts tests/translation-mock.test.ts",
     "test:source-media": "node --import tsx --test tests/source-media.test.ts",
     "seed:admin": "tsx src/scripts/seed-admin.ts",
-    "seed:voices": "tsx src/scripts/seed-voice-catalog.ts"
+    "seed:voices": "tsx src/scripts/seed-voice-catalog.ts",
+    "seed:languages": "tsx src/scripts/seed-language-catalog.ts",
+    "test:language-catalog": "node --import tsx --test tests/language-catalog.test.ts"
   },
   "dependencies": {
     "@google/genai": "2.28.0",

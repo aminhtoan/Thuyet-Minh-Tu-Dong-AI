@@ -1,5 +1,6 @@
 import mongoose, { type Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
+import { Language } from '../models/Language.js';
 import { ProcessingJob } from '../models/ProcessingJob.js';
 import { Project } from '../models/Project.js';
 import { Transcript } from '../models/Transcript.js';
@@ -10,7 +11,10 @@ import { AppError } from '../utils/app-error.js';
 import { env } from '../config/env.js';
 import { getTranslationProvider } from './translation/translation.service.js';
 import { OpenAiTranslationError } from './translation/openai-translation.provider.js';
+import { GeminiTranslationError, GEMINI_TRANSLATION_ERRORS, assertGeminiTranslationGranularity } from './translation/gemini-translation.provider.js';
+import { isTranslationMappingCurrent } from './translation/translation-mapping.js';
 import type { TranslationProviderSegment } from './translation/translation-provider.interface.js';
+import { groupedDto } from './translation/group-translation.service.js';
 
 const writeLog = async (userId: string, action: string, projectId: Types.ObjectId, targetLanguage: string) => {
   try {
@@ -18,10 +22,10 @@ const writeLog = async (userId: string, action: string, projectId: Types.ObjectI
   } catch { /* best effort */ }
 };
 
-const summary = async (translation: { _id: Types.ObjectId; projectId: Types.ObjectId; sourceLanguage: string; targetLanguage: string; fullText: string; createdAt: Date; updatedAt: Date }) => ({
+const summary = async (translation: { _id: Types.ObjectId; projectId: Types.ObjectId; sourceLanguage: string; targetLanguage: string; fullText: string; createdAt: Date; updatedAt: Date; alignmentFormat?: string | null; groups?: { sourceSegmentIds: Types.ObjectId[] }[] | null; review?: unknown }) => ({
   id: translation._id.toString(), projectId: translation.projectId.toString(), sourceLanguage: translation.sourceLanguage,
   targetLanguage: translation.targetLanguage, fullText: translation.fullText,
-  segmentCount: await TranslationSegment.countDocuments({ translationId: translation._id }),
+  ...(translation.alignmentFormat === 'GROUPS_V1' ? { alignmentFormat: 'GROUPS_V1', groupCount: translation.groups?.length ?? 0, sourceSegmentCount: translation.groups?.reduce((n, g) => n + g.sourceSegmentIds.length, 0) ?? 0, reviewed: Boolean(translation.review) } : { alignmentFormat: 'SEGMENTS_V1', segmentCount: await TranslationSegment.countDocuments({ translationId: translation._id }) }),
   createdAt: translation.createdAt, updatedAt: translation.updatedAt,
 });
 
@@ -30,11 +34,16 @@ export const listTranslations = async (projectId: string) => {
   return Promise.all(translations.map((translation) => summary(translation)));
 };
 
-export const getTranslation = async (projectId: string, targetLanguage: string) => {
+export const getTranslation = async (projectId: string, targetLanguage: string, supportsGroups = false) => {
   const translation = await Translation.findOne({ projectId, targetLanguage, status: 'READY' });
   if (!translation) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Không tìm thấy bản dịch.');
+  if (translation.alignmentFormat === 'GROUPS_V1') {
+    if (!supportsGroups) throw new AppError(409, 'TRANSLATION_FORMAT_UNSUPPORTED', 'Bản dịch theo cụm cần ứng dụng hỗ trợ GROUPS_V1.');
+    return groupedDto(translation);
+  }
   const sourceSegments = await TranscriptSegment.find({ transcriptId: translation.transcriptId }).sort({ sequence: 1 });
   const translatedSegments = await TranslationSegment.find({ translationId: translation._id });
+  if (!isTranslationMappingCurrent(sourceSegments, translatedSegments)) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Bản dịch không còn khớp bản ghi hiện tại. Vui lòng dịch lại.');
   const bySource = new Map(translatedSegments.map((segment) => [segment.transcriptSegmentId.toString(), segment]));
   return {
     ...(await summary(translation)),
@@ -61,15 +70,21 @@ export const translate = async (projectId: string, userId: string, targetLanguag
   const project = await Project.findOne({ _id: projectId, userId });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
   if (project.sourceLanguage === targetLanguage) throw new AppError(400, 'SAME_SOURCE_TARGET_LANGUAGE', 'Ngôn ngữ đích phải khác ngôn ngữ nguồn.');
+  if (!await Language.exists({ code: targetLanguage, isActive: true })) throw new AppError(400, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED', 'Ngôn ngữ đích chưa được hệ thống hỗ trợ.');
   const transcript = await Transcript.findOne({ projectId });
   if (!transcript) throw new AppError(404, 'TRANSCRIPT_NOT_FOUND', 'Không tìm thấy bản ghi.');
   const sourceSegments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 });
   if (!transcript.fullText.trim() || !sourceSegments.length || sourceSegments.some((segment) => !segment.text.trim())) throw new AppError(409, 'TRANSCRIPT_NOT_FOUND', 'Bản ghi không có nội dung có thể dịch.');
   const existing = await Translation.findOne({ transcriptId: transcript._id, targetLanguage, status: 'READY' });
-  if (existing) return { project: { id: projectId, status: project.status }, translation: await getTranslation(projectId, targetLanguage), idempotent: true };
+  if (existing?.alignmentFormat === 'GROUPS_V1') throw new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Đã có bản dịch theo cụm; không ghi đè bằng luồng cũ.');
+  if (existing && isTranslationMappingCurrent(sourceSegments, await TranslationSegment.find({ translationId: existing._id }))) return { project: { id: projectId, status: project.status }, translation: await getTranslation(projectId, targetLanguage), idempotent: true };
   if (!['TRANSCRIBED', 'TRANSLATED', 'FAILED'].includes(project.status)) {
     if (project.status === 'TRANSLATING') throw new AppError(409, 'TRANSLATION_ALREADY_RUNNING', 'Dự án đang được dịch.');
     throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép dịch.');
+  }
+  if ((process.env.TRANSLATION_PROVIDER?.trim().toLowerCase() || 'gemini') === 'gemini') {
+    try { assertGeminiTranslationGranularity(sourceSegments); }
+    catch { throw new AppError(409, 'TRANSLATION_MAPPING_FAILED', 'Bản ghi đang tách theo từng từ. Chưa thể xác minh ánh xạ ngữ nghĩa Việt–Anh với cấu trúc lưu hiện tại; cần liên kết bản dịch theo cụm/câu trước khi dịch.'); }
   }
 
   let job;
@@ -89,14 +104,18 @@ export const translate = async (projectId: string, userId: string, targetLanguag
   }
   void writeLog(userId, claimed.status === 'FAILED' ? 'TRANSLATION_RETRIED' : 'TRANSLATION_STARTED', claimed._id, targetLanguage);
   try {
-    const providerInput = sourceSegments.map((segment) => ({ index: segment.sequence - 1, text: segment.text }));
-    const result = await getTranslationProvider().translate({ sourceLanguage: transcript.languageCode, targetLanguage, segments: providerInput });
+    const providerInput = sourceSegments.map((segment) => ({ index: segment.sequence - 1, text: segment.text, sourceSegmentId: segment._id.toString(), startTime: segment.startTime, endTime: segment.endTime }));
+    const result = await getTranslationProvider().translate({ fullText: transcript.fullText, sourceLanguage: transcript.languageCode, targetLanguage, segments: providerInput });
     if (result.sourceLanguage !== transcript.languageCode || result.targetLanguage !== targetLanguage) throw new Error('TRANSLATION_INVALID_RESPONSE');
     const translated = validateResult(providerInput, result.segments);
     const session = await mongoose.startSession();
     let translationId = '';
     try {
       await session.withTransaction(async () => {
+        const existingFormat = await Translation.findOne({ transcriptId: transcript._id, targetLanguage }, undefined, { session });
+        if (existingFormat?.alignmentFormat === 'GROUPS_V1') throw new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Đã có bản dịch theo cụm; không ghi đè bằng luồng cũ.');
+        const current = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 }).session(session);
+        if (current.length !== sourceSegments.length || current.some((segment, index) => segment._id.toString() !== sourceSegments[index]?._id.toString() || segment.text !== sourceSegments[index]?.text || segment.startTime !== sourceSegments[index]?.startTime || segment.endTime !== sourceSegments[index]?.endTime)) throw new Error('TRANSLATION_MAPPING_FAILED');
         const translation = await Translation.findOneAndUpdate(
           { transcriptId: transcript._id, targetLanguage },
           { projectId, transcriptId: transcript._id, sourceLanguage: transcript.languageCode, targetLanguage, fullText: translated.map((segment) => segment.text).join(' '), status: 'READY' },
@@ -113,12 +132,14 @@ export const translate = async (projectId: string, userId: string, targetLanguag
     return { project: { id: projectId, status: 'TRANSLATED' }, translation: await getTranslation(projectId, targetLanguage), translationId, idempotent: false };
   } catch (error) {
     if (env.nodeEnv === 'development' && error instanceof OpenAiTranslationError) console.error('Translation provider diagnostic:', error.diagnostics);
-    const known = error instanceof Error && ['TRANSLATION_NOT_CONFIGURED', 'TRANSLATION_TIMEOUT', 'TRANSLATION_INVALID_RESPONSE'].includes(error.message) ? error.message : 'TRANSLATION_PROVIDER_ERROR';
+    if (env.nodeEnv === 'development' && error instanceof GeminiTranslationError) console.error('Translation provider diagnostic:', { provider: 'gemini', code: error.code, httpStatus: error.httpStatus });
+    const known = error instanceof Error && (GEMINI_TRANSLATION_ERRORS as readonly string[]).includes(error.message) ? error.message : 'TRANSLATION_PROVIDER_ERROR';
     await Promise.all([
       ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: known, completedAt: new Date() }),
       Project.updateOne({ _id: projectId }, { status: 'FAILED' }),
     ]);
     void writeLog(userId, 'TRANSLATION_FAILED', claimed._id, targetLanguage);
-    throw new AppError(known === 'TRANSLATION_NOT_CONFIGURED' ? 503 : 502, known, known === 'TRANSLATION_NOT_CONFIGURED' ? 'Dịch vụ dịch chưa được cấu hình.' : 'Không thể dịch bản ghi.');
+    const messages: Record<string, string> = { TRANSLATION_NOT_CONFIGURED: 'Dịch vụ dịch chưa được cấu hình.', TRANSLATION_INVALID_KEY: 'Khóa dịch vụ dịch không hợp lệ. Vui lòng liên hệ quản trị viên.', TRANSLATION_MODEL_UNAVAILABLE: 'Model dịch không khả dụng hoặc chưa được cấp quyền.', TRANSLATION_QUOTA_EXCEEDED: 'Dịch vụ dịch đã hết hạn mức. Vui lòng thử lại sau.', TRANSLATION_TIMEOUT: 'Dịch vụ dịch phản hồi quá lâu. Vui lòng thử lại sau.', TRANSLATION_NETWORK_ERROR: 'Không kết nối được dịch vụ dịch.', TRANSLATION_INVALID_RESPONSE: 'Dịch vụ dịch trả về dữ liệu không hợp lệ.', TRANSLATION_MAPPING_FAILED: 'Không thể ánh xạ bản dịch chính xác với bản ghi gốc.' };
+    throw new AppError(known === 'TRANSLATION_NOT_CONFIGURED' ? 503 : 502, known, messages[known] ?? 'Không thể dịch bản ghi.');
   }
 };

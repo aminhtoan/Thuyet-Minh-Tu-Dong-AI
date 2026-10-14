@@ -1,5 +1,33 @@
 # UI Specification
 
+## S25.7.9.3.3 — Bản dịch theo cụm và duyệt thủ công
+
+- Consumer Web bật riêng bằng `VITE_GROUP_TRANSLATION_ENABLED=true`, default OFF; Backend cũng cần flag tương ứng. Không đổi Transcript/player/grouping display cũ, Sidebar/Header hay routes. Nhánh legacy giữ nguyên.
+- Chọn Language thật → GET plan, không tự POST. Candidate groups không được coi là các câu ngữ nghĩa chắc chắn. Có nút gộp liền kề/khôi phục plan và checkbox chấp nhận ranh giới; người dùng xác nhận chi phí trước Xem trước bản dịch. Không sửa nguồn hoặc ép21 từ thành21 bản dịch.
+- Draft hiển thị Bản gốc | Bản dịch với `mm:ss.SSS`; ranh giới đóng băng. Có thời hạn nháp, cảnh báo RAM/restart và checklist nghĩa/tên riêng/số/địa chỉ/thêm-bỏ nội dung. Chỉ Duyệt và lưu khi người dùng đánh dấu đã kiểm tra; có Từ chối (không persist). Nháp không cho tiếp tục Giọng đọc.
+- Draft ID nằm query `draft`, chỉ là locator, không thay JWT/ownership; reload đọc GET draft, không gọi AI. Mất/hết hạn có lỗi rõ ràng. Retry dữ liệu chỉ GET; duplicate-submit có ref lock. API lỗi không báo đã lưu; chỉ response approve thành công mới hiện saved/Voice link.
+- Áp dụng UI UX Pro Max: label rõ, semantic checkbox/button, aria-live/error, loading/disabled, dùng tokens/components hiện có; hai cột desktop/1 cột dưới768, nội dung dài wrap. Voice/Generate chỉ bổ sung union consumer/count theo cụm, không đổi paid-confirmation/workflow.
+- Tests Web112/112, lint/typecheck/build PASS. UI state tests chạy component thật qua harness mock (không DOM/browser thật). Browser visual/responsive/real approval NOT RUN. Không fake dữ liệu production.
+
+## S25.7.9.2.1 — Translation catalog empty/error handling
+
+- Dropdown lấy duy nhất Language active từ GET /api/voices như backend validation, không static fallback. Loại source language và normalize mã; mọi mã thực có trong catalog được chọn (không gate bằng4 mã cũ), nhãn tiếng Việt theo Intl.DisplayNames/fallback tên thật.
+- Có aria-describedby/status cho loading, lỗi và catalog rỗng; empty: Chưa có ngôn ngữ đích được cấu hình. Vui lòng liên hệ quản trị viên để bổ sung ngôn ngữ được hỗ trợ. Select/Dịch khóa khi không có option, selected/draft cũ được clear, error có đường retry GET hiện có. Giữ placeholder/layout/timestamp/confirmation; chọn ngôn ngữ không gửi POST.
+- DB read-only hiện xác minh0 Language; không thể hiển thị English thật nếu không cấu hình dữ liệu có phép. Source/hook fixtures không phải runtime catalog và không seed dữ liệu production. Browser E2E NOT RUN; source tests không chứng minh dropdown đã có options trên tài khoản thật.
+
+## S25.7.9.2 — Gemini Translation feedback
+
+- Giữ giao diện so sánh và nhóm display S25.7.9.1, timestamp mm:ss.SSS. Select có placeholder Chọn ngôn ngữ cần dịch, không tự chọn mục đầu; target từ deep link/project có thể mở lại nếu hợp lệ. Nút Dịch disabled khi chưa chọn hoặc đang xử lý, loading Đang dịch bằng AI..., saved feedback chỉ sau GET/POST thật; chưa dịch hiện Chưa có bản dịch cho ngôn ngữ đã chọn.
+- UI UX Pro Max áp dụng explicit selection, loading/disabled, cancellation không báo thất bại giả. Ref in-flight chặn hai lần nhấn trước render, confirmation hiện có trước POST vẫn giữ; hủy trở lại chờ dịch, lỗi provider tiếng Việt hiển thị và retry qua thao tác người dùng. Không auto-trigger translation.
+- Mapping không xác minh thì không hiển thị nội dung dưới timestamp sai và khóa tiếp tục đến giọng đọc. Reload đọc bản dịch được backend lưu, không mock runtime. Không sửa player/Transcript grouping/Sidebar/Mobile/Admin. Browser E2E NOT RUN.
+
+## S25.7.9.1 — Bản dịch đồng bộ Bản ghi
+
+- Tái sử dụng groupTranscriptSegments chỉ cho presentation: punctuation/pause và giới hạn như Bước2; bản gốc/API/Database giữ nguyên toàn bộ phân đoạn. Hai cột Bản gốc | Bản dịch trên desktop, một cột dưới700px; văn bản chỉ đọc chọn/copy được, tự co theo nội dung, padding12px và focus rõ theo UI UX Pro Max. Giữ design tokens/ngôn ngữ đích/nút Dịch và confirmation hiện có.
+- Giữ backend segment ID đã có trong Transcript DTO dưới metadata frontend backendSegmentId (không đổi logical id). Translation DTO index phải khớp sequence-1 và sourceSegmentId phải khớp ID thật; kiểm tra nguồn/ngôn ngữ/phiên bản trong workspace. Chỉ nhóm bản dịch khi mapping đầy đủ, duy nhất, đúng thứ tự/timestamp/nội dung không rỗng; ghép bằng membership của cụm gốc, không nhóm độc lập bản dịch hoặc đoán mapping theo vị trí mảng.
+- Mapping không an toàn: giữ từng phân đoạn, hiển thị lý do, không ghép nội dung chưa xác minh. Chưa có bản dịch: cụm bản gốc và thông báo chờ dịch, không sinh văn bản giả. Timestamp thống nhất mm:ss.SSS (ví dụ00:06.700), giữ phút/giây/mili giây thay vì bỏ giây. Không đổi backend/schema/provider, không AI calls/Atlas writes.
+- Browser visual/E2E NOT RUN; fixture/mock kiểm tra UI/mapping không chứng minh dữ liệu dự án thật đã được dịch.
+
 ## S25.7.8.10 — Bản ghi: compact read-only presentation
 
 - Giữ layout hai cột; native audio/video controls được giữ để bảo vệ hành vi playback đã xác nhận. Audio có icon sóng âm, container nền nhẹ; không thêm custom progress/volume hoặc autoplay.

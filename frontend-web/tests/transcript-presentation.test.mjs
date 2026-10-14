@@ -33,9 +33,9 @@ test('subsecond display uses minutes:seconds.milliseconds instead of integer tru
   assert.equal(formatPreciseTimestamp(0.12), '00:00.120'); assert.equal(formatPreciseTimestamp(0.48), '00:00.480');
   assert.equal(formatPreciseTimestamp(61.234), '01:01.234'); assert.equal(formatPreciseTimestamp(59.9999), '01:00.000'); assert.equal(formatPreciseTimestamp(3601.5), '60:01.500'); assert.equal(formatPreciseTimestamp(NaN), '—');
 });
-test('grouped view never replaces editor draft or changes translation timestamp helper', async () => {
+test('grouped view never replaces editor draft and both screens share precise timestamps', async () => {
   const page = await readFile(new URL('../src/pages/TranscriptPage.tsx', import.meta.url), 'utf8');
   const row = await readFile(new URL('../src/features/transcript/TranscriptSegmentEditor.tsx', import.meta.url), 'utf8');
   const translation = await readFile(new URL('../src/features/translation/TranslationSegmentRow.tsx', import.meta.url), 'utf8');
-  assert.match(page, /displaySegments\.map/); assert.doesNotMatch(page, /setDraft|save.*displaySegments|generate.*displaySegments/); assert.match(row, /formatPreciseTimestamp/); assert.match(translation, /formatTimestamp.*transcriptUtils/);
+  assert.match(page, /displaySegments\.map/); assert.doesNotMatch(page, /setDraft|save.*displaySegments|generate.*displaySegments/); assert.match(row, /formatPreciseTimestamp/); assert.match(translation, /formatPreciseTimestamp.*transcriptPresentation/);
 });

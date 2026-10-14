@@ -12,7 +12,7 @@ import { requireProjectOwner } from '../middleware/project-owner.middleware.js';
 import { uploadMedia } from '../middleware/upload.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { createProjectSchema, listProjectsSchema, projectIdSchema, updateProjectSchema } from '../validators/project.validator.js';
-import { startTranslationSchema, targetTranslationSchema } from '../validators/translation.validator.js';
+import { startTranslationSchema, targetTranslationSchema, previewTranslationSchema, draftTranslationSchema, approveTranslationSchema } from '../validators/translation.validator.js';
 import { narrationIdSchema, startNarrationSchema } from '../validators/narration.validator.js';
 import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
 
@@ -31,6 +31,10 @@ projectRouter.post('/:id/transcription', requireProjectOwner, transcriptionContr
 projectRouter.get('/:id/transcript', requireProjectOwner, transcriptionController.get);
 projectRouter.post('/:id/translations', validate(startTranslationSchema), requireProjectOwner, translationController.start);
 projectRouter.get('/:id/translations', requireProjectOwner, translationController.list);
+projectRouter.get('/:id/translations/plan/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, translationController.plan);
+projectRouter.post('/:id/translations/preview', validate(previewTranslationSchema), requireProjectOwner, translationController.preview);
+projectRouter.get('/:id/translations/drafts/:draftId', validate(draftTranslationSchema), requireProjectOwner, translationController.draft);
+projectRouter.post('/:id/translations/drafts/:draftId/approve', validate(approveTranslationSchema), requireProjectOwner, translationController.approve);
 projectRouter.get('/:id/translations/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, translationController.get);
 projectRouter.post('/:id/narrations', validate(startNarrationSchema), requireProjectOwner, narrationController.start);
 projectRouter.get('/:id/narrations', requireProjectOwner, narrationController.list);

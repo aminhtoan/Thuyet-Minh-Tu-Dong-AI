@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import test, { after, before } from 'node:test';
+import test, { after, before, mock } from 'node:test';
 import type { Server } from 'node:http';
 import type { TranslationProvider } from '../src/services/translation/translation-provider.interface.js';
 
@@ -22,6 +22,7 @@ const { TranslationSegment } = await import('../src/models/TranslationSegment.js
 const { ProcessingJob } = await import('../src/models/ProcessingJob.js');
 const { AuthSession } = await import('../src/models/AuthSession.js');
 const { ActivityLog } = await import('../src/models/ActivityLog.js');
+const { Language } = await import('../src/models/Language.js');
 const { hashPassword } = await import('../src/utils/password.js');
 const { signAccessToken } = await import('../src/utils/jwt.js');
 const { setTranslationProviderForTests } = await import('../src/services/translation/translation.service.js');
@@ -47,6 +48,8 @@ const makeProject = async (userId: string, status = 'TRANSCRIBED', withTranscrip
 const providerFor = (prefix: string): TranslationProvider => ({ async translate(input) { return { ...input, segments: input.segments.map((segment) => ({ index: segment.index, text: `${prefix} ${segment.index}` })) }; } });
 
 before(async () => {
+  // Catalog fixture only: do not add/update real Language records for these tests.
+  mock.method(Language, 'exists', async (filter: { code: string }) => ['en', 'ja', 'de'].includes(filter.code) ? { _id: 'test-catalog' } : null);
   await connectDatabase(env.mongoUri);
   server = app.listen(0, '127.0.0.1'); await new Promise<void>((resolve) => server.once('listening', resolve));
   const address = server.address(); if (!address || typeof address === 'string') throw new Error('port'); base = `http://127.0.0.1:${address.port}`;
@@ -59,6 +62,7 @@ before(async () => {
 });
 
 after(async () => {
+  mock.restoreAll();
   setTranslationProviderForTests();
   const users = await User.find({ email: { $regex: `s21-test-.*-${suffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}@example.com` } });
   const transcripts = await Transcript.find({ projectId: { $in: projectIds } });

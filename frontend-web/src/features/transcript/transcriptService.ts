@@ -4,8 +4,8 @@ import type { Transcript } from './types'
 import { confirmationMessages } from '../../localization/confirmationMessages.mjs'
 import { requireConfirmation } from '../../utils/confirmationGuard.mjs'
 type Options = { signal?: AbortSignal }
-type TranscriptDto = { id: string; projectId: string; language: string; fullText: string; segments: Array<{ index: number; startTime: number; endTime: number; text: string }>; createdAt: string; updatedAt: string }
-const mapTranscript = (value: TranscriptDto): Transcript => ({ id: value.id, projectId: value.projectId, languageCode: value.language, fullText: value.fullText, status: 'SAVED', createdAt: value.createdAt, updatedAt: value.updatedAt, segments: value.segments.map((segment) => ({ id: `${value.id}-${segment.index}`, sequence: segment.index + 1, startTime: segment.startTime, endTime: segment.endTime, text: segment.text })) })
+type TranscriptDto = { id: string; projectId: string; language: string; fullText: string; segments: Array<{ id?: string; index: number; startTime: number; endTime: number; text: string }>; createdAt: string; updatedAt: string }
+const mapTranscript = (value: TranscriptDto): Transcript => ({ id: value.id, projectId: value.projectId, languageCode: value.language, fullText: value.fullText, status: 'SAVED', createdAt: value.createdAt, updatedAt: value.updatedAt, segments: value.segments.map((segment) => ({ id: `${value.id}-${segment.index}`, backendSegmentId: segment.id, sequence: segment.index + 1, startTime: segment.startTime, endTime: segment.endTime, text: segment.text })) })
 
 export const transcriptService = {
   async getTranscript(projectId: string, options: Options = {}): Promise<Transcript | null> {

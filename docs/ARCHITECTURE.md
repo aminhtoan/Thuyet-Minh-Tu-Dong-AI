@@ -1,5 +1,17 @@
 # System Architecture
 
+## S25.7.9.3.3 — Group Translation implementation
+
+Đã triển khai source theo [thiết kế](TRANSLATION_GROUP_DESIGN.md): optional GROUPS_V1 embedded/review trong Translation; không tạo collection/index/migration. Nguồn được hash canonical SHA256 (ID/lang/fullText/all ordered IDs/text/time/sequence). Server tạo candidate plan versioned, chỉ cho gộp các candidate liên tiếp. Output của Gemini chỉ có groupId/text; metadata nguồn được server gắn lại, không fake21 segments.
+
+Preview bounded RAM store/TTL/single-flight/idempotency không ghi Translation/job/log/status. Approve recheck JWTowner/active language/draft/digest/revision/coverage rồi transaction claim Project + insert Translation (không upsert), giữ unique(transcriptId,targetLanguage). Project write/timestamps là hàng rào xung đột với source-processing writers; source được đọc lại trong transaction. Duplicate receipt chỉ trả bản đã lưu có đúng owner/digest/revision; khác target record không overwrite. TTS kiểm tra review MANUAL_V1/current source/fullText/digest trước voice/idempotent/provider. Legacy giữ tương thích; client không hỗ trợ format bị chặn an toàn.
+
+RAM store không phải persistent queue: restart mất nháp/receipt, cần user decision mới; không hỗ trợ multi-process/multi-instance exactly-once. Feature flags Backend/Web OFF mặc định, `.env` thực không đổi. Mock source validation PASS; transaction với Database cách ly, browser và provider thật NOT RUN trong bước này. Xem [GROUPS_V1_IMPLEMENTATION.md](GROUPS_V1_IMPLEMENTATION.md).
+
+## S25.7.9.3.2 — Group Translation proposal (NOT IMPLEMENTED)
+
+Xem [TRANSLATION_GROUP_DESIGN.md](TRANSLATION_GROUP_DESIGN.md). Đề xuất GROUPS_V1 embedded trong Translation, source IDs/timestamps giữ nguyên, immutable source revision và manual semantic approval trước persistence. Giữ TranslationSegment legacy và fullText cho TTS; grouped-aware approval/revision guards và format negotiation cần triển khai sau khi duyệt. Preview draft RAM V1 không phải persistent queue hoặc completed translation; có giới hạn single-process/TTL. Không migration/index/API/schema change đã thực hiện trong bước thiết kế.
+
 ## Overview
 
 The intended system is a multilingual narration platform with two business actors, two Customer clients, a separate Admin client, and one backend. **This document is the architecture source of truth, not a claim that planned applications or APIs already exist.** S1–S5 implemented Customer frontend UI and local mocks only; S6 aligns the future full-stack design.

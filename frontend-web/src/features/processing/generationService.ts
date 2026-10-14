@@ -19,7 +19,7 @@ export const generationService = {
       voiceService.getVoice(config.voiceId, options),
     ]);
     if (!transcript || !translation || !voice ||
-        translation.sourceRevision !== transcriptRevision(transcript) ||
+        (!('groups' in translation) && translation.sourceRevision !== transcriptRevision(transcript)) ||
         config.translationRevision !== translationRevision(translation) ||
         validateNarrationConfig(config, [voice])) return null;
     return { project: { ...project }, transcript, translation, config, voice };

@@ -1,6 +1,6 @@
 import type { Project } from '../projects/types';
 import type { Transcript } from '../transcript/types';
-import type { Translation } from '../translation/types';
+import type { SavedTranslation } from '../translation/translationService';
 import type { NarrationConfig, Voice } from '../voice/types';
 
 export type ProcessingStatus = 'WAITING' | 'STARTING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
@@ -29,7 +29,7 @@ export type ProcessingSnapshot = {
 export type GenerationContext = {
   project: Project;
   transcript: Transcript;
-  translation: Translation;
+  translation: SavedTranslation;
   config: NarrationConfig;
   voice: Voice;
 };

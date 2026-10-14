@@ -1,5 +1,25 @@
 # API Status and Conventions
 
+## S25.7.9.3.3 — GROUPS_V1 (source implemented, runtime chưa kiểm thử)
+
+Mọi endpoint bên dưới dùng JWT CUSTOMER ACTIVE và ownership dự án. Plan/preview/draft/approve yêu cầu `GROUP_TRANSLATION_ENABLED=true` (mặc định OFF). Envelope `{ success: true, data: ... }` và error JSON hiện có giữ nguyên.
+
+| Method / endpoint (prefix `/api/projects/:id/translations`) | Request / response |
+| --- | --- |
+| GET `/plan/:targetLanguage` | `{ plan: { projectId, sourceLanguage, targetLanguage, sourceRevision, groupingVersion, sourceSegmentCount, groups } }`, chỉ đọc |
+| POST `/preview` | Body `{ targetLanguage, sourceRevision, groupingVersion: "phrase-candidates-v1", groups: [[sourceSegmentId, ...], ...], idempotencyKey: UUID }`; trả `{ draft }`, không ghi DB |
+| GET `/drafts/:draftId` | Trả `{ draft }` còn hạn của đúng chủ dự án, không gọi AI |
+| POST `/drafts/:draftId/approve` | Body strict `{ outputDigest: SHA256, reviewed: true }`; trả `{ translation }` đã duyệt, không gọi AI |
+| GET `/:targetLanguage?format=groups-v1` | Trả `{ translation }`, discriminator `alignmentFormat: SEGMENTS_V1 / GROUPS_V1` |
+
+Group chứa `groupId, sequence, ordered sourceSegmentIds, sourceText, translatedText, startTime, endTime`; DTO bản đã lưu thêm `targetLanguageCode` suy từ parent. Draft: `state=DRAFT`, `draftId, expiresAt, outputDigest, sourceRevision, groupingVersion`. Bản đã lưu: `state=APPROVED`, `fullText`, `review { method: MANUAL_V1, reviewedAt, outputDigest }`, `groupCount/sourceSegmentCount`; không có mảng segment giả. Reviewer luôn lấy từ JWT ở server.
+
+GET cũ không có format vẫn đọc legacy; gặp grouped trả409 `TRANSLATION_FORMAT_UNSUPPORTED`. POST legacy không được ghi đè grouped. List thêm `alignmentFormat` và count đúng format; legacy `segmentCount` giữ nguyên.
+
+Lỗi:400 `VALIDATION_ERROR`, `SAME_SOURCE_TARGET_LANGUAGE`, `TRANSLATION_LANGUAGE_NOT_SUPPORTED`;401/403 auth/RBAC;404 project/transcript/translation;409 `SOURCE_REVISION_MISMATCH`, `TRANSLATION_MAPPING_FAILED`, `TRANSLATION_REVIEW_REQUIRED`, `TRANSLATION_DRAFT_CHANGED`, `TRANSLATION_ALREADY_EXISTS`, `INVALID_PROJECT_STATE`, `TRANSLATION_FORMAT_UNSUPPORTED`;410 `TRANSLATION_DRAFT_EXPIRED`;413 `TRANSLATION_DRAFT_TOO_LARGE`;503 `GROUP_TRANSLATION_DISABLED`, `TRANSLATION_DRAFT_CAPACITY`, `TRANSLATION_NOT_CONFIGURED`;502 các mã lỗi Gemini Translation đã sanitise (key/model/quota/timeout/network/response/mapping/provider).
+
+Nháp RAM TTL15 phút, tối đa50 request/nháp,128KiB/nháp; input snapshot tối đa96KiB/1000 cụm/10000 source segments. Một owner/project/target/revision bị khóa trong TTL: cùng idempotency key/payload trả cùng kết quả hoặc lỗi; key/payload khác trả409, kể cả sau lỗi chưa rõ kết quả. Pending không bị evict. Sau TTL/restart cần thao tác và xác nhận mới; không bảo đảm exactly-once qua restart/multi-instance. Xem [GROUPS_V1_IMPLEMENTATION.md](GROUPS_V1_IMPLEMENTATION.md).
+
 ## S25.7.8.9 — File phương tiện nguồn (Implemented)
 
 - `GET /api/projects/:id/media/file` và HEAD: Bearer access JWT, CUSTOMER, user ACTIVE và ownership theo middleware hiện có. Không ký URL/token query hoặc public uploads. Trả đúng file Media hiện tại theo DB, không nhận storage path từ client; kiểm tra path containment và realpath để chặn symlink ra ngoài uploads.
@@ -122,9 +142,22 @@ Project/Media, Transcript, Translation và Narration/TTS routes đã được tr
 
 **PROPOSED:** `POST /api/projects/:id/transcript/generate`, `GET /api/projects/:id/transcript`, `PUT /api/projects/:id/transcript`. A future response may include `id`, `projectId`, `languageCode`, `status`, `fullText` and segments with `id`, numeric `sequence`, `startTime`/`endTime` in seconds, and `text`. Backend contracts, ownership checks, processing jobs and transport are deferred to S20/S24.
 
-### Translation boundary (S8)
+### Gemini Translation — S25.7.9.2
 
-**CURRENT:** `translationService.get(projectId, targetLanguage)`, `translate(projectId, transcript, targetLanguage)` and `save(projectId, translation)` use deterministic sample data and module memory. A valid saved S7 transcript is required. Each translation segment retains its source segment ID, sequence and numeric start/end seconds. Save validates text and source alignment. A development-only source fingerprint prevents loading/saving stale translations after transcript edits.
+S25.7.9.3.2 DESIGN ONLY: [Group Translation design](TRANSLATION_GROUP_DESIGN.md) đề xuất preview/draft/manual approve và format-negotiated GROUPS_V1 DTO. Các endpoints/fields/errors đó **chưa tồn tại**; contract runtime hiện tại vẫn segment-based và fail-closed word-level. Không tự thay schema hoặc dùng21 fake segments để biểu diễn nhóm.
+
+S25.7.9.3.1: Gemini word-level transcript gồm nhiều segment toàn single-word bị từ chối trước tạo job/provider với HTTP409 `TRANSLATION_MAPPING_FAILED` và thông báo cần ánh xạ theo cụm/câu. Provider cũng guard trước metadata/generation. Đủ ID/thứ tự/nonempty không chứng minh semantic alignment; không tự chia English sentence thành21 fragments hoặc tạo timestamp. Schema/DTO hiện tại chưa hỗ trợ many-to-many phrase alignment; thay đổi này chỉ fail-closed, không thêm schema/endpoint. Metadata model bằng key hiện tại đã kiểm tra1 request PASS; generation thực chưa chạy.
+
+- Giữ `POST /api/projects/:id/translations` body `{ targetLanguage }`, `GET /api/projects/:id/translations` và `GET /api/projects/:id/translations/:targetLanguage`; JWT CUSTOMER ACTIVE và ownership hiện có không đổi. Không có endpoint/collection/schema mới. Validation language-code hiện tại + Language active trong catalog thật; target thiếu/inactive trả400 TRANSLATION_LANGUAGE_NOT_SUPPORTED trước provider. Web chọn từ catalog đang có, không tạo danh sách provider giả; DB integration fixtures cần Language active tương ứng.
+- Default/`TRANSLATION_PROVIDER=gemini` dùng `@google/genai`2.28.0, `GEMINI_API_KEY` backend-only, `GEMINI_TRANSLATION_MODEL=gemini-3.8-flash`. OpenAI explicit vẫn dùng `TRANSLATION_MODEL`; STT/TTS không đổi. Model text/structured output xác minh qua [tài liệu Google](https://ai.google.dev/gemini-api/docs/generate-content/structured-output?hl=en); quyền key cụ thể chưa xác minh. Khi người dùng nhấn Dịch, `models.get` kiểm tra generateContent trước một generation request; timeout120s, SDK attempts1, không auto retry/fallback.
+- Gửi full transcript + toàn bộ segment gốc, ID/start/end/index; không gửi cụm display. Structured response chỉ nhận segments `{index,sourceSegmentId,text}`, đủ/duy nhất/đúng thứ tự/không rỗng, không nhận timestamps do AI tạo. Lưu bằng ID segment thật/timestamp nguồn có sẵn, transaction hiện tại; kiểm tra lại nguồn trước ghi. Backend GET/POST idempotence chỉ dùng bản dịch khớp tập source IDs hiện tại; bản dịch stale trả404 TRANSLATION_NOT_FOUND để có thể dịch lại, không xóa dữ liệu cũ ở GET.
+- Gemini errors sanitized: TRANSLATION_NOT_CONFIGURED(503); TRANSLATION_INVALID_KEY, TRANSLATION_MODEL_UNAVAILABLE, TRANSLATION_QUOTA_EXCEEDED, TRANSLATION_TIMEOUT, TRANSLATION_NETWORK_ERROR, TRANSLATION_INVALID_RESPONSE, TRANSLATION_MAPPING_FAILED, TRANSLATION_PROVIDER_ERROR(502). HTTP401/403/404/429 từ provider không trả raw payload. Development logging chỉ provider/code/httpStatus. Lỗi không ghi đè bản dịch đã lưu.
+- Giới hạn: mapping1:1 là kiểm tra cấu trúc, không chứng minh chất lượng dịch hoặc alignment ngữ nghĩa từng từ. Prompt dùng toàn ngữ cảnh, giữ tên riêng/địa chỉ/số liệu và yêu cầu trả rỗng nếu không thể map chính xác; không chia câu dịch theo số từ hay tạo timestamp. Với word-level STT, ngôn ngữ đổi trật tự từ có thể không map tự nhiên1:1; cần duyệt kết quả thật trước công bố workflow PASS. Không có schema mới để lưu phrase-alignment.
+- Source/mock PASS; real Gemini/model metadata bằng key dự án, Atlas persistence và browser E2E NOT RUN. Không gửi transcript ra Google trong validation này.
+
+### Translation boundary (S8 — lịch sử)
+
+**S8 HISTORICAL MOCK:** `translationService.get(projectId, targetLanguage)`, `translate(projectId, transcript, targetLanguage)` and `save(projectId, translation)` originally used sample data and module memory. Current Customer Web uses backend GET/POST and read-only presentation; profile/transcript/translation data is not generated from these historical mock services.
 
 **IMPLEMENTED:** `POST /api/projects/:id/translations` với `{ targetLanguage }`, `GET /api/projects/:id/translations` và `GET /api/projects/:id/translations/:targetLanguage`. Các route yêu cầu JWT, role `CUSTOMER` và ownership. POST xử lý đồng bộ bằng một structured provider request, lưu full text cùng translated segments liên kết source segment. Một Transcript hỗ trợ nhiều target language; target đã hoàn tất trả idempotently, active job cùng target trả `TRANSLATION_ALREADY_RUNNING`.
 
@@ -224,6 +257,8 @@ All responses use the standard success/error envelope. Query objects are strict;
 Voice DTO exposes the database `id` accepted as `voiceId` by the narration API, language metadata, provider name, display fields and optional preview URL. It does not expose `providerVoiceId`, secrets or provider payloads. Empty catalog/filter returns empty arrays.
 
 `npm run seed:voices` is an explicit idempotent development operation. It runs only for a validated OpenAI `TTS_DEFAULT_VOICE`, only when that provider has no Voice records, and only for existing active Language records. It does not call OpenAI or create languages.
+
+S25.7.9.2.2 bổ sung `npm run seed:languages` (mặc định dry-run; `--offline` để preview không kết nối DB). Catalog đề xuất vi/en/ja/ko/zh/fr, cần confirm env/DB và approval flag riêng trước ghi, unique code index prerequisite, chỉ setOnInsert/bỏ qua existing; không tạo voices hoặc sửa schema/API. Chưa seed thật. Xem [LANGUAGE_CATALOG.md](LANGUAGE_CATALOG.md). `/api/voices` vẫn trả active languages kể cả khi voices rỗng; Language metadata không bảo đảm TTS runtime khả dụng.
 
 ### Admin API
 

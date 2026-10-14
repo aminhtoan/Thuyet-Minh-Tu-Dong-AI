@@ -1,5 +1,65 @@
 # Project Progress
 
+## S25.7.9.3.3 — GROUPS_V1 implementation (2026-10-12)
+
+- **PARTIAL — source/mock validation PASS; runtime/provider/persistence chưa được phép kiểm thử.** Schema optional embedded groups/review, canonical revision/digest, merge-only source plan, Gemini group adapter, RAM preview và transactional/manual approve đã triển khai. Unique index/Transcript/TranslationSegment legacy không đổi, không migration.
+- Routes plan/preview/draft/approve + format-aware GET, JWT CUSTOMER ACTIVE/ownership và strict payloads. Preview không ghi job/status/log/Translation; approve insert-only chống overwrite, duplicate/concurrent idempotent; TTS approved/current-only cho GROUPS_V1. Web có plan review, paid preview confirm, semantic review/reject, draft restore và states thật; Voice/Generate union mapping không fake segment.
+- Backend `npm run test:group-translation`: **48/48 PASS**, gồm grouped/mock JWT service/routes/provider và legacy regression mock (20 tests grouped mới +28 legacy/provider trước đó). Backend lint/typecheck/build PASS. Default backend `npm test` **NOT RUN** vì suite dùng Database thật và có writes; không suy diễn baseline118/118 là đã chạy lại.
+- Web `npm test`: **112/112 PASS** (11 grouped tests mới, baseline101). Web lint/typecheck/build PASS. `git diff --check` PASS. Sandbox Node/Vite spawn EPERM đã chạy lại thành công với quyền thực thi; build còn warning dynamic/static import projectRepository đã có sẵn.
+- Database connections/writes **0**, real Gemini metadata/generation **0**, STT/TTS **0**; không đổi `.env` thật/catalog/Atlas/index, không commit/push. Backend/Web flags OFF mặc định. Browser/isolated MongoDB transaction/real provider **NOT RUN**.
+- Giới hạn: RAM TTL15 phút/50 entries/128KiB draft, input96KiB/1000 groups/10000 source IDs; mất nháp và idempotency qua restart, không multi-instance. Source review/manual meaning review không chứng minh ngữ nghĩa tuyệt đối. Chờ duyệt UI và quyền kiểm thử runtime cách ly trước rollout; chưa gọi dịch dự án thật. Chi tiết/file manifest tại [GROUPS_V1_IMPLEMENTATION.md](GROUPS_V1_IMPLEMENTATION.md).
+
+## S25.7.9.3.2 — Group-based Translation design
+
+- DESIGN COMPLETE / PENDING APPROVAL. Đối chiếu schemas, grouping display, Translation APIs/service và TTS fullText. Thiết kế tại TRANSLATION_GROUP_DESIGN.md: optional embedded GROUPS_V1 trong Translation, ordered sourceSegmentIds/biên nguồn/sourceText/review/sourceRevision, giữ legacy TranslationSegment.
+- Đề xuất server-owned grouping có source plan review, contextual Gemini group response, draft chưa persist rồi manual approve/digest/revision recheck; không giả ánh xạ21 từ. Hai group UI là giới hạn18 từ, không bắt buộc2 câu nghiệp vụ. TTS giữ fullText nhưng cần guard approved/current cho grouped.
+- APIs preview/draft/approve và format negotiation chỉ là đề xuất, chưa tồn tại. Schema/code migration cần phê duyệt, bulk data migration không cần mặc định; không đổi unique index hay overwrite legacy. RAM draft V1 giới hạn single-process/TTL, monitoring và multi-instance persistence là scope riêng.
+- Bước này chỉ viết tài liệu, source/schema/index/Database/transcript không sửa; DB writes0, Gemini metadata/generation0, không commit/push. git diff --check PASS; không chạy tests/build không liên quan vì không đổi application code. Chờ người dùng duyệt thiết kế.
+
+## S25.7.9.3.1 — Safe Gemini execution: BLOCKED by word-level semantic mapping
+
+- Read-only Atlas precheck: multilingual_ai_narration/development, project6acc3011dab289e21fb39f0f (truong dai hoc), TRANSCRIBED, transcript READY/vi/21 nonempty original segments, targeten active, existing English translations0. Nội dung có các cụm Tiểu học/tọa lạc và tên riêng/địa chỉ tách từng từ; không đồng nhất1 source word với1 English word.
+- User cho phép tối đa1 metadata +1 generation. Đã gọi đúng1 models.get với SDK retry attempts1/timeout15s, model gemini-3.8-flash metadata PASS/supports generateContent. Generation0, không gửi transcript tới Google, không retry/fallback/STT/TTS.
+- Thêm fail-closed guard cho Gemini word-level transcript nhiều segment toàn single-word: provider dừng trước metadata/generation; API dừng409 TRANSLATION_MAPPING_FAILED trước tạo ProcessingJob/claim Project/status/log/save. Đây là rejection của granularity không đủ tin cậy, KHÔNG chứng nhận semantic correctness của phrase responses. Existing valid translations/read routes giữ nguyên. Không schema/index/source transcript mutation.
+- Gemini Translation mock28/28 PASS (2 regression mới: provider no-call, route no-job/no-write); backend lint/typecheck/build và git diff --check PASS. Full DB-writing suite NOT RUN. Actual English result/Database save/GET Translation/browser NOT RUN; Atlas writes0 trong bước này.
+- BLOCKED: TranslationSegment hiện chỉ có một transcriptSegmentId và translatedText không rỗng; không lưu tùy tiện 21 English fragments hay lặp câu/để trống để đủ số lượng. Đề xuất phrase/sentence translation với danh sách sourceSegmentIds và thời gian lấy biên nguồn, semantic review trước persist; cần phê duyệt schema/contract riêng, chưa triển khai. Không commit/push, không gọi thêm Google.
+
+## S25.7.9.2.4 — Language catalog seed execution
+
+- User phê duyệt đúng6 Language tại multilingual_ai_narration/development. Precheck actual DB/unique-code index và online dry-run cuối PASS, existing0/conflicts0. Script write chạy1 lần/không retry, inserted6. Readback actual DB xác nhận6 records vi/en/ja/ko/zh/fr đúng tên/nativeName, active6, duplicate0, unique index vẫn hợp lệ. Không overwrite/reactivate records, không sửa schema/index/projects/users/transcript; không tạo Voice, AI requests0.
+- Actual catalog service cho GET /api/voices đọc Atlas trả6 Language/0 Voice PASS. Local HTTP GET không auth trả401 AUTH_REQUIRED (không coi là authenticated API PASS). CUA inventory browsers[]; không có phiên trình duyệt kết nối để mở truong dai hoc/Bản dịch. English selection/loại Vietnamese/nút Dịch runtime NOT RUN; không nhấn Dịch hoặc mint token/tạo session để test.
+- Seed + readback PASS, overall PARTIAL do thiếu authenticated HTTP/browser checks. Database changes chỉ6 Language mới; không commit/push. Cần người dùng kiểm tra dropdown bằng phiên đăng nhập hiện có, không chạy lại seed và không gọi AI nếu chưa duyệt riêng.
+
+## S25.7.9.2.2 — Language catalog preparation
+
+- Preparation implemented, chưa seed thật. Kiểm tra Language schema/catalog DTO/Translation target active/TTS Voice requirements. Chuẩn bị6 Language metadata vi/en/ja/ko/zh/fr (nativeName bắt buộc), không tạo Voice/AI results; provider language support đối chiếu tài liệu chính thức, runtime model/key/quality UNKNOWN. Không sửa schema/routes/TTS/STT/Admin/Mobile.
+- Seed Language mới vì seed:voices hiện có không tạo languages. Idempotent setOnInsert, bỏ qua existing kể cả inactive, schema validation, unique-code-index prerequisite/concurrent duplicate guard; không overwrite/delete. Offline preview và default dry-run, explicit env/db/write approval, actual DB check, auto index/create OFF; production/sai target thiếu consent bị chặn. Không in secrets/driver errors.
+- Catalog12/12 tests PASS với in-memory store + DB mocks và real JWT/HTTP GET /api/voices; offline dry-run PASS connections0/writes0. Backend lint/typecheck/build/git diff --check PASS; Gemini Translation mock regression26/26 PASS. Không chạy DB-writing npm test hoặc online seed/dry-run. Database writes0, AI API calls0; không commit/push.
+- Hướng dẫn tại LANGUAGE_CATALOG.md. Cần user duyệt deployment/DB/env/6 records, rồi online read-only plan và unique index verification trước seed; DB name/env label không chứng minh Production isolation. Dropdown runtime vẫn thiếu catalog cho tới bước ghi được duyệt; TTS vẫn cần Voice thật riêng.
+
+## S25.7.9.2.1 — Translation language dropdown
+
+- PARTIAL: nguyên nhân runtime xác minh bằng đọc-only MongoDB cấu hình hiện tại: collection languages có0 bản ghi/0 active; không có dữ liệu để GET /api/voices trả options. Không phải TTS voice filter làm mất ngôn ngữ (backend trả toàn bộ Language active). Không ghi Atlas/seed/cleanup; không thêm static fallback làm vượt validation Language.exists.
+- Sửa lỗi frontend phụ: bỏ guard isLanguageCode chỉ4 mã khỏi TranslationPage, chọn theo catalog thật và membership trong hook; normalize/dedupe mã/loại nguồn không phân biệt hoa thường. Dùng Intl.DisplayNames tiếng Việt với fallback tên catalog; không tạo danh sách supported mới. Deep-link target cũng kiểm tra catalog thay vì4 mã tĩnh.
+- State loading/READY/EMPTY/ERROR rõ; empty xóa selected target/draft cũ và khóa select/Dịch; lỗi tải giữ metadata bản gốc và cho retry GET. Nút Dịch chỉ enabled khi selected catalog target/busy=false/không failed, không gọi AI khi chọn. UI UX Pro Max áp dụng empty/error recovery, không redesign.
+- Web101/101 tests PASS; lint/typecheck/build và git diff --check PASS. Tests mô phỏng catalog vi/en/ja/ko/zh/fr chỉ trong runner, kiểm tra English/French selection, loading/error/retry/empty/loại Vietnamese, no POST, transcript immutable. Backend Translation mock26/26 PASS; không sửa backend. Browser dropdown E2E NOT RUN, English runtime selectable:NO do catalog thật rỗng. Warning build dynamic import có sẵn.
+- Cần người dùng cho phép cấu hình Language catalog active trong DB đích đã xác nhận trước khi options thật xuất hiện. seed:voices hiện chỉ tạo voices từ Language có sẵn, không tạo languages và không khắc phục collection rỗng. Không tự chạy seed, không AI calls/Atlas writes, không commit/push.
+
+## S25.7.9.2 — Gemini Translation integration
+
+- PARTIAL: source/mock implemented, real runtime NOT RUN. Gemini default và cấu hình local TRANSLATION_PROVIDER=gemini; key hiện có PRESENT (không sửa/in key), model fallback gemini-3.8-flash theo tài liệu Google text/structured output. SDK2.28.0 có sẵn không cài thêm. OpenAI explicit giữ lại, STT/TTS không đổi. Model access với key thật UNKNOWN; không gọi metadata/generation.
+- Full transcript/all original IDs/timestamps/index đưa vào một contextual structured generation; kiểm tra IDs/thứ tự/nội dung không rỗng, reject malformed/mapping lỗi/timestamps giả/extra fields. Không dùng2 cụm display thay21 segments. Transaction và FK segment có sẵn; kiểm tra nguồn trước ghi, bản dịch stale không được mở như bản dịch hiện hành; thất bại không ghi đè bản dịch cũ. Schema/migration0, Atlas writes0.
+- Web placeholder/chọn ngôn ngữ rõ, disabled/loading, success từ saved API data, cancellation NOT_STARTED, ref guard double-submit; nhóm/time/confirmation/auth giữ nguyên. UI UX Pro Max chỉ feedback/selection, không redesign.
+- New backend mock26/26 PASS; safe existing regression75/75 PASS (profile/filename/source-media/STT/Gemini STT + synthetic FFmpeg), tổng101/101 chạy an toàn không DB connection. Full npm test bộ118 có Atlas writes NOT RUN theo ràng buộc; không gọi đây là full regression PASS. Web96/96 PASS gồm5 hook/UI tests mới. Backend/Web lint/typecheck/build và git diff --check PASS. Build Web còn warning dynamic import có sẵn. Target phải tồn tại/active trong Language catalog thật, unsupported400 trước provider; fixtures DB integration phải chuẩn bị catalog tương ứng.
+- Chưa xác minh real Gemini quality, tên riêng và semantic per-word alignment: mock không chứng minh chất lượng dịch, đặc biệt21 từ→2 cụm không có phrase-level storage contract. Provider không tự chia văn bản theo số từ; nếu không thể mapping yêu cầu fail. Browser E2E/model key access/Atlas persistence NOT RUN. Không sửa Mobile/Admin, không commit/push; chờ duyệt trước test Google thật.
+
+## S25.7.9.1 — Translation UI consistency
+
+- Source validation PASS; browser/runtime PARTIAL, chờ duyệt. Bản dịch dùng quy tắc nhóm Bản ghi trong lớp hiển thị, giữ21 phân đoạn gốc và timestamp mm:ss.SSS; read-only text tự co thay textarea disabled, hai cột responsive, trạng thái chờ dịch rõ ràng.
+- Sửa mapping frontend bỏ qua ID thật: giữ Transcript DTO segment.id làm backendSegmentId, không đổi logical id; Translation sourceSegmentId phải khớp trước khi ghép, index theo sequence-1 không theo vị trí mảng. Group chỉ khi mapping một-một đầy đủ; thiếu/trùng/khác ID/thời gian/thứ tự thì từng phân đoạn kèm cảnh báo, nội dung chưa xác minh không ghép. Không API/schema/backend/provider changes, không mutation dữ liệu gốc.
+- Web91/91 tests PASS (7 tests mới + cập nhật assertion timestamp cũ); lint/typecheck/build và git diff --check PASS. Coverage:21 từ bảo toàn/immutable, chờ dịch, bản dịch thật qua fixture có kiểm soát, mapping theo ID/source membership, stale/missing IDs, invalid timeline/index, DOM read-only/timestamps và responsive source boundaries. Build warning dynamic import có sẵn.
+- Browser visual/E2E và dữ liệu dịch dự án thật NOT RUN. AI requests0; Atlas writes0; không sửa Mobile/Admin; không commit/push. Chờ người dùng duyệt giao diện.
+
 ## S25.7.8.10 — Transcript UI/UX final polish
 
 - Source implemented; runtime PARTIAL, chờ người dùng duyệt. Giữ hai cột và native audio/video controls; bổ sung icon sóng âm và container audio gọn. Không thay transport/auth/provider/grouping/API/Database.

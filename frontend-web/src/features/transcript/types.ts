@@ -3,6 +3,7 @@ import type { LanguageCode } from '../projects/types'
 export type TranscriptStatus = 'LOADING' | 'NOT_STARTED' | 'GENERATING' | 'READY' | 'SAVING' | 'SAVED' | 'FAILED'
 export type TranscriptSegment = {
   id: string
+  backendSegmentId?: string
   sequence: number
   startTime: number
   endTime: number

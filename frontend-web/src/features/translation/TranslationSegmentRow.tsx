@@ -1,34 +1,31 @@
 import type { TranscriptSegment } from '../transcript/types';
-import { formatTimestamp } from '../transcript/transcriptUtils';
+import { formatPreciseTimestamp } from '../transcript/transcriptPresentation.mjs';
 import type { TranslationSegment } from './types';
 
 type Props = {
   source: TranscriptSegment;
   translation?: TranslationSegment;
   error?: string;
-  disabled: boolean;
-  onChange: (id: string, text: string) => void;
 };
 
-export function TranslationSegmentRow({ source, translation, error, disabled, onChange }: Props) {
+export function TranslationSegmentRow({ source, translation, error }: Props) {
   const inputId = 'translation-' + source.id;
   return (
     <article className="translation-segment" aria-label={'Đoạn ' + source.sequence}>
       <div className="translation-segment__meta">
         <span>#{String(source.sequence).padStart(2, '0')}</span>
-        <span>{formatTimestamp(source.startTime)} → {formatTimestamp(source.endTime)}</span>
+        <span title="Phút:giây.mili giây">{formatPreciseTimestamp(source.startTime)} → {formatPreciseTimestamp(source.endTime)}</span>
       </div>
       <div className="translation-segment__columns">
         <div className="translation-original"><span className="translation-label">Bản gốc</span><p>{source.text}</p></div>
         <div className="translation-target">
-          <label className="translation-label" htmlFor={translation ? inputId : undefined}>Bản dịch</label>
+          <span className="translation-label">Bản dịch</span>
           {translation ? <>
-            <textarea id={inputId} aria-label={'Bản dịch cho đoạn ' + source.sequence}
-              value={translation.translatedText} disabled={disabled} rows={3}
-              aria-invalid={Boolean(error)} aria-describedby={error ? inputId + '-error' : undefined}
-              onChange={(event) => onChange(translation.id, event.target.value)} />
+            <div id={inputId} className="translation-target__text" role="region" tabIndex={0}
+              aria-label={'Bản dịch cho đoạn ' + source.sequence + ', chỉ đọc'}
+              aria-describedby={error ? inputId + '-error' : undefined}>{translation.translatedText}</div>
             {error && <p id={inputId + '-error'} className="translation-error" role="alert">{error}</p>}
-          </> : <p className="translation-placeholder">Bản dịch sẽ hiển thị tại đây.</p>}
+          </> : <p className="translation-placeholder">Chưa có bản dịch được xác minh cho phân đoạn này.</p>}
         </div>
       </div>
     </article>

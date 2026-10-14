@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { LanguageCode } from '../projects/types';
 import { translationService } from '../translation/translationService';
-import type { Translation } from '../translation/types';
+import type { SavedTranslation } from '../translation/translationService';
 import { narrationService } from './narrationService';
 import { voiceService } from './voiceService';
 import { createNarrationConfig, filterVoicesByGender, hasNarrationConfigChanges, isValidSpeed, validateNarrationConfig } from './voiceUtils';
@@ -9,7 +9,7 @@ import type { NarrationConfig, Voice, VoiceEditorStatus, VoiceFilter } from './t
 
 type State = {
   status: VoiceEditorStatus;
-  translation: Translation | null;
+  translation: SavedTranslation | null;
   voices: Voice[];
   draft: NarrationConfig | null;
   saved: NarrationConfig | null;

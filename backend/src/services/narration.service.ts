@@ -14,6 +14,7 @@ import { assertInsideUploadRoot, resolveStoredFile, safeDeleteStoredFile, upload
 import { env } from '../config/env.js';
 import { getTtsProvider } from './tts/tts.service.js';
 import { OpenAiTtsError } from './tts/openai-tts.provider.js';
+import { assertApprovedCurrent, loadSource } from './translation/group-translation.service.js';
 
 const speed = 1;
 const log = async (userId: string, action: string, projectId: Types.ObjectId, language: string, voiceId: Types.ObjectId) => {
@@ -60,6 +61,7 @@ export const generate = async (projectId: string, userId: string, targetLanguage
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
   const translation = await Translation.findOne({ projectId, targetLanguage, status: 'READY' });
   if (!translation) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Không tìm thấy bản dịch.');
+  if (translation.alignmentFormat === 'GROUPS_V1') assertApprovedCurrent(translation, await loadSource(projectId));
   if (!translation.fullText.trim()) throw new AppError(409, 'TRANSLATION_EMPTY', 'Bản dịch không có nội dung để tạo giọng đọc.');
   if (translation.fullText.length > 4096) throw new AppError(413, 'TTS_TEXT_TOO_LARGE', 'Nội dung vượt quá giới hạn của dịch vụ giọng đọc.');
   const voice = await resolveVoice(targetLanguage, requestedVoiceId);

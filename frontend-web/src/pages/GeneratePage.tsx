@@ -71,7 +71,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
           <div><dt>Ngôn ngữ nguồn</dt><dd>{languageNames[context.transcript.languageCode]}</dd></div>
           <div><dt>Ngôn ngữ đích</dt><dd>{languageNames[context.translation.targetLanguage]}</dd></div>
           <div><dt>Bản ghi</dt><dd>{context.transcript.segments.length} phân đoạn</dd></div>
-          <div><dt>Bản dịch</dt><dd>{context.translation.segments.length} phân đoạn</dd></div>
+          <div><dt>Bản dịch</dt><dd>{'groups' in context.translation ? `${context.translation.groups.length} cụm đã duyệt` : `${context.translation.segments.length} phân đoạn`}</dd></div>
           <div><dt>Giọng đọc</dt><dd>{context.voice.name}</dd></div>
           <div><dt>Tốc độ đọc</dt><dd>{formatSpeed(context.config.speed)}</dd></div>
           <div><dt>Phương tiện</dt><dd>{context.project.mediaName ?? 'Phương tiện đã lưu'} ({context.project.mediaType === 'VIDEO' ? 'video' : 'âm thanh'})</dd></div>

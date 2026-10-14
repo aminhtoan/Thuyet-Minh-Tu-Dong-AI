@@ -41,7 +41,8 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
     if (editor.dirty && !window.confirm('Hủy cấu hình giọng đọc chưa lưu và quay lại Bản dịch?')) return;
     navigate('/projects/' + project.id + '/translation' + (target ? '?language=' + target : ''));
   }
-  const characterCount = editor.translation?.segments.reduce((count, segment) => count + segment.translatedText.length, 0) ?? 0;
+  const translationItems = editor.translation ? ('groups' in editor.translation ? editor.translation.groups : editor.translation.segments) : [];
+  const characterCount = translationItems.reduce((count, segment) => count + segment.translatedText.length, 0);
   return <>
     <PageHeader title="Giọng đọc và thuyết minh" description="Chọn giọng đọc và thiết lập cách đọc cho nội dung đã dịch."
       actions={<Button variant="secondary" disabled={editor.busy} onClick={backToTranslation}>Quay lại bản dịch</Button>} />
@@ -54,8 +55,8 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
       action={<Button onClick={backToTranslation}>Quay lại bản dịch</Button>} /></Card>}
     {editor.translation && editor.draft && editor.status !== 'LOADING' && <div className="voice-workspace">
       <Card className="voice-summary"><div><span className="voice-label">Ngôn ngữ thuyết minh</span><h2>{languageNames[editor.translation.targetLanguage]}</h2></div>
-        <div><span className="voice-label">Bản dịch đã lưu</span><p>{editor.translation.segments.length} phân đoạn · {characterCount} ký tự</p></div>
-        <blockquote>{editor.translation.segments.slice(0, 2).map((segment) => segment.translatedText).join(' ')}</blockquote>
+        <div><span className="voice-label">Bản dịch đã lưu</span><p>{translationItems.length} {'groups' in editor.translation ? 'cụm đã duyệt' : 'phân đoạn'} · {characterCount} ký tự</p></div>
+        <blockquote>{translationItems.slice(0, 2).map((segment) => segment.translatedText).join(' ')}</blockquote>
       </Card>
       <section aria-labelledby="voice-list-heading"><div className="voice-toolbar"><h2 id="voice-list-heading">Chọn giọng đọc</h2>
         <div className="voice-filters" role="group" aria-label="Lọc giọng đọc theo giới tính">
