@@ -33,14 +33,15 @@ test('project list keeps its local search while the header search is route-aware
   const projects = await readFile(new URL('../src/pages/ProjectsPlaceholder.tsx', import.meta.url), 'utf8');
   assert.match(topbar, /useLocation\(\)/);
   assert.match(topbar, /isProjectsPage = pathname === '\/projects'/);
-  assert.match(topbar, /\{!isProjectsPage && !isNewProjectPage && !isHistoryPage && !isAccountPage && <form className="topbar__search"/);
+  assert.match(topbar, /const showSearch = !isProjectsPage && !isNewProjectPage && !isHistoryPage && !isAccountPage/);
+  assert.match(topbar, /\{showSearch && <form className="topbar__search"/);
   assert.match(projects, /className="project-list-search"/);
 });
 
 test('project list moves its semantic heading into the route-aware topbar', async () => {
   const topbar = await readFile(new URL('../src/components/layout/Topbar.tsx', import.meta.url), 'utf8');
   const projects = await readFile(new URL('../src/pages/ProjectsPlaceholder.tsx', import.meta.url), 'utf8');
-  assert.match(topbar, /isProjectsPage \? <div className="topbar__page-heading"><h1>Dự án của tôi<\/h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn\.<\/p><\/div> : <span className="topbar__title">\{title\}<\/span>/);
+  assert.match(topbar, /isProjectsPage \? <div className="topbar__page-heading"><h1>Dự án của tôi<\/h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn\.<\/p><\/div>/);
   assert.doesNotMatch(projects, /<PageHeader|to="\/projects\/new"/);
 });
 

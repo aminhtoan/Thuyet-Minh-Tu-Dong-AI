@@ -54,7 +54,8 @@ test('Account route, loader and dropdown logout stay intact', async () => {
   assert.match(source, /<AccountProfile user=\{user\} onUpdated=\{setUser\} \/>/);
   assert.match(header, /authService\.logout\(\)/);
   assert.match(header, /confirmationMessages\.logout/);
-  assert.match(header, /!isAccountPage && <form className="topbar__search"/);
+  assert.match(header, /const showSearch = !isProjectsPage && !isNewProjectPage && !isHistoryPage && !isAccountPage/);
+  assert.match(header, /\{showSearch && <form className="topbar__search"/);
 });
 
 test('compact profile CSS removes cover/waves and keeps information close and responsive', async () => {
@@ -72,7 +73,7 @@ test('compact profile CSS removes cover/waves and keeps information close and re
 test('compact profile stays in normal flow with divider and adjacent labels/values', async () => {
   const css = await readFile(new URL('../src/styles/account.css', import.meta.url), 'utf8');
   const shell = await readFile(new URL('../src/styles/shell.css', import.meta.url), 'utf8');
-  assert.match(shell, /\.topbar \{ position: sticky/);
+  assert.match(shell, /\.topbar \{\s*position: sticky/);
   assert.match(css, /\.account-page \{[^}]*margin: 8px auto 0/);
   assert.match(css, /\.account-profile__content \{[^}]*border-top: 1px solid var\(--color-border\)/);
   assert.match(css, /\.account-profile__summary \{[^}]*gap: 24px/);

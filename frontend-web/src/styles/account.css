@@ -1,4 +1,4 @@
-.topbar--account { min-height: 94px; padding-block: 14px; }
+.topbar--account { min-height: 80px; padding-block: 10px; }
 .topbar--account .topbar__title { display: none; }
 .topbar__account-heading { flex: 1; min-width: 0; }
 .topbar__account-heading h1 { margin: 0 0 4px; font-size: clamp(1.5rem, 2vw, 1.875rem); line-height: 1.25; letter-spacing: -.025em; }

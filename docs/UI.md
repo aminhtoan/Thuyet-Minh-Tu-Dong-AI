@@ -1,5 +1,30 @@
 # UI Specification
 
+## UI04 — Dashboard Hero & Quick Actions (2026-10-15)
+
+- Giữ nguyên Be Vietnam Pro, Navy/Purple, gradient Hero, thứ tự Dashboard và toàn bộ route/logic hiện có. Hero dùng bố cục hai vùng rõ ràng khi đủ rộng: copy/CTA bên trái, minh họa CSS hiện có bên phải; chiều cao tối thiểu giảm từ `238px` xuống `208px`, artwork thu về `168px` và CTA giữ target tối thiểu `44px`. Không tạo hoặc thêm asset mới.
+- Quick Actions giữ đúng bốn semantic link: `Tạo thuyết minh` tới `/projects/new`; `Bản ghi`, `Bản dịch`, `Giọng đọc` tiếp tục tới luồng chọn dự án `/projects`. Card đồng chiều cao tối thiểu `112px`, icon `44px`, padding/typography thống nhất; nội dung dài được wrap thay vì cắt.
+- Trạng thái tương tác có hover, focus-visible 2px/offset 3px, active và reduced-motion. Icon trang trí tiếp tục `aria-hidden`; navigation giữ nhãn truy cập `Lối tắt sáng tạo`.
+- Breakpoint dựa trên chiều rộng thật của container Dashboard, không chỉ viewport: trên `980px` hiển thị 4 cột, từ `560–980px` hiển thị 2 cột, dưới/equal `560px` hiển thị 1 cột. Khi container không quá `760px`, artwork trang trí được ẩn để ưu tiên copy/CTA và tránh tràn ngang.
+- Source/regression **PASS**: Web tests `126/126`, lint, typecheck, production build và `git diff --check`. Browser visual smoke 320/375/768/1024/1440 **NOT RUN** vì không có browser/app kết nối; chưa coi responsive visual là PASS.
+
+## UI03 — Sidebar & Header refinement (2026-10-15)
+
+- Giữ nhận diện Navy `#111C32`, Primary `#5850EC`, routes và nội dung Header đã duyệt. Sidebar desktop rộng `252px`; brand/logo được căn trên hàng 48px, menu item cao 48px, icon 20px, gap 12px; active/hover/focus vẫn dùng Navy/Purple và indicator cạnh trái.
+- Header cơ sở cao 72px và chia ba vùng rõ ràng: context/tiêu đề, tìm kiếm tối đa 440px, tài khoản. Các route `/projects`, `/projects/new`, `/history`, `/settings` tiếp tục giữ tiêu đề lớn/subtitle và quy tắc ẩn search đã duyệt; Header có subtitle dùng min-height 80px để không cắt nội dung. Search vẫn submit tới `/projects?q=...`; Profile, cập nhật tên thật, menu tài khoản và logout không đổi nghiệp vụ.
+- Responsive: tại `<=1023px` Sidebar chuyển thành drawer có backdrop; tại `<=1199px` Profile thu gọn về avatar để bảo toàn bề rộng; tại `<=640px` search xuống hàng riêng. Shell dùng `min-width: 0`, wrap/ellipsis có title phù hợp và `overflow-x: clip` ở container để tránh tràn toàn trang; cần browser thật xác nhận tại 320/375/768/1024/1440.
+- Drawer accessibility: drawer đóng có `inert` + `aria-hidden`; khi mở, nội dung nền có `inert`, khóa cuộn body, focus vào nút Đóng, giữ Tab/Shift+Tab trong drawer, Escape/backdrop/nút đóng/điều hướng đều đóng và trả focus về nút menu. Có role dialog/aria-modal trong drawer mode, target 44–48px, focus ring rõ và reduced-motion.
+- Source/tests **122/122 PASS** (5 regression UI03 mới), lint/typecheck/build và `git diff --check` ghi tại PROGRESS. Browser visual/keyboard smoke **NOT RUN** vì inventory không có browser hoặc app kết nối; chưa coi responsive visual là PASS.
+
+## UI02 — Dashboard typography & design foundation (2026-10-14)
+
+- Phương án C: giữ Navy `#111C32`, Primary `#5850EC`, Accent `#794CFF`, nền `#F8FAFC`, cấu trúc Sidebar/Header/hero/quick actions/chart/KPI/projects/activity và tất cả dữ liệu/routes. Không đổi `DashboardPlaceholder.tsx`, `dashboardMetrics.mjs`, global tokens hoặc shared components.
+- Dashboard dùng Be Vietnam Pro self-hosted 400/600/700 (Google Fonts v12, TTF nguyên bản, đủ glyph tiếng Việt đã test). Assets và SIL OFL1.1 tại `frontend-web/src/assets/fonts/be-vietnam-pro/`; `dashboard-fonts.css` đăng ký `font-display: swap`, `.dashboard` mới chọn font; fallback Segoe UI/Arial/sans-serif. Không Google font request lúc runtime, không dependency/package mới; không preload toàn site để tránh tải font cho trang không dùng. Ba assets tổng369520 bytes (~361KiB), chưa nén WOFF2 hoặc đo CLS/runtime cache.
+- Tokens cục bộ `--dashboard-*`: title26–28px, section20px, body15px (button/feedback14px), table13px/chart12px, KPI30px; tên quick action giữ17px. Line-height1.3 heading/1.5–1.6 nội dung; số dùng tabular-nums.
+- Spacing8/12/16/24/32px: section gap24px desktop/16px nhỏ, card padding24px/16px nhỏ, quick actions padding16px/12px khi thiếu diện tích; cards16px, KPI14px radius, border/shadow tokens hiện có. Giữ ratios/breakpoints cấu trúc; không đổi phép tính chiều cao bar8% (để UI05 xử lý riêng).
+- Tên dự án/nội dung dài wrap thay vì bị ellipsis/cắt; quick-action text flex có min-width0, KPI/badge wrap, section-heading cho xuống hàng, chart labels12px không bị rule9px cũ ghi đè. CSS `.section-heading` trong Dashboard được scope lại để không ảnh hưởng trang khác.
+- Áp dụng UI UX Pro Max: font-display/fallback, typography hierarchy, scope, long-token wrapping và layout co giãn. Source/tests117/117 + lint/typecheck/build PASS; Browser visual375/768/1024/1440 **NOT RUN** vì inventory không có browser kết nối. Chưa xác nhận visual/CLS/spacing bằng screenshot; chờ duyệt trước UI03.
+
 ## S25.7.9.3.3 — Bản dịch theo cụm và duyệt thủ công
 
 - Consumer Web bật riêng bằng `VITE_GROUP_TRANSLATION_ENABLED=true`, default OFF; Backend cũng cần flag tương ứng. Không đổi Transcript/player/grouping display cũ, Sidebar/Header hay routes. Nhánh legacy giữ nguyên.

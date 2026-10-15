@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../../features/auth/authService';
 import { subscribeProfileUpdates } from '../../features/auth/profileUpdate.mjs';
@@ -6,10 +6,10 @@ import { getProfileIdentity } from '../../features/auth/profileIdentity.mjs';
 import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
 import { Icon } from '../common/Icon';
 
-type TopbarProps = { title: string; onMenuClick: () => void; sidebarOpen: boolean };
+type TopbarProps = { menuButtonRef: RefObject<HTMLButtonElement | null>; title: string; onMenuClick: () => void; sidebarOpen: boolean };
 type HeaderUser = { id: string; fullName: string; email: string; role: string };
 
-export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
+export function Topbar({ menuButtonRef, title, onMenuClick, sidebarOpen }: TopbarProps) {
   const [query, setQuery] = useState('');
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -25,6 +25,7 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
   const isNewProjectPage = pathname === '/projects/new';
   const isHistoryPage = pathname === '/history';
   const isAccountPage = pathname === '/settings';
+  const showSearch = !isProjectsPage && !isNewProjectPage && !isHistoryPage && !isAccountPage;
 
   useEffect(() => {
     let active = true;
@@ -63,17 +64,19 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
     catch { setLoggingOut(false); logoutLock.current = false; }
   }
 
-  return <header className={`topbar${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}${isAccountPage ? ' topbar--account' : ''}`}>
-    <div className="topbar__context"><button className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button>{isProjectsPage ? <div className="topbar__page-heading"><h1>Dự án của tôi</h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn.</p></div> : <span className="topbar__title">{title}</span>}</div>
-    {isNewProjectPage && <div className="topbar__create-heading"><h1>Tạo thuyết minh</h1><p>Thêm thông tin và chọn video hoặc âm thanh để bắt đầu.</p></div>}
-    {isHistoryPage && <div className="topbar__history-heading"><h1>Lịch sử</h1><p>Theo dõi các dự án và mở lại kết quả đã tạo.</p></div>}
-    {isNewProjectPage && <Link className="button button--secondary button--md topbar__create-back" to="/projects"><Icon name="arrow" width="16" />Về danh sách dự án</Link>}
-    {isAccountPage && <div className="topbar__account-heading"><h1>Tài khoản</h1><p>Quản lý thông tin cá nhân của bạn.</p></div>}
-    {!isProjectsPage && !isNewProjectPage && !isHistoryPage && !isAccountPage && <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
-      <Icon name="search" width="17" /><input aria-label="Tìm kiếm dự án toàn ứng dụng" placeholder="Tìm kiếm dự án..." value={query} onChange={event => setQuery(event.target.value)} />
-      <button type="submit" aria-label="Tìm dự án"><Icon name="arrow" width="16" /></button>
-    </form>}
-    <div className="topbar-profile" ref={profileRootRef}>
+  return <header className={`topbar${showSearch ? ' topbar--search' : ''}${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}${isAccountPage ? ' topbar--account' : ''}`}>
+    <div className="topbar__context">
+      <button ref={menuButtonRef} className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button>
+      {isProjectsPage ? <div className="topbar__page-heading"><h1>Dự án của tôi</h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn.</p></div> : isNewProjectPage ? <div className="topbar__create-heading"><h1>Tạo thuyết minh</h1><p>Thêm thông tin và chọn video hoặc âm thanh để bắt đầu.</p></div> : isHistoryPage ? <div className="topbar__history-heading"><h1>Lịch sử</h1><p>Theo dõi các dự án và mở lại kết quả đã tạo.</p></div> : isAccountPage ? <div className="topbar__account-heading"><h1>Tài khoản</h1><p>Quản lý thông tin cá nhân của bạn.</p></div> : <span className="topbar__title" title={title}>{title}</span>}
+    </div>
+    <div className="topbar__center">
+      {showSearch && <form className="topbar__search" role="search" onSubmit={event => { event.preventDefault(); navigate('/projects?q=' + encodeURIComponent(query.trim())); }}>
+        <Icon name="search" width="18" /><input aria-label="Tìm kiếm dự án toàn ứng dụng" placeholder="Tìm kiếm dự án..." value={query} onChange={event => setQuery(event.target.value)} />
+        <button type="submit" aria-label="Tìm dự án"><Icon name="arrow" width="16" /></button>
+      </form>}
+      {isNewProjectPage && <Link className="button button--secondary button--md topbar__create-back" to="/projects"><Icon name="arrow" width="16" />Về danh sách dự án</Link>}
+    </div>
+    <div className="topbar__account-region"><div className="topbar-profile" ref={profileRootRef}>
       <button ref={profileButtonRef} className="topbar-profile__trigger" type="button" aria-label={`Mở menu tài khoản của ${identity.name}`} aria-haspopup="menu" aria-expanded={profileOpen} aria-controls={profileId} onClick={() => profileOpen ? setProfileOpen(false) : openProfile()} onKeyDown={(event) => { if (!profileOpen && (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openProfile(); } }}>
         <span className="topbar-profile__avatar" aria-hidden="true">{identity.initial}</span><span className="topbar-profile__copy"><strong title={identity.name}>{identity.name}</strong><small>Người dùng</small></span><Icon className={`topbar-profile__chevron${profileOpen ? ' topbar-profile__chevron--open' : ''}`} name="chevronDown" width="16" />
       </button>
@@ -83,6 +86,6 @@ export function Topbar({ title, onMenuClick, sidebarOpen }: TopbarProps) {
         <Link className="topbar-profile__item" role="menuitem" to="/settings" onClick={() => setProfileOpen(false)}>Thông tin tài khoản</Link>
         <button className="topbar-profile__item topbar-profile__item--danger" role="menuitem" type="button" disabled={loggingOut} onClick={() => void logout()}>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</button>
       </div>}
-    </div>
+    </div></div>
   </header>;
 }

@@ -1,5 +1,30 @@
 # Project Progress
 
+## UI04 — Dashboard Hero & Quick Actions (2026-10-15)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** Hero được thu gọn (`min-height: 208px`), giữ gradient và artwork CSS hiện có theo bố cục copy trái/artwork phải; artwork ẩn khi container hẹp để ưu tiên heading/description/CTA. Không thêm asset/library và không đổi Dashboard JSX, dữ liệu hoặc nghiệp vụ.
+- Quick Actions đồng chiều cao, icon/padding/copy nhất quán; có hover/focus-visible/active/reduced-motion và wrap nội dung dài. Container query theo content width: 4 cột rộng, 2 cột trung bình, 1 cột hẹp. Routes giữ nguyên: `/projects/new` và ba luồng chọn dự án `/projects`.
+- Thêm 4 regression test cho Hero, route/semantic Quick Actions, container breakpoints và interaction/reduced-motion. Web tests **126/126 PASS**; lint/typecheck/production build và `git diff --check` PASS. Build còn warning dynamic/static import `projectRepository.ts` đã có sẵn, không liên quan UI04.
+- Browser visual 320/375/768/1024/1440 **NOT RUN**: Computer Use trả `apps: []`, `browsers: []`. Cần browser thật xác nhận tỷ lệ Hero/artwork, chiều cao card và overflow trước khi đánh dấu visual hoàn tất.
+- Chỉ `frontend-web/src/styles/dashboard.css`, test UI04 và docs thay đổi trong bước này. Không sửa Backend/Mobile/Admin/API/Database, không AI call/DB write, không commit/push.
+
+## UI03 — Sidebar & Header refinement (2026-10-15)
+
+- **PARTIAL — source/regression PASS, browser visual/interaction verification pending.** Sidebar desktop `252px`, menu item 48px/icon 20px/gap 12px, brand alignment và active/hover/focus được chuẩn hóa trên Navy/Purple hiện có. Header cơ sở 72px dùng ba vùng context/search/account; search max 440px, mobile xuống hàng; Header có title/subtitle giữ min-height 80px để tránh cắt copy đã duyệt.
+- Giữ nguyên routes, search `/projects?q=...`, Profile lấy user thật, dropdown, logout, tiêu đề/subtitle đặc thù và quy tắc không hiện Header Search trên Projects/Create/History/Account. Không đổi Dashboard/KPI/chart/table/project data/API/business logic.
+- Drawer `<=1023px`: backdrop, nút đóng 44px, body scroll lock, `inert`/`aria-hidden` khi đóng và nền inert khi mở, focus ban đầu, Tab/Shift+Tab containment, Escape và focus return về menu. Added pure focus-wrap helper/declaration và close icon trong icon component hiện có; không cài library.
+- Web tests **122/122 PASS** (từ 117, thêm 5 test UI03); lint/typecheck/build và `git diff --check` PASS. Lần test sandbox đầu nhận `spawn EPERM`, chạy lại cùng suite ngoài worker sandbox PASS; đây không phải defect source.
+- Browser visual/keyboard smoke 320/375/768/1024/1440 **NOT RUN**: Computer Use trả `apps: []`, `browsers: []`. Chưa xác nhận kích thước thực, scroll, overlay/focus trên browser; cần người dùng duyệt trước UI04.
+- Chỉ Customer Web shell/tests/docs thay đổi. Không sửa Backend/Mobile/Admin/API/Database, không AI call/DB write, không commit/push.
+
+## UI02 — Dashboard typography & design foundation (2026-10-14)
+
+- Source implementation hoàn tất; **PARTIAL — chờ browser visual verification/người dùng duyệt**. Be Vietnam Pro self-hosted3 weights + license/fallback/swap chỉ áp dụng Dashboard, không global typography/dependency change. Local scale26–28/20/15/12–13/30px, spacing8/12/16/24/32, card radius16/KPI14px và subtle border/shadow.
+- Files: `frontend-web/src/styles/dashboard.css`, `dashboard-fonts.css`, font assets `regular.ttf/semibold.ttf/bold.ttf/OFL.txt`, `frontend-web/tests/dashboard-foundation.test.mjs`, `docs/UI.md`, `docs/PROGRESS.md`. Không sửa Dashboard JSX/Sidebar/Header/global styles/tokens/project repository/dashboardMetrics, Backend/Mobile/Admin/API/Database.
+- Web `npm test` **117/117 PASS** (5 regression mới kiểm tra TTF weight/glyph tiếng Việt/license/font scope/scale/wrapping và bảo toàn routes/order/chart/KPI guards); lint/typecheck/production build PASS. Build xuất3 local font assets, còn warning dynamic/static import projectRepository đã có sẵn. `git diff --check` PASS.
+- Browser375/768/1024/1440 **NOT RUN**: Computer Use inventory apps[]/browsers[]; không coi CSS/source tests là responsive visual PASS. Runtime font loading/fallback CLS và nội dung thực cần duyệt trên trình duyệt. Font footprint~361KiB; tối ưu WOFF2 nếu cần ở bước sau, không cài tooling trong UI02.
+- Không gọi Backend/AI, không ghi Database, không thêm production fixtures, không commit/push. Chart/KPI semantics và logic chưa đổi theo scope UI02; chờ xác nhận trước UI03.
+
 ## S25.7.9.3.3 — GROUPS_V1 implementation (2026-10-12)
 
 - **PARTIAL — source/mock validation PASS; runtime/provider/persistence chưa được phép kiểm thử.** Schema optional embedded groups/review, canonical revision/digest, merge-only source plan, Gemini group adapter, RAM preview và transactional/manual approve đã triển khai. Unique index/Transcript/TranslationSegment legacy không đổi, không migration.

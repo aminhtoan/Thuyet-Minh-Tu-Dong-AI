@@ -1,0 +1,22 @@
+/* Google Fonts v12, unmodified; license: assets/fonts/be-vietnam-pro/OFL.txt. */
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/be-vietnam-pro/regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/be-vietnam-pro/semibold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/be-vietnam-pro/bold.ttf') format('truetype');
+}
