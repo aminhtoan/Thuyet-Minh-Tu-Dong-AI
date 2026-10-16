@@ -37,6 +37,6 @@ test('Demo branch never mounts API loader and demo rows have no business links',
   assert.match(source, /import\.meta\.env\.DEV && isProjectDemoEnabled/)
   const branch = source.slice(source.indexOf('function DemoProjectList()'), source.indexOf('function ProjectListView'))
   assert.doesNotMatch(branch, /useCompleteHistory|api\(|projectRepository/)
-  assert.match(source, /demo \? <span className="project-list-name"[^>]*>\{project\.name\}<\/span> : <Link/)
+  assert.match(source, /demo\s*\? <span className="project-list-name"[^>]*>\{project\.name\}<\/span>\s*: <Link/)
   assert.match(source, /Chỉ xem demo/)
 })

@@ -1,5 +1,32 @@
 # UI Specification
 
+## UI06.4 — Professional Project Table Redesign (2026-10-17)
+
+- Bảng `/projects` tiếp tục dùng semantic `<table>` với `caption`, `thead`, `tbody`, `th scope="col"` và `th scope="row"`; thêm `colgroup` để giữ đủ sáu cột theo tỷ lệ ổn định: Tên dự án `30%`, Phương tiện `13%`, Ngôn ngữ `19%`, Ngày tạo `14%`, Trạng thái `14%`, Thao tác `10%`.
+- Typography giữ Be Vietnam Pro; header `13px`, nội dung `14px`, hàng cao `68px`, padding `12px 14px`, nền header xám nhạt, border dọc/ngang mảnh và hover/focus-within tím rất nhẹ. Status badge chỉ được chuẩn hóa trong `.projects-page .project-list-status`, không đổi mapping 10 trạng thái hoặc shared badge.
+- Tên dự án giữ nguyên Unicode và tối đa hai dòng, có `title` đầy đủ; accessible name bổ sung ngày tạo, trạng thái và project ID để phân biệt tên trùng. Link chi tiết và route workflow không đổi.
+- Phương tiện chỉ hiển thị icon `video` hoặc `wave` khi `mediaType` lần lượt là `VIDEO`/`AUDIO`; dữ liệu thiếu tiếp tục hiển thị `Chưa có tệp`, không suy đoán. Ngôn ngữ tiếp tục dùng `projectListLanguagePair` với dữ liệu nguồn/đích thật và fallback hiện có.
+- Cột thao tác giữ nhãn trung tính `Tiếp tục` và route từ `projectAction().step`. Chưa dùng trực tiếp nhãn động vì `FAILED → Thử xử lý lại` hiện chỉ là điều hướng tới `/generate`, không tự thực hiện retry; cần đối chiếu nhãn–hành vi riêng ở UI06.7.
+- Responsive: bảng có `min-width: 920px` và chỉ cuộn ngang trong region `project-list-table-scroll`; page không bị tràn. Region, project link và action link có focus-visible; hover motion tắt dưới `prefers-reduced-motion`.
+- Validation: Web tests `153/153`, lint, typecheck, production build và `git diff --check` PASS. Browser visual/keyboard tại 320/375/768/1024/1440 **NOT RUN**.
+
+## UI06.3 — My Projects compact filter toolbar (2026-10-17)
+
+- Bộ lọc `/projects` dùng progressive disclosure trong scope `.projects-page`: hàng chính gồm ô tìm kiếm tên dự án, nút `Bộ lọc` có icon/chevron và nút Primary `Tìm kiếm`; Thời gian, Trạng thái, Sắp xếp, khoảng ngày tùy chọn và `Đặt lại` nằm trong panel nâng cao mặc định đóng.
+- Giữ nguyên cơ chế draft → submit. Mở/đóng panel không gọi filter, không đổi URL và không xóa lựa chọn; submit hợp lệ vẫn ghi `q/status/period/sort/from/to/page`, đặt `page=1`, rồi thu panel. `Đặt lại` chỉ đưa draft về mặc định và có hướng dẫn phải nhấn `Tìm kiếm` để áp dụng. Validation khoảng ngày giữ nguyên, hiển thị `role="alert"` và tự mở panel để người dùng sửa.
+- Trạng thái áp dụng lấy từ URL/applied state, không lấy từ draft: nút hiển thị badge số bộ lọc nâng cao đang thực sự áp dụng. Search tiếng Việt không dấu, phép kết hợp AND, đủ 10 `ProjectStatus`, sort/period và toàn bộ dữ liệu/route hiện có không đổi.
+- Accessibility: disclosure là native button với `aria-expanded`/`aria-controls`; panel đóng có `aria-hidden` + `inert` nên control không lọt vào Tab order; focus-visible rõ và icon trang trí không lặp screen-reader text. Chuyển động nhẹ của panel/chevron tắt dưới `prefers-reduced-motion`.
+- Responsive: desktop giữ Search/Bộ lọc/Tìm kiếm cùng hàng; tại `<=700px`, search chiếm toàn hàng và hai nút chia hai cột, advanced controls xếp dọc; input/select dùng 16px trên màn hình hẹp để tránh browser zoom. Tại `<=420px`, badge rút gọn còn số đếm; bảng và pagination không thay đổi trong UI06.3.
+- Source validation **PASS**: Web tests `147/147`, lint, typecheck, production build và `git diff --check` PASS. Build còn warning dynamic/static import `projectRepository.ts` có sẵn. Browser visual/keyboard tại 320/375/768/1024/1440 **NOT RUN**.
+
+## UI06.2 — My Projects design foundation (2026-10-17)
+
+- Trang `/projects` có wrapper `.projects-page` riêng để giới hạn typography, spacing, card, bảng và responsive; không đổi form, URL query parameters, filter/sort, phân trang, dữ liệu hay điều hướng hiện có. Các selector mới đều nằm dưới scope trang hoặc route-specific Topbar, tránh lan sang Dashboard và các màn hình Customer Web khác.
+- Tái sử dụng Be Vietnam Pro đã self-host từ UI02, không nhân bản `@font-face`, asset hoặc dependency. Thang chữ cục bộ: page title `26–28px`, section title `19px`, body `15px`, table/control `14px`, label/secondary `13px`; màu Navy/Purple và token nền sáng giữ nguyên.
+- Card danh sách dùng radius `16px` (`14px` ở màn hình rất hẹp), border token và shadow nhẹ. Khoảng cách nội bộ được chuẩn hóa theo `12/16/24/32px`; filter, table và pagination giữ nguyên cấu trúc chức năng của UI06.1.
+- Responsive: page/panel có `min-width: 0`; bảng `min-width: 800px` cuộn ngang trong vùng riêng có accessible label/focus, không làm tràn toàn trang. Filter chuyển một cột tại `<=700px`; custom dates, nút tìm kiếm, demo notice và pagination co giãn theo content area.
+- Source validation **PASS**: Web tests `142/142`, lint, typecheck, production build và `git diff --check`. Build còn cảnh báo dynamic/static import `projectRepository.ts` đã có sẵn, không liên quan UI06.2. Browser visual 320/375/768/1024/1440 **NOT RUN**; chưa coi responsive visual là PASS.
+
 ## UI05.5 — Compact Date Filter Popover (2026-10-17)
 
 - Bộ lọc thời gian của biểu đồ Dashboard được thu gọn thành một nút có icon lịch, nhãn chế độ đã áp dụng (`Theo ngày/tháng/năm`) và chevron. Tiêu đề cùng khoảng thời gian đã chọn luôn hiển thị; date/month/year inputs chỉ mount khi popover mở nên card không còn khoảng trống điều khiển dư.

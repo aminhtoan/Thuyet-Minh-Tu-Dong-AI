@@ -1,5 +1,29 @@
 # Project Progress
 
+## UI06.4 — Professional Project Table Redesign (2026-10-17)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** Bảng `/projects` giữ nguyên sáu cột và semantic table, nhưng đã có `colgroup` chuyên nghiệp với Tên dự án chiếm `30%`, header xám nhạt, hàng `68px`, border đều, hover/focus-within nhẹ và typography Be Vietnam Pro `13/14px`.
+- Tên dài/Unicode giữ nguyên, tối đa hai dòng và có full title; accessible name thêm ngày tạo, trạng thái và ID để phân biệt dự án trùng tên. Audio/Video dùng icon system hiện có; trường hợp thiếu `mediaType` vẫn báo `Chưa có tệp`, không suy đoán. Cặp ngôn ngữ, mười status mappings và badge semantics không đổi.
+- Route chi tiết/workflow, filter UI06.3, pagination, dữ liệu/API và `projectAction` không đổi. Nhãn thao tác vẫn là `Tiếp tục`: nhãn `Thử xử lý lại` của `projectAction` chưa được đưa lên bảng vì route hiện chỉ mở màn hình xử lý, chưa chứng minh có mutation retry; chuyển việc đối chiếu nhãn–route sang UI06.7.
+- Responsive dùng `min-width: 920px` và vùng cuộn ngang cục bộ có accessible name/focus, không làm tràn toàn trang. Thêm 6 regression tests cho sáu cột, tỷ lệ, tên dài/trùng/Unicode, media fallback, ngôn ngữ/status, route thao tác và accessibility/overflow.
+- Web tests **153/153 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build còn warning dynamic/static import `projectRepository.ts` có sẵn, không liên quan UI06.4. Browser visual/keyboard tại 320/375/768/1024/1440 **NOT RUN**. Không commit/push.
+
+## UI06.3 — My Projects compact filter toolbar (2026-10-17)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** `/projects` có toolbar gọn gồm Search, disclosure `Bộ lọc` và Primary `Tìm kiếm`; bộ lọc Thời gian/Trạng thái/Sắp xếp cùng khoảng ngày tùy chọn được thu vào panel nâng cao, mặc định đóng. Table, pagination, Header và Sidebar không đổi.
+- Draft/submit contract được giữ nguyên: toggle không áp dụng/xóa giá trị; submit hợp lệ ghi đủ `q/status/period/sort/from/to/page` và reset page về 1. `Đặt lại` chỉ reset draft; validation khoảng ngày mở panel và giữ dữ liệu nhập. Badge đếm advanced filters từ applied URL state nên không báo nhầm draft chưa áp dụng.
+- Disclosure có `aria-expanded`, `aria-controls`, `aria-hidden` và `inert` khi đóng; focus ring rõ, native keyboard behavior và reduced-motion được bảo vệ. Responsive desktop một hàng, mobile search full-width + hai nút không tràn, advanced controls một cột; CSS mới chỉ nằm trong `.projects-page`.
+- Thêm 5 regression tests cho disclosure/inert, draft-submit URL, reset, custom-date + đủ 10 status, responsive/focus/reduced-motion; cập nhật 1 foundation test UI06.2. Web tests **147/147 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build còn warning `projectRepository.ts` đã có sẵn.
+- Browser visual/keyboard 320/375/768/1024/1440 **NOT RUN**; cần xác nhận thực tế animation, wrapping badge và Tab order. Không commit/push.
+
+## UI06.2 — My Projects design foundation (2026-10-17)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** Trang `/projects` đã có scope `.projects-page`, dùng lại Be Vietnam Pro của UI02 và thang chữ `26–28/19/15/14/13px`; không tải lại font, không đổi global tokens hay shared component.
+- Panel dự án dùng radius 16px, border/shadow nhẹ và spacing theo hệ `12/16/24/32px`. Header route, filter, table, empty/loading/error và pagination được cân chỉnh ở lớp trình bày nhưng giữ nguyên markup chức năng, URL query parameters, search/filter/sort, phân trang và navigation.
+- Responsive bảo vệ `min-width: 0`; bảng rộng cuộn ngang trong chính card, filter về một cột tại `<=700px` và card về radius 14px tại `<=420px`. Không sửa Dashboard, Backend, Mobile, Admin, API, Database hoặc dữ liệu.
+- Thêm 4 regression tests cho page scope/logic boundary, font reuse, typography/card foundation và overflow responsive. Web tests **142/142 PASS**; lint, typecheck, production build và `git diff --check` PASS. Lần test đầu trong sandbox bị `spawn EPERM` trước khi chạy test; chạy lại đúng suite với quyền thực thi PASS.
+- Browser visual 320/375/768/1024/1440 **NOT RUN**; chưa xác nhận trực quan font metrics, độ rộng cột và cuộn bảng. Không commit/push.
+
 ## UI05.5 — Compact Date Filter Popover (2026-10-17)
 
 - **PARTIAL — source/regression PASS, browser visual verification pending.** Bộ lọc Ngày/Tháng/Năm được thu gọn thành trigger icon lịch + nhãn chế độ + chevron; inputs chỉ xuất hiện trong popover `310px`, không chiếm chiều cao card khi đóng. Giữ nguyên tiêu đề và khoảng thời gian đã áp dụng.
