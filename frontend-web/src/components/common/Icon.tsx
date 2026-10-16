@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 
-export type IconName = 'dashboard' | 'projects' | 'plus' | 'history' | 'settings' | 'menu' | 'close' | 'sparkles' | 'eye' | 'eyeOff' | 'search' | 'arrow' | 'chevronDown' | 'mic' | 'video' | 'document' | 'language' | 'wave' | 'check' | 'alert'
+export type IconName = 'dashboard' | 'projects' | 'plus' | 'history' | 'settings' | 'menu' | 'close' | 'sparkles' | 'eye' | 'eyeOff' | 'search' | 'arrow' | 'chevronDown' | 'calendar' | 'mic' | 'video' | 'document' | 'language' | 'wave' | 'check' | 'alert'
 
 type IconProps = SVGProps<SVGSVGElement> & { name: IconName }
 
@@ -8,6 +8,7 @@ const paths: Record<IconName, string> = {
   search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
   arrow: 'M4 12h16m-6-6 6 6-6 6',
   chevronDown: 'm6 9 6 6 6-6',
+  calendar: 'M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z',
   mic: 'M9 5a3 3 0 0 1 6 0v7a3 3 0 0 1-6 0V5Zm-4 6v1a7 7 0 0 0 14 0v-1m-7 8v3m-4 0h8',
   video: 'M3 5h18v14H3V5Zm7 4 5 3-5 3V9Z',
   document: 'M5 3h10l4 4v14H5V3Zm9 0v5h5M8 12h8m-8 4h6',
@@ -28,6 +29,6 @@ const paths: Record<IconName, string> = {
 }
 
 export function Icon({ name, ...props }: IconProps) {
-  const isStroke = name === 'plus' || name === 'history' || name === 'menu' || name === 'close' || name === 'eyeOff' || ['search', 'arrow', 'chevronDown', 'mic', 'video', 'document', 'language', 'wave', 'check', 'alert'].includes(name)
+  const isStroke = name === 'plus' || name === 'history' || name === 'menu' || name === 'close' || name === 'eyeOff' || ['search', 'arrow', 'chevronDown', 'calendar', 'mic', 'video', 'document', 'language', 'wave', 'check', 'alert'].includes(name)
   return <svg viewBox="0 0 24 24" aria-hidden="true" fill={isStroke ? 'none' : 'currentColor'} stroke={isStroke ? 'currentColor' : 'none'} strokeWidth={isStroke ? 2 : undefined} strokeLinecap="round" strokeLinejoin="round" {...props}><path d={paths[name]} /></svg>
 }

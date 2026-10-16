@@ -59,7 +59,7 @@ test('font loading is local, swap-based and opt-in only inside Dashboard', () =>
   assert.match(css, /font-family: var\(--dashboard-font\)/);
 });
 test('Dashboard scale and spacing use scoped foundation without changing global brand tokens', async () => {
-  for (const [name, value] of [['title', 'clamp(26px, 2vw, 28px)'], ['section-title', '20px'], ['body', '15px'], ['label', '13px'], ['chart-label', '12px'], ['kpi', '30px']]) assert.ok(css.includes(`--dashboard-${name}: ${value}`));
+  for (const [name, value] of [['title', 'clamp(26px, 2vw, 28px)'], ['section-title', '20px'], ['body', '15px'], ['label', '13px'], ['chart-label', '12px']]) assert.ok(css.includes(`--dashboard-${name}: ${value}`));
   for (const spacing of [8, 12, 16, 24, 32]) assert.match(css, new RegExp(`--dashboard-space-[a-z]+: ${spacing}px`));
   assert.match(css, /--dashboard-radius: 16px/); assert.match(css, /--dashboard-radius-inner: 14px/);
   const tokens = await readFile(new URL('../src/styles/tokens.css', import.meta.url), 'utf8');
@@ -74,13 +74,14 @@ test('readability protections preserve content instead of hiding long names and 
   assert.match(css, /\.dashboard \.section-heading \{[^}]*flex-wrap: wrap/);
   assert.match(css, /\.dashboard \.dashboard-chart__label \{ font-size: var\(--dashboard-chart-label\)/);
 });
-test('existing routes, section order, chart/KPI guards and source fields remain intact', async () => {
+test('existing routes, section order, chart guards and source fields remain intact', async () => {
   const source = await readFile(new URL('../src/pages/DashboardPlaceholder.tsx', import.meta.url), 'utf8');
   const headings = ['dashboard-hero', 'quick-actions', 'dashboard-overview', 'dashboard-grid'];
   let previous = -1;
-  for (const heading of headings) { const next = source.indexOf(`className="${heading}"`); assert.ok(next > previous); previous = next; }
+  for (const heading of headings) { const next = source.indexOf(heading); assert.ok(next > previous); previous = next; }
   assert.match(source, /hasCompleteProjectDataset\(projects.length, pagination\)/);
-  assert.match(source, /pagination\?\.total \?\? statistics.total/);
-  assert.match(source, /Math.max\(\(day.value \/ maximum\) \* 100, day.value \? 8 : 0\)/);
+  assert.match(source, /buildLinearProjectScale\(Math\.max/);
+  assert.match(source, /\(day\.value \/ scale\.maximum\) \* 100/);
+  assert.doesNotMatch(source, /day\.value \? 8 : 0/);
   assert.equal((source.match(/route: '\/projects(?:\/new)?'/g) ?? []).length, 4);
 });

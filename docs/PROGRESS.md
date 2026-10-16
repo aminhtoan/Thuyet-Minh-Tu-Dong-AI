@@ -1,5 +1,37 @@
 # Project Progress
 
+## UI05.5 — Compact Date Filter Popover (2026-10-17)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** Bộ lọc Ngày/Tháng/Năm được thu gọn thành trigger icon lịch + nhãn chế độ + chevron; inputs chỉ xuất hiện trong popover `310px`, không chiếm chiều cao card khi đóng. Giữ nguyên tiêu đề và khoảng thời gian đã áp dụng.
+- State lựa chọn được tách thành draft: thay đổi control và `Đặt lại` không làm biểu đồ đổi ngay; `Áp dụng` mới cập nhật `chartMode/chartAnchor`. Reset khôi phục draft về Ngày/hôm nay; click ngoài hoặc Escape hủy phần chưa áp dụng. Không đổi phép nhóm `createdAt`, timezone, API, dữ liệu hay nghiệp vụ.
+- Popover hỗ trợ click ngoài, Escape, focus vào mode hiện hành khi mở và focus return về trigger khi Escape/Apply; trigger có disclosure ARIA, mode giữ `aria-pressed`, control/button có focus-visible và target phù hợp. CSS responsive neo popover trong content area ở container hẹp, không tạo horizontal overflow toàn trang.
+- Thêm 3 regression tests cho draft/apply/reset, outside/Escape/focus, kích thước/responsive và cập nhật test control hiện có. Web tests **138/138 PASS**; lint, typecheck, production build và `git diff --check` PASS. Lần test đầu trong worker sandbox bị `spawn EPERM` trước khi chạy test; chạy lại đúng suite ngoài sandbox PASS.
+- Browser visual **NOT RUN**: Computer Use không khởi tạo được kernel assets do `path not found`. Chưa xác nhận trực quan popover tại 320/375/768/1024/1440; không commit/push.
+
+## UI05.4 — Dashboard Date / Month / Year Filter (2026-10-17)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** Biểu đồ 7 ngày được mở rộng thành thống kê Ngày/Tháng/Năm với segmented control, date/month/year controls và nút đặt lại; không đổi Donut, Hero, Quick Actions, Shell, bảng dự án hoặc nghiệp vụ.
+- Pure metrics tạo 7 ngày kết thúc tại ngày chọn, đủ số ngày lịch của tháng và 12 tháng của năm; bucket trống bằng 0, scale Y tuyến tính bắt đầu từ 0. Nhóm `createdAt` theo múi giờ thiết bị, đã test ranh giới năm và tháng 2 nhuận.
+- Data integrity: giữ request hiện có giới hạn 100 dự án và `hasCompleteProjectDataset`. Dataset phân trang chưa đủ hiển thị trạng thái thiếu dữ liệu thay vì thống kê sai; không phát sinh request vô hạn, không sửa Backend/API/Database.
+- Responsive: header/filter wrap theo container; tháng 31 cột cuộn ngang bên trong biểu đồ và vùng cuộn hỗ trợ keyboard focus; mobile control xếp dọc, không mở rộng toàn trang. Loading/error/retry và empty state hiện có được giữ.
+- Thêm 3 regression tests cho ba chế độ thời gian, năm nhuận/ranh giới local date, control/a11y và guard `limit=100`; cập nhật regression tooltip/empty state. Web tests **135/135 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build còn cảnh báo dynamic/static import `projectRepository.ts` đã có sẵn, không liên quan UI05.4.
+- Browser visual **NOT RUN**: Computer Use không khởi tạo được kernel assets do `path not found`; không coi responsive/scroll/tooltip trực quan là PASS. Không commit/push.
+
+## UI05.3 — Remove Duplicate KPI Cards (2026-10-17)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** Đã xóa hàng bốn KPI độc lập khỏi Dashboard và dọn toàn bộ JSX/CSS/token chỉ dùng cho KPI; Analytics nối trực tiếp sau Quick Actions bằng spacing section hiện có, không tạo khoảng trắng dư.
+- Giữ nguyên biểu đồ cột 7 ngày, Donut Chart với tổng/số lượng/tỷ lệ, phân loại `Khác`, dữ liệu fail-closed, Hero, Quick Actions, Shell, Dự án gần đây và Hoạt động gần đây. Không đổi route, API, business logic hoặc dữ liệu.
+- Regression UI05.2 được cập nhật để xác nhận KPI đã bị loại bỏ nhưng chart/Donut và trạng thái thiếu dữ liệu vẫn nguyên vẹn. Web tests **132/132 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build còn cảnh báo dynamic/static import `projectRepository.ts` đã có sẵn, không liên quan UI05.3.
+- Browser visual **NOT RUN**: Computer Use không khởi tạo được kernel assets do `path not found`. Chưa xác nhận trực quan tại 320/375/768/1024/1440. Không sửa Backend/Mobile/Admin/API/Database, không commit/push.
+
+## UI05.2 — Advanced Dashboard Analytics (2026-10-17)
+
+- **PARTIAL — source/regression PASS, browser visual verification pending.** Bốn KPI được tách thành hàng độc lập với icon/semantic tone/số lớn; Analytics dùng tỷ lệ 60/40 cho bar chart 7 ngày và donut trạng thái, cùng card height/padding/radius. Không sửa Hero/Quick Actions/Shell/recent projects/activity, route hoặc dữ liệu/API.
+- Bar chart dùng scale tuyến tính có tick 0, bỏ minimum-height 8% từng làm sai tỷ lệ; có gridline, giá trị, tooltip ngày/số dự án cho hover + focus, figcaption screen reader và empty/incomplete state. Donut SVG có segment gap, tổng ở giữa, legend count/percentage/progress, hover/focus đồng nhất và mô tả văn bản.
+- Data integrity: completed/processing/failed tái sử dụng thống kê hiện có; trạng thái chưa phân loại được giữ riêng trong `Khác`. Dataset phân trang chưa đầy đủ không tính tỷ lệ hoặc KPI nhóm; total vẫn dùng `pagination.total`. Zero dataset không sinh phần trăm giả.
+- Thêm 2 pure helper + declaration cho linear scale/status distribution và 6 regression tests UI05.2; cập nhật regression foundation để xác nhận không còn bar floor. Web tests **132/132 PASS**; lint/typecheck/production build và `git diff --check` PASS. Build còn warning dynamic/static import `projectRepository.ts` đã có sẵn, không liên quan UI05.2.
+- Browser visual 320/375/768/1024/1440 **NOT RUN**: Computer Use thất bại khi khởi tạo kernel assets do `path not found`. Cần browser thật xác nhận tooltip clipping, SVG focus và tỷ lệ card. Không Backend/Mobile/Admin/API/Database change, không AI call/DB write, không commit/push.
+
 ## UI04 — Dashboard Hero & Quick Actions (2026-10-15)
 
 - **PARTIAL — source/regression PASS, browser visual verification pending.** Hero được thu gọn (`min-height: 208px`), giữ gradient và artwork CSS hiện có theo bố cục copy trái/artwork phải; artwork ẩn khi container hẹp để ưu tiên heading/description/CTA. Không thêm asset/library và không đổi Dashboard JSX, dữ liệu hoặc nghiệp vụ.

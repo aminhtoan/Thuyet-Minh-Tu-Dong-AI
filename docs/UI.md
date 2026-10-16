@@ -1,5 +1,41 @@
 # UI Specification
 
+## UI05.5 — Compact Date Filter Popover (2026-10-17)
+
+- Bộ lọc thời gian của biểu đồ Dashboard được thu gọn thành một nút có icon lịch, nhãn chế độ đã áp dụng (`Theo ngày/tháng/năm`) và chevron. Tiêu đề cùng khoảng thời gian đã chọn luôn hiển thị; date/month/year inputs chỉ mount khi popover mở nên card không còn khoảng trống điều khiển dư.
+- Popover rộng tối đa `310px`, radius `14px`, shadow nhẹ và dùng typography Be Vietnam Pro của Dashboard. Bên trong giữ đủ ba chế độ, control thời gian native, `Đặt lại` và `Áp dụng`; container hẹp dùng chiều rộng theo content area để không gây tràn toàn trang.
+- Giá trị trong popover là **bản nháp**. Đổi chế độ/ngày/tháng/năm hoặc `Đặt lại` chưa tác động biểu đồ; chỉ `Áp dụng` mới cập nhật state thống kê. `Đặt lại` đưa bản nháp về chế độ Ngày và ngày hiện tại, đúng mặc định UI05.4.
+- Accessibility: trigger native button có `aria-haspopup="dialog"`, `aria-expanded`, `aria-controls`; mode dùng `aria-pressed`; focus chuyển vào lựa chọn hiện hành khi mở. Click ngoài đóng không áp dụng; Escape đóng và trả focus về trigger; Apply cũng đóng và trả focus. Focus-visible và touch target tối thiểu được giữ rõ ràng.
+- Logic `createdAt`, timezone thiết bị, bucket Ngày/Tháng/Năm, fail-closed dataset, API và Donut Chart không đổi. Regression kiểm tra cấu trúc popover, draft/apply/reset, click ngoài, Escape/focus và responsive CSS.
+- Source validation **PASS**: Web tests `138/138`, lint, typecheck, production build và `git diff --check`. Build còn warning dynamic/static import `projectRepository.ts` đã có sẵn, không liên quan UI05.5. Browser visual **NOT RUN** vì Computer Use không khởi tạo được kernel assets (`path not found`); chưa coi responsive/keyboard runtime là PASS.
+
+## UI05.4 — Dashboard Date / Month / Year Filter (2026-10-17)
+
+- Card biểu đồ đổi thành `Thống kê dự án theo thời gian`, có segmented control `Ngày | Tháng | Năm`, control thời gian native và nút `Đặt lại`. Chế độ Ngày mặc định hôm nay và hiển thị 7 ngày kết thúc tại ngày chọn; Tháng hiển thị đủ 28/29/30/31 ngày; Năm hiển thị 12 tháng.
+- Thống kê chỉ dùng `project.createdAt`. Ngày/tháng không có dự án vẫn có bucket `0`; trục Y tiếp tục bắt đầu từ 0 với scale tuyến tính. Tooltip và mô tả screen reader dùng ngày/tháng/năm đầy đủ cùng số dự án.
+- Nhóm lịch theo **múi giờ cục bộ của thiết bị** bằng `getFullYear/getMonth/getDate`; phép tạo ngày dùng constructor lịch cục bộ thay vì trừ milliseconds, tránh lệch ở ranh giới tháng/năm và môi trường có DST. Giao diện công khai chú thích múi giờ này.
+- Data integrity giữ fail-closed: Dashboard vẫn chỉ gọi `/projects?page=1&limit=100`; nếu `pagination.total > projects.length`, biểu đồ không tính số liệu từ tập thiếu mà hiển thị `Chưa đủ dữ liệu để lập biểu đồ`. Không tải vô hạn, không thêm request và không sửa Backend/API.
+- Desktop đặt tiêu đề và bộ lọc cùng hàng khi đủ chỗ; container hẹp cho phép xuống hàng. Biểu đồ tháng có vùng cuộn ngang focusable riêng (`min-width: 1120px`), không làm tràn toàn trang; control xếp dọc và rộng toàn phần ở container `<=420px`.
+- Áp dụng UI UX Pro Max: control native có label, segmented button có `aria-pressed`, focus ring rõ, biểu đồ có dữ liệu văn bản tương đương và vùng cuộn tháng có accessible name. Donut Chart và các khu vực Dashboard khác không đổi.
+- Source validation **PASS**: Web tests `135/135`, lint, typecheck, production build và `git diff --check`. Browser visual **NOT RUN** do Computer Use không khởi tạo được kernel assets (`path not found`); chưa coi responsive/scroll/tooltip trực quan là PASS.
+
+## UI05.3 — Remove Duplicate KPI Cards (2026-10-17)
+
+- Đã xóa hoàn toàn hàng bốn KPI độc lập (`Tổng dự án`, `Hoàn thành`, `Đang xử lý`, `Thất bại`) khỏi Dashboard để tránh lặp lại thông tin đã có trong biểu đồ Donut. Component, markup, token và các selector CSS chỉ phục vụ hàng KPI cũng được loại bỏ.
+- Analytics hiện nằm ngay sau bốn Quick Actions theo khoảng cách section chuẩn của Dashboard, không còn vùng trống trung gian. Biểu đồ cột 7 ngày và Donut Chart giữ nguyên bố cục 60/40, dữ liệu thật, trạng thái loading/error/empty và responsive theo container.
+- Donut tiếp tục hiển thị tổng dự án ở tâm, các nhóm `Hoàn thành`, `Đang xử lý`, `Thất bại`, `Khác`, cùng số lượng, tỷ lệ phần trăm, progress bar và nội dung hỗ trợ screen reader. Không thay đổi logic phân loại hoặc API.
+- Regression xác nhận không còn `DashboardMetric`, `dashboard-kpis`, `dashboard-metric` hay token KPI; đồng thời bảo vệ thứ tự Quick Actions → Analytics và cơ chế fail-closed khi dữ liệu phân trang chưa đầy đủ.
+- Source validation **PASS**: Web tests `132/132`, lint, typecheck, production build và `git diff --check`. Browser visual **NOT RUN** do Computer Use không khởi tạo được kernel assets (`path not found`); chưa coi responsive visual là PASS.
+
+## UI05.2 — Advanced Dashboard Analytics (2026-10-17)
+
+- Vùng thống kê Dashboard dùng dữ liệu dự án thật hiện có và tách thành hai tầng: bốn KPI độc lập phía trên (`Tổng dự án`, `Hoàn thành`, `Đang xử lý`, `Thất bại`), sau đó Analytics 60/40 gồm biểu đồ cột 7 ngày và donut trạng thái. Card dùng Be Vietnam Pro, radius/shadow/tokens Navy–Purple hiện có; Hero, Quick Actions, Sidebar, Header, bảng dự án và hoạt động không đổi.
+- KPI có số lớn, icon SVG từ thư viện hiện có, màu nền nhấn theo semantic token và hover transform/elevation nhẹ. `Tổng dự án` tiếp tục lấy `pagination.total` khi có; ba số phân loại chỉ hiển thị khi dataset đầy đủ, nếu không hiển thị `—` thay vì suy diễn từ một trang API.
+- Biểu đồ cột có trục Y tuyến tính bắt đầu từ 0, tick nguyên, gridline nhẹ và chiều cao cột đúng `value / scale.maximum` — bỏ mức tối thiểu 8% cũ. Mỗi ngày có tooltip ngày đầy đủ + số dự án khi hover hoặc keyboard focus, figcaption cho screen reader và trạng thái rỗng/thiếu dữ liệu rõ ràng.
+- Donut SVG responsive dùng tối đa bốn nhóm: Hoàn thành, Đang xử lý, Thất bại và Khác. `Khác` là phần còn lại thực tế (ví dụ `DRAFT`), không gán vào processing. Tổng nằm giữa; hover/focus segment hoặc legend cập nhật thông tin nhóm. Legend luôn có tên, số lượng, phần trăm, progress bar và mô tả văn bản hỗ trợ screen reader; zero/incomplete dataset fail-closed.
+- Responsive theo container Dashboard: Analytics 60/40 khi rộng, xếp dọc khi `<=980px`; donut/legend xếp dọc khi `<=620px`; KPI 4 → 2 → 1 cột. Tooltip biên đầu/cuối được neo trong vùng biểu đồ; reduced-motion tắt transition/transform liên quan.
+- Source/regression **PASS**: Web tests `132/132`, lint, typecheck, production build và `git diff --check`. Browser visual 320/375/768/1024/1440 **NOT RUN** vì Computer Use không khởi tạo được kernel assets (`path not found`); chưa coi tỷ lệ trực quan là PASS.
+
 ## UI04 — Dashboard Hero & Quick Actions (2026-10-15)
 
 - Giữ nguyên Be Vietnam Pro, Navy/Purple, gradient Hero, thứ tự Dashboard và toàn bộ route/logic hiện có. Hero dùng bố cục hai vùng rõ ràng khi đủ rộng: copy/CTA bên trái, minh họa CSS hiện có bên phải; chiều cao tối thiểu giảm từ `238px` xuống `208px`, artwork thu về `168px` và CTA giữ target tối thiểu `44px`. Không tạo hoặc thêm asset mới.
