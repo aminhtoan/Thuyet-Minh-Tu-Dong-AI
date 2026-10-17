@@ -11,4 +11,16 @@
 .project-detail-message { margin: 0; font-size: var(--font-size-sm); }
 .project-detail-message--success { color: var(--color-success); }
 .project-detail-message--error { color: var(--color-error); }
+.project-workflow-warning { margin: 0; padding: var(--space-md); border: 1px solid var(--color-warning-border, #f6c86b); border-radius: var(--radius-md); background: var(--color-warning-light, #fff8e6); color: var(--color-text-secondary); }
+.project-workflow-warning strong { color: var(--color-text-primary); }
+.project-resume-upload { display: grid; gap: var(--space-md); margin-top: var(--space-lg); padding: var(--space-lg); border: 1px dashed var(--color-primary); border-radius: var(--radius-lg); background: var(--color-primary-light); }
+.project-resume-upload h3, .project-resume-upload p { margin: 0; }
+.project-resume-upload__picker { font-weight: var(--font-weight-semibold); }
+.project-resume-upload input[type='file'] { min-height: 44px; max-width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.project-resume-upload input[type='file']:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent); outline-offset: 2px; }
+.project-resume-upload__file { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); min-width: 0; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); background: var(--color-surface); }
+.project-resume-upload__file strong { min-width: 0; overflow-wrap: anywhere; }
+.project-resume-upload__file span, .project-resume-upload__hint { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.project-resume-upload__actions, .project-resume-upload__success { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); }
+.project-resume-upload__success { justify-content: space-between; color: var(--color-success); }
 @media (max-width: 600px) { .project-detail-heading { flex-direction: column; }.project-media-grid { grid-template-columns: 1fr; }.project-detail-layout .voice-actions { align-items: stretch; flex-direction: column; }.project-detail-layout .voice-actions > * { width: 100%; } }

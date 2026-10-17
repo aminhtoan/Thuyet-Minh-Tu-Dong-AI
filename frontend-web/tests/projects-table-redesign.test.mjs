@@ -46,11 +46,12 @@ test('language pairs and all existing status mappings remain presentation-only',
   assert.match(css, /\.projects-page \.project-list-status \.badge \{/)
 })
 
-test('the neutral action label preserves the verified workflow route without implying a mutation', () => {
+test('the action uses the verified workflow path without implying an automatic mutation', () => {
   assert.match(source, /const action = projectAction\(project\)/)
-  assert.match(source, /'\/projects\/' \+ project\.id \+ '\/' \+ action\.step/)
-  assert.match(source, /<span>Tiếp tục<\/span><Icon name="arrow"/)
-  assert.match(actionSource, /status === 'FAILED' \? 'Thử xử lý lại' : 'Xem tiến trình xử lý'/)
+  assert.match(source, /to=\{action\.path\}/)
+  assert.match(source, /<span>\{action\.label\}<\/span><Icon name="arrow"/)
+  assert.match(actionSource, /workflow\.state === 'FAILED' \? 'Mở bước gặp lỗi'/)
+  assert.doesNotMatch(actionSource, /project\.status ===/)
 })
 
 test('responsive table scrolling and focus styles remain local to Projects', () => {

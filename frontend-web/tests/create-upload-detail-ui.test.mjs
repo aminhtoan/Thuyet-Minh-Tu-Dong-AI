@@ -23,4 +23,7 @@ test('project detail exposes workflow, media, save feedback and duplicate-submit
   assert.match(detailSource, /Phương tiện nguồn/);
   assert.match(detailSource, /saveLock\.current/);
   assert.match(detailSource, /Đã lưu thay đổi dự án/);
+  assert.match(detailSource, /Tiếp tục tải phương tiện/);
+  assert.match(detailSource, /uploadLock\.current/);
+  assert.match(uploadSource, /export async function uploadMediaToProject/);
 });

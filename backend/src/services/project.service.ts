@@ -7,6 +7,7 @@ import { Project, type ProjectDocument } from '../models/Project.js';
 import type { ProjectStatus } from '../constants/project.constants.js';
 import { AppError } from '../utils/app-error.js';
 import { safeDeleteStoredFile } from '../utils/file.js';
+import { resolveProjectWorkflows } from './project-workflow.service.js';
 
 interface ProjectInput { name: string; description?: string; sourceLanguage: string }
 interface ListInput { search?: string; status?: ProjectStatus; page: number; limit: number }
@@ -16,6 +17,11 @@ const serialize = (project: ProjectDocument & { _id: Types.ObjectId; createdAt: 
   sourceLanguage: project.sourceLanguage, status: project.status, progress: project.progress,
   createdAt: project.createdAt, updatedAt: project.updatedAt,
 });
+
+const serializeWithWorkflow = async (projects: Array<ProjectDocument & { _id: Types.ObjectId; createdAt: Date; updatedAt: Date }>) => {
+  const workflows = await resolveProjectWorkflows(projects.map((project) => ({ id: project._id.toString(), status: project.status })));
+  return projects.map((project) => ({ ...serialize(project), workflow: workflows.get(project._id.toString()) }));
+};
 
 const log = async (userId: string, action: string, entityId: Types.ObjectId, description: string) => {
   try { await ActivityLog.create({ userId, action, entityType: 'Project', entityId, description }); } catch { /* best effort */ }
@@ -44,10 +50,14 @@ export const list = async (userId: string, input: ListInput) => {
     Project.find(filter).sort({ createdAt: -1 }).skip((input.page - 1) * input.limit).limit(input.limit),
     Project.countDocuments(filter),
   ]);
-  return { projects: projects.map(serialize), pagination: { ...input, search: undefined, status: undefined, total, totalPages: Math.ceil(total / input.limit) } };
+  return { projects: await serializeWithWorkflow(projects), pagination: { ...input, search: undefined, status: undefined, total, totalPages: Math.ceil(total / input.limit) } };
 };
 
-export const get = async (id: string, userId: string) => serialize(await owned(id, userId));
+export const get = async (id: string, userId: string) => {
+  const project = await owned(id, userId);
+  const [serialized] = await serializeWithWorkflow([project]);
+  return serialized;
+};
 
 export const update = async (id: string, userId: string, input: Partial<ProjectInput>) => {
   const project = await Project.findOneAndUpdate({ _id: id, userId }, { $set: input }, { returnDocument: 'after', runValidators: true });

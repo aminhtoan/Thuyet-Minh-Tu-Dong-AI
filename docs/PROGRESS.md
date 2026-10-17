@@ -1,5 +1,48 @@
 # Project Progress
 
+## UI06.7.4 — Web Workflow Navigation & DRAFT Resume (2026-10-18)
+
+- **PARTIAL — frontend source/regression PASS; Browser Desktop và Backend integration pending.** Customer Web tiêu thụ `workflow` optional từ Project List/Detail DTO và ánh xạ `UPLOAD / TRANSCRIPT / TRANSLATION / VOICE / GENERATE / RESULT`; `UNKNOWN`, thiếu contract, blocked, provenance ngôn ngữ không hợp lệ hoặc destination chưa hỗ trợ đều fail-closed về Project Detail.
+- `projectAction` không còn suy đoán failure stage từ `ProjectStatus`; FAILED chỉ mở bước do Backend cung cấp và không tự retry. Query `language` chỉ được tạo từ `workflow.targetLanguage` có provenance tin cậy và được màn hình đích hiện tại hỗ trợ.
+- Project Detail có upload tối thiểu cho `UPLOAD + READY + canResume`: dùng đúng project ID và `POST /projects/:id/media`, giữ validation 500 MB/FormData field `file`, loading/cancel/error/success, retry và synchronous double-submit lock. Transport upload project hiện hữu không create/delete project; cleanup DELETE vẫn chỉ nằm trong wrapper tạo project mới.
+- Opening/navigating không gọi STT/Translation/TTS/processing. Existing Create Project vẫn dùng flow create → upload; cache refresh sau upload là best-effort và không biến upload thành thất bại giả.
+- Web tests **159/159 PASS** (gồm 6 workflow-navigation tests mới); lint, typecheck, production build và `git diff --check` PASS. Build giữ warning dynamic/static import `projectRepository.ts` đã có từ trước. Browser Desktop **NOT RUN** vì phiên làm việc không có browser/tab khả dụng; Database writes **0**, AI requests **0**, không sửa Backend/Mobile/Admin và không commit/push.
+
+## UI06.7.3 — Audio-only Terminal State (2026-10-18)
+
+- **PARTIAL — source/unit PASS; transaction integration PENDING.** TTS completion dùng Media hiện tại để đặt AUDIO `COMPLETED/100`, giữ VIDEO `GENERATING_AUDIO/100`; không dựa vào progress và không thay video Result rule.
+- Narration READY, TTS job COMPLETED và Project terminal status nằm trong cùng transaction, có re-read owner/status/media/job và conditional update. Project/job bị xóa hoặc đổi state làm transaction abort; failure cleanup không ghi đè state mới. Active job khác trì hoãn terminal state và reconciliation transaction hoàn tất AUDIO khi workflow idle.
+- Idempotent lookup đã bao gồm `projectId`; duplicate completion không gọi provider lại và có thể reconcile legacy AUDIO an toàn. Không schema/index/route/dependency change.
+- Pure unit/mock suite `test:tts-terminal` **11/11 PASS**: audio/video decision, missing/wrong-project Narration, conflict, duplicate decision, video Result guard và toàn bộ workflow resolver UI06.7.2. DB integration tests đã được cập nhật cho Media fixture, AUDIO success/idempotency và failure, nhưng **NOT RUN** vì `.env` trỏ MongoDB SRV `multilingual_ai_narration` và suite ghi/xóa fixture.
+- Backend lint, typecheck, build và `git diff --check` **PASS**. Database writes **0**, AI/TTS requests **0**, không commit/push.
+
+## UI06.7.2 — Backend Workflow Summary Contract (2026-10-18)
+
+- **PARTIAL — source/unit validation PASS; DB-backed integration NOT RUN.** `GET /api/projects` và `GET /api/projects/:id` bổ sung workflow summary additive; create/update DTO, route paths, state machine, schema/index và frontend không đổi.
+- Resolver thu thập Media, READY Transcript/Translation/Narration, Result và latest ProcessingJob bằng sáu batch reads cố định cho cả page. Không có query theo từng Project; job latest dùng aggregate trên index `projectId + createdAt` hiện có. Project IDs luôn bắt nguồn từ query owner-scoped đã xác thực CUSTOMER.
+- Đủ 10 ProjectStatus, target-language provenance, `progress=0`, audio/video artifact và FAILED fail-closed. Job lỗi thiếu/mâu thuẫn trả `UNKNOWN/BLOCKED`; raw provider error được loại bỏ và code không nhận diện được thành `PROCESSING_FAILED`.
+- Unit regression mới **7/7 PASS**, bao phủ 10 status, cả bốn failure stage, progress/provenance, failure ambiguity/sanitization, audio/video artifact và six-read query guard. Project/Media integration đã bổ sung List/Detail backward compatibility + workflow và giữ IDOR hiện có, nhưng **NOT RUN** vì `.env` hiện trỏ MongoDB SRV database `multilingual_ai_narration` và suite có ghi/xóa fixture; không dùng database này khi chưa xác minh isolation.
+- Backend lint, typecheck, build và `git diff --check` PASS. Sandbox ban đầu chặn tiến trình con của tsx/esbuild bằng `spawn EPERM`; focused unit suite chạy lại ngoài sandbox PASS.
+- Không đổi MongoDB schema/index, không migration/seed, không gọi AI, không sửa Web/Mobile/Admin, không commit/push. Frontend chưa sử dụng summary; DRAFT upload resume và route mapping vẫn là scope tiếp theo.
+
+## UI06.7.1 — Project Workflow Contract & Navigation Design (2026-10-18)
+
+- **DESIGN COMPLETED — pending approval; no application/API/Database changes.** Verified existing routes/screens, DRAFT create-upload flow, owner-guarded media API, ProcessingJob types, STT/Translation/TTS/video state transitions, protected Result resolution and current workflow tests.
+- DRAFT can reuse `POST /projects/:id/media`, but Web currently always creates a new project before upload. Proposed safe route is existing Project Detail with a reusable existing-ID upload component; failure must never delete that existing project.
+- FAILED stage already exists in ProcessingJob but is not exposed to Customer Web. Frontend-only cannot recover it safely. Recommended additive `workflow` summary returns domain step/state, safe job/failure metadata, trusted target-language provenance and artifact readiness; frontend alone maps it to existing routes and never auto-retries.
+- Audio-only recommendation: TTS success stores READY Narration and sets Project `COMPLETED`; video stays `GENERATING_AUDIO` until explicit composition reaches `PROCESSING_VIDEO` then `COMPLETED`. Existing Result UI already reads protected Narration as an audio artifact, so no fake Result record is needed.
+- Option A frontend-only is lower risk but incomplete after reload and fail-closed for FAILED/ambiguous jobs. Option B frontend + minimal Backend contract is recommended for correctness and recovery. Required approvals: Option B, audio terminal semantics, Project Detail as DRAFT upload host, and whether failure correlation without a new Project job-reference field is sufficient.
+- Detailed matrix, contract and regression plan are recorded in `docs/UI.md`. Mobile verification remains deferred. No tests/build were rerun because this step changes documentation only; `git diff --check` is required before handoff. No commit/push.
+
+## UI06.7 — My Projects Navigation & Data Safety Review (2026-10-18)
+
+- **AUDIT COMPLETED — không sửa application source.** Đã đối chiếu `/projects`, đủ 10 `ProjectStatus`, các route Transcript/Translation/Voice/Generate/Result, Project Detail Web/Mobile tham khảo, repository/filter/presentation hooks và Project API/ownership guards. Không tìm thấy bằng chứng UI06.5/UI06.6 đã được triển khai trong source, tests hoặc docs.
+- Phát hiện P0: mapping hiện tại đẩy `TRANSCRIBING`, `TRANSCRIBED`, `TRANSLATING`, `TRANSLATED` và mọi `FAILED` vào `/generate`, trong khi các màn hình nghiệp vụ tương ứng nằm ở Transcript/Translation/Voice và `FAILED` không cho biết bước lỗi. `DRAFT` vào Transcript nhưng không có đường tiếp tục upload. Audio TTS hoàn tất không đưa project sang trạng thái terminal ở Backend.
+- Phát hiện P0 về tính đúng dữ liệu: hai enrichment request/project nuốt mọi lỗi qua `Promise.allSettled`, khiến lỗi auth/network/server có thể bị trình bày thành `Chưa có tệp` hoặc `Chưa dịch`. Không có mutation nào được thực hiện trong audit.
+- Fetch hiện tải toàn bộ page `limit=100` tuần tự rồi lọc/sort/page 10 ở client, đồng thời gọi media + translations cho từng project. Công thức HTTP ước tính `ceil(N/100)+2N`; tương ứng 21/201/2.010 request với 10/100/1.000 project, chưa tính DB queries nội bộ. Offset pagination thiếu tie-break/snapshot nên có rủi ro thiếu/trùng khi dữ liệu thay đổi trong lúc tải.
+- URL deep-link/reload hoạt động với `q/status/period/sort/from/to/page`, nhưng invalid URL không được canonicalize; custom-date URL lỗi có thể hiện no-results thay vì validation; page vượt biên chỉ clamp presentation; dùng replace nên Back không lưu từng lần filter/page. JWT không nằm trong URL, Backend bắt buộc auth/role/ownership và chống IDOR bằng query `userId`/owner middleware.
+- Web tests **153/153 PASS** sau khi chạy lại ngoài worker sandbox (lần đầu không chạy test nào vì `spawn EPERM`); lint, typecheck, production build và `git diff --check` PASS. Build còn warning dynamic/static import `projectRepository.ts` đã có sẵn. Browser Desktop **NOT RUN**: không có Backend/Web server lắng nghe ở các cổng dự án trong phiên audit. Mobile browser/Expo **DEFERRED**; không commit/push.
+
 ## UI06.4 — Professional Project Table Redesign (2026-10-17)
 
 - **PARTIAL — source/regression PASS, browser visual verification pending.** Bảng `/projects` giữ nguyên sáu cột và semantic table, nhưng đã có `colgroup` chuyên nghiệp với Tên dự án chiếm `30%`, header xám nhạt, hàng `68px`, border đều, hover/focus-within nhẹ và typography Be Vietnam Pro `13/14px`.

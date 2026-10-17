@@ -4,6 +4,7 @@ import { relative, resolve } from 'node:path';
 import mongoose, { type Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
 import { Language } from '../models/Language.js';
+import { Media } from '../models/Media.js';
 import { Narration } from '../models/Narration.js';
 import { ProcessingJob } from '../models/ProcessingJob.js';
 import { Project } from '../models/Project.js';
@@ -14,6 +15,7 @@ import { assertInsideUploadRoot, resolveStoredFile, safeDeleteStoredFile, upload
 import { env } from '../config/env.js';
 import { getTtsProvider } from './tts/tts.service.js';
 import { OpenAiTtsError } from './tts/openai-tts.provider.js';
+import { resolveTtsTerminalStatus } from './tts/tts-terminal-state.js';
 import { assertApprovedCurrent, loadSource } from './translation/group-translation.service.js';
 
 const speed = 1;
@@ -21,6 +23,7 @@ const log = async (userId: string, action: string, projectId: Types.ObjectId, la
   try { await ActivityLog.create({ userId, action, entityType: 'Project', entityId: projectId, description: `${action.replaceAll('_', ' ').toLowerCase()} (${language}, ${voiceId.toString()})` }); } catch { /* best effort */ }
 };
 const duplicateKey = (error: unknown) => Boolean(error && typeof error === 'object' && 'code' in error && (error as { code?: unknown }).code === 11000);
+const completionConflict = () => new Error('TTS_COMPLETION_CONFLICT');
 
 const serialize = async (narration: { _id: Types.ObjectId; projectId: Types.ObjectId; translationId: Types.ObjectId; voiceId: Types.ObjectId; languageCode: string; speed: number; mimeType: string; fileSize: number; provider: string; model: string; status: string; duration?: number | null; createdAt: Date; updatedAt: Date }) => {
   const voice = await Voice.findById(narration.voiceId).select('name');
@@ -56,6 +59,38 @@ const resolveVoice = async (targetLanguage: string, voiceId?: string) => {
   return voice;
 };
 
+const finalizeIdleAudioProject = async (projectId: string, userId: string) => {
+  const session = await mongoose.startSession();
+  let status: 'GENERATING_AUDIO' | 'COMPLETED' | null = null;
+  try {
+    await session.withTransaction(async () => {
+      const currentProject = await Project.findOne({ _id: projectId, userId }).session(session);
+      if (!currentProject) return;
+      if (currentProject.status === 'COMPLETED') { status = 'COMPLETED'; return; }
+      if (currentProject.status !== 'GENERATING_AUDIO') return;
+      const currentMedia = await Media.findOne({ projectId }).select('mediaType').session(session);
+      if (currentMedia?.mediaType !== 'AUDIO') { status = 'GENERATING_AUDIO'; return; }
+      const [readyNarration, activeJob] = await Promise.all([
+        Narration.exists({ projectId, status: 'READY' }).session(session),
+        ProcessingJob.exists({ projectId, status: { $in: ['QUEUED', 'PROCESSING'] } }).session(session),
+      ]);
+      const terminal = resolveTtsTerminalStatus({
+        mediaType: currentMedia.mediaType, ttsSucceeded: true, narrationReady: Boolean(readyNarration),
+        narrationProjectMatches: Boolean(readyNarration), hasConflictingActiveJob: Boolean(activeJob),
+      });
+      if (terminal !== 'COMPLETED') { status = 'GENERATING_AUDIO'; return; }
+      const updated = await Project.updateOne(
+        { _id: projectId, userId, status: 'GENERATING_AUDIO' },
+        { status: 'COMPLETED', progress: 100 },
+        { session },
+      );
+      if (updated.matchedCount !== 1) throw completionConflict();
+      status = 'COMPLETED';
+    });
+  } finally { await session.endSession(); }
+  return status;
+};
+
 export const generate = async (projectId: string, userId: string, targetLanguage: string, requestedVoiceId?: string) => {
   const project = await Project.findOne({ _id: projectId, userId });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
@@ -64,9 +99,14 @@ export const generate = async (projectId: string, userId: string, targetLanguage
   if (translation.alignmentFormat === 'GROUPS_V1') assertApprovedCurrent(translation, await loadSource(projectId));
   if (!translation.fullText.trim()) throw new AppError(409, 'TRANSLATION_EMPTY', 'Bản dịch không có nội dung để tạo giọng đọc.');
   if (translation.fullText.length > 4096) throw new AppError(413, 'TTS_TEXT_TOO_LARGE', 'Nội dung vượt quá giới hạn của dịch vụ giọng đọc.');
+  const media = await Media.findOne({ projectId }).select('mediaType');
+  if (!media) throw new AppError(404, 'MEDIA_NOT_FOUND', 'Không tìm thấy media nguồn.');
   const voice = await resolveVoice(targetLanguage, requestedVoiceId);
-  const existing = await Narration.findOne({ translationId: translation._id, voiceId: voice._id, speed, status: 'READY' });
-  if (existing) return { project: { id: projectId, status: project.status }, narration: await serialize(existing), idempotent: true };
+  const existing = await Narration.findOne({ projectId, translationId: translation._id, voiceId: voice._id, speed, status: 'READY' });
+  if (existing) {
+    const reconciled = media.mediaType === 'AUDIO' ? await finalizeIdleAudioProject(projectId, userId) : null;
+    return { project: { id: projectId, status: reconciled ?? project.status }, narration: await serialize(existing), idempotent: true };
+  }
   if (!['TRANSLATED', 'GENERATING_AUDIO', 'FAILED'].includes(project.status)) throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép tạo giọng đọc.');
 
   let job;
@@ -74,7 +114,7 @@ export const generate = async (projectId: string, userId: string, targetLanguage
   catch (error) { if (duplicateKey(error)) throw new AppError(409, 'TTS_ALREADY_RUNNING', 'Giọng đọc này đang được tạo.'); throw error; }
   await Project.updateOne({ _id: projectId }, { status: 'GENERATING_AUDIO', progress: 0 });
   void log(userId, project.status === 'FAILED' ? 'TTS_RETRIED' : 'TTS_STARTED', project._id, targetLanguage, voice._id);
-  let storedPath: string | undefined; let temporaryPath: string | undefined;
+  let storedPath: string | undefined; let temporaryPath: string | undefined; let persistenceCommitted = false;
   try {
     const result = await getTtsProvider().synthesize({ text: translation.fullText, language: targetLanguage, voice: voice.providerVoiceId, format: 'mp3' });
     if (!(result.audio instanceof Uint8Array) || !result.audio.byteLength || result.format !== 'mp3' || result.mimeType !== 'audio/mpeg' || !result.provider.trim()) throw new Error('TTS_INVALID_RESPONSE');
@@ -82,24 +122,59 @@ export const generate = async (projectId: string, userId: string, targetLanguage
     const filename = `narration-${targetLanguage}-${randomUUID()}.mp3`; const finalPath = resolve(directory, filename); temporaryPath = `${finalPath}.tmp`; assertInsideUploadRoot(finalPath);
     await writeFile(temporaryPath, result.audio, { flag: 'wx' }); await rename(temporaryPath, finalPath); temporaryPath = undefined;
     storedPath = relative(uploadRoot, finalPath).replaceAll('\\', '/');
-    const session = await mongoose.startSession(); let narrationId = '';
+    const session = await mongoose.startSession(); let narrationId = ''; let completedProjectStatus: 'GENERATING_AUDIO' | 'COMPLETED' = 'GENERATING_AUDIO';
     try {
       await session.withTransaction(async () => {
+        const [currentProject, currentMedia, currentJob, conflictingActiveJob] = await Promise.all([
+          Project.findOne({ _id: projectId, userId, status: 'GENERATING_AUDIO' }).session(session),
+          Media.findOne({ projectId }).select('mediaType').session(session),
+          ProcessingJob.findOne({ _id: job._id, projectId, type: 'TTS', status: 'PROCESSING' }).session(session),
+          ProcessingJob.exists({ projectId, _id: { $ne: job._id }, status: { $in: ['QUEUED', 'PROCESSING'] } }).session(session),
+        ]);
+        if (!currentProject || !currentMedia || !currentJob) throw completionConflict();
         const [narration] = await Narration.create([{ projectId, translationId: translation._id, voiceId: voice._id, languageCode: targetLanguage, speed,
           audioPath: storedPath, mimeType: result.mimeType, fileSize: result.audio.byteLength, provider: result.provider, model: result.model ?? process.env.TTS_MODEL ?? 'unknown', status: 'READY' }], { session });
         if (!narration) throw new Error('TTS_INVALID_RESPONSE'); narrationId = narration._id.toString();
-        await ProcessingJob.updateOne({ _id: job._id }, { status: 'COMPLETED', progress: 100, completedAt: new Date() }, { session });
-        await Project.updateOne({ _id: projectId }, { status: 'GENERATING_AUDIO', progress: 100 }, { session });
+        const terminal = resolveTtsTerminalStatus({
+          mediaType: currentMedia.mediaType, ttsSucceeded: true, narrationReady: narration.status === 'READY',
+          narrationProjectMatches: narration.projectId.toString() === projectId, hasConflictingActiveJob: Boolean(conflictingActiveJob),
+        });
+        if (!terminal) throw completionConflict();
+        const completedJob = await ProcessingJob.updateOne(
+          { _id: job._id, projectId, type: 'TTS', status: 'PROCESSING' },
+          { status: 'COMPLETED', progress: 100, completedAt: new Date() },
+          { session },
+        );
+        if (completedJob.matchedCount !== 1) throw completionConflict();
+        const completedProject = await Project.updateOne(
+          { _id: projectId, userId, status: 'GENERATING_AUDIO' },
+          { status: terminal, progress: 100 },
+          { session },
+        );
+        if (completedProject.matchedCount !== 1) throw completionConflict();
+        completedProjectStatus = terminal;
       });
+      persistenceCommitted = true;
     } finally { await session.endSession(); }
+    if (media.mediaType === 'AUDIO' && completedProjectStatus === 'GENERATING_AUDIO') {
+      try { completedProjectStatus = await finalizeIdleAudioProject(projectId, userId) ?? completedProjectStatus; }
+      catch { /* Artifact/job commit succeeded; a later idempotent request can reconcile the terminal state. */ }
+    }
     void log(userId, 'TTS_COMPLETED', project._id, targetLanguage, voice._id);
-    return { project: { id: projectId, status: 'GENERATING_AUDIO' }, narration: await getNarration(projectId, narrationId), idempotent: false };
+    return { project: { id: projectId, status: completedProjectStatus }, narration: await getNarration(projectId, narrationId), idempotent: false };
   } catch (error) {
+    if (persistenceCommitted) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'TTS_COMPLETION_READ_FAILED', 'Giọng đọc đã được tạo nhưng chưa thể tải trạng thái mới nhất.');
+    }
     if (temporaryPath) { try { await unlink(temporaryPath); } catch { /* absent temp */ } }
     if (storedPath) await safeDeleteStoredFile(storedPath);
     if (env.nodeEnv === 'development' && error instanceof OpenAiTtsError) console.error('TTS provider diagnostic:', error.diagnostics);
     const code = error instanceof Error && ['TTS_NOT_CONFIGURED', 'TTS_TIMEOUT', 'TTS_INVALID_RESPONSE', 'TTS_TEXT_TOO_LARGE'].includes(error.message) ? error.message : 'TTS_PROVIDER_ERROR';
-    await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]);
+    await Promise.all([
+      ProcessingJob.updateOne({ _id: job._id, status: 'PROCESSING' }, { status: 'FAILED', errorMessage: code, completedAt: new Date() }),
+      Project.updateOne({ _id: projectId, userId, status: 'GENERATING_AUDIO' }, { status: 'FAILED' }),
+    ]);
     void log(userId, 'TTS_FAILED', project._id, targetLanguage, voice._id);
     throw new AppError(code === 'TTS_NOT_CONFIGURED' ? 503 : code === 'TTS_TEXT_TOO_LARGE' ? 413 : 502, code, code === 'TTS_NOT_CONFIGURED' ? 'Dịch vụ giọng đọc chưa được cấu hình.' : 'Không thể tạo giọng đọc.');
   }

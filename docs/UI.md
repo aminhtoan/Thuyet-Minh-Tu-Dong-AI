@@ -1,5 +1,111 @@
 # UI Specification
 
+## UI06.7.4 — Web workflow navigation and DRAFT resume (2026-10-18)
+
+- Project List, Project Card và Project Detail dùng một resolver route dựa trên `project.workflow`; không còn chọn màn hình từ `ProjectStatus` đơn lẻ. `workflow` thiếu/mâu thuẫn, `UNKNOWN/BLOCKED`, `canResume=false` hoặc target language không có provenance phù hợp đều đưa người dùng về Project Detail với giải thích, không tạo job và không retry.
+- Route mapping: `UPLOAD` → Project Detail; `TRANSCRIPT` → Transcript; `TRANSLATION` → Translation; `VOICE` → Voice; `GENERATE` → Generate; `RESULT` → Result. `language` chỉ xuất hiện khi đến từ `JOB | TRANSLATION | NARRATION | RESULT`; các bước Voice/Generate/Result bắt buộc có target được destination hiện tại hỗ trợ.
+- Matrix UI thực thi: DRAFT → UPLOAD; UPLOADED/TRANSCRIBING → TRANSCRIPT; TRANSCRIBED/TRANSLATING → TRANSLATION; TRANSLATED → VOICE; GENERATING_AUDIO → VOICE, GENERATE hoặc RESULT theo summary; PROCESSING_VIDEO → GENERATE; COMPLETED → RESULT; FAILED → explicit failure step; evidence mơ hồ → Detail/blocked.
+- DRAFT resume nằm trong Project Detail và chỉ hiển thị cho `UPLOAD + READY + canResume`. File picker giữ format/500 MB validation, trạng thái loading/cancel/retry/error/success và focus native; upload dùng existing project ID, field `file`, Bearer/refresh từ API client. Lỗi không DELETE dự án hiện hữu và retry không POST tạo project mới.
+- Create Project giữ wrapper create → upload → cleanup đúng project vừa tạo. Upload transport được tách khỏi lifecycle create/cleanup; cache refresh sau thành công là best-effort. Không có mutation khi chỉ mở route; AI actions vẫn cần thao tác/confirmation ở màn hình nghiệp vụ.
+- UI UX Pro Max được áp dụng cho fail-closed navigation, deep link ổn định, lỗi có recovery path, disabled/loading rõ và control tối thiểu 44px. Browser responsive/keyboard vẫn cần smoke thực tế; Mobile/Expo deferred.
+
+## UI06.7.3 — Audio-only terminal state (2026-10-18)
+
+- TTS success giờ phân nhánh theo source Media đã xác minh: AUDIO + READY Narration đúng Project + không có active job mâu thuẫn → Project `COMPLETED/100`; VIDEO → giữ `GENERATING_AUDIO/100` cho bước FFmpeg. Progress 100 một mình không bao giờ tạo terminal state.
+- Narration READY, TTS job COMPLETED và Project status được ghi trong cùng MongoDB transaction. Transaction đọc lại Project ownership/status, Media và current TTS job; conditional updates dừng khi Project/job đã bị xóa hoặc thay đổi.
+- Nếu có job active khác, completion hiện tại giữ `GENERATING_AUDIO`; bước reconciliation transaction chỉ đặt AUDIO thành COMPLETED sau khi không còn job active và đã có READY Narration. Duplicate request dùng đúng Project/Translation/Voice Narration và reconciliation idempotent, không gọi TTS lại.
+- Failure update chỉ áp dụng cho TTS job còn PROCESSING và Project còn GENERATING_AUDIO, nên lỗi muộn không ghi đè một Project đã COMPLETED hoặc đổi state. Workflow summary giữ rule AUDIO COMPLETED + READY Narration → RESULT; VIDEO COMPLETED thiếu Result → UNKNOWN/BLOCKED.
+- Customer Web/Mobile/Admin không đổi. DB-backed TTS/video integration vẫn pending vì backend `.env` trỏ tới MongoDB SRV development; chỉ pure unit/mock tests được phép chạy trong bước này.
+
+## UI06.7.2 — Backend workflow summary contract (2026-10-18)
+
+- Backend Project List/Detail DTO đã có `workflow` additive theo thiết kế UI06.7.1. Backend trả domain step/state và evidence an toàn; frontend vẫn chịu trách nhiệm ánh xạ route, nên chưa có thay đổi navigation hay UI trong bước này.
+- Resolver xử lý đủ 10 ProjectStatus và fail-closed thành `UNKNOWN/BLOCKED` khi media/artifact/job mới nhất không đủ hoặc mâu thuẫn. `FAILED` chỉ resume khi job failed mới nhất xác định được stage và đủ prerequisite; raw provider error không được trả về.
+- Ngôn ngữ đích mang provenance `JOB | TRANSLATION | NARRATION | RESULT`; `progress=0` được giữ nguyên. Audio có READY Narration được trình bày là Result artifact qua summary mà không đổi state machine legacy.
+- Project List dùng sáu batch reads cố định cho Media, Transcript, Translation, Narration, Result và latest ProcessingJob, không query theo từng row. Existing ownership/RBAC bao quanh Project query trước khi resolver đọc evidence.
+- Customer Web chưa tiêu thụ contract trong UI06.7.2. DRAFT reusable upload, route mapping, polling và explicit retry vẫn thuộc bước frontend tiếp theo; không được tự retry chỉ vì mở trang.
+
+## UI06.7.1 — Project workflow contract and navigation design (2026-10-18)
+
+### Evidence and decision
+
+- Design/audit only; application source, routes, API and state machine remain unchanged. UI UX Pro Max guidance applied: deep links must preserve the current workflow state, back paths must be predictable, and an unavailable destination must explain why instead of guessing a route.
+- Existing `POST /api/projects/:id/media` is owner-guarded and already changes the project to `UPLOADED`; it can resume a real `DRAFT`. The Web upload service cannot reuse it because it always creates a new project first and deletes that newly-created project on upload failure.
+- Failure stage exists in `ProcessingJob.type` (`TRANSCRIPTION`, `TRANSLATION`, `TTS`, `VIDEO_PROCESSING`) with a safe `errorMessage` code, but Customer API exposes no job/workflow summary. `Project.status=FAILED` alone therefore cannot select a correct retry screen.
+- TTS completion persists a READY Narration and COMPLETED TTS job but deliberately leaves Project at `GENERATING_AUDIO`. Result Web already treats a READY Narration as an audio artifact, so audio-only projects can safely use `COMPLETED` after TTS; video projects must remain `GENERATING_AUDIO` until explicit FFmpeg processing succeeds.
+
+### Recommended navigation contract
+
+| Project status | Current route | Recommended destination | Required trusted data | Resume | Backend support |
+|---|---|---|---|---|---|
+| `DRAFT` | Transcript | Project Detail with existing-project upload | owned project; media absent | Yes, after Web upload UI is reusable | Existing upload API is sufficient; workflow summary recommended |
+| `UPLOADED` | Transcript | Transcript | readable source media | Yes | No new mutation; summary improves validation |
+| `TRANSCRIBING` | Generate | Transcript processing state | active TRANSCRIPTION job | Partially today; robust after reload with polling | Yes |
+| `TRANSCRIBED` | Generate | Translation | READY transcript | Yes | Summary recommended, existing read APIs sufficient |
+| `TRANSLATING` | Generate | Translation with trusted target language | active TRANSLATION job and target language | Partially today | Yes |
+| `TRANSLATED` | Generate | Voice with trusted target language | current approved/READY translation | Yes | Summary recommended |
+| `GENERATING_AUDIO` | Generate | Voice while TTS is active; Generate when READY narration exists for video; Result for legacy audio narration | media type, TTS job, READY narration, target language | Ambiguous today | Yes |
+| `PROCESSING_VIDEO` | Generate | Generate processing state | active VIDEO_PROCESSING job and narration language | Not reliably after reload today | Yes |
+| `COMPLETED` | Result | Result | READY narration for audio or Result for video, with trusted language | Yes | Summary recommended |
+| `FAILED` | Generate | Transcript/Translation/Voice/Generate selected from failed job type; Project Detail if unknown | latest failure causally matching current status | No safe resume today | Required |
+
+`projectId` remains a path parameter. `language` is added only when returned from a current ProcessingJob, approved/READY Translation, READY Narration or Result. Missing, conflicting or failed enrichment never produces a language query. Opening a project never starts or retries AI processing.
+
+### Proposed additive Backend contract
+
+Extend the safe Project DTO returned by list/detail with an optional `workflow` object, computed server-side in batches and protected by existing ownership rules:
+
+```text
+workflow: {
+  step: UPLOAD | TRANSCRIPT | TRANSLATION | VOICE | GENERATE | RESULT | UNKNOWN
+  state: READY | PROCESSING | FAILED | COMPLETED | BLOCKED
+  canResume: boolean
+  mediaType: AUDIO | VIDEO | null
+  targetLanguage: { code, source: JOB | TRANSLATION | NARRATION | RESULT } | null
+  processing: { jobId, type, status, progress } | null
+  failure: { jobId, type, code, failedAt } | null
+  artifact: { narrationReady, resultReady }
+}
+```
+
+- Backend returns domain `step`, never a frontend URL. Web owns route mapping.
+- `failure.code` is an allow-listed safe code, not raw provider output. When Project is `FAILED`, use a failed job only if it is the latest causally consistent job; otherwise return `UNKNOWN/BLOCKED` and do not guess.
+- List resolution must batch Media/Translation/Narration/Result/ProcessingJob lookups; adding one workflow request per row would recreate the N+1 problem.
+- Polling reads this summary only. Retry remains an explicit, confirmed action on the correct workflow screen.
+- No schema change is required for a fail-closed first version. A later `currentJobId/lastFailedJobId` reference would give stronger causal guarantees but is not part of the minimal proposal.
+
+### Audio-only terminal rule
+
+- During TTS: `GENERATING_AUDIO`, ProcessingJob `TTS/PROCESSING`.
+- TTS success with AUDIO source: transaction stores READY Narration, completes job and sets Project `COMPLETED/100`. Result page reads the protected Narration; no fake video Result is created.
+- TTS success with VIDEO source: Project remains `GENERATING_AUDIO/100`; the user explicitly starts video composition, then `PROCESSING_VIDEO` → `COMPLETED` only after a valid Result is stored.
+- TTS failure remains `FAILED`; workflow summary points back to Voice using the failed TTS job and trusted target language.
+
+### Options
+
+- **A — Frontend-only:** route DRAFT to Project Detail; split existing upload transport so it can upload to an existing ID; map linear statuses; send FAILED/ambiguous processing states to Project Detail. Low complexity and low API risk, but partial correctness, no reliable active-job recovery, no failure-stage recovery, and audio status remains inconsistent.
+- **B — Frontend + minimal Backend contract (recommended):** add the workflow summary, batch resolution and audio terminal rule; Web uses one fail-closed resolver. Medium complexity/regression risk, but correct FAILED routing, trusted language provenance and reliable reload recovery.
+
+### Expected implementation and regression scope
+
+- Web: `projectAction.ts`, project types/repository, `ProjectsPlaceholder.tsx`, `ProjectDetailPage.tsx`, reusable upload UI/`uploadService.ts`, and processing pages/hooks that consume/poll workflow summary.
+- Backend: project serializer/service/controller contract, a workflow-summary service using ProcessingJob and artifact models, `narration.service.ts`, and related route/service tests. Existing route paths can remain unchanged.
+- Tests: exhaustive 10-status resolver matrix; missing/conflicting workflow fail-closed; DRAFT upload uses the existing ID and never creates/deletes another project; FAILED mapping for all four job types plus unknown; target-language provenance; no navigation-triggered mutation; active-job reload/poll; audio TTS → COMPLETED; video TTS → GENERATING_AUDIO → PROCESSING_VIDEO → COMPLETED; ownership/IDOR; legacy Project DTO compatibility; list query-count guard preventing N+1.
+- Mobile/Admin remain deferred and unchanged. Before implementation, approve Option B, the audio terminal rule, Project Detail as the DRAFT upload host, and whether the minimal no-schema failure correlation is sufficient.
+
+## UI06.7 — My Projects navigation and data-safety audit (2026-10-18)
+
+- Audit-only: không sửa navigation, data fetching, Backend/API/Database hoặc giao diện. Không tìm thấy bằng chứng source/test/docs cho UI06.5 hoặc UI06.6; trạng thái hai bước này chưa được xác nhận.
+- Mapping hiện tại của `projectAction` chỉ có ba nhánh: `DRAFT`/`UPLOADED` → Transcript, `COMPLETED` → Result, tám trạng thái còn lại → Generate. Đối chiếu màn hình đích cho thấy `TRANSCRIBING` phải quay lại Transcript; `TRANSCRIBED`/`TRANSLATING` phải vào Translation; `TRANSLATED` phải vào Voice. `FAILED` không mang thông tin bước lỗi nên không thể điều hướng retry an toàn chỉ từ `ProjectStatus`. `DRAFT` vào Transcript nhưng màn hình chỉ báo phải upload trước và không có route tiếp tục upload dự án hiện hữu.
+- `GENERATING_AUDIO`/`PROCESSING_VIDEO` vào Generate là đúng hướng ở mức route, nhưng trạng thái xử lý không được khôi phục từ customer job API khi reload. Đặc biệt audio TTS kết thúc vẫn giữ project ở `GENERATING_AUDIO`; frontend chỉ đánh dấu session cục bộ hoàn tất, nên danh sách không có trạng thái terminal đáng tin cậy cho audio.
+- `/projects` dùng `useCompleteHistory`: tải tuần tự tất cả trang server với `limit=100`, sau đó lọc/sort/phân trang 10 dòng ở client. Mỗi project được enrich bằng hai HTTP request riêng (media và translations). Ước tính HTTP request là `ceil(N/100) + 2N`: 21 request cho 10 project, 201 cho 100 và 2.010 cho 1.000; đây là ước tính theo source, không phải số đo runtime.
+- Enrichment dùng `Promise.allSettled` rồi biến mọi lỗi media thành `media=null` và mọi lỗi translation thành danh sách rỗng. UI vì vậy có thể hiển thị `Chưa có tệp`/`Chưa dịch` cho cả 404 hợp lệ, 401/403, lỗi mạng hoặc lỗi server. Cần mô hình trạng thái `loading/absent/error/unknown` tách biệt trước khi coi dữ liệu là rỗng.
+- Backend có server-side pagination/search/status và ownership guard theo user đã xác thực. Tuy nhiên offset pagination sắp xếp chỉ theo `createdAt` và không có snapshot/tie-break `_id`; dữ liệu tạo đồng thời giữa các page có thể làm thiếu/trùng, còn dedupe client chỉ loại trùng chứ không khôi phục bản ghi bị bỏ sót.
+- URL `q/status/period/sort/from/to/page` hỗ trợ reload và Back/Forward đồng bộ draft. Submit luôn reset page 1. Giá trị URL không hợp lệ được fallback nhưng không canonicalize; custom date không hợp lệ nhập trực tiếp qua URL có thể trở thành tập rỗng mà không hiện lỗi; page vượt biên được clamp trong UI nhưng URL vẫn giữ số sai. Filter/pagination dùng `replace`, nên lịch sử browser không lưu từng lần thay đổi.
+- Security source review: route web có `RequireAuth`; API gửi Bearer token và refresh-once, không đưa token vào URL. Backend project routes yêu cầu CUSTOMER, truy vấn theo `userId` hoặc `requireProjectOwner`, trả 404 chung cho ID không thuộc user. UI guard không thay thế authorization server. Không thấy logging token/credentials trong luồng được audit.
+- Ưu tiên đề xuất: P0 sửa workflow resolver theo bước thực và trạng thái lỗi, tách lỗi enrichment khỏi dữ liệu vắng mặt, xác định terminal state cho audio. P1 bổ sung list-summary/batch metadata và server filter/sort/date hoặc endpoint query phù hợp, stable pagination, customer processing status, canonical URL/error handling. P2 giữ target language tường minh khi có nhiều bản dịch, bảo toàn progress `0`, và thêm matrix/request-count/history regression tests.
+- Validation: Web tests `153/153`, lint, typecheck, production build và `git diff --check` PASS; lần test sandbox đầu tiên không chạy case nào do `spawn EPERM`, chạy lại đúng suite ngoài worker sandbox PASS. Browser desktop không chạy vì không có Backend/Web server đang lắng nghe; Mobile/Expo deferred.
+
 ## UI06.4 — Professional Project Table Redesign (2026-10-17)
 
 - Bảng `/projects` tiếp tục dùng semantic `<table>` với `caption`, `thead`, `tbody`, `th scope="col"` và `th scope="row"`; thêm `colgroup` để giữ đủ sáu cột theo tỷ lệ ổn định: Tên dự án `30%`, Phương tiện `13%`, Ngôn ngữ `19%`, Ngày tạo `14%`, Trạng thái `14%`, Thao tác `10%`.

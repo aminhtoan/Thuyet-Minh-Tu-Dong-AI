@@ -166,7 +166,7 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
                   <td className="project-list-status"><ProjectStatusBadge status={project.status} />{demo && <small className="project-list-simulated">Giả lập · Không có tệp thật</small>}</td>
                   <td>{demo
                     ? <span className="project-list-readonly" title="Thao tác nghiệp vụ không khả dụng với dữ liệu demo">Chỉ xem demo</span>
-                    : <Link className="project-list-action" to={'/projects/' + project.id + '/' + action.step + (project.targetLanguage ? '?language=' + project.targetLanguage : '')} aria-label={`Tiếp tục dự án ${projectAccessibleName}`}><span>Tiếp tục</span><Icon name="arrow" width="16" /></Link>}
+                    : <Link className="project-list-action" to={action.path} title={action.reason} aria-label={`${action.label} dự án ${projectAccessibleName}`}><span>{action.label}</span><Icon name="arrow" width="16" /></Link>}
                   </td>
                 </tr>
               })}</tbody>

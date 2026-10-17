@@ -93,6 +93,30 @@ Tất cả route yêu cầu access JWT và role `CUSTOMER`; owner luôn lấy t�
 | `GET` | `/api/projects/:id/media` | — | `200`, current source Media |
 | `DELETE` | `/api/projects/:id/media` | — | `200`; Project trở về `DRAFT`, progress `0` |
 
+### Project workflow summary (UI06.7.2)
+
+`GET /api/projects` và `GET /api/projects/:id` giữ nguyên toàn bộ trường Project hiện có và bổ sung trường `workflow`. Đây là contract additive; các response create/update không bắt buộc trả trường này.
+
+```text
+workflow: {
+  step: UPLOAD | TRANSCRIPT | TRANSLATION | VOICE | GENERATE | RESULT | UNKNOWN
+  state: READY | PROCESSING | FAILED | COMPLETED | BLOCKED
+  canResume: boolean
+  mediaType: AUDIO | VIDEO | null
+  targetLanguage: { code, source: JOB | TRANSLATION | NARRATION | RESULT } | null
+  processing: { jobId, type, status, progress } | null
+  failure: { jobId, type, code, failedAt } | null
+  artifact: { narrationReady, resultReady }
+}
+```
+
+- Backend trả domain step, không trả route của frontend và không tự khởi chạy/retry tác vụ.
+- `targetLanguage` chỉ có khi có nguồn đáng tin cậy từ job hoặc artifact READY; lỗi enrichment không được biến thành ngôn ngữ suy đoán.
+- `processing.progress` bảo toàn giá trị `0`. `failure.code` chỉ trả mã nằm trong allow-list; lỗi provider không nhận diện được được chuẩn hóa thành `PROCESSING_FAILED`, không lộ raw error.
+- Với `FAILED`, job mới nhất phải là job failed có `completedAt` và đủ artifact tiên quyết. Bằng chứng thiếu/mâu thuẫn trả `UNKNOWN/BLOCKED`, `canResume=false`.
+- Audio có Narration READY được coi là Result artifact. Từ UI06.7.3, TTS completion chuyển Project nguồn AUDIO sang `COMPLETED/100`; workflow summary vẫn nhận diện bản ghi legacy còn ở `GENERATING_AUDIO`.
+- List resolver đọc Media, Transcript, Translation, Narration, Result và ProcessingJob theo batch cho toàn bộ page; không query theo từng Project. Tất cả project ID đầu vào đã được giới hạn bởi ownership của authenticated CUSTOMER.
+
 Media nhận MP4/WebM/QuickTime video và MPEG/WAV/MP4/M4A/WebM audio theo MIME allow-list. Giới hạn lấy từ `MAX_UPLOAD_SIZE_MB`. Mỗi Project có một source Media; upload mới thay thế file/metadata cũ. Filename lưu trữ do server tạo và API không trả `fileName`, `storagePath` hoặc absolute path.
 
 Các lỗi chính: `400 VALIDATION_ERROR`, `400 FILE_REQUIRED`, `401 AUTH_REQUIRED`, `403 FORBIDDEN`, `404 PROJECT_NOT_FOUND`, `404 MEDIA_NOT_FOUND`, `413 FILE_TOO_LARGE`, `415 UNSUPPORTED_MEDIA_TYPE`.
@@ -171,7 +195,7 @@ Lifecycle: `TRANSCRIBED|TRANSLATED|FAILED → TRANSLATING → TRANSLATED`; lỗi
 
 **IMPLEMENTED S22:** `POST /api/projects/:id/narrations` nhận `{ targetLanguage, voiceId? }`; `GET /api/projects/:id/narrations`; `GET /api/projects/:id/narrations/:narrationId`; và protected `GET /api/projects/:id/narrations/:narrationId/audio`. Tất cả yêu cầu JWT, role `CUSTOMER` và Project ownership. Xử lý đồng bộ; Voice được resolve server-side theo Language/provider, voice mặc định từ environment. Identity idempotent là Translation + Voice + speed; active job trùng trả `TTS_ALREADY_RUNNING`.
 
-Lifecycle S22: `TRANSLATED|FAILED → GENERATING_AUDIO`; sau thành công Project vẫn ở `GENERATING_AUDIO` để S23 tiếp quản, không chuyển `COMPLETED`. Lỗi chính: `TRANSLATION_NOT_FOUND`, `TRANSLATION_EMPTY`, `VOICE_NOT_FOUND`, `VOICE_INACTIVE`, `VOICE_NOT_SUPPORTED`, `TTS_ALREADY_RUNNING`, `TTS_NOT_CONFIGURED`, `TTS_TEXT_TOO_LARGE`, `TTS_TIMEOUT`, `TTS_INVALID_RESPONSE`, `TTS_PROVIDER_ERROR`, `NARRATION_NOT_FOUND`, `NARRATION_AUDIO_NOT_FOUND`.
+Lifecycle hiện tại: `TRANSLATED|FAILED → GENERATING_AUDIO`; sau TTS thành công, transaction chỉ đặt Project `COMPLETED/100` khi source Media hiện tại là AUDIO, Narration vừa tạo là READY/đúng Project và không còn job active mâu thuẫn. Source VIDEO giữ `GENERATING_AUDIO/100` để bước xử lý video tiếp quản; chỉ transaction tạo Result video hợp lệ mới đặt `COMPLETED`. Narration, TTS job và Project completion được ghi trong cùng transaction; update có filter trạng thái để không ghi đè Project/job đã thay đổi. Lỗi chính: `TRANSLATION_NOT_FOUND`, `TRANSLATION_EMPTY`, `MEDIA_NOT_FOUND`, `VOICE_NOT_FOUND`, `VOICE_INACTIVE`, `VOICE_NOT_SUPPORTED`, `TTS_ALREADY_RUNNING`, `TTS_NOT_CONFIGURED`, `TTS_TEXT_TOO_LARGE`, `TTS_TIMEOUT`, `TTS_INVALID_RESPONSE`, `TTS_PROVIDER_ERROR`, `NARRATION_NOT_FOUND`, `NARRATION_AUDIO_NOT_FOUND`.
 
 Future processing: saved Translation → voice/speed configuration → TTS service → narration audio / ProcessingJob → video processing. S9 stops at saved configuration.
 

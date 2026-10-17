@@ -4,6 +4,22 @@ export type ProjectPagination = { page: number; limit: number; total: number; to
 export type MediaType = 'VIDEO' | 'AUDIO'
 export type LanguageCode = string
 
+export type WorkflowStep = 'UPLOAD' | 'TRANSCRIPT' | 'TRANSLATION' | 'VOICE' | 'GENERATE' | 'RESULT' | 'UNKNOWN'
+export type WorkflowState = 'READY' | 'PROCESSING' | 'FAILED' | 'COMPLETED' | 'BLOCKED'
+export type WorkflowTargetLanguageSource = 'JOB' | 'TRANSLATION' | 'NARRATION' | 'RESULT'
+export type WorkflowJobType = 'TRANSCRIPTION' | 'TRANSLATION' | 'TTS' | 'VIDEO_PROCESSING'
+
+export type ProjectWorkflow = {
+  step: WorkflowStep
+  state: WorkflowState
+  canResume: boolean
+  mediaType: MediaType | null
+  targetLanguage: { code: LanguageCode; source: WorkflowTargetLanguageSource } | null
+  processing: { jobId: string; type: WorkflowJobType; status: 'QUEUED' | 'PROCESSING'; progress: number } | null
+  failure: { jobId: string; type: WorkflowJobType; code: string; failedAt: string } | null
+  artifact: { narrationReady: boolean; resultReady: boolean }
+}
+
 export type Project = {
   id: string
   name: string
@@ -16,6 +32,7 @@ export type Project = {
   mediaName?: string
   mediaSize?: number
   durationSeconds?: number
+  workflow?: ProjectWorkflow
   updatedAt: string
   createdAt?: string
 }

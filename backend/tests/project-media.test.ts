@@ -112,11 +112,17 @@ test('S19 project and media integration', async (t) => {
     const other = await json('/api/projects', 'POST', otherToken, { name: 'Không được lộ', sourceLanguage: 'vi' }); otherProjectId = other.body.data.project.id;
     const page = await request('/api/projects?page=1&limit=2', { headers: { authorization: `Bearer ${ownerToken}` } });
     assert.equal(page.status, 200); assert.equal(page.body.data.projects.length, 2); assert.equal(page.body.data.pagination.total, 3);
+    assert.equal(page.body.data.projects.every((project: any) => project.workflow?.step === 'UPLOAD' && project.workflow?.canResume === true), true);
+    assert.equal(typeof page.body.data.projects[0].name, 'string'); assert.equal(typeof page.body.data.projects[0].createdAt, 'string');
     const search = await request('/api/projects?search=Video%20S19', { headers: { authorization: `Bearer ${ownerToken}` } }); assert.equal(search.body.data.projects.length, 1);
     const status = await request('/api/projects?status=DRAFT', { headers: { authorization: `Bearer ${ownerToken}` } }); assert.equal(status.body.data.projects.length, 3);
     assert.equal(JSON.stringify(page.body).includes('Không được lộ'), false);
   });
-  await t.test('12. own detail returns 200', async () => assert.equal((await request(`/api/projects/${projectId}`, { headers: { authorization: `Bearer ${ownerToken}` } })).status, 200));
+  await t.test('12. own detail returns backward-compatible DTO plus workflow', async () => {
+    const response = await request(`/api/projects/${projectId}`, { headers: { authorization: `Bearer ${ownerToken}` } });
+    assert.equal(response.status, 200); assert.equal(response.body.data.project.id, projectId);
+    assert.equal(response.body.data.project.workflow.step, 'UPLOAD'); assert.equal(response.body.data.project.workflow.state, 'READY');
+  });
   await t.test('13. cross-user detail is concealed as 404', async () => assert.equal((await request(`/api/projects/${otherProjectId}`, { headers: { authorization: `Bearer ${ownerToken}` } })).status, 404));
   await t.test('14. invalid ObjectId returns controlled 400', async () => assert.equal((await request('/api/projects/not-an-id', { headers: { authorization: `Bearer ${ownerToken}` } })).status, 400));
   await t.test('15. own update succeeds', async () => { const r = await json(`/api/projects/${projectId}`, 'PATCH', ownerToken, { name: 'Tên đã sửa' }); assert.equal(r.status, 200); assert.equal(r.body.data.project.name, 'Tên đã sửa'); });
