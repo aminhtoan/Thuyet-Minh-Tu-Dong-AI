@@ -12,6 +12,7 @@ import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, type UploadStat
 import { languages } from '../features/projects/languages';
 import { projectAction, workflowStepForDisplay } from '../features/projects/projectAction';
 import { projectRepository } from '../features/projects/projectRepository';
+import { projectMetadataState } from '../features/projects/projectDataState';
 import { uploadMediaToProject } from '../features/projects/uploadService';
 import { useProject } from '../features/projects/useProjects';
 import '../styles/project-detail.css';
@@ -41,6 +42,10 @@ export function ProjectDetailPage() {
   useEffect(() => () => uploadController.current?.abort(), []);
   if (isLoading) return <Card><Spinner label="Đang tải dự án" /></Card>;
   if (error || !project || !projectId) return <Card><ErrorState title="Không thể mở dự án" description={error ?? 'Dự án không tồn tại hoặc bạn không có quyền truy cập.'} /></Card>;
+  const mediaState = projectMetadataState(project).media;
+  const storedMediaName = mediaState === 'ERROR' ? 'Không tải được thông tin tệp' : mediaState === 'UNKNOWN' || mediaState === 'LOADING' ? 'Chưa xác định' : project.mediaName ?? 'Chưa tải lên';
+  const storedMediaType = mediaState === 'ERROR' ? 'Không tải được thông tin' : mediaState === 'UNKNOWN' || mediaState === 'LOADING' ? 'Chưa xác định' : project.mediaType === 'VIDEO' ? 'Video' : project.mediaType === 'AUDIO' ? 'Âm thanh' : 'Chưa có tệp';
+  const storedMediaSize = mediaState === 'ERROR' ? 'Không tải được thông tin' : mediaState === 'UNKNOWN' || mediaState === 'LOADING' ? 'Chưa xác định' : project.mediaSize ? formatFileSize(project.mediaSize) : 'Chưa có dữ liệu';
   const currentProject = project;
   const action = projectAction(project);
   const canResumeUpload = project.workflow?.step === 'UPLOAD' && project.workflow.state === 'READY' && project.workflow.canResume;
@@ -86,7 +91,7 @@ export function ProjectDetailPage() {
   return <><PageHeader title="Chi tiết dự án" description="Xem và cập nhật thông tin dự án." actions={<Link className="button button--secondary button--md" to="/projects">Quay lại dự án</Link>} />
     <div className="project-detail-layout">
       <Card padding="lg" className="project-detail-summary"><div className="project-detail-heading"><div><span className="project-detail-eyebrow">DỰ ÁN</span><h2>{project.name}</h2><p>{project.description || 'Chưa có mô tả.'}</p></div><ProjectStatusBadge status={project.status} /></div><WorkflowSteps current={workflowStepForDisplay(project.workflow)} />{!action.available && <p className="project-workflow-warning" role="status"><strong>Chưa thể xác định bước tiếp theo.</strong> {action.reason} Bạn vẫn có thể xem và chỉnh sửa thông tin dự án.</p>}</Card>
-      <Card padding="lg"><section aria-labelledby="media-heading"><h2 id="media-heading">Phương tiện nguồn</h2><dl className="project-media-grid"><div><dt>Tên tệp</dt><dd>{uploadStatus === 'success' && uploadFile ? uploadFile.name : project.mediaName ?? 'Chưa tải lên'}</dd></div><div><dt>Loại</dt><dd>{uploadStatus === 'success' && uploadValidation.valid ? uploadValidation.mediaType === 'VIDEO' ? 'Video' : 'Âm thanh' : project.mediaType === 'VIDEO' ? 'Video' : project.mediaType === 'AUDIO' ? 'Âm thanh' : 'Chưa xác định'}</dd></div><div><dt>Dung lượng</dt><dd>{uploadStatus === 'success' && uploadFile ? formatFileSize(uploadFile.size) : project.mediaSize ? formatFileSize(project.mediaSize) : 'Chưa có dữ liệu'}</dd></div></dl>
+      <Card padding="lg"><section aria-labelledby="media-heading"><h2 id="media-heading">Phương tiện nguồn</h2><dl className="project-media-grid"><div><dt>Tên tệp</dt><dd>{uploadStatus === 'success' && uploadFile ? uploadFile.name : storedMediaName}</dd></div><div><dt>Loại</dt><dd>{uploadStatus === 'success' && uploadValidation.valid ? uploadValidation.mediaType === 'VIDEO' ? 'Video' : 'Âm thanh' : storedMediaType}</dd></div><div><dt>Dung lượng</dt><dd>{uploadStatus === 'success' && uploadFile ? formatFileSize(uploadFile.size) : storedMediaSize}</dd></div></dl>
         {canResumeUpload && <div className="project-resume-upload" aria-labelledby="resume-upload-heading"><div><h3 id="resume-upload-heading">Tiếp tục tải phương tiện</h3><p>Dự án nháp này đã được lưu. Tệp sẽ được tải lên đúng dự án hiện tại.</p></div>
           <label className="project-resume-upload__picker" htmlFor="resume-media-file">Chọn tệp âm thanh hoặc video</label><input id="resume-media-file" type="file" accept=".mp4,.mov,.webm,.mp3,.wav,.m4a,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/mp4" onChange={selectUploadFile} disabled={uploadStatus === 'uploading' || uploadStatus === 'success'} />
           {uploadFile && <div className="project-resume-upload__file"><strong>{uploadFile.name}</strong><span>{formatFileSize(uploadFile.size)}</span></div>}

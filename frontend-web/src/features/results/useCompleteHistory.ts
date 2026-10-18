@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { projectRepository } from '../projects/projectRepository'
+import { collectionDataState } from '../projects/projectDataState'
 import type { Project } from '../projects/types'
 export function useCompleteHistory() {
   const [projects, setProjects] = useState<Project[]>([]), [isLoading, setLoading] = useState(true), [error, setError] = useState<string | null>(null), [attempt, setAttempt] = useState(0)
@@ -22,5 +23,5 @@ export function useCompleteHistory() {
     void load()
     return () => controller.abort()
   }, [attempt])
-  return { projects, isLoading, error, reload: () => setAttempt(value => value + 1) }
+  return { projects, isLoading, error, dataState: collectionDataState(isLoading, error, projects.length), reload: () => setAttempt(value => value + 1) }
 }

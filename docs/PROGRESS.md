@@ -1,5 +1,31 @@
 # Project Progress
 
+## UI07.3 — Web Data-State Integrity (2026-10-18)
+
+- **PARTIAL — source/regression validation; Browser Desktop NOT RUN.** Đã loại bỏ fallback biến lỗi media thành `null` và lỗi translation thành `[]`; repository nay giữ trạng thái metadata riêng theo từng project: `READY/EMPTY/ERROR/UNKNOWN` và bảo toàn partial success.
+- Project List, History và Project Detail không còn hiển thị “Chưa có tệp/Chưa dịch” khi request chưa được xác minh. Dashboard/History/Projects có cảnh báo dữ liệu chưa đầy đủ; empty toàn trang chỉ xuất hiện sau list API thành công với 0 bản ghi, còn list API lỗi tiếp tục dùng ErrorState/retry.
+- Dashboard giữ tính toán từ status/createdAt đã xác nhận và không hạ enrichment lỗi thành số 0. Pagination completeness guard hiện có được giữ nguyên. Workflow action/guard từ UI07.2 không thay đổi.
+- Regression bổ sung cho collection loading/ready/empty/error, media success/not-found/error, translation success/empty/error/unknown, partial project failure và feedback của ba màn hình. Không gọi AI, không ghi Database, không sửa Backend/Mobile/Admin/API/dependency, không commit/push.
+- Backend vẫn dùng 2 enrichment request/project nên chi phí N+1 còn tồn tại; đây là rủi ro hiệu năng riêng, không được che bằng fallback. Browser Desktop và DB-backed integration UI06.7.2–3 vẫn pending.
+
+## UI07.2 — Web Workflow Deep-Link Guards & Language Catalog (2026-10-18)
+
+- **PARTIAL — source/regression PASS; Browser Desktop và Backend DB integration PENDING.** Đã áp dụng guard dựa hoàn toàn trên Backend workflow DTO cho Transcript, Translation, Voice, Generate và Result. Không redirect tự động, không mutation khi chỉ mở/reload URL; recovery fail-closed có focus và liên kết về Project Detail.
+- Mutation chỉ được bật tại bước hiện tại khi `state` là `READY/FAILED` và `canResume=true`; `PROCESSING`/bước đã qua là chỉ đọc. `BLOCKED/UNKNOWN/missing`, future step, target mismatch và Result chưa có artifact đúng loại đều bị chặn. Artifact Result hợp lệ vẫn xem được khi `canResume=false`.
+- Translation tiếp tục dùng Language active từ `GET /api/voices`, không static allowlist; test xác nhận `vi/en/ja/ko/zh/fr`. Voice/TTS vẫn cần Voice thật từ response lọc theo language; không tạo voice giả hoặc mặc định target. Nhãn ngôn ngữ mở rộng bằng `Intl.DisplayNames`.
+- Web tests **165/165 PASS**; lint/typecheck/build và `git diff --check` được chạy trong validation UI07.2. Không gọi AI/TTS, không ghi Database, không sửa Backend/Mobile/Admin/API/dependency, không commit/push.
+- Backend contract gap còn lại: `GET /api/voices` đang ghép Language translation và Voice catalog trong một response; frontend phân biệt bằng `voices`, nhưng API chưa có capability field riêng cho translation/TTS. Workflow DTO/audio terminal DB integration UI06.7.2–3 vẫn pending trên DB test cách ly.
+- Browser Desktop: **NOT RUN**; Mobile/Expo: **DEFERRED**.
+
+## UI07.1 — Full Website UI/UX Audit (2026-10-18)
+
+- **AUDIT COMPLETED — source evidence only; Browser Desktop NOT RUN.** Đã audit 14 route pages Customer Web, AppShell/Sidebar/Topbar, shared components, page styles, feature hooks/services và 33 file test. Browser inventory trả `apps: []`, `browsers: []`; responsive 1024/1280/1440 chưa được xác nhận trực quan. Mobile browser/Expo **DEFERRED**.
+- P0: `projectRepository` vẫn biến lỗi media/translation enrichment thành dữ liệu vắng và tạo 2 request phụ/project; workflow deep links chưa đồng loạt gate theo `workflow.state/canResume`; Voice/Generate/Result dùng static language list `vi/en/ja/ko` dù catalog runtime có thể gồm `zh/fr`; workflow DTO/audio terminal integration UI06.7.2–3 vẫn pending trên DB test cách ly.
+- P1: Be Vietnam Pro mới áp dụng cho Dashboard/Projects, còn workflow pages kế thừa Inter/system; PageHeader/state hierarchy và CSS scope chưa đồng nhất; Generate còn hiển thị project status suy ra client; History tiếp tục tải toàn bộ pages rồi enrich client-side. Login/Register, Sidebar, Dashboard và các layout đã được duyệt được đánh dấu **preserve**, không đề xuất redesign lại.
+- P2: shared Empty/Error state có ID cố định, fallback aria-label của ProgressBar còn tiếng Anh, token `--font-size-xs` chưa được khai báo và component PlaceholderPage chưa dùng còn copy tiếng Anh.
+- Kế hoạch UI07.2–UI07.10 được ghi tại `docs/UI.md`: ưu tiên workflow/data safety, sau đó shared foundation, Create/Detail, Transcript/Translation, Voice, Generate/Result, auxiliary pages và cuối cùng browser/accessibility release gate.
+- Không sửa application source, Backend/API/Database, Mobile/Admin, dependency hoặc dữ liệu; không gọi AI và không ghi DB. UI06.5/UI06.6 vẫn chưa có bằng chứng triển khai. Audit chỉ cập nhật `docs/UI.md` và `docs/PROGRESS.md`; không commit/push.
+
 ## UI06.7.4 — Web Workflow Navigation & DRAFT Resume (2026-10-18)
 
 - **PARTIAL — frontend source/regression PASS; Browser Desktop và Backend integration pending.** Customer Web tiêu thụ `workflow` optional từ Project List/Detail DTO và ánh xạ `UPLOAD / TRANSCRIPT / TRANSLATION / VOICE / GENERATE / RESULT`; `UNKNOWN`, thiếu contract, blocked, provenance ngôn ngữ không hợp lệ hoặc destination chưa hỗ trợ đều fail-closed về Project Detail.

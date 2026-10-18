@@ -6,7 +6,9 @@ import { EmptyState } from '../components/common/EmptyState';
 import { ErrorState } from '../components/common/ErrorState';
 import { Spinner } from '../components/common/Spinner';
 import { WorkflowSteps } from '../components/common/WorkflowSteps';
+import { WorkflowReadOnlyNotice, WorkflowRouteRecovery } from '../components/common/WorkflowRouteGuard';
 import { PageHeader } from '../components/layout/PageHeader';
+import { resolveWorkflowRouteAccess } from '../features/projects/workflowRouteGuard';
 import { useProject } from '../features/projects/useProjects';
 import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
@@ -31,12 +33,14 @@ export function TranslationPage() {
       <Link to="/projects" className="button button--secondary button--md">Quay lại dự án</Link>
     </Card>
   </>;
-  const preferredTarget = language?.trim().toLowerCase() || (project.targetLanguage ?? '');
-  if (import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true') return <GroupTranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
-  return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} />;
+  const access = resolveWorkflowRouteAccess(project.workflow, 'TRANSLATION', language);
+  if (!access.allowed) return <><PageHeader title="Bản dịch" description="Kiểm tra nội dung bản ghi đã dịch." /><WorkflowRouteRecovery projectId={project.id} access={access} /></>;
+  const preferredTarget = language?.trim().toLowerCase() || access.targetLanguage || '';
+  if (import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true') return <GroupTranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} />;
+  return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} />;
 }
 
-function TranslationWorkspace({ project, preferredTarget }: { project: Project; preferredTarget: LanguageCode }) {
+function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: { project: Project; preferredTarget: LanguageCode; canMutate: boolean; notice: string | null }) {
   const editor = useTranslationEditor(project.id, preferredTarget);
   const navigate = useNavigate();
   function backToTranscript() {
@@ -54,10 +58,11 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{translationStatusLabels[editor.status]}</Badge>
     </div>
     <WorkflowSteps current="translation" />
+    <WorkflowReadOnlyNotice reason={notice} />
     {editor.status === 'LOADING' && <Card className="translation-loading"><Spinner label="Đang tải bản dịch" /><p role="status">Đang tải bản ghi và bản dịch...</p></Card>}
     {editor.status === 'FAILED' && <Card><ErrorState
       title={editor.failedAction === 'save' ? 'Không thể lưu bản dịch' : editor.failedAction === 'load' ? 'Không thể tải bản dịch' : 'Không thể dịch bản ghi'}
-      description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
+      description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.failedAction === 'load' || canMutate ? editor.retry : undefined} /></Card>}
     {!editor.transcript && editor.status === 'NOT_STARTED' && <Card><EmptyState title="Cần có bản ghi trước khi dịch"
       description="Hãy tạo, kiểm tra và lưu bản ghi trước."
       action={<Button onClick={backToTranscript}>Quay lại bản ghi</Button>} /></Card>}
@@ -66,7 +71,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
         <div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{translationLanguageLabel({ code: sourceLanguage, name: languageNames[sourceLanguage] ?? sourceLanguage, nativeName: '' })}</p></div>
         <div className="translation-language-field">
           <label htmlFor="target-language">Ngôn ngữ đích</label>
-          <select id="target-language" value={editor.targetLanguage ?? ''} disabled={!editor.canChangeTarget}
+          <select id="target-language" value={editor.targetLanguage ?? ''} disabled={!canMutate || !editor.canChangeTarget}
             aria-describedby="translation-language-help translation-language-status"
             onChange={(event) => editor.changeTarget(event.target.value)}>
             <option value="" disabled>Chọn ngôn ngữ cần dịch</option>
@@ -75,7 +80,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
             </option>)}
           </select>
         </div>
-        {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={!editor.targetLanguage || editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
+        {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={!canMutate || !editor.targetLanguage || editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
         <p id="translation-language-help" className="translation-note">Chọn ngôn ngữ để tạo hoặc mở lại bản dịch đã lưu.</p>
         <p id="translation-language-status" className="translation-note" role="status">{editor.languageStatus === 'LOADING' ? 'Đang tải danh sách ngôn ngữ...' : editor.languageStatus === 'ERROR' ? 'Không thể tải danh sách ngôn ngữ. Chọn Thử lại để tải lại.' : editor.languageStatus === 'EMPTY' ? 'Chưa có ngôn ngữ đích được cấu hình. Vui lòng liên hệ quản trị viên để bổ sung ngôn ngữ được hỗ trợ.' : `${editor.targetChoices.length} ngôn ngữ đích khả dụng.`}</p>
         <p className="translation-note">Bản dịch được tạo bởi dịch vụ trên máy chủ và lưu theo dự án.</p>
@@ -94,8 +99,8 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
         <p role="status">Bản dịch đã được lưu trên máy chủ và hiện ở chế độ chỉ đọc.</p>
         {editor.invalid && <p className="translation-error" role="alert">Hãy bổ sung các bản dịch còn trống trước khi lưu.</p>}
         <div className="translation-action-buttons">
-          <Button variant="secondary" disabled={!editor.canReset} onClick={editor.reset}>Đặt lại thay đổi</Button>
-          <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onClick={editor.save}>Lưu bản dịch</Button>
+          <Button variant="secondary" disabled={!canMutate || !editor.canReset} onClick={editor.reset}>Đặt lại thay đổi</Button>
+          <Button loading={editor.status === 'SAVING'} disabled={!canMutate || !editor.canSave} onClick={editor.save}>Lưu bản dịch</Button>
           <Button variant="secondary" disabled={!editor.saved || editor.busy || editor.status === 'FAILED' || Boolean(presentation.notice)} onClick={() => navigate('/projects/' + project.id + '/voice?language=' + editor.targetLanguage)}>Tiếp tục đến giọng đọc</Button>
         </div>
         <p className="translation-note">{editor.saved ? 'Đặt lại sẽ khôi phục bản dịch đã lưu gần nhất.' : 'Đặt lại sẽ hủy bản dịch chưa lưu để bạn bắt đầu lại hoặc đổi ngôn ngữ.'}</p>

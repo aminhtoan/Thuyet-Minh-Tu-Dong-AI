@@ -8,8 +8,10 @@ import { ErrorState } from '../components/common/ErrorState';
 import { ProgressBar } from '../components/common/ProgressBar';
 import { Spinner } from '../components/common/Spinner';
 import { WorkflowSteps } from '../components/common/WorkflowSteps';
+import { WorkflowReadOnlyNotice, WorkflowRouteRecovery } from '../components/common/WorkflowRouteGuard';
 import { PageHeader } from '../components/layout/PageHeader';
-import { isLanguageCode } from '../features/projects/languages';
+import { languageDisplayName } from '../features/projects/languages';
+import { resolveWorkflowRouteAccess } from '../features/projects/workflowRouteGuard';
 import { useProject } from '../features/projects/useProjects';
 import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
@@ -28,16 +30,18 @@ export function GeneratePage() {
   const { project, isLoading, error } = useProject(projectId);
   if (isLoading) return <Card><Spinner label="Đang tải dự án" /></Card>;
   if (error) return <Card><ErrorState title="Không thể tải dự án" description={error} /></Card>;
-  if (!project || (language !== null && !isLanguageCode(language))) return <>
+  if (!project) return <>
     <PageHeader title="Tạo thuyết minh" description="Kiểm tra cấu hình thuyết minh đã lưu." />
-    <Card><ErrorState title={project ? 'Ngôn ngữ không khả dụng' : 'Không tìm thấy dự án'} description="Mở một cấu hình giọng đọc đã lưu để bắt đầu." />
-      <Link className="button button--secondary button--md" to={project ? '/projects/' + project.id + '/voice' : '/projects'}>Quay lại {project ? 'cấu hình giọng đọc' : 'danh sách dự án'}</Link>
+    <Card><ErrorState title="Không tìm thấy dự án" description="Dự án không tồn tại hoặc bạn không có quyền truy cập." />
+      <Link className="button button--secondary button--md" to="/projects">Quay lại danh sách dự án</Link>
     </Card>
   </>;
-  return <GenerateWorkspace key={project.id + (language ?? '')} project={project} language={language ?? undefined} />;
+  const access = resolveWorkflowRouteAccess(project.workflow, 'GENERATE', language);
+  if (!access.allowed) return <><PageHeader title="Tạo thuyết minh" description="Kiểm tra cấu hình thuyết minh đã lưu." /><WorkflowRouteRecovery projectId={project.id} access={access} /></>;
+  return <GenerateWorkspace key={project.id + (access.targetLanguage ?? '')} project={project} language={access.targetLanguage ?? undefined} canMutate={access.canMutate} notice={access.reason} />;
 }
 
-function GenerateWorkspace({ project, language }: { project: Project; language?: LanguageCode }) {
+function GenerateWorkspace({ project, language, canMutate, notice }: { project: Project; language?: LanguageCode; canMutate: boolean; notice: string | null }) {
   const processing = useProcessing(project.id, language);
   const [confirmed, setConfirmed] = useState(false);
   const navigate = useNavigate();
@@ -59,6 +63,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
       actions={<Button variant="secondary" disabled={busy} onClick={() => edit('voice')}>Quay lại cấu hình giọng đọc</Button>} />
     <div className="generation-heading"><h2>{project.name}</h2><Badge variant={snapshot?.status === 'COMPLETED' ? 'success' : snapshot?.status === 'FAILED' ? 'error' : 'info'}>{snapshot ? processingStatusLabels[snapshot.status] : 'Đang tải'}</Badge></div>
     <WorkflowSteps current="generate" />
+    <WorkflowReadOnlyNotice reason={notice} />
     {processing.loadStatus === 'LOADING' && <Card className="processing-loading"><Spinner label="Đang tải cấu hình tạo thuyết minh" /><p role="status">Đang tải cấu hình đã lưu...</p></Card>}
     {processing.loadStatus === 'FAILED' && <Card><ErrorState title="Không thể tải cấu hình tạo thuyết minh" description={processing.error ?? 'Vui lòng thử lại.'} onRetry={processing.reload} /></Card>}
     {processing.loadStatus === 'READY' && !context && <Card><EmptyState title="Cần lưu cấu hình giọng đọc"
@@ -69,7 +74,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
         <dl>
           <div><dt>Dự án</dt><dd>{context.project.name}</dd></div>
           <div><dt>Ngôn ngữ nguồn</dt><dd>{languageNames[context.transcript.languageCode]}</dd></div>
-          <div><dt>Ngôn ngữ đích</dt><dd>{languageNames[context.translation.targetLanguage]}</dd></div>
+          <div><dt>Ngôn ngữ đích</dt><dd>{languageDisplayName(context.translation.targetLanguage)}</dd></div>
           <div><dt>Bản ghi</dt><dd>{context.transcript.segments.length} phân đoạn</dd></div>
           <div><dt>Bản dịch</dt><dd>{'groups' in context.translation ? `${context.translation.groups.length} cụm đã duyệt` : `${context.translation.segments.length} phân đoạn`}</dd></div>
           <div><dt>Giọng đọc</dt><dd>{context.voice.name}</dd></div>
@@ -80,8 +85,8 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
           <Button variant="secondary" disabled={busy} onClick={() => edit('voice')}>Chỉnh sửa giọng đọc</Button></div>
         <p className="processing-note">Dự án video sẽ được ghép với âm thanh thuyết minh bằng FFmpeg. Dự án âm thanh dùng trực tiếp tệp giọng đọc đã tạo.</p>
         {snapshot.status === 'WAITING' && <>
-          <label className="generation-confirmation"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />Tôi đã kiểm tra ngôn ngữ, giọng đọc và tốc độ đọc.</label>
-          <Button disabled={!confirmed} onClick={processing.start}>{project.mediaType === 'VIDEO' ? 'Tạo video' : 'Tạo âm thanh'}</Button>
+          <label className="generation-confirmation"><input type="checkbox" checked={confirmed} disabled={!canMutate} onChange={(event) => setConfirmed(event.target.checked)} />Tôi đã kiểm tra ngôn ngữ, giọng đọc và tốc độ đọc.</label>
+          <Button disabled={!canMutate || !confirmed} onClick={processing.start}>{project.mediaType === 'VIDEO' ? 'Tạo video' : 'Tạo âm thanh'}</Button>
         </>}
       </Card>
       <Card className="processing-panel">
@@ -94,7 +99,7 @@ function GenerateWorkspace({ project, language }: { project: Project; language?:
         {busy && <p className="processing-note">Hãy giữ trang này mở trong khi máy chủ xử lý. Đóng trang không hủy tác vụ phía máy chủ.</p>}
         {snapshot.status === 'FAILED' && <div className="processing-outcome" role="alert"><h3>Xử lý thất bại</h3>
           <p>Giai đoạn: {failedStage ?? 'Tạo thuyết minh'}</p><p>{snapshot.error?.message}</p>
-          <Button onClick={processing.retry}>Thử xử lý lại</Button><p className="processing-note">Thử lại sẽ khởi động hai giai đoạn từ 0%.</p></div>}
+          <Button disabled={!canMutate} onClick={processing.retry}>Thử xử lý lại</Button><p className="processing-note">Thử lại sẽ khởi động hai giai đoạn từ 0%.</p></div>}
         {snapshot.status === 'COMPLETED' && <div className="processing-outcome"><h3>Đã hoàn tất xử lý</h3><p>Tệp kết quả đã sẵn sàng để phát và tải xuống.</p>
           <Button onClick={() => navigate('/projects/' + project.id + '/result?language=' + target)}>Xem kết quả</Button></div>}
       </Card>

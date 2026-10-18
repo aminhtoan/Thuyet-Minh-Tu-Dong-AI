@@ -14,6 +14,7 @@ import { Spinner } from '../components/common/Spinner'
 import { ProjectStatusBadge } from '../features/projects/ProjectStatusBadge'
 import { projectAction } from '../features/projects/projectAction'
 import { projectListLanguagePair, projectListPage } from '../features/projects/projectListPresentation'
+import { hasIncompleteProjectMetadata, projectMetadataState } from '../features/projects/projectDataState'
 import { createDemoProjects, isProjectDemoEnabled } from '../features/projects/projectDemo'
 import type { Project, ProjectStatus, ProjectStatusFilter } from '../features/projects/types'
 
@@ -28,9 +29,12 @@ function ProjectsEmptyState({ filtered }: { filtered: boolean }) {
   </section>
 }
 
-function ProjectMedia({ mediaType }: { mediaType?: Project['mediaType'] }) {
-  if (mediaType === 'VIDEO') return <span className="project-list-media"><Icon name="video" width="18" /><span>Video</span></span>
-  if (mediaType === 'AUDIO') return <span className="project-list-media"><Icon name="wave" width="18" /><span>Âm thanh</span></span>
+function ProjectMedia({ project }: { project: Project }) {
+  const state = projectMetadataState(project).media
+  if (state === 'ERROR') return <span className="project-list-media project-list-media--error">Không tải được thông tin</span>
+  if (state === 'UNKNOWN' || state === 'LOADING') return <span className="project-list-media project-list-media--unknown">Chưa xác định</span>
+  if (project.mediaType === 'VIDEO') return <span className="project-list-media"><Icon name="video" width="18" /><span>Video</span></span>
+  if (project.mediaType === 'AUDIO') return <span className="project-list-media"><Icon name="wave" width="18" /><span>Âm thanh</span></span>
   return <span className="project-list-media project-list-media--empty">Chưa có tệp</span>
 }
 
@@ -63,6 +67,7 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
   const matches = useMemo(() => historyDateError(applied) ? [] : filterAndSortProjects(allProjects, applied), [allProjects, applied])
   const pagination = projectListPage(matches, page)
   const { projects } = pagination
+  const hasIncompleteMetadata = !demo && hasIncompleteProjectMetadata(allProjects)
   const updateParams = (next: { q?: string; status?: ProjectStatusFilter; page?: number }) => {
     const values = new URLSearchParams(params)
     if (next.q !== undefined) { if (next.q.trim()) values.set('q', next.q); else values.delete('q'); }
@@ -136,6 +141,7 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
             </div>
           </div>
         </form>
+        {!isLoading && !error && hasIncompleteMetadata && <p className="project-list-data-notice" role="status"><strong>Dữ liệu chưa đầy đủ.</strong> Một số thông tin phương tiện hoặc bản dịch chưa tải được; danh sách dự án và trạng thái vẫn được giữ nguyên.</p>}
         {isLoading ? <div className="project-loading" role="status"><Spinner size="lg" label="Đang tải dự án" /><p>Đang tải dự án...</p></div> : error ? <ErrorState title="Không thể tải dự án" description={error} onRetry={reload} /> : projects.length > 0 ? <>
           <div className="project-list-table-scroll" tabIndex={0} role="region" aria-label="Danh sách dự án">
             <table className="project-list-table">
@@ -160,7 +166,7 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
                     ? <span className="project-list-name" title={project.name} aria-label={`Dự án demo ${projectAccessibleName}`} tabIndex={0}>{project.name}</span>
                     : <Link className="project-list-name" title={project.name} aria-label={`Mở dự án ${projectAccessibleName}`} to={'/projects/' + project.id}>{project.name}</Link>}
                   </th>
-                  <td><ProjectMedia mediaType={project.mediaType} /></td>
+                  <td><ProjectMedia project={project} /></td>
                   <td><span className="project-list-language" title={projectListLanguagePair(project)}>{projectListLanguagePair(project)}</span></td>
                   <td>{project.createdAt && createdDate !== '—' ? <time dateTime={project.createdAt}>{createdDate}</time> : '—'}</td>
                   <td className="project-list-status"><ProjectStatusBadge status={project.status} />{demo && <small className="project-list-simulated">Giả lập · Không có tệp thật</small>}</td>

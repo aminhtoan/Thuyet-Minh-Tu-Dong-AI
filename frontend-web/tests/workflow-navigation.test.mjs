@@ -22,7 +22,7 @@ function project(status, step, overrides = {}) {
       step, state: step === 'RESULT' ? 'COMPLETED' : status === 'FAILED' ? 'FAILED' : status.endsWith('ING') || status === 'GENERATING_AUDIO' || status === 'PROCESSING_VIDEO' ? 'PROCESSING' : 'READY',
       canResume: true, mediaType: status === 'DRAFT' ? null : 'AUDIO',
       targetLanguage: needsLanguage ? { code: 'en', source: status === 'COMPLETED' ? 'RESULT' : 'JOB' } : null,
-      processing: null, failure: null, artifact: { narrationReady: false, resultReady: false }, ...overrides,
+      processing: null, failure: null, artifact: { narrationReady: step === 'RESULT', resultReady: false }, ...overrides,
     },
   }
 }
@@ -55,10 +55,12 @@ test('FAILED navigation follows the explicit workflow failure stage without trig
   assert.doesNotMatch(detailSource, /processing\.retry\(/)
 })
 
-test('target language is accepted only from trusted workflow provenance supported by destination pages', () => {
+test('target language follows trusted workflow provenance without a frontend language allowlist', () => {
   assert.equal(projectAction(project('TRANSLATED', 'VOICE', { targetLanguage: { code: 'en', source: 'TRANSLATION' } })).available, true)
+  assert.equal(projectAction(project('TRANSLATED', 'VOICE', { targetLanguage: { code: 'zh', source: 'TRANSLATION' } })).available, true)
+  assert.equal(projectAction(project('TRANSLATED', 'VOICE', { targetLanguage: { code: 'fr', source: 'TRANSLATION' } })).available, true)
   assert.equal(projectAction(project('TRANSLATED', 'VOICE', { targetLanguage: null })).available, false)
-  assert.equal(projectAction(project('TRANSLATED', 'VOICE', { targetLanguage: { code: 'xx', source: 'TRANSLATION' } })).available, false)
+  assert.equal(projectAction(project('TRANSLATED', 'VOICE', { targetLanguage: { code: 'bad code', source: 'TRANSLATION' } })).available, false)
 })
 
 test('DRAFT resume uploads to the existing id and never invokes create-project cleanup', () => {

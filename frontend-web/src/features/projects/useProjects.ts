@@ -1,10 +1,11 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { projectRepository } from './projectRepository';
+import { collectionDataState } from './projectDataState';
 import type { Project, ProjectPagination, ProjectStatus } from './types';
 export function useProjects() {
   const state = useSyncExternalStore(projectRepository.subscribe, projectRepository.getState, projectRepository.getState);
   useEffect(() => { void projectRepository.refresh(); }, []);
-  return { projects: state.projects, pagination: state.pagination, isLoading: state.loading, error: state.error, reload: projectRepository.refresh };
+  return { projects: state.projects, pagination: state.pagination, isLoading: state.loading, error: state.error, dataState: collectionDataState(state.loading, state.error, state.projects.length), reload: projectRepository.refresh };
 }
 
 export function useProjectPage(input: { page: number; limit: number; search?: string; status?: ProjectStatus }) {
@@ -24,7 +25,7 @@ export function useProjectPage(input: { page: number; limit: number; search?: st
     }).finally(() => { if (!controller.signal.aborted) setIsLoading(false); });
     return () => controller.abort();
   }, [page, limit, search, status, attempt]);
-  return { projects, pagination, isLoading, error, reload: () => setAttempt((value) => value + 1) };
+  return { projects, pagination, isLoading, error, dataState: collectionDataState(isLoading, error, projects.length), reload: () => setAttempt((value) => value + 1) };
 }
 
 export function useProject(projectId?: string) {

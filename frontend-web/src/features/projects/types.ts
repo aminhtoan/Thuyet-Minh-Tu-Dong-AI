@@ -3,6 +3,12 @@ export type ProjectStatusFilter = 'ALL' | ProjectStatus
 export type ProjectPagination = { page: number; limit: number; total: number; totalPages: number }
 export type MediaType = 'VIDEO' | 'AUDIO'
 export type LanguageCode = string
+export type DataState = 'LOADING' | 'READY' | 'EMPTY' | 'ERROR' | 'UNKNOWN'
+
+export type ProjectMetadataState = {
+  media: DataState
+  translation: DataState
+}
 
 export type WorkflowStep = 'UPLOAD' | 'TRANSCRIPT' | 'TRANSLATION' | 'VOICE' | 'GENERATE' | 'RESULT' | 'UNKNOWN'
 export type WorkflowState = 'READY' | 'PROCESSING' | 'FAILED' | 'COMPLETED' | 'BLOCKED'
@@ -32,6 +38,7 @@ export type Project = {
   mediaName?: string
   mediaSize?: number
   durationSeconds?: number
+  metadataState?: ProjectMetadataState
   workflow?: ProjectWorkflow
   updatedAt: string
   createdAt?: string

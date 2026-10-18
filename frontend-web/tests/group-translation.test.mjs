@@ -39,7 +39,7 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
   } });
   let tree;
   return {
-    render() { cursor = 0; refCursor = 0; effectCursor = 0; tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage: 'vi' }, preferredTarget: target }); for (const effect of effects) if (effect.action) { const fn = effect.action; effect.action = null; effect.cleanup = fn(); } return tree; },
+    render() { cursor = 0; refCursor = 0; effectCursor = 0; tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage: 'vi' }, preferredTarget: target, canMutate: true, notice: null }); for (const effect of effects) if (effect.action) { const fn = effect.action; effect.action = null; effect.cleanup = fn(); } return tree; },
     async settle() { this.render(); await flush(); this.render(); },
     find(predicate) { function walk(value) { if (!value || typeof value !== 'object') return null; if (predicate(value)) return value; for (const child of [value.props?.children].flat(Infinity)) { const match = walk(child); if (match) return match; } return null; } return walk(tree); },
     text() { function walk(value) { if (typeof value === 'string') return value; if (!value || typeof value !== 'object') return ''; return [value.props?.children].flat(Infinity).map(walk).join(' '); } return walk(tree); },

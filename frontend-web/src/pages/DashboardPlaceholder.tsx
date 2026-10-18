@@ -9,6 +9,7 @@ import { ProjectStatusBadge } from '../features/projects/ProjectStatusBadge';
 import { buildLinearProjectScale, buildProjectStatusDistribution, buildProjectTimeSeries, hasCompleteProjectDataset, type ProjectStatusDistributionDatum, type ProjectTimeRange } from '../features/projects/dashboardMetrics.mjs';
 import { calculateProjectStatistics, formatRelativeDate, getProjectStatusLabel, getRecentProjects, languageNames } from '../features/projects/projectUtils';
 import { useProjects } from '../features/projects/useProjects';
+import { hasIncompleteProjectMetadata } from '../features/projects/projectDataState';
 import type { Project } from '../features/projects/types';
 import '../styles/dashboard.css';
 
@@ -229,6 +230,7 @@ export function DashboardPlaceholder() {
   const complete = hasCompleteProjectDataset(projects.length, pagination);
   const statistics = calculateProjectStatistics(projects);
   const recent = getRecentProjects(projects);
+  const hasIncompleteMetadata = hasIncompleteProjectMetadata(projects);
   return <div className="dashboard">
     <section className="dashboard-hero">
       <div className="dashboard-hero__copy"><span className="dashboard-eyebrow">CHÀO MỪNG TRỞ LẠI!</span><h1>Tạo thuyết minh đa ngôn ngữ<br />cho video của bạn</h1><p>Một không gian cho bản ghi, bản dịch và giọng đọc.<br className="desktop-break" /> Tiếp tục quy trình thuyết minh đa ngôn ngữ của bạn.</p><Link className="button button--primary button--md hero-cta" to="/projects/new"><Icon name="plus" width="19" />Tạo thuyết minh</Link></div>
@@ -236,6 +238,7 @@ export function DashboardPlaceholder() {
     </section>
     <nav className="quick-actions" aria-label="Lối tắt sáng tạo">{quickActions.map((action) => <Link className="quick-action" to={action.route} key={action.title}><span className="quick-action__icon"><Icon name={action.icon} width="24" /></span><span><strong>{action.title}</strong><small>{action.detail}</small></span></Link>)}</nav>
     {isLoading ? <Card className="dashboard-state"><Spinner size="lg" label="Đang tải bảng điều khiển" /><p>Đang tải dữ liệu dự án...</p></Card> : error ? <Card className="dashboard-state"><ErrorState title="Không thể tải bảng điều khiển" description={error} onRetry={() => void reload()} /></Card> : <>
+      {hasIncompleteMetadata && <p className="dashboard-data-notice" role="status"><strong>Dữ liệu chưa đầy đủ.</strong> Thống kê trạng thái dùng dữ liệu dự án đã xác nhận; một số metadata phương tiện hoặc bản dịch chưa tải được.</p>}
       <div className="dashboard-overview dashboard-analytics">
         <Card className="dashboard-chart-card"><div className="dashboard-chart-card__header"><div><h2 id="project-time-chart-title">Thống kê dự án theo thời gian</h2><p>{chartRangeDescription(chartMode, chartAnchor)}</p></div><ProjectTimeFilters mode={chartMode} anchor={chartAnchor} onApply={(nextMode, nextAnchor) => { setChartMode(nextMode); setChartAnchor(nextAnchor); }} /></div><ProjectTimeChart projects={projects} complete={complete} mode={chartMode} anchor={chartAnchor} /></Card>
         <Card className="dashboard-donut-card"><div className="section-heading"><div><h2>Trạng thái dự án</h2><p>Phân bố trên toàn bộ dự án</p></div></div><StatusDonutChart statistics={statistics} complete={complete} /></Card>

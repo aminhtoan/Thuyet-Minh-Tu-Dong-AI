@@ -32,6 +32,8 @@ test('long duplicate and Unicode project names remain intact and receive a disti
 test('media cells use verified media types and keep an explicit unknown fallback', () => {
   assert.match(source, /mediaType === 'VIDEO'[\s\S]*?<Icon name="video"/)
   assert.match(source, /mediaType === 'AUDIO'[\s\S]*?<Icon name="wave"/)
+  assert.match(source, /state === 'ERROR'[\s\S]*?>Không tải được thông tin</)
+  assert.match(source, /state === 'UNKNOWN'[\s\S]*?>Chưa xác định</)
   assert.match(source, /project-list-media project-list-media--empty">Chưa có tệp/)
   assert.doesNotMatch(source, /mediaType \? 'Video'/)
 })

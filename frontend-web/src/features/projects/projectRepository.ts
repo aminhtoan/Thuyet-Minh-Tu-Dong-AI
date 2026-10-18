@@ -1,4 +1,5 @@
 import { ApiError, api } from '../../lib/api';
+import { mediaDataState, translationDataState } from './projectDataState';
 import type { LanguageCode, MediaType, Project, ProjectPagination, ProjectStatus, ProjectWorkflow } from './types';
 type ProjectDto = { id: string; name: string; description?: string; sourceLanguage: LanguageCode; status: ProjectStatus; progress: number; workflow?: ProjectWorkflow; createdAt: string; updatedAt: string };
 type MediaDto = { originalName: string; mediaType: MediaType; fileSize: number; duration: number | null };
@@ -11,10 +12,15 @@ const emit = () => listeners.forEach((listener) => listener());
 const setState = (patch: Partial<State>) => { state = { ...state, ...patch }; emit(); };
 async function enrich(project: ProjectDto): Promise<Project> {
   const [mediaResult, translationsResult] = await Promise.allSettled([api<{ media: MediaDto }>(`/projects/${project.id}/media`), api<{ translations: TranslationDto[] }>(`/projects/${project.id}/translations`)]);
-  const media = mediaResult.status === 'fulfilled' ? mediaResult.value.media : null;
-  const translations = translationsResult.status === 'fulfilled' ? translationsResult.value.translations : [];
+  const mediaState = mediaDataState(mediaResult);
+  const translationPayload = translationsResult.status === 'fulfilled' ? translationsResult.value.translations : undefined;
+  const translationState = translationDataState(translationsResult.status === 'fulfilled'
+    ? { status: 'fulfilled', value: translationPayload }
+    : translationsResult);
+  const media = mediaState === 'READY' && mediaResult.status === 'fulfilled' ? mediaResult.value.media : null;
+  const translations = translationState === 'READY' && translationPayload ? translationPayload : [];
   const latest = [...translations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-  return { ...project, progress: project.progress || undefined, targetLanguage: latest?.targetLanguage, mediaType: media?.mediaType, mediaName: media?.originalName, mediaSize: media?.fileSize, durationSeconds: media?.duration ?? undefined };
+  return { ...project, progress: project.progress, targetLanguage: latest?.targetLanguage, mediaType: media?.mediaType, mediaName: media?.originalName, mediaSize: media?.fileSize, durationSeconds: media?.duration ?? undefined, metadataState: { media: mediaState, translation: translationState } };
 }
 async function load() { setState({ loading: true, error: null }); try { const response = await api<{ projects: ProjectDto[]; pagination?: ProjectPagination }>('/projects?page=1&limit=100'); setState({ projects: await Promise.all(response.projects.map(enrich)), pagination: response.pagination ?? null, loading: false }); } catch (error) { setState({ loading: false, error: error instanceof ApiError ? error.message : 'Không thể kết nối đến máy chủ.' }); } }
 export const projectRepository = {

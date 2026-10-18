@@ -82,6 +82,13 @@
 .state h2 { margin-bottom: var(--space-sm); font-size: var(--font-size-lg); }
 .state p { max-width: 28rem; margin-bottom: var(--space-lg); color: var(--color-text-secondary); }
 
+.workflow-route-recovery { display: grid; justify-items: start; gap: var(--space-md); max-width: 44rem; margin-inline: auto; }
+.workflow-route-recovery h2, .workflow-route-recovery p { margin: 0; }
+.workflow-route-recovery h2:focus { outline: none; }
+.workflow-route-recovery h2:focus-visible { border-radius: var(--radius-sm); box-shadow: 0 0 0 3px rgb(88 80 236 / 18%); }
+.workflow-route-recovery__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.workflow-route-notice { margin: 0 0 var(--space-lg); padding: var(--space-md); color: var(--color-text-secondary); background: var(--color-primary-light); border: 1px solid rgb(88 80 236 / 22%); border-radius: var(--radius-md); }
+
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-lg); margin-bottom: var(--space-lg); }
 .page-header h1 { margin-bottom: var(--space-xs); font-size: clamp(1.5rem, 2vw, 1.875rem); line-height: var(--line-height-tight); letter-spacing: -0.025em; }
 .page-header p { margin-bottom: 0; color: var(--color-text-secondary); }

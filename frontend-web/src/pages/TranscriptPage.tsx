@@ -18,6 +18,8 @@ import { groupTranscriptSegments } from '../features/transcript/transcriptPresen
 import { SourceMediaPlayer } from '../features/transcript/SourceMediaPlayer'
 import { activeTranscriptSegment, seekSourceMedia } from '../features/transcript/sourcePlayback.mjs'
 import { WorkflowSteps } from '../components/common/WorkflowSteps'
+import { WorkflowReadOnlyNotice, WorkflowRouteRecovery } from '../components/common/WorkflowRouteGuard'
+import { resolveWorkflowRouteAccess } from '../features/projects/workflowRouteGuard'
 import { projectStatusLabels, transcriptStatusLabels } from '../localization/statusLabels.mjs'
 import '../styles/transcript.css'
 
@@ -27,10 +29,12 @@ export function TranscriptPage() {
   if (isLoading) return <Card padding="lg"><Spinner label="Đang tải dự án" /></Card>
   if (error) return <Card padding="lg"><ErrorState title="Không thể tải dự án" description={error} /></Card>
   if (!project || !projectId) return <><PageHeader title="Bản ghi" description="Kiểm tra nội dung lời nói trong dự án." /><Card padding="lg"><ErrorState title="Không tìm thấy dự án" description="Dự án không tồn tại hoặc bạn không có quyền truy cập." /><Link className="button button--secondary button--md" to="/projects">Quay lại dự án</Link></Card></>
-  return <TranscriptWorkspace key={projectId} project={project} />
+  const access = resolveWorkflowRouteAccess(project.workflow, 'TRANSCRIPT')
+  if (!access.allowed) return <><PageHeader title="Bản ghi" description="Kiểm tra nội dung lời nói trong dự án." /><WorkflowRouteRecovery projectId={project.id} access={access} /></>
+  return <TranscriptWorkspace key={projectId} project={project} canMutate={access.canMutate} notice={access.reason} />
 }
 
-function TranscriptWorkspace({ project }: { project: Project }) {
+function TranscriptWorkspace({ project, canMutate, notice }: { project: Project; canMutate: boolean; notice: string | null }) {
   const editor = useTranscriptEditor(project.id)
   const playerRef = useRef<HTMLMediaElement | null>(null)
   const [mediaReady, setMediaReady] = useState(false)
@@ -48,13 +52,14 @@ function TranscriptWorkspace({ project }: { project: Project }) {
   const navigate = useNavigate()
   const canContinue = Boolean(editor.draft && !editor.hasInvalidSegments && editor.status === 'SAVED')
   const stage = editor.status === 'GENERATING' ? 'TRANSCRIBING' : editor.draft ? 'TRANSCRIBED' : project.status
-  const canGenerate = project.status !== 'DRAFT'
-  const retry = editor.failedAction === 'load' ? editor.retryLoad : editor.failedAction === 'save' ? editor.saveTranscript : editor.generate
+  const canGenerate = canMutate
+  const retry = editor.failedAction === 'load' ? editor.retryLoad : canMutate ? editor.failedAction === 'save' ? editor.saveTranscript : editor.generate : undefined
 
   return <>
     <PageHeader title="Bản ghi" description="Xem từng phân đoạn có mốc thời gian trước khi dịch." actions={<Link className="button button--secondary button--md" to="/projects">Quay lại dự án</Link>} />
     <div className="transcript-intro"><div><span className="transcript-eyebrow">KHÔNG GIAN DỰ ÁN</span><h2>{project.name}</h2><p>Ngôn ngữ nguồn: {languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()} · Bản ghi được lưu trên máy chủ.</p></div><Badge variant={stage === 'TRANSCRIBED' ? 'success' : stage === 'FAILED' ? 'error' : 'info'}>{projectStatusLabels[stage]}</Badge></div>
     <WorkflowSteps current="transcript" />
+    <WorkflowReadOnlyNotice reason={notice} />
     <div className="transcript-layout">
       <Card padding="lg" className="transcript-media"><h2>Phương tiện nguồn</h2><SourceMediaPlayer projectId={project.id} mediaType={project.mediaType} playerRef={playerRef} onTimeChange={setMediaTime} onReadyChange={setMediaReady} /><strong>{project.mediaName ?? 'Chưa có phương tiện'}</strong><p>{project.mediaType === 'VIDEO' ? 'Video' : 'Âm thanh'} · {languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()}{project.mediaSize ? ` · ${formatFileSize(project.mediaSize)}` : ''}{project.durationSeconds ? ` · ${formatTimestamp(project.durationSeconds)}` : ''}</p>{seekError && <p role="alert">{seekError}</p>}</Card>
       <Card padding="lg" className="transcript-editor"><div className="transcript-editor__heading"><div><h2>Các phân đoạn bản ghi</h2><p>{editor.draft ? `${displaySegments.length} cụm hiển thị · ${editor.draft.segments.length} phân đoạn gốc` : 'Tạo bản ghi để bắt đầu kiểm tra.'}</p></div><Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{transcriptStatusLabels[editor.status]}</Badge></div>
@@ -64,7 +69,7 @@ function TranscriptWorkspace({ project }: { project: Project }) {
         {editor.status === 'FAILED' && <ErrorState title={editor.failedAction === 'save' ? 'Không thể lưu bản ghi' : editor.failedAction === 'load' ? 'Không thể tải bản ghi' : 'Không thể tạo bản ghi'} description={editor.error ?? 'Vui lòng thử lại.'} onRetry={retry} retryLabel="Thử lại" />}
         {groupingError && <ErrorState title="Không thể hiển thị mốc thời gian" description={groupingError} onRetry={editor.retryLoad} />}
         {editor.draft && !groupingError && displaySegments.length > 0 && editor.status !== 'LOADING' && editor.status !== 'GENERATING' && <div className="transcript-segment-list" aria-label="Các phân đoạn bản ghi">{displaySegments.map((segment) => <TranscriptSegmentEditor key={segment.id} segment={segment} error={editor.segmentErrors[segment.id]} onSeek={(time) => void seek(time)} canSeek={mediaReady} active={activeSegment === segment.id} />)}</div>}
-        {editor.draft && editor.draft.segments.length === 0 && <EmptyState title="Không có phân đoạn bản ghi" description="Thử tạo lại bản ghi từ phương tiện nguồn." action={<Button onClick={editor.generate}>Tạo lại bản ghi</Button>} />}
+        {editor.draft && editor.draft.segments.length === 0 && <EmptyState title="Không có phân đoạn bản ghi" description="Thử tạo lại bản ghi từ phương tiện nguồn." action={canMutate ? <Button onClick={editor.generate}>Tạo lại bản ghi</Button> : undefined} />}
         {editor.draft && <div className="transcript-actions"><div className="transcript-actions__status" role="status">Bản ghi được lưu trên máy chủ. Chỉnh sửa bản ghi hiện chưa được hỗ trợ.</div><div className="transcript-actions__next"><Button variant="secondary" disabled={!canContinue} onClick={() => navigate(`/projects/${project.id}/translation`)}>Tiếp tục đến bản dịch</Button><span>{canContinue ? 'Bản ghi sẵn sàng để dịch.' : 'Bản ghi chưa sẵn sàng.'}</span></div></div>}
       </Card>
     </div>

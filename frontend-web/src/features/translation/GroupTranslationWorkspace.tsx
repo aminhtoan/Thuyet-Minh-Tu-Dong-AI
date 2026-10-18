@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { WorkflowSteps } from '../../components/common/WorkflowSteps';
+import { WorkflowReadOnlyNotice } from '../../components/common/WorkflowRouteGuard';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Spinner } from '../../components/common/Spinner';
 import { voiceService } from '../voice/voiceService';
@@ -18,7 +19,7 @@ import type { GroupDraft, GroupPlan, GroupTranslation, TranslationGroup } from '
 
 type Language = { code: string; name: string; nativeName: string };
 const message = (error: unknown) => error instanceof Error ? error.message : 'Không thể tải bản dịch. Vui lòng thử lại.';
-export function GroupTranslationWorkspace({ project, preferredTarget }: { project: Project; preferredTarget: string }) {
+export function GroupTranslationWorkspace({ project, preferredTarget, canMutate, notice }: { project: Project; preferredTarget: string; canMutate: boolean; notice: string | null }) {
   const [params, setParams] = useSearchParams();
   const draftId = params.get('draft');
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -69,12 +70,12 @@ export function GroupTranslationWorkspace({ project, preferredTarget }: { projec
     const next = new URLSearchParams(params); next.set('language', value); next.delete('draft'); setParams(next, { replace: true });
   }
   function merge(index: number) {
-    if (busy || draft || saved) return;
+    if (!canMutate || busy || draft || saved) return;
     setGroups(current => current.flatMap((g, i) => i === index ? [{ ...g, sourceSegmentIds: [...g.sourceSegmentIds, ...current[i + 1]!.sourceSegmentIds], sourceText: `${g.sourceText} ${current[i + 1]!.sourceText}`, endTime: current[i + 1]!.endTime }] : i === index + 1 ? [] : [g]).map((g, i) => ({ ...g, sequence: i + 1 })));
     setPlanReviewed(false); requestKey.current = null;
   }
   async function preview() {
-    if (!plan || !planReviewed || lock.current || busy || draft || saved) return;
+    if (!canMutate || !plan || !planReviewed || lock.current || busy || draft || saved) return;
     if (!window.confirm('Tạo bản dịch nháp bằng AI cho các cụm đã kiểm tra? Thao tác có thể phát sinh chi phí. Bản dịch chỉ được lưu sau khi bạn duyệt.')) return;
     lock.current = true; setBusy('preview'); setError(null);
     requestKey.current ??= crypto.randomUUID();
@@ -85,7 +86,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget }: { projec
     finally { lock.current = false; if (mounted.current) setBusy(null); }
   }
   async function approve() {
-    if (!draft || !reviewed || busy || lock.current) return;
+    if (!canMutate || !draft || !reviewed || busy || lock.current) return;
     if (Date.parse(draft.expiresAt) <= Date.now()) { setError('Bản nháp đã hết hạn. Không tự động dịch lại.'); return; }
     lock.current = true; setBusy('approve'); setError(null);
     try {
@@ -103,9 +104,10 @@ export function GroupTranslationWorkspace({ project, preferredTarget }: { projec
     <PageHeader title="Bản dịch" description="Kiểm tra cụm nguồn, xem trước bản dịch và duyệt ngữ nghĩa trước khi lưu."
       actions={<Link className="button button--secondary button--md" to={`/projects/${project.id}/transcript`}>Quay lại bản ghi</Link>} />
     <WorkflowSteps current="translation" />
+    <WorkflowReadOnlyNotice reason={notice} />
     <div className="group-translation-workspace">
       <Card className="translation-language-card"><div><h2>{project.name}</h2><p>Ngôn ngữ nguồn: {translationLanguageLabel({ code: project.sourceLanguage, name: project.sourceLanguage, nativeName: '' })}</p></div>
-        <div className="translation-language-field"><label htmlFor="group-target">Ngôn ngữ đích</label><select id="group-target" value={target} disabled={Boolean(busy)} onChange={e => changeTarget(e.target.value)}>
+        <div className="translation-language-field"><label htmlFor="group-target">Ngôn ngữ đích</label><select id="group-target" value={target} disabled={!canMutate || Boolean(busy)} onChange={e => changeTarget(e.target.value)}>
           <option value="">Chọn ngôn ngữ cần dịch</option>{languages.map(l => <option key={l.code} value={l.code}>{translationLanguageLabel(l)}</option>)}
         </select></div>
       </Card>
@@ -119,16 +121,16 @@ export function GroupTranslationWorkspace({ project, preferredTarget }: { projec
       </Card>}
       {displayGroups.map((g, i) => <Card key={g.groupId} className="group-translation-card"><h3>Cụm {i + 1} · {formatPreciseTimestamp(g.startTime)} → {formatPreciseTimestamp(g.endTime)}</h3>
         <div className="group-translation-columns"><section><h4>Bản gốc</h4><p>{g.sourceText}</p></section><section><h4>Bản dịch</h4><p>{g.translatedText || 'Chờ tạo bản dịch nháp.'}</p></section></div>
-        {plan && !draft && !saved && i < groups.length - 1 && <Button variant="secondary" disabled={Boolean(busy)} onClick={() => merge(i)}>Gộp với cụm tiếp theo</Button>}
+        {plan && !draft && !saved && i < groups.length - 1 && <Button variant="secondary" disabled={!canMutate || Boolean(busy)} onClick={() => merge(i)}>Gộp với cụm tiếp theo</Button>}
       </Card>)}
       {legacy && <><p>Bản dịch đã lưu theo định dạng phân đoạn cũ, giữ nguyên dữ liệu.</p>{legacy.rows.map(row => <Card key={row.source.id}><div className="group-translation-columns"><section><h3>Bản gốc</h3><p>{row.source.text}</p></section><section><h3>Bản dịch</h3><p>{row.translation?.translatedText ?? 'Chưa có bản dịch khớp nguồn.'}</p></section></div></Card>)}</>}
-      {plan && !draft && !saved && <Card className="group-translation-review"><label><input type="checkbox" checked={planReviewed} disabled={Boolean(busy)} onChange={e => setPlanReviewed(e.target.checked)} /> Tôi đã kiểm tra và chấp nhận ranh giới các cụm nguồn.</label>
-        <Button disabled={!planReviewed || Boolean(busy)} loading={busy === 'preview'} onClick={preview}>Xem trước bản dịch</Button>
+      {plan && !draft && !saved && <Card className="group-translation-review"><label><input type="checkbox" checked={planReviewed} disabled={!canMutate || Boolean(busy)} onChange={e => setPlanReviewed(e.target.checked)} /> Tôi đã kiểm tra và chấp nhận ranh giới các cụm nguồn.</label>
+        <Button disabled={!canMutate || !planReviewed || Boolean(busy)} loading={busy === 'preview'} onClick={preview}>Xem trước bản dịch</Button>
       </Card>}
       {draft && <Card className="group-translation-review"><h2>Duyệt bản dịch nháp</h2><p>Hết hạn: {new Date(draft.expiresAt).toLocaleString('vi-VN')}. Nháp chỉ nằm trong bộ nhớ máy chủ; khởi động lại sẽ làm mất nháp. Không tự động dịch lại.</p>
         <p>So sánh ý nghĩa từng cụm và toàn câu, tên riêng, số và địa chỉ. Kiểm tra nội dung bị thêm/bỏ và cách diễn đạt tiếng Anh. Kiểm tra cấu trúc không chứng minh bản dịch đúng tuyệt đối.</p>
-        <label><input type="checkbox" checked={reviewed} disabled={Boolean(busy)} onChange={e => setReviewed(e.target.checked)} /> Tôi đã kiểm tra ngữ nghĩa và chấp nhận bản dịch này.</label>
-        <div className="group-translation-actions"><Button disabled={!reviewed || Boolean(busy)} loading={busy === 'approve'} onClick={approve}>Duyệt và lưu bản dịch</Button>
+        <label><input type="checkbox" checked={reviewed} disabled={!canMutate || Boolean(busy)} onChange={e => setReviewed(e.target.checked)} /> Tôi đã kiểm tra ngữ nghĩa và chấp nhận bản dịch này.</label>
+        <div className="group-translation-actions"><Button disabled={!canMutate || !reviewed || Boolean(busy)} loading={busy === 'approve'} onClick={approve}>Duyệt và lưu bản dịch</Button>
           <Button variant="secondary" disabled={Boolean(busy)} onClick={() => { setDraft(null); setReviewed(false); const next = new URLSearchParams(params); next.delete('draft'); setParams(next, { replace: true }); }}>Từ chối bản nháp</Button></div>
       </Card>}
       {saved && !error && <Link className="button button--primary button--md" to={`/projects/${project.id}/voice?language=${encodeURIComponent(target)}`}>Tiếp tục: Giọng đọc</Link>}

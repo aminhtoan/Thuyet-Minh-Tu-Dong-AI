@@ -14,3 +14,12 @@ export function filterTargetLanguages(source: LanguageCode) {
 export function isLanguageCode(value: string): value is LanguageCode {
   return languages.some((language) => language.code === value);
 }
+
+export function languageDisplayName(value: LanguageCode): string {
+  const configured = languages.find((language) => language.code === value)?.nativeName;
+  try {
+    const localized = new Intl.DisplayNames(['vi'], { type: 'language', fallback: 'none' }).of(value);
+    if (localized) return localized.charAt(0).toUpperCase() + localized.slice(1);
+  } catch { /* Fall back to the existing source-language catalog. */ }
+  return configured || value.toUpperCase();
+}

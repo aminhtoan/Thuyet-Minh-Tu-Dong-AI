@@ -16,6 +16,7 @@ import '../styles/history.css'
 import type { Project, ProjectStatusFilter } from '../features/projects/types'
 import { useCompleteHistory } from '../features/results/useCompleteHistory'
 import { historyPageNumbers } from '../features/results/historyPagination'
+import { hasIncompleteProjectMetadata } from '../features/projects/projectDataState'
 
 export function HistoryPlaceholder() {
   return import.meta.env.DEV && isHistoryDemoEnabled(import.meta.env.DEV, import.meta.env.VITE_HISTORY_DEMO) ? <DemoHistory /> : <ApiHistory />
@@ -33,6 +34,7 @@ function HistoryView({ projects, isLoading, error, reload, demo }: { projects: P
   const matches = useMemo(() => filterHistory(projects, applied), [projects, applied])
   const pagination = projectListPage(matches, page)
   const { projects: filteredProjects, page: currentPage, totalPages } = pagination
+  const hasIncompleteMetadata = !demo && hasIncompleteProjectMetadata(projects)
 
   return <>
     <Card className="history-panel" padding="sm">
@@ -45,6 +47,7 @@ function HistoryView({ projects, isLoading, error, reload, demo }: { projects: P
         {draft.period === 'CUSTOM' && <div className="history-date-range"><Input label="Từ ngày" type="date" value={draft.from} onChange={event => setDraft({ ...draft, from: event.target.value })} /><Input label="Đến ngày" type="date" value={draft.to} onChange={event => setDraft({ ...draft, to: event.target.value })} /></div>}
         {validationError && <p role="alert" className="history-filter-error">{validationError}</p>}
       </form>
+      {!isLoading && !error && hasIncompleteMetadata && <p className="history-data-notice" role="status"><strong>Dữ liệu chưa đầy đủ.</strong> Một số thông tin bản dịch hoặc phương tiện chưa tải được; các dự án hợp lệ khác vẫn được hiển thị.</p>}
       {isLoading ? <div className="project-loading" role="status"><Spinner size="lg" /><p>Đang tải lịch sử...</p></div>
         : error ? <ErrorState title="Không thể tải dự án" description={error} onRetry={reload} />
 : filteredProjects.length > 0 ? <div className="history-table-scroll" tabIndex={0} role="region" aria-label="Bảng lịch sử dự án"><table className="history-table"><caption className="visually-hidden">Lịch sử dự án thuyết minh theo ngày tạo</caption><thead><tr>{['Tên dự án', 'Ngôn ngữ', 'Ngày tạo', 'Trạng thái', 'Thao tác'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead><tbody>{filteredProjects.map(project => <tr key={project.id}><td><strong className="history-project-name" title={project.name} tabIndex={0}>{project.name}</strong></td><td>{projectListLanguagePair(project)}</td><td>{project.createdAt && Number.isFinite(Date.parse(project.createdAt)) ? <time dateTime={project.createdAt}>{new Date(project.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</time> : '—'}</td><td><ProjectStatusBadge status={project.status} /></td><td>{demo ? <span className="history-readonly">Chỉ xem demo</span> : <Link className="history-detail-link" to={'/projects/' + project.id} aria-label={'Xem chi tiết dự án ' + project.name}>Xem chi tiết</Link>}</td></tr>)}</tbody></table></div>
