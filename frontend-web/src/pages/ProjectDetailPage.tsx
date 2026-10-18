@@ -12,7 +12,7 @@ import { WorkflowSteps } from '../components/common/WorkflowSteps';
 import { ProjectStatusBadge } from '../features/projects/ProjectStatusBadge';
 import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, type UploadStatus } from '../features/projects/mediaUpload';
 import { languages } from '../features/projects/languages';
-import { projectAction, workflowStepForDisplay } from '../features/projects/projectAction';
+import { projectAction } from '../features/projects/projectAction';
 import { projectRepository } from '../features/projects/projectRepository';
 import { projectMetadataState } from '../features/projects/projectDataState';
 import { uploadMediaToProject } from '../features/projects/uploadService';
@@ -100,7 +100,7 @@ export function ProjectDetailPage() {
   function cancelUpload() { uploadController.current?.abort(); }
   return <><PageHeader title={project.name} description={project.description || 'Chưa có mô tả cho dự án này.'} actions={<div className="project-detail-header-actions"><ProjectStatusBadge status={project.status} /><Link className="button button--secondary button--md project-detail-back" to="/projects"><Icon name="arrow" width="16" />Quay lại dự án</Link></div>} />
     <div className="project-detail-layout">
-      <Card padding="lg" className="project-detail-summary"><section aria-labelledby="workflow-heading"><div className="project-detail-section-heading"><span className="project-detail-section-icon" aria-hidden="true"><Icon name="sparkles" width="20" /></span><div><h2 id="workflow-heading">Tiến độ dự án</h2><p>Theo dõi các bước xử lý và tiếp tục khi dự án sẵn sàng.</p></div></div><WorkflowSteps current={workflowStepForDisplay(project.workflow)} />
+      <Card padding="lg" className="project-detail-summary"><section aria-labelledby="workflow-heading"><div className="project-detail-section-heading"><span className="project-detail-section-icon" aria-hidden="true"><Icon name="sparkles" width="20" /></span><div><h2 id="workflow-heading">Tiến độ dự án</h2><p>Theo dõi các bước xử lý và tiếp tục khi dự án sẵn sàng.</p></div></div><WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="UPLOAD" />
         {project.workflow?.state === 'PROCESSING' && <div className="project-workflow-state" role="status"><strong>Dự án đang được xử lý.</strong><span>Vui lòng chờ bước hiện tại hoàn tất; trang này không tự tạo thêm tác vụ.</span>{project.workflow.processing && <ProgressBar value={project.workflow.processing.progress} label="Tiến độ xử lý" />}</div>}
         {project.workflow?.state === 'FAILED' && action.available && <div className="project-workflow-state project-workflow-state--error" role="alert"><strong>Bước hiện tại chưa hoàn tất.</strong><span>Bạn có thể mở đúng bước gặp lỗi để xem hướng dẫn và chủ động thử lại.</span></div>}
         {project.workflow?.state === 'COMPLETED' && <div className="project-workflow-state project-workflow-state--success" role="status"><strong>Dự án đã hoàn thành.</strong><span>Kết quả chỉ khả dụng khi Backend xác nhận artifact hợp lệ.</span></div>}

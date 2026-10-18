@@ -35,9 +35,10 @@ test('Projects typography, spacing and card treatment follow the approved founda
   assert.match(css, /\.projects-page \.project-pagination \{[^}]*gap: 16px;[^}]*padding: 16px 24px/s)
 })
 
-test('Projects responsive guards keep wide tables inside their own scroll region', () => {
+test('Projects responsive guards fit desktop tables and keep narrow tables inside their own scroll region', () => {
   assert.match(css, /\.projects-page \.project-list-table-scroll \{[^}]*max-width: 100%;[^}]*overflow-x: auto/s)
-  assert.match(css, /\.projects-page \.project-list-table \{[^}]*min-width: 920px/s)
+  assert.match(css, /\.projects-page \.project-list-table \{[^}]*min-width: 0/s)
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.projects-page \.project-list-table \{[^}]*min-width: 760px/s)
   assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.projects-page \.project-list-toolbar \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/)
   assert.match(css, /@media \(max-width: 420px\)[\s\S]*border-radius: 14px/)
 })

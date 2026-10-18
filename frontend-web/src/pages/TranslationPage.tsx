@@ -57,7 +57,7 @@ function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: {
     <div className="translation-heading"><div><span className="translation-label">KHÔNG GIAN DỰ ÁN</span><h2>{project.name}</h2></div>
       <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{translationStatusLabels[editor.status]}</Badge>
     </div>
-    <WorkflowSteps current="translation" />
+      <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="TRANSLATION" />
     <WorkflowReadOnlyNotice reason={notice} />
     {editor.status === 'LOADING' && <Card className="translation-loading"><Spinner label="Đang tải bản dịch" /><p role="status">Đang tải bản ghi và bản dịch...</p></Card>}
     {editor.status === 'FAILED' && <Card><ErrorState

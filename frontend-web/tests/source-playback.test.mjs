@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { activeTranscriptSegment, seekSourceMedia, createSourceMediaLoader, sourceMediaError } from '../src/features/transcript/sourcePlayback.mjs';
+import { activeTranscriptSegment, seekSourceMedia, createSourceMediaLoader, MAX_AUTOLOAD_BLOB_SIZE, scheduleSourceMediaAutoLoad, sourceMediaError, sourceMediaInitialState } from '../src/features/transcript/sourcePlayback.mjs';
 test('active grouped segment follows time with gaps and exclusive end', () => {
   const segments = [{ id: 'a', startTime: 0.1, endTime: 1 }, { id: 'b', startTime: 2, endTime: 3 }];
   assert.equal(activeTranscriptSegment(segments, 0.2), 'a'); assert.equal(activeTranscriptSegment(segments, 1), null); assert.equal(activeTranscriptSegment(segments, 2), 'b'); assert.equal(activeTranscriptSegment(segments, NaN), null);
@@ -32,8 +32,30 @@ test('unsupported MIME and error status are handled safely', async () => {
   await assert.rejects(loader.load(), e => e.status === 415);
   assert.match(sourceMediaError({ status: 401 }), /đăng nhập/); assert.match(sourceMediaError({ status: 403 }), /quyền/); assert.match(sourceMediaError({ status: 404 }), /Không tìm thấy/); assert.match(sourceMediaError({ status: 415 }), /MP3 hoặc MP4/);
 });
-test('player uses authenticated blob, no token src, no autoplay or AI; page seek wired', async () => {
+test('player distinguishes verified loading, empty, error, unknown and oversized media', () => {
+  assert.deepEqual(sourceMediaInitialState('READY', 'AUDIO', 1024), { status: 'LOADING', error: null });
+  assert.deepEqual(sourceMediaInitialState('READY', 'VIDEO', MAX_AUTOLOAD_BLOB_SIZE), { status: 'LOADING', error: null });
+  assert.equal(sourceMediaInitialState('EMPTY', undefined, undefined).status, 'EMPTY');
+  assert.equal(sourceMediaInitialState('ERROR', undefined, undefined).status, 'ERROR');
+  assert.equal(sourceMediaInitialState('UNKNOWN', 'AUDIO', 1024).status, 'UNKNOWN');
+  assert.equal(sourceMediaInitialState('READY', undefined, 1024).status, 'UNKNOWN');
+  assert.equal(sourceMediaInitialState('READY', 'AUDIO', undefined).status, 'UNKNOWN');
+  const oversized = sourceMediaInitialState('READY', 'AUDIO', MAX_AUTOLOAD_BLOB_SIZE + 1);
+  assert.equal(oversized.status, 'ERROR'); assert.match(oversized.error, /phát trực tuyến/);
+});
+test('StrictMode probe aborts before auto-load while live mount starts exactly once', async () => {
+  let calls = 0;
+  const probe = new AbortController(); scheduleSourceMediaAutoLoad(probe.signal, () => { calls++; }); probe.abort();
+  const live = new AbortController(); scheduleSourceMediaAutoLoad(live.signal, () => { calls++; });
+  await Promise.resolve();
+  assert.equal(calls, 1);
+});
+test('player auto-loads authenticated blob, has bounded lifecycle, no autoplay or AI; page seek wired', async () => {
   const source = await readFile(new URL('../src/features/transcript/SourceMediaPlayer.tsx', import.meta.url), 'utf8');
   const page = await readFile(new URL('../src/pages/TranscriptPage.tsx', import.meta.url), 'utf8');
-  assert.match(source, /apiBlob/); assert.match(source, /controller\.abort\(\); current\.dispose\(\)/); assert.match(source, /<video/); assert.match(source, /<audio/); assert.doesNotMatch(source, /autoPlay|generateTranscript|gemini|accessToken|refreshToken/); assert.match(page, /onSeek=|canSeek=\{mediaReady\}/); assert.match(page, /active=\{activeSegment === segment.id\}/);
+  assert.match(source, /scheduleSourceMediaAutoLoad/); assert.match(source, /apiBlob/); assert.match(source, /AbortSignal\.any/); assert.match(source, /AbortSignal\.timeout/);
+  assert.match(source, /controller\.abort\(\); current\.dispose\(\)/); assert.match(source, /URL\.revokeObjectURL/); assert.match(source, /Thử tải lại/);
+  assert.match(source, /<video/); assert.match(source, /<audio/); assert.match(source, /preload="metadata"/); assert.doesNotMatch(source, /autoPlay|generateTranscript|gemini|accessToken|refreshToken|Tải phương tiện để phát/);
+  assert.doesNotMatch(source, /Phương tiện được tải qua phiên đăng nhập bảo vệ và chỉ phát khi bạn nhấn Phát\./);
+  assert.match(page, /key=\{mediaIdentity\}/); assert.match(page, /onSeek=|canSeek=\{mediaReady\}/); assert.match(page, /active=\{activeSegment === segment.id\}/);
 });

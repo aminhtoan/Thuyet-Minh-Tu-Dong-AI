@@ -1,5 +1,44 @@
 # Project Progress
 
+## UI07.6.5 — Remove Transcript Helper Text (2026-10-18)
+
+- **PARTIAL — source validation; Browser Desktop NOT RUN.** Đã bỏ đúng năm chú thích được yêu cầu khỏi Transcript, gồm mô tả PageHeader, read-only notice, player security helper, thống kê cụm/phân đoạn và footer read-only. Empty-state instruction “Tạo bản ghi để bắt đầu kiểm tra” chỉ còn khi chưa có transcript và không phải thống kê động bị yêu cầu xóa.
+- WorkflowRouteGuard, recovery khi route bị chặn, quyền tạo/thử lại, Stepper, player auto-load, segment/timestamp, action tiếp tục và các trạng thái loading/error/empty/unknown không đổi. CSS không dùng được dọn trong scope Transcript; không sửa shared guard hoặc màn hình khác.
+- Regression xác nhận các helper không còn được render trong Transcript và bảo toàn protected player/no-autoplay. Web tests **197/197 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build giữ warning dynamic/static import `projectRepository.ts` đã có từ trước; không sửa Backend/API/Database/Mobile/Admin, không commit/push.
+
+## UI07.6.4 — Transcript Media Player Auto-Load & Reload Fix (2026-10-18)
+
+- **PARTIAL — source/regression validation; Browser Desktop NOT RUN.** Root cause là `SourceMediaPlayer` trước đây chỉ gọi loader từ nút thủ công; Blob URL chỉ tồn tại trong component memory nên reload luôn quay lại nút tải. Player nay auto-load khi media metadata được Backend xác nhận, reload tự tạo lại Blob URL, vẫn dùng protected `apiBlob`/refresh-once và không autoplay.
+- StrictMode probe được loại trước request bằng microtask + AbortSignal; request có lifecycle abort và timeout 120 giây, late result không set state, Blob URL được revoke khi unmount/đổi media. UI phân biệt loading/ready/empty/error/unknown, có retry tải và retry phát, không khởi tạo STT/Translation/TTS.
+- Blob transport hiện giữ toàn bộ response trong browser memory. Auto-load bị chặn trên 100 MiB với thông báo streaming dependency; upload limit 500 MB không đổi. Phát tệp lớn hiệu quả vẫn cần Backend/auth contract cho native range streaming, chưa được thay đổi trong bước Frontend-only này.
+- Focused source-playback tests đã bổ sung cho state decision, StrictMode single request, authenticated transport, reload/remount identity, timeout/cleanup, no-autoplay và no-AI mutation. Web tests **197/197 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build giữ warning dynamic/static import `projectRepository.ts` đã có từ trước; không sửa Backend/API/Database/Mobile/Admin, không gọi AI, không commit/push.
+
+## UI07.6.2 — Clickable Workflow Stepper (2026-10-18)
+
+- **PARTIAL — source/regression PASS; Browser Desktop NOT RUN.** Stepper sáu bước nay điều hướng client-side bằng semantic React Router links tới Project Detail/Transcript/Translation/Voice/Generate/Result của cùng project. Bước đang hiển thị không tạo navigation; Enter và Space đều được hỗ trợ, cùng hover/active/focus-visible và lý do khóa bằng tiếng Việt.
+- Quyền click fail-closed qua cả presentation resolver và `resolveWorkflowRouteAccess`: completed/current/processing/failed chỉ mở khi Backend workflow có bằng chứng phù hợp; upcoming, `BLOCKED/UNKNOWN`, workflow thiếu/mâu thuẫn, Result thiếu artifact và route cần ngôn ngữ nhưng thiếu provenance đều disabled. Query `language` chỉ dùng target đáng tin cậy; Stepper không tạo mutation và không thay thế deep-link guard ở trang đích.
+- Regression bao phủ matrix 1–6, current/upcoming, matching và ambiguous FAILED, PROCESSING, missing/BLOCKED/UNKNOWN workflow, missing target language, project ID, keyboard semantics, route-guard reuse và no-mutation. Web tests **195/195 PASS**; lint, typecheck và production build PASS. Build giữ warning dynamic/static import `projectRepository.ts` đã có từ trước.
+- Không sửa Backend/API/Database/Mobile/Admin, không gọi AI, không thêm dependency, không commit/push.
+
+## UI07.6.1 — Premium Workflow Stepper Redesign (2026-10-18)
+
+- **PARTIAL — source/regression PASS; Browser Desktop NOT RUN.** Shared WorkflowSteps đã được thay bằng horizontal stepper sáu bước dùng trực tiếp Backend workflow DTO. Bộ đếm, `aria-current` và trạng thái completed/current/upcoming chỉ xuất hiện khi workflow có bằng chứng nhất quán; `BLOCKED/UNKNOWN` và dữ liệu mâu thuẫn fail-closed về giao diện trung tính.
+- Failure/processing stage chỉ được ánh xạ khi job type khớp `workflow.step`: TRANSCRIPTION → Bản ghi, TRANSLATION → Bản dịch, TTS → Giọng đọc, VIDEO_PROCESSING → Tạo thuyết minh. Project `FAILED` không rõ stage không còn bị trình bày sai như lỗi Transcript; render không tạo mutation, retry, job hay navigation.
+- Card Navy/Purple/Be Vietnam Pro có header, trạng thái mô tả, progress line theo vị trí bước (không phải provider progress), marker có biểu tượng/nhãn, wrap tên dài, focus-visible, local horizontal scroll dưới 700px và reduced-motion. Project Detail cùng toàn bộ workflow pages, kể cả GROUPS_V1, dùng cùng contract.
+- Web tests **190/190 PASS**; lint, typecheck và production build PASS. Build giữ warning dynamic/static import `projectRepository.ts` đã có từ trước. Không sửa Backend/API/Database/Mobile/Admin, không gọi AI, không thêm dependency, không commit/push.
+
+## UI07.5.1 — Create Project Desktop UI Polish (2026-10-18)
+
+- **PARTIAL — source/regression PASS; Browser Desktop NOT RUN.** Đã giảm density card và dropzone của `/projects/new`, bỏ guidance định dạng/500 MB bị lặp và giữ một bản có liên kết `aria-describedby`. File đã chọn vẫn hiển thị metadata/preview/thay/xóa/validation thật.
+- Nút Quay lại/Tạo dự án và trạng thái Đang kiểm tra dùng chung vùng căn phải trên desktop; mobile vẫn full-width. Loading/disabled/cancel/retry/success và upload transport không đổi; không thêm progress phần trăm giả.
+- Web tests **183/183 PASS**; lint, typecheck và production build PASS. `git diff --check` PASS sau cập nhật. Không sửa Backend/Mobile/Admin, không thêm dependency, không commit/push.
+
+## UI07.4.1 — Fix Project Table Overflow & Pagination (2026-10-18)
+
+- **PARTIAL — source/regression PASS; Browser Desktop NOT RUN.** Đã bỏ `min-width: 920px` gây tràn desktop, cân lại sáu cột theo `28/12/16/13/13/18`, tăng vùng Thao tác và cho nội dung dài wrap an toàn. “Mở bước gặp lỗi”, icon, route và workflow/data-state safety được giữ nguyên.
+- Pagination đã bỏ dòng thống kê “Hiển thị x–y / tổng dự án”; ba control Trang trước / Trang hiện tại / Trang sau được căn giữa, không đổi logic hoặc API. Mobile hẹp vẫn cuộn trong vùng bảng riêng.
+- Web tests **182/182 PASS**; lint, typecheck và production build PASS. `git diff --check` PASS sau cập nhật. Không sửa Backend/Mobile/Admin, không thêm dependency, không commit/push.
+
 ## UI07.5 — Create Project & Project Detail UI/UX (2026-10-18)
 
 - **PARTIAL — source/regression validation; Browser Desktop NOT RUN.** Create Project có heading “Tạo dự án mới”, CTA “Tạo dự án”, back action, drag/drop có keyboard alternative, thông tin định dạng/500 MB và file preview/thay/xóa rõ ràng hơn; không thêm progress giả hoặc thay upload transport.

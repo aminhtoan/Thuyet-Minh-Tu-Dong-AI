@@ -178,7 +178,7 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
               })}</tbody>
             </table>
           </div>
-          <nav className="project-pagination" aria-label="Phân trang dự án"><button className="button button--secondary button--sm" type="button" disabled={pagination.page <= 1} onClick={() => updateParams({ page: pagination.page - 1 })}>Trang trước</button><div className="project-list-pagination-summary"><span aria-live="polite">Hiển thị {pagination.from}–{pagination.to} / {pagination.total} dự án</span><span className="project-list-current-page" aria-current="page">Trang {pagination.page} / {pagination.totalPages}</span></div><button className="button button--secondary button--sm" type="button" disabled={pagination.page >= pagination.totalPages} onClick={() => updateParams({ page: pagination.page + 1 })}>Trang sau</button></nav>
+          <nav className="project-pagination" aria-label="Phân trang dự án"><button className="button button--secondary button--sm" type="button" disabled={pagination.page <= 1} onClick={() => updateParams({ page: pagination.page - 1 })}>Trang trước</button><span className="project-list-current-page" aria-current="page" aria-live="polite">Trang {pagination.page} / {pagination.totalPages}</span><button className="button button--secondary button--sm" type="button" disabled={pagination.page >= pagination.totalPages} onClick={() => updateParams({ page: pagination.page + 1 })}>Trang sau</button></nav>
         </> : <ProjectsEmptyState filtered={hasActiveFilters} />}
       </Card>
     </div>

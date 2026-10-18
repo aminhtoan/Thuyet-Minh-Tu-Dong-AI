@@ -62,7 +62,7 @@ function GenerateWorkspace({ project, language, canMutate, notice }: { project: 
     <PageHeader title="Tạo thuyết minh" description="Kiểm tra cấu hình trước khi bắt đầu xử lý."
       actions={<Button variant="secondary" disabled={busy} onClick={() => edit('voice')}>Quay lại cấu hình giọng đọc</Button>} />
     <div className="generation-heading"><h2>{project.name}</h2><Badge variant={snapshot?.status === 'COMPLETED' ? 'success' : snapshot?.status === 'FAILED' ? 'error' : 'info'}>{snapshot ? processingStatusLabels[snapshot.status] : 'Đang tải'}</Badge></div>
-    <WorkflowSteps current="generate" />
+    <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="GENERATE" />
     <WorkflowReadOnlyNotice reason={notice} />
     {processing.loadStatus === 'LOADING' && <Card className="processing-loading"><Spinner label="Đang tải cấu hình tạo thuyết minh" /><p role="status">Đang tải cấu hình đã lưu...</p></Card>}
     {processing.loadStatus === 'FAILED' && <Card><ErrorState title="Không thể tải cấu hình tạo thuyết minh" description={processing.error ?? 'Vui lòng thử lại.'} onRetry={processing.reload} /></Card>}

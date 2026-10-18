@@ -44,6 +44,16 @@ test('Create Project uses the approved heading, explicit primary action and acce
   assert.doesNotMatch(createSource, /<ProgressBar/);
 });
 
+test('Create Project desktop layout stays compact without duplicating file guidance', () => {
+  assert.equal((createSource.match(/formatFileSize\(MAX_MEDIA_FILE_SIZE\)/g) ?? []).length, 1);
+  assert.doesNotMatch(createSource, /upload-file--empty|Chưa có tệp nào được chọn/);
+  assert.match(createSource, /<small id="upload-file-formats">Hỗ trợ:/);
+  assert.match(uploadCss, /\.upload-layout \{[^}]*gap: 16px;[^}]*max-width: 68rem/s);
+  assert.match(uploadCss, /\.upload-layout \.upload-form-card \{[^}]*gap: 14px;[^}]*padding: 22px 24px/s);
+  assert.match(uploadCss, /\.upload-dropzone \{[^}]*min-height: 176px/s);
+  assert.match(createSource, /status === 'validating'[\s\S]*className="upload-primary-actions"[\s\S]*Đang kiểm tra/);
+});
+
 test('media validation preserves supported formats and the real 500 MB limit', () => {
   assert.equal(MAX_MEDIA_FILE_SIZE, 500 * 1024 * 1024);
   assert.deepEqual(validateMediaFile({ name: 'âm thanh thử nghiệm.mp3', size: 1024, mimeType: 'audio/mpeg' }), { valid: true, mediaType: 'AUDIO' });

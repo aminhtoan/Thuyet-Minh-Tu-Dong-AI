@@ -6,7 +6,7 @@ const pages = Object.fromEntries(await Promise.all(['Transcript', 'Translation',
 const stage = await readFile(new URL('../src/features/processing/ProcessingStage.tsx', import.meta.url), 'utf8');
 
 test('workflow screens retain all six workflow stages and paid-action service guards', () => {
-  for (const step of ['transcript', 'translation', 'voice', 'generate', 'result']) assert.match(pages[step[0].toUpperCase() + step.slice(1)], new RegExp(`WorkflowSteps current="${step}"`));
+  for (const step of ['transcript', 'translation', 'voice', 'generate', 'result']) assert.match(pages[step[0].toUpperCase() + step.slice(1)], /WorkflowSteps workflow=\{project\.workflow\} projectId=\{project\.id\}/);
   assert.match(pages.Transcript, /editor\.generate/);
   assert.match(pages.Translation, /editor\.translate/);
   assert.match(pages.Voice, /editor\.save/);
@@ -20,7 +20,7 @@ test('technical processing and editor statuses use Vietnamese dictionaries', () 
 });
 
 test('read-only transcript and translation do not advertise unsupported editing', () => {
-  assert.match(pages.Transcript, /Xem từng phân đoạn/);
+  assert.doesNotMatch(pages.Transcript, /WorkflowReadOnlyNotice|Xem từng phân đoạn có mốc thời gian trước khi dịch\.|cụm hiển thị|phân đoạn gốc|Bản ghi được lưu trên máy chủ\. Chỉnh sửa bản ghi hiện chưa được hỗ trợ\./);
   assert.match(pages.Translation, /chế độ chỉ đọc/);
 });
 

@@ -50,7 +50,7 @@ function VoiceWorkspace({ project, language, canMutate, notice }: { project: Pro
     <PageHeader title="Giọng đọc và thuyết minh" description="Chọn giọng đọc và thiết lập cách đọc cho nội dung đã dịch."
       actions={<Button variant="secondary" disabled={editor.busy} onClick={backToTranslation}>Quay lại bản dịch</Button>} />
     <div className="voice-heading"><h2>{project.name}</h2><Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{voiceStatusLabels[editor.status]}</Badge></div>
-    <WorkflowSteps current="voice" />
+    <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="VOICE" />
     <WorkflowReadOnlyNotice reason={notice} />
     {editor.status === 'LOADING' && <Card className="voice-loading"><Spinner label="Đang tải giọng đọc" /><p role="status">Đang tải danh sách giọng đọc và cấu hình...</p></Card>}
     {editor.status === 'FAILED' && <Card><ErrorState title={editor.failedAction === 'save' ? 'Không thể lưu cấu hình' : 'Không thể tải giọng đọc'} description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.failedAction === 'load' || canMutate ? editor.retry : undefined} /></Card>}

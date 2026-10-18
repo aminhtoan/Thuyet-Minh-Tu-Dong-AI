@@ -69,7 +69,7 @@
   border-radius: var(--radius-md);
 }
 
-.project-detail-summary .workflow-steps { margin-bottom: 0; }
+.project-detail-summary .workflow-stepper { margin-bottom: 0; }
 
 .project-workflow-state,
 .project-workflow-warning,

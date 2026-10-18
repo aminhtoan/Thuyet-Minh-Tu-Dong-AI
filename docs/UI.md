@@ -1,5 +1,46 @@
 # UI Specification
 
+## UI07.6.5 — Remove Transcript Helper Text (2026-10-18)
+
+- Transcript bỏ năm dòng helper được chỉ định tại PageHeader, read-only notice, protected-player note, số cụm/phân đoạn động và footer read-only để giảm nhiễu thị giác. Chỉ presentation của Transcript thay đổi; dữ liệu transcript, phép nhóm hiển thị và timestamp vẫn nguyên vẹn.
+- Heading, project/status, Workflow Stepper, player, segments và action tiếp tục được giữ. Trạng thái loading/error/empty/unknown, lỗi seek/playback, WorkflowRouteRecovery khi deep link bị chặn và toàn bộ guard/mutation permissions không đổi.
+- CSS không dùng của player note và footer status được loại bỏ; khoảng cách action còn lại tiếp tục theo nhịp spacing hiện có. Thay đổi không lan sang Translation hoặc các consumer khác của shared guard.
+
+## UI07.6.4 — Transcript Media Player Auto-Load & Reload Fix (2026-10-18)
+
+- Transcript tự chuẩn bị phương tiện nguồn ngay khi Project metadata xác nhận media `READY`; reload tạo lại authenticated Blob URL trong bộ nhớ, không còn yêu cầu nhấn “Tải phương tiện để phát”. Player native vẫn không autoplay và chỉ phát sau thao tác của người dùng.
+- Luồng tải tiếp tục dùng `apiBlob` với Bearer session và refresh-once; token không đi vào URL. Trạng thái `LOADING / READY / EMPTY / ERROR / UNKNOWN` tách biệt, lỗi tải có “Thử tải lại”, timeout 120 giây và metadata chưa xác minh không bị trình bày thành không có tệp.
+- Lifecycle hoãn auto-load một microtask để React StrictMode có thể cleanup probe trước request; unmount/project-media change abort request, bỏ qua late result và revoke Object URL đúng owner. Media identity bao gồm project, metadata state, loại, tên và kích thước nên không phát nhầm Blob cũ.
+- Vì transport hiện tại dùng `response.blob()`, Frontend giới hạn auto-load ở 100 MiB để tránh giữ tệp tới 500 MB trong RAM. Tệp lớn cần contract streaming có xác thực mà native media element có thể dùng (Backend Range hiện có nhưng Bearer token không thể gắn vào `src`); UI báo dependency này thay vì tải không kiểm soát. Không đổi upload limit, Backend hay API.
+
+## UI07.6.2 — Clickable Workflow Stepper (2026-10-18)
+
+- Horizontal Stepper sáu bước giữ nguyên presentation UI07.6.1 nhưng các bước được phép nay là React Router links: Tải lên → Project Detail, Bản ghi → Transcript, Bản dịch → Translation, Giọng đọc → Voice, Tạo thuyết minh → Generate, Kết quả → Result. Mọi URL giữ đúng project ID; query `language` chỉ được thêm từ `workflow.targetLanguage` có provenance đã được route guard tin cậy.
+- Resolver navigation tái sử dụng `resolveWorkflowRouteAccess` làm nguồn quyền truy cập. Bước đã hoàn thành và bước processing/failed có bằng chứng có thể mở ở chế độ guard cho phép; bước tương lai, `BLOCKED/UNKNOWN`, workflow thiếu/mâu thuẫn, Result thiếu artifact hoặc route cần target language nhưng thiếu provenance đều không tạo link. Deep-link guard tại trang đích vẫn là lớp kiểm tra cuối cùng.
+- Mỗi page truyền `pageStep` tường minh; bước của chính trang đang xem là phần tử không tương tác nên không tạo navigation/reload. Workflow state và `aria-current="step"` vẫn chỉ bắt nguồn từ Backend workflow DTO, không suy đoán từ URL hay page prop.
+- Link có hover/active/focus-visible, con trỏ rõ ràng, kích hoạt bằng Enter và Space; bước khóa có `aria-disabled`, nhãn trạng thái và lý do tiếng Việt qua accessible label/title. Không có click handler trên bước khóa, mutation, retry, approve hoặc processing job. Reduced-motion và responsive/local scroll của UI07.6.1 được giữ nguyên.
+
+## UI07.6.1 — Premium Workflow Stepper (2026-10-18)
+
+- `WorkflowSteps` nay nhận trực tiếp `Project.workflow` từ Backend tại Project Detail, Transcript, Translation (legacy và GROUPS_V1), Voice, Generate và Result. Thành phần không suy đoán bước hiện tại từ URL hoặc `ProjectStatus`, không điều hướng, retry hay tạo processing job khi render.
+- Stepper giữ đúng sáu bước trong card trắng: header “Quy trình tạo thuyết minh”, bộ đếm đáng tin cậy “Bước X / 6”, đường tiến trình mảnh và marker có cả biểu tượng lẫn nhãn trạng thái. Bước hoàn thành dùng dấu kiểm xanh lá; bước hiện tại/đang xử lý dùng tím; bước sắp tới dùng xám; bước lỗi chỉ dùng đỏ khi `workflow.failure.jobType` khớp bước Backend đã xác nhận.
+- Resolver fail-closed: `PROCESSING` cần processing job khớp bước; `FAILED` cần failure job khớp bước; dữ liệu thiếu, mâu thuẫn, `BLOCKED` hoặc `UNKNOWN` đều hiển thị trung tính, không có `aria-current` hay bộ đếm bước. Trạng thái `COMPLETED` tại Result còn yêu cầu artifact đúng loại media. Không dùng phần trăm provider để tạo tiến độ giả.
+- Desktop dùng sáu cột cân bằng; tên dài được wrap. Dưới 700px, chỉ vùng stepper cuộn ngang cục bộ với nhãn trợ năng, không làm tràn toàn trang. Focus-visible, trạng thái bằng văn bản và `prefers-reduced-motion` được hỗ trợ. Source/regression PASS; Browser Desktop 1024/1280/1440 chưa chạy.
+
+## UI07.5.1 — Create Project Desktop UI Polish (2026-10-18)
+
+- Giữ nguyên ba bước, trường tên/mô tả/ngôn ngữ, helper/validation/character count và toàn bộ upload workflow của UI07.5. Desktop giảm khoảng cách giữa card từ 18px xuống 16px, khoảng cách nội bộ từ 16px xuống 14px và padding card còn 22px dọc/24px ngang; mobile tiếp tục dùng padding 16px và layout một cột.
+- Dropzone desktop giảm từ 210px xuống 176px; icon, drag-and-drop, keyboard/single-pointer “Chọn tệp”, định dạng thật và giới hạn 500 MB vẫn còn. Danh sách định dạng/dung lượng chỉ xuất hiện một lần trong dropzone; khối “Chưa có tệp” lặp bên dưới đã được bỏ.
+- Khi có tệp, metadata/preview/thay đổi/xóa/validation vẫn dùng dữ liệu thật. Bước 3 căn cùng vùng action cho trạng thái idle/selected/validating; disabled và `aria-busy` tiếp tục do Button dùng chung quản lý, upload chỉ dùng spinner indeterminate, không có phần trăm giả.
+- Không đổi API, upload transport, validation, route hoặc business logic. Source/regression PASS; Browser Desktop 1024/1280/1440 chưa chạy.
+
+## UI07.4.1 — Project table overflow & pagination (2026-10-18)
+
+- Bảng `/projects` giữ semantic table sáu cột và workflow action hiện có, nhưng bỏ `min-width: 920px` ở desktop. `table-layout: fixed`, tổng độ rộng 100% và tỷ lệ cột mới `28/12/16/13/13/18` ưu tiên Tên dự án và Thao tác; padding ngang giảm có kiểm soát ở vùng desktop 701–1199px.
+- Nhãn hành động, media, ngôn ngữ, badge và trạng thái demo được phép wrap trong ô thay vì tràn/cắt. Nhãn nghiệp vụ “Mở bước gặp lỗi” và icon mũi tên được giữ nguyên; không đổi route, workflow mapping hoặc data-state contract. Màn hình dưới 701px tiếp tục cuộn ngang bên trong region bảng, không làm tràn toàn trang.
+- Pagination bỏ dòng “Hiển thị x–y / tổng dự án”, giữ Trang trước / Trang hiện tại / Trang sau và căn giữa cụm điều khiển. Logic phân trang, URL, filter và tổng dữ liệu không thay đổi.
+- Source/regression validation PASS; browser đo overflow thực tế tại 1024/1280/1440 chưa chạy.
+
 ## UI07.5 — Create Project & Project Detail UI/UX (2026-10-18)
 
 - Route `/projects/new` dùng page heading “Tạo dự án mới” với mô tả ngắn và đường quay lại danh sách hiện có. Ba card nghiệp vụ giữ nguyên thứ tự, form giới hạn chiều rộng, CTA chính đổi thành “Tạo dự án”; drag-and-drop luôn có nút chọn tệp thay thế cho keyboard/single-pointer, metadata tệp, thay/xóa, preview, validation định dạng và giới hạn 500 MB vẫn dùng logic thật hiện có.

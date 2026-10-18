@@ -7,7 +7,7 @@ const source = await readFile(new URL('../src/pages/ProjectsPlaceholder.tsx', im
 const css = await readFile(new URL('../src/styles/project-list.css', import.meta.url), 'utf8')
 const actionSource = await readFile(new URL('../src/features/projects/projectAction.ts', import.meta.url), 'utf8')
 
-test('professional Projects table keeps six semantic columns with a 30 percent name column', () => {
+test('professional Projects table keeps six semantic columns with balanced name and action widths', () => {
   assert.match(source, /<table className="project-list-table">[\s\S]*?<colgroup>[\s\S]*?<\/colgroup>[\s\S]*?<thead>/)
   assert.equal((source.match(/<col className="project-list-column project-list-column--/g) ?? []).length, 6)
   assert.deepEqual(
@@ -15,8 +15,10 @@ test('professional Projects table keeps six semantic columns with a 30 percent n
     1,
   )
   assert.match(source, /\['Tên dự án', 'Phương tiện', 'Ngôn ngữ', 'Ngày tạo', 'Trạng thái', 'Thao tác'\]/)
-  assert.match(css, /\.projects-page \.project-list-column--name \{[^}]*width: 30%/s)
+  assert.match(css, /\.projects-page \.project-list-column--name \{[^}]*width: 28%/s)
+  assert.match(css, /\.projects-page \.project-list-column--action \{[^}]*width: 18%/s)
   assert.match(css, /\.projects-page \.project-list-table \{[^}]*table-layout: fixed/s)
+  assert.match(css, /\.projects-page \.project-list-table \{[^}]*min-width: 0/s)
 })
 
 test('long duplicate and Unicode project names remain intact and receive a distinguishing accessible name', () => {
@@ -54,12 +56,21 @@ test('the action uses the verified workflow path without implying an automatic m
   assert.match(source, /<span>\{action\.label\}<\/span><Icon name="arrow"/)
   assert.match(actionSource, /workflow\.state === 'FAILED' \? 'Mở bước gặp lỗi'/)
   assert.doesNotMatch(actionSource, /project\.status ===/)
+  assert.match(css, /\.projects-page \.project-list-action \{[^}]*max-width: 100%;[^}]*white-space: normal/s)
+  assert.match(css, /\.projects-page \.project-list-action span \{[^}]*overflow-wrap: anywhere/s)
 })
 
-test('responsive table scrolling and focus styles remain local to Projects', () => {
+test('desktop table fits its container while narrow screens keep local scrolling', () => {
   assert.match(source, /role="region" aria-label="Danh sách dự án"/)
   assert.match(source, /<caption className="sr-only">Dự án của tôi<\/caption>/)
   assert.match(css, /\.projects-page \.project-list-table-scroll \{[^}]*overflow-x: auto/s)
   assert.match(css, /\.projects-page \.project-list-table-scroll:focus-visible/)
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.projects-page \.project-list-table \{[^}]*min-width: 760px/s)
   assert.doesNotMatch(css, /^\.project-list-action\b/m)
+})
+
+test('pagination keeps navigation controls without the redundant result-count line', () => {
+  assert.doesNotMatch(source, /Hiển thị \{pagination\.from\}–\{pagination\.to\} \/ \{pagination\.total\} dự án/)
+  assert.match(source, /Trang \{pagination\.page\} \/ \{pagination\.totalPages\}/)
+  assert.match(css, /\.projects-page \.project-pagination \{[^}]*justify-content: center/s)
 })

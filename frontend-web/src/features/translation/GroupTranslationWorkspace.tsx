@@ -103,7 +103,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
   return <>
     <PageHeader title="Bản dịch" description="Kiểm tra cụm nguồn, xem trước bản dịch và duyệt ngữ nghĩa trước khi lưu."
       actions={<Link className="button button--secondary button--md" to={`/projects/${project.id}/transcript`}>Quay lại bản ghi</Link>} />
-    <WorkflowSteps current="translation" />
+    <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="TRANSLATION" />
     <WorkflowReadOnlyNotice reason={notice} />
     <div className="group-translation-workspace">
       <Card className="translation-language-card"><div><h2>{project.name}</h2><p>Ngôn ngữ nguồn: {translationLanguageLabel({ code: project.sourceLanguage, name: project.sourceLanguage, nativeName: '' })}</p></div>
