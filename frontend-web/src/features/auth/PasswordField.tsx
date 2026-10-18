@@ -7,6 +7,6 @@ type PasswordFieldProps = Omit<ComponentProps<typeof Input>, 'type' | 'suffix'>
 
 export function PasswordField(props: PasswordFieldProps) {
   const [visible, setVisible] = useState(false)
-  const label = visible ? 'Hide password' : 'Show password'
+  const label = visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
   return <Input {...props} type={visible ? 'text' : 'password'} suffix={<button className="password-toggle" type="button" onClick={() => setVisible((current) => !current)} aria-label={label} title={label}><Icon name={visible ? 'eyeOff' : 'eye'} width="20" /></button>} />
 }

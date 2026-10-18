@@ -15,7 +15,7 @@ export function ProgressBar({ value, label, showValue = true }: ProgressBarProps
           {showValue && <span>{normalizedValue}%</span>}
         </div>
       )}
-      <div className="progress__track" role="progressbar" aria-label={label ?? 'Progress'} aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizedValue}>
+      <div className="progress__track" role="progressbar" aria-label={label ?? 'Tiến độ xử lý'} aria-valuemin={0} aria-valuemax={100} aria-valuenow={normalizedValue} aria-valuetext={`${normalizedValue}%`}>
         <div className="progress__bar" style={{ width: `${normalizedValue}%` }} />
       </div>
     </div>

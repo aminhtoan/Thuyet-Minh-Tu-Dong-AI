@@ -1,5 +1,19 @@
 # Project Progress
 
+## UI07.5 — Create Project & Project Detail UI/UX (2026-10-18)
+
+- **PARTIAL — source/regression validation; Browser Desktop NOT RUN.** Create Project có heading “Tạo dự án mới”, CTA “Tạo dự án”, back action, drag/drop có keyboard alternative, thông tin định dạng/500 MB và file preview/thay/xóa rõ ràng hơn; không thêm progress giả hoặc thay upload transport.
+- Project Detail có PageHeader theo tên/status thật, workflow state feedback, progress từ Backend khi có, media state `ERROR/UNKNOWN/LOADING` tường minh, form label đầy đủ và DRAFT resume chọn/thay/xóa/cancel/retry. Không có mutation khi chỉ mở trang và không tự retry FAILED.
+- CSS Detail đã tách khỏi Auth/Voice thành scope riêng; desktop có workflow summary cùng grid media/form, responsive một cột dưới 1100px. Logic create cleanup và existing-project upload vẫn tách biệt; upload lỗi/hủy của DRAFT không xóa project.
+- Regression bổ sung cho title/CTA/drag alternative, file type/size, workflow/media states, DRAFT existing-ID safety, duplicate-submit boundary và CSS isolation. Không gọi AI/TTS, không ghi Database, không sửa Backend/Mobile/Admin và không commit/push.
+
+## UI07.4 — Shared Typography, Page Header & Accessibility (2026-10-18)
+
+- **PARTIAL — source/regression validation; Browser Desktop NOT RUN.** Đã đưa Be Vietnam Pro tự lưu lên toàn Customer Web qua global foundation, bổ sung `--font-size-xs`, giữ nguyên Navy/Purple và không đổi layout đã duyệt của Login/Register/Sidebar/Dashboard/Projects.
+- Shared PageHeader có ID duy nhất và quan hệ title/description cho assistive technology; Empty/Error state không còn fixed ID; ProgressBar, PasswordField và PlaceholderPage dùng nhãn/copy tiếng Việt. Icon trạng thái dùng SVG hiện có thay cho ký tự trang trí.
+- Focus-visible được tăng độ rõ; reduced-motion dừng spinner và bỏ transition không thiết yếu. Không đổi route, workflow, data-state contract, API hay business logic; không sửa Backend/Mobile/Admin và không thêm dependency.
+- Regression mới bao phủ font/token, PageHeader, component IDs, nhãn trợ năng, focus và reduced motion. Browser Desktop 1024/1280/1440 **NOT RUN**; Mobile/Expo **DEFERRED**.
+
 ## UI07.3 — Web Data-State Integrity (2026-10-18)
 
 - **PARTIAL — source/regression validation; Browser Desktop NOT RUN.** Đã loại bỏ fallback biến lỗi media thành `null` và lỗi translation thành `[]`; repository nay giữ trạng thái metadata riêng theo từng project: `READY/EMPTY/ERROR/UNKNOWN` và bảo toàn partial success.

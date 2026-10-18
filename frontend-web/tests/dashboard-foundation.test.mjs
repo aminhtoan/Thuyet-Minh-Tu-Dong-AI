@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const css = await readFile(new URL('../src/styles/dashboard.css', import.meta.url), 'utf8');
 const fonts = await readFile(new URL('../src/styles/dashboard-fonts.css', import.meta.url), 'utf8');
+const globalCss = await readFile(new URL('../src/styles/global.css', import.meta.url), 'utf8');
 function table(buffer, tag) {
   for (let i = 0; i < buffer.readUInt16BE(4); i++) {
     const offset = 12 + i * 16;
@@ -51,10 +52,11 @@ test('self-hosted font weights are real TTF assets with Vietnamese glyph coverag
   assert.match(license, /Copyright 2021 The Be Vietnam Pro Project Authors/);
   assert.match(license, /SIL OPEN FONT LICENSE Version 1.1/);
 });
-test('font loading is local, swap-based and opt-in only inside Dashboard', () => {
+test('font loading is local, swap-based and shared across Customer Web without duplicate imports', () => {
   assert.equal((fonts.match(/font-display: swap/g) ?? []).length, 3);
   assert.doesNotMatch(fonts, /src:\s*url\(https?:/);
-  assert.match(css, /@import '\.\/dashboard-fonts.css'/);
+  assert.match(globalCss, /@import '\.\/dashboard-fonts.css'/);
+  assert.doesNotMatch(css, /@import '\.\/dashboard-fonts.css'/);
   assert.match(css, /--dashboard-font: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif/);
   assert.match(css, /font-family: var\(--dashboard-font\)/);
 });

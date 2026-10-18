@@ -56,7 +56,8 @@ test('sidebar and header follow UI03 dimensions without changing brand tokens', 
 test('topbar keeps route-aware headings, search destination, profile and logout', async () => {
   const topbar = await readFile(new URL('../src/components/layout/Topbar.tsx', import.meta.url), 'utf8');
 
-  for (const label of ['Dự án của tôi', 'Tạo thuyết minh', 'Lịch sử', 'Tài khoản']) assert.match(topbar, new RegExp(label));
+  for (const label of ['Dự án của tôi', 'Tạo dự án mới', 'Lịch sử', 'Tài khoản']) assert.match(topbar, new RegExp(label));
+  assert.match(topbar, /Thêm thông tin và phương tiện để bắt đầu tạo thuyết minh/);
   assert.match(topbar, /navigate\('\/projects\?q=' \+ encodeURIComponent\(query\.trim\(\)\)\)/);
   assert.match(topbar, /authService\.logout\(\)/);
   assert.match(topbar, /aria-expanded=\{profileOpen\}/);

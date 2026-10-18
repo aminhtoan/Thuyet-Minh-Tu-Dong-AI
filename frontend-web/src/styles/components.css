@@ -41,8 +41,6 @@
 .spinner--sm { width: 1rem; height: 1rem; }
 .spinner--lg { width: 2rem; height: 2rem; border-width: 3px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1400ms; } }
-
 .field { display: grid; gap: var(--space-sm); }
 .field__label { color: var(--color-text-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
 .field__required { color: var(--color-error); }
@@ -65,7 +63,7 @@
 .card--interactive:hover { border-color: #cbd5e1; box-shadow: var(--shadow-md); transform: translateY(-1px); }
 .card--interactive:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgb(88 80 236 / 12%), var(--shadow-md); }
 
-.badge { display: inline-flex; align-items: center; width: fit-content; min-height: 1.625rem; padding: 0.2rem 0.625rem; border-radius: var(--radius-full); color: var(--color-text-secondary); background: var(--color-surface-secondary); font-size: 0.75rem; font-weight: var(--font-weight-semibold); }
+.badge { display: inline-flex; align-items: center; width: fit-content; min-height: 1.625rem; padding: 0.2rem 0.625rem; border-radius: var(--radius-full); color: var(--color-text-secondary); background: var(--color-surface-secondary); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
 .badge--info { color: var(--color-info); background: var(--color-info-light); }
 .badge--success { color: var(--color-success); background: var(--color-success-light); }
 .badge--warning { color: var(--color-warning); background: var(--color-warning-light); }
@@ -78,6 +76,7 @@
 
 .state { display: grid; justify-items: center; padding: var(--space-xl); text-align: center; }
 .state__icon { display: grid; width: 3rem; height: 3rem; place-items: center; margin-bottom: var(--space-md); color: var(--color-primary); background: var(--color-primary-light); border-radius: var(--radius-full); }
+.state__icon svg { width: 1.5rem; height: 1.5rem; }
 .state--error .state__icon { color: var(--color-error); background: var(--color-error-light); }
 .state h2 { margin-bottom: var(--space-sm); font-size: var(--font-size-lg); }
 .state p { max-width: 28rem; margin-bottom: var(--space-lg); color: var(--color-text-secondary); }
@@ -90,9 +89,10 @@
 .workflow-route-notice { margin: 0 0 var(--space-lg); padding: var(--space-md); color: var(--color-text-secondary); background: var(--color-primary-light); border: 1px solid rgb(88 80 236 / 22%); border-radius: var(--radius-md); }
 
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-lg); margin-bottom: var(--space-lg); }
-.page-header h1 { margin-bottom: var(--space-xs); font-size: clamp(1.5rem, 2vw, 1.875rem); line-height: var(--line-height-tight); letter-spacing: -0.025em; }
-.page-header p { margin-bottom: 0; color: var(--color-text-secondary); }
-.page-header__actions { display: flex; flex-shrink: 0; gap: var(--space-sm); }
+.page-header__copy { min-width: 0; max-width: 48rem; }
+.page-header h1 { margin-bottom: var(--space-xs); overflow-wrap: anywhere; font-size: clamp(1.5rem, 2vw, 1.875rem); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); letter-spacing: -0.025em; }
+.page-header p { margin-bottom: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
+.page-header__actions { display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-sm); }
 
 .showcase-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
 .showcase-card--wide { grid-column: 1 / -1; }
@@ -105,4 +105,12 @@
   .page-header__actions { width: 100%; flex-wrap: wrap; }
   .showcase-grid, .showcase-fields { grid-template-columns: 1fr; }
   .showcase-card--wide { grid-column: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .button,
+  .field__control,
+  .card--interactive,
+  .progress__bar { transition: none; }
 }

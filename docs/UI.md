@@ -1,5 +1,22 @@
 # UI Specification
 
+## UI07.5 — Create Project & Project Detail UI/UX (2026-10-18)
+
+- Route `/projects/new` dùng page heading “Tạo dự án mới” với mô tả ngắn và đường quay lại danh sách hiện có. Ba card nghiệp vụ giữ nguyên thứ tự, form giới hạn chiều rộng, CTA chính đổi thành “Tạo dự án”; drag-and-drop luôn có nút chọn tệp thay thế cho keyboard/single-pointer, metadata tệp, thay/xóa, preview, validation định dạng và giới hạn 500 MB vẫn dùng logic thật hiện có.
+- Upload không hiển thị progress giả vì browser transport hiện tại không cung cấp phần trăm trung gian đáng tin cậy. Loading dùng trạng thái indeterminate, cancel/retry/success giữ nguyên; create flow vẫn tạo project rồi upload, còn DRAFT resume chỉ upload vào project ID hiện hữu.
+- Project Detail đưa tên thật, mô tả và status badge vào PageHeader; card tiến độ trình bày rõ `PROCESSING`, `FAILED`, `COMPLETED` và fail-closed khi workflow không khả dụng. Progress chỉ hiển thị khi Backend cung cấp ProcessingJob; mở trang không tạo/retry tác vụ.
+- Media card phân biệt `ERROR`, `UNKNOWN/LOADING` với `EMPTY`, không biến lỗi metadata thành “chưa có tệp”. DRAFT có chọn/thay/xóa tệp, cancel/retry và success CTA; transport `POST /projects/:id/media`, double-submit guard và nguyên tắc không xóa DRAFT khi lỗi được giữ nguyên.
+- Form Detail dùng scope `project-detail-*` riêng với label/input association, feedback và responsive actions; đã loại bỏ coupling với `auth-form` và `voice-actions`. Desktop dùng workflow card toàn chiều rộng cùng media/form grid; tự xếp một cột dưới 1100px và giữ controls đầy chiều rộng ở màn hình hẹp.
+- Không đổi Backend/API/Database, route, workflow/navigation, Dashboard/Sidebar/Projects/Auth hoặc dependency. Browser Desktop chưa xác minh trực quan; Mobile/Expo deferred.
+
+## UI07.4 — Shared Typography, Page Header & Accessibility (2026-10-18)
+
+- Customer Web dùng thống nhất bộ font Be Vietnam Pro tự lưu trong repository với `font-display: swap`; font được nạp một lần từ `global.css`, không thêm CDN/dependency và vẫn có fallback Segoe UI/Arial/system. Dashboard và Projects giữ nguyên các scope typography đã duyệt, không đổi bố cục riêng.
+- Token nền tảng Navy/Purple được giữ nguyên; bổ sung `--font-size-xs: 0.75rem` để loại bỏ biến chưa khai báo và dùng token này cho caption/badge. PageHeader giữ hierarchy `h1 + description + actions`, bổ sung quan hệ `aria-labelledby`/`aria-describedby` bằng `useId`, vùng copy chống tràn và actions có thể wrap an toàn.
+- EmptyState và ErrorState không còn ID DOM cố định khi render nhiều lần; title/description dùng ID duy nhất và icon SVG từ hệ icon hiện có. ProgressBar có nhãn mặc định tiếng Việt cùng `aria-valuetext`; nút hiện/ẩn mật khẩu và PlaceholderPage không còn copy tiếng Anh.
+- Focus toàn cục dùng viền Primary rõ ràng thay cho màu tím quá trong suốt. Khi `prefers-reduced-motion: reduce`, spinner dừng quay và transition của button/input/card/progress được tắt. Không tự động chuyển focus khi dữ liệu cập nhật và không thay đổi workflow/navigation/business logic.
+- Phạm vi chỉ là shared foundation Customer Web. Login/Register, Sidebar, Dashboard, Project List và các workflow page không bị redesign. Browser Desktop 1024/1280/1440 chưa được xác minh trực quan; Mobile/Expo deferred.
+
 ## UI07.3 — Web Data-State Integrity (2026-10-18)
 
 - Customer Web dùng hợp đồng trạng thái `LOADING / READY / EMPTY / ERROR / UNKNOWN`. `EMPTY` chỉ được dùng sau response thành công xác nhận không có dữ liệu; lỗi request và payload không đủ bằng chứng không còn bị trình bày như dữ liệu rỗng.

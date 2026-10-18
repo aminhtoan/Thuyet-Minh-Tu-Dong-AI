@@ -1,5 +1,3 @@
-@import './dashboard-fonts.css';
-
 .dashboard {
   --dashboard-font: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   --dashboard-space-xs: 8px;

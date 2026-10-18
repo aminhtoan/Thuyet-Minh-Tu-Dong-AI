@@ -104,8 +104,8 @@ export function NewProjectPlaceholder() {
   }
   function cancelUpload() { controllerRef.current?.abort(); setStatus('cancelled') }
 
-  return <>
-    <div className="upload-layout">
+  return <div className="upload-page">
+    <div className="upload-layout" aria-label="Biểu mẫu tạo dự án mới">
       <Card padding="lg" className="upload-form-card">
         <div className="upload-section-heading"><span className="upload-step">1</span><div><h2>Chi tiết dự án</h2><p>Đặt tên dự án và chọn ngôn ngữ được sử dụng trong phương tiện gốc.</p></div></div>
         <div className="upload-fields">
@@ -115,16 +115,16 @@ export function NewProjectPlaceholder() {
         </div>
       </Card>
       <Card padding="lg" className="upload-form-card">
-        <div className="upload-section-heading"><span className="upload-step">2</span><div><h2>Tệp phương tiện</h2><p>Tải lên video hoặc âm thanh của bạn. Hỗ trợ nhiều định dạng phổ biến.</p></div></div>
-        <input ref={inputRef} id="media-file" className="visually-hidden" type="file" accept=".mp4,.mov,.webm,.mp3,.wav,.m4a,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/mp4" onChange={onBrowseChange} disabled={busy || status === 'success'} aria-label="Chọn tệp video hoặc âm thanh" />
-        {!file ? <div className={`upload-dropzone${dragOver ? ' upload-dropzone--active' : ''}`} onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
+        <div className="upload-section-heading"><span className="upload-step">2</span><div><h2 id="upload-media-heading">Tệp phương tiện</h2><p id="upload-media-guidance">Tải lên video hoặc âm thanh của bạn. Hỗ trợ nhiều định dạng phổ biến.</p></div></div>
+        <input ref={inputRef} id="media-file" className="visually-hidden" type="file" accept=".mp4,.mov,.webm,.mp3,.wav,.m4a,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/mp4" onChange={onBrowseChange} disabled={busy || status === 'success'} aria-label="Chọn tệp video hoặc âm thanh" aria-describedby="upload-media-guidance" />
+        {!file ? <div className={`upload-dropzone${dragOver ? ' upload-dropzone--active' : ''}`} role="group" aria-labelledby="upload-media-heading" aria-describedby="upload-file-formats" onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
           <div className="upload-dropzone__symbol" aria-hidden="true"><Icon name="arrow" width="32" /></div><strong>Kéo thả video hoặc âm thanh vào đây</strong><span>hoặc chọn tệp từ máy tính</span><Button type="button" disabled={busy || status === 'success'} onClick={() => inputRef.current?.click()}>Chọn tệp</Button><small>Hỗ trợ: MP4, MOV, WEBM, MP3, WAV, M4A · Dung lượng tối đa: {formatFileSize(MAX_MEDIA_FILE_SIZE)}</small>
         </div> : <div className={`upload-file${validation.valid ? '' : ' upload-file--invalid'}`}>
           <div className="upload-file__head"><span className="upload-file__type">{validation.valid ? validation.mediaType === 'VIDEO' ? 'Video' : 'Âm thanh' : 'Tệp không hợp lệ'}</span><div className="upload-file__actions"><Button type="button" size="sm" variant="secondary" disabled={busy || status === 'success'} onClick={() => inputRef.current?.click()}>Thay đổi</Button><Button type="button" size="sm" variant="ghost" disabled={busy || status === 'success'} onClick={removeFile}>Xóa</Button></div></div>
           <strong className="upload-file__name">{file.name}</strong><span className="upload-file__size">{formatFileSize(file.size)} · {validation.valid ? 'Tệp hợp lệ' : 'Tệp không hợp lệ'}</span>
           {validation.valid && previewUrl && (validation.mediaType === 'VIDEO' ? <video className="upload-preview" src={previewUrl} controls preload="metadata" aria-label="Xem trước video đã chọn" /> : <audio className="upload-preview" src={previewUrl} controls preload="metadata" aria-label="Nghe thử âm thanh đã chọn" />)}
         </div>}
-        {!file && <div className="upload-file upload-file--empty"><strong>Chưa có tệp nào được chọn</strong><span>Hãy chọn hoặc kéo thả tệp phương tiện để tiếp tục.</span></div>}
+        {!file && <div id="upload-file-formats" className="upload-file upload-file--empty"><strong>Chưa có tệp nào được chọn</strong><span>MP4, MOV, WEBM, MP3, WAV hoặc M4A · Tối đa {formatFileSize(MAX_MEDIA_FILE_SIZE)}</span></div>}
         {file && !validation.valid && <p className="upload-error" role="alert">{validation.error}</p>}
       </Card>
       <Card padding="lg" className="upload-form-card upload-action-card">
@@ -133,9 +133,9 @@ export function NewProjectPlaceholder() {
         {status === 'cancelled' && <div className="upload-feedback" role="status"><strong>Đã hủy tải lên</strong><p>Tệp vẫn đang được chọn. Bạn có thể thử lại khi sẵn sàng.</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Thử lại</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Chọn tệp khác</Button></div></div>}
         {status === 'failed' && <div className="upload-feedback" role="alert"><strong>Tải lên thất bại</strong><p>{uploadError ?? 'Không thể tải tệp phương tiện lên.'}</p><div className="upload-actions"><Button type="button" onClick={startUpload}>Thử lại</Button><Button type="button" variant="secondary" onClick={() => inputRef.current?.click()}>Chọn tệp khác</Button></div></div>}
         {status === 'success' && <div className="upload-feedback upload-feedback--success" role="status"><strong>Tải lên hoàn tất</strong><p>Dự án và tệp phương tiện đã được lưu.</p><Link className="button button--primary button--md" to="/projects">Tiếp tục đến dự án</Link></div>}
-        {(status === 'idle' || status === 'selected') && <Button type="button" size="lg" disabled={!canUpload} onClick={startUpload}>Tải lên và tiếp tục<Icon name="arrow" width="18" /></Button>}
+        {(status === 'idle' || status === 'selected') && <div className="upload-primary-actions"><Link className="button button--secondary button--lg" to="/projects">Quay lại danh sách</Link><Button type="button" size="lg" disabled={!canUpload} onClick={startUpload}>Tạo dự án<Icon name="arrow" width="18" /></Button></div>}
         {status === 'validating' && <Button type="button" size="lg" loading disabled>Đang kiểm tra...</Button>}
       </Card>
     </div>
-  </>
+  </div>
 }
