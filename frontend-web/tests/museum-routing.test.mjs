@@ -273,6 +273,7 @@ test('public video catalog stays empty without fake player and accepts only publ
   }
   const listing = renderRoute('/thuyet-minh', false, undefined, [publicVideoFixture], publicVideoAssets)
   assert.match(listing, /href="\/thuyet-minh\/test-only-public-video"/)
+  assert.match(listing, /aria-label="Xem video: Video fixture công khai"[^>]*>Xem video/)
   assert.doesNotMatch(listing, /<video/)
 })
 
@@ -295,4 +296,42 @@ test('unpublished/missing asset video slugs fail closed and public video UI does
   for (const file of ['pages/MuseumVideosPage.tsx', 'pages/MuseumVideoDetailPage.tsx', 'components/museum/MuseumVideoPlayer.tsx', 'features/museum/publicVideos.ts']) {
     assert.doesNotMatch(read(file), /\b(api|apiBlob|fetch)\s*\(|useSearchParams|accessToken|createObjectURL|dangerouslySetInnerHTML/)
   }
+})
+
+test('actual authorized catalog entry renders publicly with local MP4, source credit and unavailable target languages', () => {
+  const inventory = new Set(['/museum/videos/bao-tang-chung-tich-chien-tranh.mp4', '/museum/posters/bao-tang-chung-tich-chien-tranh.jpg'])
+  const listing = renderRoute('/thuyet-minh', false, undefined, undefined, inventory)
+  assert.match(listing, /Bảo tàng Chứng tích Chiến tranh — Video giới thiệu/)
+  assert.match(listing, /href="\/thuyet-minh\/bao-tang-chung-tich-chien-tranh"/)
+  assert.match(listing, />Xem video<\/a>/)
+  const html = renderRoute('/thuyet-minh/bao-tang-chung-tich-chien-tranh?videoUrl=https://example.test/private.mp4', false, undefined, undefined, inventory)
+  assert.match(html, /src="\/museum\/videos\/bao-tang-chung-tich-chien-tranh.mp4"/)
+  assert.match(html, /poster="\/museum\/posters\/bao-tang-chung-tich-chien-tranh.jpg"/)
+  assert.doesNotMatch(html, /class="museum-video__transcript"|museum-video__experience--with-transcript/)
+  assert.match(html, /href="https:\/\/youtu.be\/_MN6nsn-XDM" target="_blank" rel="noopener noreferrer">Nguồn video: YouTube — xem video gốc/)
+  assert.match(html, /Chưa có bản ghi công khai cho ngôn ngữ này/)
+  assert.doesNotMatch(html, /<track|autoplay|example.test\/private.mp4/)
+  const radios = html.match(/<input\b[^>]*>/g)
+  for (const code of ['vi', 'en', 'th', 'ko', 'zh-CN']) {
+    const radio = radios.find((input) => input.includes(`value="${code}"`))
+    assert.ok(radio)
+    if (code === 'vi') assert.doesNotMatch(radio, /disabled/); else assert.match(radio, /disabled/)
+  }
+  assert.match(renderRoute('/thuyet-minh/not-published', false, undefined, undefined, inventory), /Không tìm thấy video/)
+})
+
+test('single video uses a featured card while multiple published videos retain the responsive grid', () => {
+  const catalog = [{ ...publicVideoFixture, posterUrl: '/museum/posters/test-only.jpg' }]
+  const inventory = new Set([...publicVideoAssets, '/museum/posters/test-only.jpg'])
+  const featured = renderRoute('/thuyet-minh', false, undefined, catalog, inventory)
+  assert.match(featured, /museum-video__cards--featured/)
+  assert.match(featured, /<img[^>]*src="\/museum\/posters\/test-only.jpg"[^>]*loading="eager"/)
+  const multiple = renderRoute('/thuyet-minh', false, undefined, [...catalog, { ...catalog[0], slug: 'second-test-only', title: 'Video test thứ hai' }], inventory)
+  assert.doesNotMatch(multiple, /museum-video__cards--featured/)
+  assert.equal((multiple.match(/museum-video__card-copy/g) || []).length, 2)
+  assert.match(multiple, /loading="lazy"/)
+  const detailWithTranscript = renderRoute('/thuyet-minh/test-only-public-video', false, undefined, catalog, inventory)
+  assert.match(detailWithTranscript, /museum-video__experience--with-transcript/)
+  assert.match(detailWithTranscript, /class="museum-video__transcript"/)
+  assert.match(detailWithTranscript, /Bản ghi kiểm thử/)
 })

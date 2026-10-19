@@ -1014,8 +1014,32 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 
 ## MUSEUM-06.1 — Tạo thư mục và chuẩn bị tích hợp video thật
 
-- **PREPARED — VIDEO/PUBLICATION PENDING** ngày 2026-10-19. Tạo ba thư mục public/museum/videos, posters, captions có .gitkeep. MP4 dự kiến `bao-tang-chung-tich-chien-tranh.mp4` chưa tồn tại; không copy/tạo media giả hoặc dùng private upload.
+- **PREPARED — PUBLICATION PENDING** ngày 2026-10-19. Tạo ba thư mục public/museum/videos, posters, captions có .gitkeep. MP4 `bao-tang-chung-tich-chien-tranh.mp4` xuất hiện trong lúc validation, không do agent tạo/copy. ffprobe read-only xác nhận MP4 23.762.139 byte, H.264 640×360, AAC, 307.478639 giây. Chưa xác minh quyền/nội dung và browser playback.
 - Mở rộng inventory/allowlist đúng loại asset cho đường dẫn mới, giữ tương thích museum-media cũ. Chuẩn bị một draft trong catalog hiện có, PRIVATE/DRAFT, quyền chưa xác nhận, cả vi/en/th/ko/zh-CN đều UNAVAILABLE. Catalog công khai vẫn 0 video.
 - Git ignore chặn file trong museum/videos, cho phép .gitkeep; không stage/commit video. Public directory vẫn phục vụ file trực tiếp: người dùng cần xác nhận quyền trước khi copy video, sau đó kiểm tra file thật và duyệt metadata/publication.
-- Focused tests **10/10 PASS**; tích hợp playback thật **NOT RUN** do chưa có file. Không sửa Backend/Database/Admin/Mobile/ADMIN07, không gọi AI/TTS và không commit/push.
-- Validation cuối: Web tests **251/251 PASS**, lint/typecheck/build/diff-check PASS; build giữ cảnh báo chunking có sẵn. File MP4 chưa tồn tại và chưa công bố entry; không có media được đưa vào Git index.
+- Focused tests **10/10 PASS**; browser playback thật **NOT RUN**. File ở public có thể được phục vụ trực tiếp khi dev server chạy; DRAFT chỉ ẩn catalog. Không sửa Backend/Database/Admin/Mobile/ADMIN07, không gọi AI/TTS và không commit/push.
+- Validation: Web tests **251/251 PASS**, lint/typecheck/build/diff-check PASS; build giữ cảnh báo chunking có sẵn. MP4 tồn tại nhưng entry chưa công bố và vi vẫn UNAVAILABLE; không có media được đưa vào Git index.
+
+## MUSEUM-06.2 — Publish Real Vietnamese Museum Video
+
+- **BLOCKED — REQUIRED EDITORIAL METADATA MISSING**. Xác nhận quyền đăng công khai của người dùng đã được ghi nhận; không yêu cầu xác nhận lại. Cập nhật title/description đúng yêu cầu và vi AVAILABLE, giữ bốn ngôn ngữ đích UNAVAILABLE.
+- File verification PASS: ffprobe xác nhận H.264/AAC, 640×360, 307.478639 giây, 23.762.139 byte; FFmpeg giải mã toàn bộ audio/video sang null không lỗi. Không sửa/copy/thay thế MP4 hoặc đưa vào Git.
+- Chưa PUBLIC/PUBLISHED vì contract bắt buộc sourceAttribution.label/reference và rights.credit/license, hiện chưa có dữ liệu. Không tự gán tác giả, giấy phép hay nguồn. Public catalog vẫn 0 và slug entry còn Not Found. CTA “Xem video” đã chuẩn bị cho card được công bố.
+- Web tests **251/251 PASS**; lint, typecheck, build và git diff --check PASS. Browser QA **NOT RUN**, không có browser; không báo playback PASS chỉ từ decode. Build còn cảnh báo chunking có sẵn.
+- Chỉ sửa Customer Web/tests/docs, giữ thay đổi chưa commit; không sửa Backend/Database/Admin/Mobile/ADMIN07, không gọi AI/TTS và không commit/push.
+
+## MUSEUM-06.2.2 — Publish Authorized YouTube-sourced Video
+
+- **PUBLIC/PUBLISHED — SOURCE VALIDATION PASS**. Dỡ blocker MUSEUM-06.2 bằng nguồn YouTube `https://youtu.be/_MN6nsn-XDM`, credit và quyền cho phép đăng lại cụ thể theo người dùng cung cấp. Không gán Creative Commons, tác giả/kênh chưa xác minh hoặc quyền sở hữu.
+- Catalog có **1** video công khai; route list/detail dùng MP4 local hiện có. vi AVAILABLE; en/th/ko/zh-CN UNAVAILABLE. Credit có link tới video gốc; không có media/transcript/subtitle giả và không sử dụng protected endpoints.
+- SHA256 MP4 giữ nguyên từ lần full decode PASS ở MUSEUM-06.2; không thay file hoặc đưa MP4 vào Git. Giữ nguyên các thay đổi chưa commit và ADMIN07.
+- Web tests **253/253 PASS**; lint/typecheck/production build/diff-check PASS. Build còn cảnh báo chunking có sẵn. Browser playback **NOT RUN**, không có browser khả dụng; tác giả/kênh chưa xác minh vì không đọc được trang nguồn.
+- Chỉ cập nhật Customer Web/tests/docs. Database/AI/TTS requests: **0**; không sửa Backend/Admin/Mobile, không commit/push hoặc deploy hosting.
+
+## MUSEUM-06.4 — Public Video UI Polish
+
+- **SOURCE PASS**. Một video dùng featured card; nhiều video dùng responsive grid. Có poster thật trích tại giây 35 bằng FFmpeg (JPEG 640×360, 52.655 byte), thêm posterUrl vào catalog; không đổi nguồn/quyền, trạng thái công bố hoặc routes.
+- Player 16:9 căn giữa, không dành cột trống khi thiếu transcript; có transcript thật mới mở hai cột desktop. Selector compact, vi sẵn sàng/bốn ngôn ngữ đích chưa có; credit YouTube gọn và giữ link/license nguyên vẹn.
+- Web tests **254/254 PASS**; lint/typecheck/build/diff-check PASS. Regression kiểm tra featured/grid, poster ở card/player, transcript present/absent và các guards hiện có. MP4 hash không đổi; video vẫn không đưa vào Git.
+- Browser QA desktop/mobile **NOT RUN**, không có browser khả dụng. Chỉ xem ảnh poster local; chưa khẳng định visual, controls, playback hoặc overflow ở các viewport yêu cầu. Build còn cảnh báo chunking cũ.
+- Không sửa Backend/Database/Admin/Mobile/ADMIN07, không tạo AI audio/transcript/caption, không thêm dependency và không commit/push.

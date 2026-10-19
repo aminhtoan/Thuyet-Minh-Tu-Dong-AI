@@ -24,7 +24,7 @@ const { Transcript } = await import('../src/models/Transcript.js');
 const { TranscriptSegment } = await import('../src/models/TranscriptSegment.js');
 const { ActivityLog } = await import('../src/models/ActivityLog.js');
 const { AppError } = await import('../src/utils/app-error.js');
-const { GeminiSttError } = await import('../src/services/stt/gemini-stt.provider.js');
+const { GeminiSttError, mapGeminiTranscript } = await import('../src/services/stt/gemini-stt.provider.js');
 
 test('STT service integration with mock persistence and no external provider calls', async (t) => {
   const projectId = new Types.ObjectId(); const userId = new Types.ObjectId().toString();
@@ -81,6 +81,22 @@ test('STT service integration with mock persistence and no external provider cal
       const result = await transcribe(projectId.toString(), userId);
       assert.equal(status, 'TRANSCRIBED'); assert.equal(lastJob.status, 'COMPLETED'); assert.equal(result.transcript.fullText, 'Xin chào'); assert.equal(result.transcript.segments.length, 1);
     });
+    await t.test('zero-duration boundary phrase persists all words with unchanged positive source interval (mock DB)', async () => {
+      setSttProviderForTests({ async transcribe() {
+        return mapGeminiTranscript({ status: 'completed', output_text: 'Xin chào', steps: [{ type: 'model_output', content: [{ type: 'text', annotations: [
+          { type: 'word_info', text: 'Xin', start_offset: '0s', end_offset: '1s' },
+          { type: 'word_info', text: 'chào', start_offset: '1s', end_offset: '1s' },
+        ] }] }] }, 2, 'vi');
+      } });
+      const result = await transcribe(projectId.toString(), userId);
+      assert.equal(result.transcript.fullText, 'Xin chào');
+      assert.equal(result.transcript.segments.length, 1);
+      assert.equal(result.transcript.segments[0]!.text, 'Xin chào');
+      assert.equal(result.transcript.segments[0]!.startTime, 0);
+      assert.equal(result.transcript.segments[0]!.endTime, 1);
+      assert.equal(lastJob.status, 'COMPLETED');
+      assert.equal(status, 'TRANSCRIBED');
+    });
     await t.test('failed provider does not overwrite an existing successful transcript', async () => {
       setSttProviderForTests({ async transcribe() { throw new Error('private-message'); } }); await fails('STT_PROVIDER_ERROR', 502); assert.equal(stored.fullText, 'Xin chào');
     });
@@ -89,6 +105,20 @@ test('STT service integration with mock persistence and no external provider cal
         setSttProviderForTests({ async transcribe() { throw new GeminiSttError(code); } });
         await fails(code, http); assert.equal(stored.fullText, 'Xin chào'); assert.equal(lastJob.errorMessage, code);
       }
+    });
+    await t.test('internal Gemini validation diagnostic is not exposed in public 502 or persisted job error', async () => {
+      setSttProviderForTests({ async transcribe() { throw new GeminiSttError('STT_INVALID_RESPONSE', undefined, { code: 'TIMESTAMP_OVERLAP_OR_ORDER', wordIndex: 7, wordCount: 21 }); } });
+      await assert.rejects(transcribe(projectId.toString(), userId), (error: unknown) => {
+        assert.ok(error instanceof AppError);
+        assert.equal(error.code, 'STT_INVALID_RESPONSE');
+        assert.equal(error.statusCode, 502);
+        assert.ok(!('diagnostic' in error));
+        assert.ok(!JSON.stringify(error).includes('TIMESTAMP_OVERLAP_OR_ORDER'));
+        return true;
+      });
+      assert.equal(lastJob.errorMessage, 'STT_INVALID_RESPONSE');
+      assert.ok(!JSON.stringify(lastJob).includes('TIMESTAMP_OVERLAP_OR_ORDER'));
+      assert.equal(stored.fullText, 'Xin chào');
     });
   } finally { setSttProviderForTests(); await rm(directory, { recursive: true, force: true }); }
 });

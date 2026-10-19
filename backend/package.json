@@ -17,7 +17,7 @@
     "test:profile": "node --import tsx --test tests/profile-name.test.ts",
     "test:filename": "node --import tsx --test tests/filename-encoding.test.ts",
     "test:stt-debug": "node --import tsx --test tests/stt-debug.test.ts",
-    "test:gemini": "node --import tsx --test tests/gemini-stt.test.ts tests/stt-debug.test.ts",
+    "test:gemini": "node --import tsx --test tests/gemini-stt.test.ts tests/gemini-stt-diagnostics.test.ts tests/stt-debug.test.ts",
     "test:gemini-translation": "node --import tsx --test tests/gemini-translation.test.ts tests/translation-mock.test.ts",
     "test:group-translation": "node --import tsx --test tests/group-translation.test.ts tests/gemini-translation.test.ts tests/translation-mock.test.ts",
     "test:source-media": "node --import tsx --test tests/source-media.test.ts",

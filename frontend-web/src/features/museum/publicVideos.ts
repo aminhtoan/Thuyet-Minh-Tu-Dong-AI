@@ -30,25 +30,36 @@ export type MuseumPublicVideo = {
   languageVariants: readonly MuseumVideoVariant[]
 }
 
-// Prepared metadata only. Missing source/rights and UNAVAILABLE media keep this
-// draft out of the public list/detail even if a video is copied into public/.
+// Published using the user's confirmation of specific channel-owner permission.
+// No author identity, ownership, or Creative Commons license is inferred.
 export const museumPublicVideos: readonly MuseumPublicVideo[] = [{
   slug: 'bao-tang-chung-tich-chien-tranh',
-  title: 'Bảo tàng Chứng tích Chiến tranh',
-  description: 'Video thuyết minh về Bảo tàng Chứng tích Chiến tranh.',
-  sourceAttribution: { label: '', reference: '' },
-  rights: { confirmed: false, license: '', credit: '', verificationReference: '' },
-  visibility: 'PRIVATE',
-  publishedStatus: 'DRAFT',
+  title: 'Bảo tàng Chứng tích Chiến tranh — Video giới thiệu',
+  description: 'Khám phá những câu chuyện lịch sử qua video giới thiệu Bảo tàng Chứng tích Chiến tranh.',
+  posterUrl: '/museum/posters/bao-tang-chung-tich-chien-tranh.jpg',
+  sourceAttribution: { label: 'YouTube', reference: 'https://youtu.be/_MN6nsn-XDM' },
+  rights: {
+    confirmed: true,
+    license: 'Được chủ kênh cho phép tải và đăng lại trên website, theo xác nhận của người dùng. Quyền cho phép cụ thể cho website, không phải giấy phép Creative Commons.',
+    credit: 'Nguồn video: YouTube — xem video gốc',
+    verificationReference: 'Người dùng xác nhận chủ kênh YouTube cho phép tải và đăng lại trên website — MUSEUM-06.2.2.',
+  },
+  visibility: 'PUBLIC',
+  publishedStatus: 'PUBLISHED',
   sourceLanguage: 'vi',
   languageVariants: [
-    { language: 'vi', state: 'UNAVAILABLE', videoUrl: '/museum/videos/bao-tang-chung-tich-chien-tranh.mp4' },
+    { language: 'vi', state: 'AVAILABLE', videoUrl: '/museum/videos/bao-tang-chung-tich-chien-tranh.mp4' },
     { language: 'en', state: 'UNAVAILABLE' },
     { language: 'th', state: 'UNAVAILABLE' },
     { language: 'ko', state: 'UNAVAILABLE' },
     { language: 'zh-CN', state: 'UNAVAILABLE' },
   ],
 }]
+
+export function getPublicVideoSourceUrl(video: MuseumPublicVideo) {
+  const reference = video.sourceAttribution.reference
+  return /^https:\/\/(?:youtu\.be\/[a-zA-Z0-9_-]{11}|(?:www\.)?youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11})$/.test(reference) ? reference : undefined
+}
 
 export function isPublicVideoAsset(url: string | undefined, kind: 'video' | 'poster' | 'caption', assets: ReadonlySet<string> = publicMuseumAssetPaths): url is string {
   if (!url || !assets.has(url)) return false

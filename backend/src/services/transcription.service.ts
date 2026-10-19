@@ -144,7 +144,9 @@ export const transcribe = async (projectId: string, userId: string) => {
       console.error('STT provider diagnostic:', error.diagnostics);
     }
     if (env.nodeEnv === 'development' && error instanceof GeminiSttError) {
-      console.error('STT provider diagnostic:', { provider: 'gemini', code: error.code, httpStatus: error.httpStatus });
+      console.error('STT provider diagnostic:', { provider: 'gemini', code: error.code, httpStatus: error.httpStatus, diagnostic: error.diagnostic });
+      // Separate bounded evidence so Node's default inspection depth does not hide the scalar fields.
+      if (error.diagnostic?.timestampEvidence) console.error('STT timestamp evidence:', error.diagnostic.timestampEvidence);
     }
     const code = error instanceof GeminiSttError ? error.code : error instanceof Error && ['STT_NOT_CONFIGURED', 'STT_FILE_TOO_LARGE', 'STT_TIMEOUT', 'STT_INVALID_RESPONSE'].includes(error.message) ? error.message : 'STT_PROVIDER_ERROR';
     await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]);

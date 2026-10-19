@@ -10,8 +10,55 @@ import type { SttInput, SttProvider, SttResult } from './stt-provider.interface.
 
 export const GEMINI_STT_MODEL = 'gemini-3.5-transcribe';
 export const GEMINI_STT_ERRORS = ['STT_NOT_CONFIGURED', 'STT_INVALID_KEY', 'STT_MODEL_UNAVAILABLE', 'STT_QUOTA_EXCEEDED', 'STT_INVALID_FILE', 'STT_FILE_TOO_LARGE', 'STT_TIMEOUT', 'STT_INVALID_RESPONSE', 'STT_NO_SPEECH', 'STT_PROVIDER_ERROR'] as const;
+// Internal diagnostics contain fixed metadata and, in development only, bounded numeric timestamp evidence.
+export const GEMINI_STT_DIAGNOSTIC_CODES = ['RESPONSE_SCHEMA_INVALID', 'INTERACTION_NOT_COMPLETED', 'SOURCE_DURATION_INVALID', 'TRANSCRIPT_EMPTY', 'WORD_ANNOTATIONS_MISSING', 'WORD_SCHEMA_INVALID', 'TIMESTAMP_MISSING', 'TIMESTAMP_FORMAT_INVALID', 'TIMESTAMP_NON_FINITE', 'TIMESTAMP_OVERLAP_OR_ORDER', 'TIMESTAMP_INTERVAL_INVALID', 'TIMESTAMP_BEYOND_DURATION'] as const;
+export type GeminiSttDiagnostic = Readonly<{
+  code: typeof GEMINI_STT_DIAGNOSTIC_CODES[number];
+  wordIndex?: number;
+  wordCount?: number;
+  issueCount?: number;
+  field?: 'start_offset' | 'end_offset';
+  timestampEvidence?: TimestampIntervalEvidence;
+}>;
+type TimestampValue = Readonly<{ raw: string | number; type: 'string' | 'number'; decimalPlaces: number; parsed: number }>;
+type TimestampIntervalEvidence = Readonly<{
+  valuesSuppressed: boolean;
+  startType: string;
+  endType: string;
+  start?: TimestampValue;
+  end?: TimestampValue;
+  relation?: 'EQUAL' | 'REVERSED';
+  precision?: 'PRECISION_COLLAPSE' | 'NO_COLLAPSE';
+}>;
+const scalarType = (value: unknown) => value === null ? 'null' : typeof value;
+const safeTimestamp = (value: unknown): TimestampValue | undefined => {
+  if (typeof value !== 'string' && typeof value !== 'number') return;
+  if (typeof value === 'number' && (!Number.isFinite(value) || value < 0)) return;
+  const raw = String(value);
+  if (raw.length > 64 || !/^\d+(?:\.\d+)?s?(?![\s\S])/.test(raw)) return;
+  const numeric = raw.replace(/s$/, '');
+  const parsed = Number(numeric);
+  if (!Number.isFinite(parsed)) return;
+  return Object.freeze({ raw: value, type: typeof value as 'string' | 'number', decimalPlaces: numeric.split('.')[1]?.length ?? 0, parsed });
+};
+// Canonical decimal comparison avoids calling 1.0s vs 1.00s a precision collapse.
+const exactDecimal = (value: string | number) => {
+  const [integer = '', fraction = ''] = String(value).replace(/s$/, '').split('.');
+  return `${integer.replace(/^0+(?=\d)/, '')}.${fraction.replace(/0+$/, '')}`;
+};
+export const timestampIntervalEvidence = (rawStart: unknown, rawEnd: unknown): TimestampIntervalEvidence => {
+  const start = safeTimestamp(rawStart); const end = safeTimestamp(rawEnd);
+  const types = { startType: scalarType(rawStart), endType: scalarType(rawEnd) };
+  // Suppress both values if either is unsafe. Never coerce objects or serialize provider payloads.
+  if (!start || !end) return Object.freeze({ ...types, valuesSuppressed: true });
+  if (end.parsed > start.parsed) return Object.freeze({ ...types, valuesSuppressed: true });
+  return Object.freeze({ ...types, valuesSuppressed: false, start, end,
+    relation: end.parsed === start.parsed ? 'EQUAL' : 'REVERSED',
+    precision: end.parsed === start.parsed && exactDecimal(start.raw) !== exactDecimal(end.raw) ? 'PRECISION_COLLAPSE' : 'NO_COLLAPSE',
+  });
+};
 export class GeminiSttError extends Error {
-  constructor(public readonly code: typeof GEMINI_STT_ERRORS[number], public readonly httpStatus?: number) { super(code); }
+  constructor(public readonly code: typeof GEMINI_STT_ERRORS[number], public readonly httpStatus?: number, public readonly diagnostic?: GeminiSttDiagnostic) { super(code); }
 }
 export interface GeminiTransport {
   checkModel(model: string, signal: AbortSignal): Promise<void>;
@@ -36,29 +83,75 @@ const sdkTransport = (key: string): GeminiTransport => {
 };
 const wordSchema = z.object({ type: z.literal('word_info'), text: z.string().trim().min(1), start_offset: z.string(), end_offset: z.string() });
 const outputSchema = z.object({ status: z.literal('completed'), output_text: z.string().optional(), steps: z.array(z.object({ type: z.string(), content: z.array(z.object({ type: z.string(), text: z.string().optional(), annotations: z.array(z.unknown()).optional() })).optional() })) });
-const offset = (value: string): number => {
-  if (!/^\d+(?:\.\d+)?s$/.test(value)) throw new GeminiSttError('STT_INVALID_RESPONSE');
+const invalidResponse = (code: GeminiSttDiagnostic['code'], details: Omit<GeminiSttDiagnostic, 'code'> = {}): never => {
+  throw new GeminiSttError('STT_INVALID_RESPONSE', undefined, Object.freeze({ code, ...details }));
+};
+const offset = (value: string, wordIndex: number, field: 'start_offset' | 'end_offset'): number => {
+  if (!value) return invalidResponse('TIMESTAMP_MISSING', { wordIndex, field });
+  if (!/^\d+(?:\.\d+)?s$/.test(value)) return invalidResponse('TIMESTAMP_FORMAT_INVALID', { wordIndex, field });
   const result = Number(value.slice(0, -1));
-  if (!Number.isFinite(result)) throw new GeminiSttError('STT_INVALID_RESPONSE');
+  if (!Number.isFinite(result)) return invalidResponse('TIMESTAMP_NON_FINITE', { wordIndex, field });
   return result;
 };
 export const mapGeminiTranscript = (value: unknown, duration: number, language: string): SttResult => {
+  if (typeof value === 'object' && value !== null && 'status' in value && typeof value.status === 'string' && value.status !== 'completed') {
+    return invalidResponse('INTERACTION_NOT_COMPLETED');
+  }
   const output = outputSchema.safeParse(value);
-  if (!output.success || !Number.isFinite(duration) || duration <= 0) throw new GeminiSttError('STT_INVALID_RESPONSE');
+  if (!output.success) return invalidResponse('RESPONSE_SCHEMA_INVALID', { issueCount: output.error.issues.length });
+  if (!Number.isFinite(duration) || duration <= 0) return invalidResponse('SOURCE_DURATION_INVALID');
   const contents = output.data.steps.filter((s) => s.type === 'model_output').flatMap((s) => s.content ?? []);
   const text = (output.data.output_text ?? contents.filter((c) => c.type === 'text').map((c) => c.text ?? '').join(' ')).trim();
-  if (!text) throw new GeminiSttError('STT_NO_SPEECH');
+  if (!text) throw new GeminiSttError('STT_NO_SPEECH', undefined, Object.freeze({ code: 'TRANSCRIPT_EMPTY' }));
   const words = contents.flatMap((c) => c.annotations ?? []).filter((a) => typeof a === 'object' && a !== null && 'type' in a && a.type === 'word_info');
-  if (!words.length) throw new GeminiSttError('STT_INVALID_RESPONSE');
-  let previousEnd = 0;
-  const segments = words.map((word) => {
-    const parsed = wordSchema.safeParse(word);
-    if (!parsed.success) throw new GeminiSttError('STT_INVALID_RESPONSE');
-    const start = offset(parsed.data.start_offset); const end = offset(parsed.data.end_offset);
-    if (start < previousEnd || end <= start || end > duration) throw new GeminiSttError('STT_INVALID_RESPONSE');
-    previousEnd = end;
-    return { start, end, text: parsed.data.text };
+  if (!words.length) return invalidResponse('WORD_ANNOTATIONS_MISSING', { wordCount: 0 });
+  const invalidInterval = (wordIndex: number, rawStart: string, rawEnd: string): never => invalidResponse('TIMESTAMP_INTERVAL_INVALID', {
+    wordIndex,
+    ...((process.env.NODE_ENV ?? 'development') === 'development'
+      ? { timestampEvidence: timestampIntervalEvidence(rawStart, rawEnd) } : {}),
   });
+  let previousEnd = 0;
+  const annotations = words.map((word, wordIndex) => {
+    const annotation = word as Record<string, unknown>;
+    for (const field of ['start_offset', 'end_offset'] as const) {
+      if (annotation[field] === undefined || annotation[field] === null || annotation[field] === '') return invalidResponse('TIMESTAMP_MISSING', { wordIndex, field });
+      if (typeof annotation[field] !== 'string') return invalidResponse('TIMESTAMP_FORMAT_INVALID', { wordIndex, field });
+    }
+    const parsed = wordSchema.safeParse(word);
+    if (!parsed.success) return invalidResponse('WORD_SCHEMA_INVALID', { wordIndex, issueCount: parsed.error.issues.length });
+    const start = offset(parsed.data.start_offset, wordIndex, 'start_offset'); const end = offset(parsed.data.end_offset, wordIndex, 'end_offset');
+    if (start < previousEnd) return invalidResponse('TIMESTAMP_OVERLAP_OR_ORDER', { wordIndex, wordCount: words.length });
+    // Equal source offsets may be represented as part of a touching phrase below.
+    // Reversed intervals and floating-point collapse remain invalid.
+    if (end < start || (end === start && exactDecimal(parsed.data.start_offset) !== exactDecimal(parsed.data.end_offset))) {
+      return invalidInterval(wordIndex, parsed.data.start_offset, parsed.data.end_offset);
+    }
+    if (end > duration) return invalidResponse('TIMESTAMP_BEYOND_DURATION', { wordIndex });
+    previousEnd = end;
+    return { start, end, text: parsed.data.text, wordIndex, rawStart: parsed.data.start_offset, rawEnd: parsed.data.end_offset };
+  });
+  const segments: SttResult['segments'] = [];
+  let pending: typeof annotations = [];
+  for (const annotation of annotations) {
+    const previous = segments.at(-1);
+    if (annotation.start === annotation.end) {
+      if (!pending.length && previous?.end === annotation.start) {
+        previous.text += ` ${annotation.text}`;
+      } else pending.push(annotation);
+      continue;
+    }
+    // A leading/gap point can only join a following phrase at its exact start.
+    // Never bridge a gap or invent a duration for an isolated point.
+    for (const point of pending) {
+      if (point.start !== annotation.start) return invalidInterval(point.wordIndex, point.rawStart, point.rawEnd);
+    }
+    segments.push({ start: annotation.start, end: annotation.end, text: [...pending.map(point => point.text), annotation.text].join(' ') });
+    pending = [];
+  }
+  if (pending.length) {
+    const point = pending[0]!;
+    return invalidInterval(point.wordIndex, point.rawStart, point.rawEnd);
+  }
   return { text, duration, language, segments };
 };
 const mapError = (error: unknown): GeminiSttError => {

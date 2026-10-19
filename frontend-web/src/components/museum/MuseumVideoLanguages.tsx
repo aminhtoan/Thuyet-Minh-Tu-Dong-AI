@@ -10,7 +10,7 @@ export function MuseumVideoLanguages({ video, selected, onChange }: { video: Mus
         const declared = video.languageVariants.find((variant) => variant.language === language.code)
         return <label key={language.code} className={`museum-video__language${selected === language.code ? ' museum-video__language--selected' : ''}`}>
           <input type="radio" name={name} value={language.code} checked={selected === language.code} disabled={!available} onChange={() => { if (available) onChange(language.code) }} />
-          <span><strong>{language.name}</strong><span lang="en">{language.internationalName} · {language.code}</span><small>{available ? 'Sẵn sàng' : declared?.state === 'PROCESSING' ? 'Đang xử lý' : 'Đang chuẩn bị'}</small></span>
+          <span><strong>{language.name} <span className="museum-video__language-code">{language.code}</span></strong><small>{available ? 'Sẵn sàng' : declared?.state === 'PROCESSING' ? 'Đang xử lý' : 'Đang chuẩn bị'}</small></span>
         </label>
       })}
     </div>

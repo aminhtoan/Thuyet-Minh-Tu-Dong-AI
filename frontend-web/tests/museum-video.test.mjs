@@ -97,23 +97,36 @@ test('public video publication requires public status, rights, source and a real
   assert.equal(contract.getPublishedPublicVideos([video, video], assets).length, 0)
 })
 
-test('museum video draft has the planned Vietnamese path but cannot publish by copying a file alone', () => {
+test('authorized YouTube-sourced video publishes only when its Vietnamese asset exists', () => {
   assert.equal(contract.museumPublicVideos.length, 1)
   const draft = contract.museumPublicVideos[0]
   assert.equal(draft.slug, 'bao-tang-chung-tich-chien-tranh')
-  assert.equal(draft.publishedStatus, 'DRAFT')
-  assert.equal(draft.visibility, 'PRIVATE')
-  assert.equal(draft.rights.confirmed, false)
+  assert.equal(draft.publishedStatus, 'PUBLISHED')
+  assert.equal(draft.visibility, 'PUBLIC')
+  assert.equal(draft.rights.confirmed, true)
+  assert.match(draft.rights.verificationReference, /MUSEUM-06\.2/)
+  assert.equal(draft.rights.credit, 'Nguồn video: YouTube — xem video gốc')
+  assert.match(draft.rights.license, /không phải giấy phép Creative Commons/)
+  assert.equal(draft.sourceAttribution.label, 'YouTube')
+  assert.equal(draft.sourceAttribution.reference, 'https://youtu.be/_MN6nsn-XDM')
   assert.equal(draft.sourceLanguage, 'vi')
   assert.equal(draft.languageVariants.length, 5)
   for (const variant of draft.languageVariants) {
-    assert.equal(variant.state, 'UNAVAILABLE')
+    assert.equal(variant.state, variant.language === 'vi' ? 'AVAILABLE' : 'UNAVAILABLE')
     assert.equal(variant.transcript, undefined)
     assert.equal(variant.captionUrl, undefined)
   }
   assert.equal(draft.languageVariants[0].videoUrl, '/museum/videos/bao-tang-chung-tich-chien-tranh.mp4')
   assert.equal(contract.getPublishedPublicVideos().length, 0)
-  assert.equal(contract.getPublishedPublicVideos([draft], new Set([draft.languageVariants[0].videoUrl])).length, 0)
+  assert.equal(contract.getPublishedPublicVideos([draft], new Set([draft.languageVariants[0].videoUrl])).length, 1)
+})
+
+test('credit links allow only HTTPS YouTube video references without credentials or injected URLs', () => {
+  const entry = contract.museumPublicVideos[0]
+  assert.equal(contract.getPublicVideoSourceUrl(entry), 'https://youtu.be/_MN6nsn-XDM')
+  for (const reference of ['javascript:alert(1)', 'https://youtu.be.evil.test/_MN6nsn-XDM', 'https://user:secret@youtu.be/_MN6nsn-XDM', '/api/projects/private', 'https://youtu.be/_MN6nsn-XDM?token=secret']) {
+    assert.equal(contract.getPublicVideoSourceUrl({ ...entry, sourceAttribution: { ...entry.sourceAttribution, reference } }), undefined)
+  }
 })
 
 test('new museum media directories enforce the correct asset kind and preserve legacy paths', () => {
