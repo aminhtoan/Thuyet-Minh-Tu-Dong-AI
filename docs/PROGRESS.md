@@ -925,3 +925,17 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - Success tiếp tục dùng mapping workflow chung. Reject/timeout/UNKNOWN/BLOCKED fail-closed về Project Detail; navigation exception giữ Dashboard, hiện lỗi ngắn và cho phép thử lại.
 - Không sửa Backend/Database/Mobile/Admin, không gọi AI/TTS và không bật feature flag.
 - Web tests **216/216 PASS**; lint và typecheck PASS. Browser verification: NOT RUN.
+
+## UI07.7.1.4 — Dashboard Action Column Alignment
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Root cause là action track chỉ tối thiểu 80px và rule typography phía dưới ghi đè `nowrap` thành `normal`, làm “Xem chi tiết” xuống hai dòng.
+- Grid năm cột nay dành tối thiểu 112px cho Thao tác, giảm nhẹ minima/gap của các cột giữa và giữ tên dự án là cột ưu tiên. Action header/cell căn giữa; nút rộng ổn định 7rem, label và spinner luôn cùng một hàng; row min-height 68px.
+- Giữ Smart Resume, timeout/fallback/guard và dữ liệu Backend nguyên vẹn. Bảng vẫn dùng overflow cục bộ khi viewport thực sự hẹp, không dùng overflow hidden cho toàn trang.
+- Web tests **217/217 PASS**; lint, typecheck, production build và `git diff --check` PASS. Browser Desktop: NOT RUN.
+
+## UI07.7.1.5 — Unified Dashboard Continue Action
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Tất cả action trong bảng Dự án gần đây hiển thị duy nhất “Tiếp tục”; spinner + “Đang mở”, khóa double-click, timeout, AbortController và cleanup `finally` được giữ nguyên.
+- Thay đổi chỉ thuộc presentation: Smart Resume vẫn dùng Project workflow DTO và helper chung. UNKNOWN/BLOCKED/missing/API error vẫn về Project Detail an toàn; không suy luận từ ProjectStatus và không bypass WorkflowRouteGuard.
+- Link tên dự án vẫn mở Project Detail. Không sửa Backend/Database/Mobile/Admin, không gọi AI/TTS và không thêm dependency.
+- Web tests **218/218 PASS**; lint, typecheck, production build và `git diff --check` PASS. Browser Desktop: **NOT RUN**.

@@ -102,7 +102,7 @@ test('time chart remains fail-closed for the paginated 100-project dashboard req
 
 test('dashboard recent projects use only real project fields', async () => {
   const source = await readFile(new URL('../src/pages/DashboardPlaceholder.tsx', import.meta.url), 'utf8');
-  for (const label of ['Tên dự án', 'Cập nhật', 'Ngôn ngữ nguồn', 'Trạng thái', 'Xem chi tiết']) assert.match(source, new RegExp(label));
+  for (const label of ['Tên dự án', 'Cập nhật', 'Ngôn ngữ nguồn', 'Trạng thái', 'Tiếp tục']) assert.match(source, new RegExp(label));
   assert.doesNotMatch(source, /thumbnail|mockProjects|fixtureProjects/);
 });
 

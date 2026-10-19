@@ -234,9 +234,7 @@ function DashboardProjectAction({ project }: { project: Project }) {
   const resumeLock = useRef(false);
   const mountedRef = useRef(true);
   const requestControllerRef = useRef<AbortController | null>(null);
-  const cachedAction = projectAction(project);
-  const cachedCanResume = project.workflow?.canResume === true && cachedAction.available && cachedAction.step !== 'unknown';
-  const label = cachedCanResume ? 'Tiếp tục' : 'Xem chi tiết';
+  const actionLabel = 'Tiếp tục';
 
   useEffect(() => {
     // React StrictMode replays setup/cleanup in development. Resetting the ref
@@ -285,9 +283,9 @@ function DashboardProjectAction({ project }: { project: Project }) {
     className="dashboard-recent-row__action"
     loading={loading}
     disabled={loading}
-    aria-label={`${label} dự án ${project.name}`}
+    aria-label={`${actionLabel} dự án ${project.name}`}
     onClick={() => void openProject()}
-  >{loading ? 'Đang mở' : label}</Button>{resumeError && <small role="alert">{resumeError}</small>}</div>;
+  >{loading ? 'Đang mở' : actionLabel}</Button>{resumeError && <small role="alert">{resumeError}</small>}</div>;
 }
 
 export function DashboardPlaceholder() {

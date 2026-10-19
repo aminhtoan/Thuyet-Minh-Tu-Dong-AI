@@ -1258,3 +1258,16 @@ Không thay đổi Customer Web. Contract workflow hiện chỉ xem CURRENT arti
 - Dashboard resume chỉ gọi Project Detail DTO để lấy workflow; không còn chờ enrichment Media/Translation không cần thiết. Thao tác có timeout 8 giây, truyền AbortSignal xuống transport và luôn giải phóng loading/lock trong `finally`.
 - Refresh-token request có timeout 15 giây và fail-closed bằng cách xóa session khi refresh thất bại; không còn shared refresh promise pending vô hạn.
 - Timeout/reject/workflow không tin cậy vẫn mở Project Detail cùng thông báo phục hồi. Chỉ khi bản thân `navigate` thất bại và trang không đổi, lỗi ngắn xuất hiện ngay tại action để người dùng thử lại.
+
+## UI07.7.1.4 — Dashboard Action Column Alignment (2026-10-19)
+
+- Cột Dự án gần đây được cân lại theo năm track với cột Thao tác tối thiểu 112px; các cột Cập nhật/Ngôn ngữ/Trạng thái co giãn nhẹ để giữ bảng trong content area Desktop.
+- Action cell và header cột cuối căn giữa, row có min-height 68px và nội dung căn giữa theo chiều dọc. Nút có chiều rộng ổn định 7rem nên đổi giữa “Tiếp tục”, “Xem chi tiết” và spinner + “Đang mở” không làm xê dịch cột.
+- `white-space: nowrap` chỉ áp dụng cho action button và các span trực tiếp bên trong; tên dự án/badge vẫn được wrap an toàn. Container bảng giữ `max-width: 100%` và overflow cục bộ cho viewport hẹp, không che nội dung hoặc gây tràn toàn trang.
+
+## UI07.7.1.5 — Unified Dashboard Continue Action (2026-10-19)
+
+- Mọi hàng trong bảng “Dự án gần đây” dùng duy nhất nhãn hành động “Tiếp tục”; trạng thái loading vẫn hiển thị spinner cùng “Đang mở” trên một dòng.
+- Nhãn được thống nhất chỉ ở lớp trình bày. Smart Resume vẫn tải Project DTO mới nhất, dùng `projectAction` và chỉ mở bước workflow khi `canResume=true` cùng dữ liệu đáng tin cậy.
+- Workflow UNKNOWN/BLOCKED/thiếu dữ liệu hoặc lỗi API tiếp tục fail-closed về Project Detail kèm thông báo an toàn. Link tên dự án vẫn luôn mở Project Detail.
+- Kích thước và căn chỉnh cột Thao tác từ UI07.7.1.4 được giữ nguyên, không thay đổi layout Dashboard hoặc WorkflowRouteGuard.

@@ -5,6 +5,7 @@ import { resolveDashboardResume } from '../src/features/projects/dashboardResume
 import { projectAction } from '../src/features/projects/projectAction.ts'
 
 const dashboardSource = await readFile(new URL('../src/pages/DashboardPlaceholder.tsx', import.meta.url), 'utf8')
+const dashboardCss = await readFile(new URL('../src/styles/dashboard.css', import.meta.url), 'utf8')
 const detailSource = await readFile(new URL('../src/pages/ProjectDetailPage.tsx', import.meta.url), 'utf8')
 const repositorySource = await readFile(new URL('../src/features/projects/projectRepository.ts', import.meta.url), 'utf8')
 const apiSource = await readFile(new URL('../src/lib/api.ts', import.meta.url), 'utf8')
@@ -149,4 +150,21 @@ test('resume fetch requests only the Project DTO and auth refresh is bounded', (
   assert.match(apiSource, /AUTH_REFRESH_TIMEOUT_MS = 15_000/)
   assert.match(apiSource, /signal: AbortSignal\.timeout\(AUTH_REFRESH_TIMEOUT_MS\)/)
   assert.match(apiSource, /catch \{ session\.clear\(\); return false \}/)
+})
+
+test('recent project action column keeps all action and loading labels on one line', () => {
+  assert.match(dashboardCss, /grid-template-columns: minmax\(150px, 1\.65fr\)[^;]+minmax\(112px, \.8fr\)/)
+  assert.match(dashboardCss, /\.dashboard-recent-row__action-cell \{[^}]*min-width: 112px;[^}]*align-self: center;[^}]*justify-items: center;/)
+  assert.match(dashboardCss, /\.dashboard \.dashboard-recent-row__action\.button \{[^}]*width: 7rem;[^}]*white-space: nowrap;/)
+  assert.match(dashboardCss, /\.dashboard \.dashboard-recent-row__action\.button > span \{ white-space: nowrap; \}/)
+  assert.doesNotMatch(dashboardCss, /\.dashboard \.dashboard-recent-row__action \{ white-space: normal; \}/)
+  assert.match(dashboardCss, /\.dashboard-recent-table \{ overflow-x: auto; \}/)
+})
+
+test('recent projects use one Continue label without changing safe resume resolution', () => {
+  assert.match(dashboardSource, /const actionLabel = 'Tiếp tục';/)
+  assert.match(dashboardSource, /aria-label=\{`\$\{actionLabel\} dự án \$\{project\.name\}`\}/)
+  assert.match(dashboardSource, /\{loading \? 'Đang mở' : actionLabel\}/)
+  assert.doesNotMatch(dashboardSource, /cachedCanResume/)
+  assert.doesNotMatch(dashboardSource, /cachedAction/)
 })
