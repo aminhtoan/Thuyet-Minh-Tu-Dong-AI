@@ -61,7 +61,7 @@ test('21 word segments retain IDs/text/times; two heuristic candidates may merge
 });
 test('bounded draft bytes and expiration during generation reject without keeping a draft', async () => {
   let now = 0; const s = source();
-  const value = { ownerId: 'owner', projectId: 'project', transcriptId: s.transcriptId, sourceLanguage: 'vi', targetLanguage: 'en', sourceRevision: revision(s), groupingVersion: 'phrase-candidates-v1', groups: candidateGroups(s), outputDigest: 'digest' };
+  const value = { ownerId: 'owner', projectId: 'project', transcriptId: s.transcriptId, transcriptRevision: 1, sourceLanguage: 'vi', targetLanguage: 'en', sourceRevision: revision(s), groupingVersion: 'phrase-candidates-v1', groups: candidateGroups(s), outputDigest: 'digest' };
   const large = new GroupDraftStore();
   await assert.rejects(large.preview('bytes', 'signature', async () => ({ ...value, groups: value.groups.map(g => ({ ...g, translatedText: 'x'.repeat(128 * 1024) })) })), code('TRANSLATION_DRAFT_TOO_LARGE'));
   const expired = new GroupDraftStore(() => now, 1000);
@@ -78,7 +78,7 @@ test('provider mapping rejects refusals, missing/reordered/duplicate/extra metad
 test('draft TTL, capacity, scoped IDs, restart, no retries, clone safety and concurrent single-flight', async () => {
   let now = 0, calls = 0;
   const store = new GroupDraftStore(() => now, 1000, 1), s = source();
-  const value = { ownerId: 'owner', projectId: 'project', transcriptId: s.transcriptId, sourceLanguage: 'vi', targetLanguage: 'en', sourceRevision: revision(s), groupingVersion: 'phrase-candidates-v1', groups: candidateGroups(s), outputDigest: 'digest' };
+  const value = { ownerId: 'owner', projectId: 'project', transcriptId: s.transcriptId, transcriptRevision: 1, sourceLanguage: 'vi', targetLanguage: 'en', sourceRevision: revision(s), groupingVersion: 'phrase-candidates-v1', groups: candidateGroups(s), outputDigest: 'digest' };
   const create = async () => { calls++; return value; };
   const [a, b] = await Promise.all([store.preview('key', 'signature', create), store.preview('key', 'signature', create)]);
   assert.equal(calls, 1); assert.equal(a.draftId, b.draftId);
@@ -108,6 +108,7 @@ test('schema legacy remains valid and grouped records require manual approval', 
 
 test('service and real JWT routes with mock persistence only: preview/approve/legacy/TTS', async t => {
   const s = source(), owner = new Types.ObjectId().toString(), other = new Types.ObjectId().toString(), projectId = new Types.ObjectId().toString();
+  (s as typeof s & { transcriptRevision: number }).transcriptRevision = 1;
   const project = { _id: new Types.ObjectId(projectId), userId: owner, sourceLanguage: 'vi', status: 'TRANSCRIBED' };
   const user = { _id: new Types.ObjectId(owner), fullName: 'Test only', role: 'CUSTOMER', status: 'ACTIVE' };
   let persisted: any = null, writes = 0, generations = 0;
@@ -115,7 +116,8 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
   t.mock.method(mongoose, 'connect', () => { assert.fail('Database connection forbidden'); });
   t.mock.method(Project, 'findOne', (filter: any) => query(filter._id === projectId && filter.userId === owner ? project : null));
   t.mock.method(Project, 'findOneAndUpdate', () => query(project));
-  t.mock.method(Transcript, 'findOne', () => query({ _id: new Types.ObjectId(s.transcriptId), languageCode: s.languageCode, fullText: s.fullText, status: 'READY' }));
+  t.mock.method(Transcript, 'findOne', () => query({ _id: new Types.ObjectId(s.transcriptId), languageCode: s.languageCode, fullText: s.fullText, status: 'READY', revision: 1 }));
+  t.mock.method(Transcript, 'updateOne', async (filter: any) => ({ matchedCount: filter.revision === 1 ? 1 : 0 }));
   t.mock.method(TranscriptSegment, 'find', () => query(s.segments.map(v => ({ ...v, _id: new Types.ObjectId(v.id) }))));
   t.mock.method(Language, 'exists', (f: any) => query(f.code === 'en' ? { _id: 'lang' } : null));
   t.mock.method(Translation, 'findOne', () => query(persisted)); t.mock.method(Translation, 'exists', () => query(persisted ? { _id: persisted._id } : null));

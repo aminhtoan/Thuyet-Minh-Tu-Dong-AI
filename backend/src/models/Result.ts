@@ -4,6 +4,7 @@ const resultSchema = new Schema(
   {
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true, index: true },
     narrationId: { type: Schema.Types.ObjectId, ref: 'Narration', required: true },
+    sourceNarrationRevision: { type: Number, min: 1, validate: Number.isInteger },
     languageCode: { type: String, required: true, trim: true, lowercase: true },
     videoPath: { type: String, required: true, trim: true },
     audioPath: { type: String, trim: true },

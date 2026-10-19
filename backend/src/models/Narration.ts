@@ -5,6 +5,8 @@ const narrationSchema = new Schema(
   {
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true, index: true },
     translationId: { type: Schema.Types.ObjectId, ref: 'Translation', required: true },
+    revision: { type: Number, min: 1, validate: Number.isInteger },
+    sourceTranslationRevision: { type: Number, min: 1, validate: Number.isInteger },
     voiceId: { type: Schema.Types.ObjectId, ref: 'Voice', required: true },
     languageCode: { type: String, required: true, trim: true, lowercase: true },
     speed: { type: Number, required: true, min: 0.5, max: 2 },

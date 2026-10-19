@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { AppError } from '../../utils/app-error.js';
 import type { TranslationGroup } from './group-plan.js';
 
-export type GroupDraft = { draftId: string; ownerId: string; projectId: string; transcriptId: string; sourceLanguage: string; targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: TranslationGroup[]; outputDigest: string; expiresAt: string; alignmentFormat: 'GROUPS_V1'; state: 'DRAFT' };
+export type GroupDraft = { draftId: string; ownerId: string; projectId: string; transcriptId: string; transcriptRevision: number; sourceLanguage: string; targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: TranslationGroup[]; outputDigest: string; expiresAt: string; alignmentFormat: 'GROUPS_V1'; state: 'DRAFT' };
 type Entry = { expires: number; signature: string; promise: Promise<GroupDraft> };
 // One process only. A failed generation is retained until TTL: same key never retries AI.
 export class GroupDraftStore {

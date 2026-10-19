@@ -7,13 +7,16 @@ import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { formatPreciseTimestamp } from '../src/features/transcript/transcriptPresentation.mjs';
+import { TRANSCRIPT_SEGMENT_MAX_LENGTH, validateTranscriptSegmentText } from '../src/features/transcript/transcriptEditing.mjs';
 
 const source = await readFile(new URL('../src/features/transcript/TranscriptSegmentEditor.tsx', import.meta.url), 'utf8');
 const realRequire = createRequire(import.meta.url);
 const exports = {};
 runInNewContext(ts.transpileModule(source, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS } }).outputText, {
   exports,
-  require: (name) => name.endsWith('transcriptPresentation.mjs') ? { formatPreciseTimestamp } : realRequire(name),
+  require: (name) => name.endsWith('transcriptPresentation.mjs') ? { formatPreciseTimestamp }
+    : name.endsWith('transcriptEditing.mjs') ? { TRANSCRIPT_SEGMENT_MAX_LENGTH, validateTranscriptSegmentText }
+      : realRequire(name),
 });
 const segment = { id: 'segment-test', sequence: 1, startTime: 6.7, endTime: 10.123, text: 'Thuyết minh tiếng Việt.\nGiữ nguyên lời nói <nguyên bản>.' };
 
@@ -33,7 +36,7 @@ test('compact transcript renders selectable read-only text, precise timestamps a
 test('play preserves exact start time and remains disabled until media is ready', () => {
   let sought;
   const tree = exports.TranscriptSegmentEditor({ segment, onSeek: (time) => { sought = time; }, canSeek: true });
-  const button = tree.props.children[0].props.children[1];
+  const button = tree.props.children[0].props.children[1].props.children[0];
   button.props.onClick();
   assert.equal(sought, 6.7);
   const html = renderToStaticMarkup(React.createElement(exports.TranscriptSegmentEditor, { segment, onSeek: () => {}, canSeek: false }));

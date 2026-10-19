@@ -1,5 +1,53 @@
 # API Status and Conventions
 
+## UI07.6.6.1 — Transcript revision & downstream provenance foundation (2026-10-19)
+
+Schema additive, không migration tự động:
+
+- `Transcript.revision?: integer >= 1`: content write mới khởi tạo `1`; mỗi lần thay toàn bộ transcript hợp lệ tăng đơn điệu. `updatedAt` không được dùng làm revision. Transcript legacy thiếu field là `UNKNOWN`, không được tự gán revision khi đọc.
+- `Translation.revision?`, `Translation.sourceTranscriptRevision?` liên kết bản dịch với đúng revision Transcript. GROUPS_V1 tiếp tục giữ SHA-256 `sourceRevision` và nay đồng thời giữ monotonic transcript revision.
+- `Narration.revision?`, `Narration.sourceTranslationRevision?` liên kết audio với đúng Translation revision.
+- `Result.sourceNarrationRevision?` liên kết video kết quả với đúng Narration revision.
+- `ProcessingJob` có source ID/revision tương ứng cho Translation, TTS và Video Processing. Job hoàn tất chỉ được commit nếu snapshot nguồn vẫn khớp trong transaction.
+
+`artifact-provenance.service.ts` phân loại `CURRENT / STALE / UNKNOWN`:
+
+- `CURRENT`: source ID và revision của artifact khớp chính xác source hiện hành, đồng thời toàn bộ upstream chain CURRENT.
+- `STALE`: có đủ provenance và xác định source ID/revision đã thay đổi.
+- `UNKNOWN`: thiếu provenance, revision không hợp lệ, source không tồn tại hoặc dữ liệu legacy không đủ bằng chứng. UNKNOWN không bao giờ được coi là CURRENT.
+
+Luồng tạo mới fail-closed:
+
+- Translation chụp Transcript revision trước provider và tái kiểm tra transcript/segments/job snapshot trong transaction lưu.
+- TTS chỉ dùng Translation CURRENT; chụp Translation revision và tái kiểm tra toàn chuỗi trước khi tạo Narration READY.
+- Video processing chỉ dùng Narration CURRENT; chụp Narration revision và tái kiểm tra Transcript → Translation → Narration trước khi tạo Result/COMPLETED.
+- Workflow summary batch lọc bỏ artifact/job STALE hoặc UNKNOWN mà không thêm N+1 query và không xóa dữ liệu cũ.
+
+`GET transcript` thêm `revision` (`null` cho legacy). Danh sách Translation thêm `provenanceState`; đọc một Translation cụ thể fail-closed với `409 TRANSLATION_PROVENANCE_INVALID` nếu không CURRENT. Tạo artifact mới từ transcript legacy thiếu revision trả `409 TRANSCRIPT_REVISION_UNAVAILABLE` cho đến khi có kế hoạch migration/khởi tạo được phê duyệt.
+
+Chưa có PATCH transcript segment, UI edit, migration hay endpoint xóa artifact trong bước này.
+
+## UI07.6.6 — Chỉnh sửa thủ công phân đoạn bản ghi (BLOCKED, 2026-10-19)
+
+Audit source xác nhận Backend hiện chỉ có `POST /api/projects/:id/transcription` và `GET /api/projects/:id/transcript`; chưa có endpoint cập nhật transcript an toàn để tái sử dụng. `Transcript` và `TranscriptSegment` cũng chưa có revision/version dùng cho optimistic concurrency.
+
+Chưa triển khai mutation vì các ràng buộc dữ liệu sau chưa được đáp ứng:
+
+- Legacy translation `SEGMENTS_V1` chỉ kiểm tra tập `sourceSegmentId`; sửa nội dung nhưng giữ nguyên ID sẽ khiến bản dịch cũ vẫn bị coi là hiện hành.
+- `Narration` và `Result` chưa lưu provenance của transcript/translation revision. Artifact READY cũ có thể tiếp tục được workflow và TTS sử dụng sau khi transcript thay đổi.
+- Workflow summary hiện đọc artifact READY, chưa có trạng thái stale để phân biệt dữ liệu phụ thuộc phiên bản transcript cũ.
+- Không có compare-and-set để phát hiện hai phiên cùng sửa một phân đoạn; timestamp Mongoose không phải write precondition.
+
+Contract tối thiểu đề xuất, **chưa triển khai**:
+
+- Transcript có revision ổn định (hash nội dung chuẩn hóa hoặc version tăng đơn điệu).
+- Endpoint owner-only cập nhật đúng một segment nhận `text` đã trim và `expectedRevision`; giữ nguyên segment ID, sequence, start/end, đồng thời cập nhật `fullText` và revision trong một transaction/compare-and-set.
+- Revision không khớp trả `409 TRANSCRIPT_REVISION_CONFLICT`; transcript không READY, STT đang xử lý, workflow `BLOCKED/UNKNOWN`, hoặc artifact policy chưa cho phép đều phải fail-closed.
+- Translation, Narration và Result lưu source revision/provenance và có trạng thái stale không phá hủy; workflow/TTS chỉ sử dụng artifact còn current. Không tự xóa bản dịch đã duyệt hay artifact đã tạo.
+- Server chỉ lấy owner từ JWT/project middleware, chỉ cho sửa trường `text`, validate nội dung Unicode tiếng Việt và giới hạn độ dài thống nhất với Web.
+
+Do thay đổi trên cần quyết định schema, migration/backward compatibility và chính sách đối với bản dịch/narration/result đã tồn tại, bước này không thêm route, schema hay Database write.
+
 ## S25.7.9.3.3 — GROUPS_V1 (source implemented, runtime chưa kiểm thử)
 
 Mọi endpoint bên dưới dùng JWT CUSTOMER ACTIVE và ownership dự án. Plan/preview/draft/approve yêu cầu `GROUP_TRANSLATION_ENABLED=true` (mặc định OFF). Envelope `{ success: true, data: ... }` và error JSON hiện có giữ nguyên.
@@ -361,3 +409,30 @@ List responses dự kiến có `items` và `pagination { page, limit, total, tot
 - Settings: `GET /api/admin/settings`, `PATCH /api/admin/settings`.
 
 All are proposed and unimplemented. `/api/admin/**` requires authenticated ADMIN in the future. Provider credentials, JWT/MongoDB secrets and cloud credentials must never be returned to Admin frontend; they belong to backend environment/secret management.
+## UI07.6.6.2 — Chỉnh sửa an toàn một phân đoạn bản ghi
+
+`PATCH /api/projects/:id/transcript/segments/:segmentId` yêu cầu JWT CUSTOMER và quyền sở hữu dự án.
+
+```json
+{
+  "text": "Nội dung đã chỉnh sửa",
+  "expectedRevision": 3
+}
+```
+
+- `text` được trim, không được rỗng và tối đa 4000 ký tự; body không chấp nhận field ngoài contract.
+- `expectedRevision` là số nguyên dương bắt buộc. Revision không khớp trả `409 TRANSCRIPT_REVISION_CONFLICT`.
+- Transcript legacy thiếu revision trả `409 TRANSCRIPT_REVISION_UNAVAILABLE`; API không tự backfill.
+- Khi có thay đổi, segment text, `Transcript.fullText` và revision mới được ghi trong cùng MongoDB transaction. Timestamp, sequence và segment ID không thay đổi.
+- No-op trả thành công nhưng không tăng revision. STT đang chạy trả `409 TRANSCRIPT_EDIT_NOT_ALLOWED`.
+- Response trả transcript `{ id, revision, fullText }`, segment đã cập nhật và `downstream { requiresRevalidation, artifactsPreserved, regenerationStarted }`. Artifact cũ được giữ nguyên, không có job AI/TTS/video nào tự khởi động.
+- Revision/provenance hiện có khiến Translation/Narration/Result và job hoàn tất muộn trở thành `STALE` hoặc `UNKNOWN`; workflow tiếp tục fail-closed thay vì dùng artifact lỗi thời.
+
+## UI07.6.6.3 — Downstream stale guards
+
+- Translation completion và GROUPS_V1 approve đặt write-fence theo revision của Transcript trong cùng transaction ghi Translation.
+- TTS completion đặt write-fence cho Transcript và Translation; video completion đặt write-fence cho Transcript, Translation và Narration. Fence không tăng revision nhưng làm concurrent upstream edit phát sinh write conflict/revalidation trước commit.
+- `GET /api/projects/:id/narrations/:narrationId` và endpoint audio trả `409 NARRATION_PROVENANCE_INVALID` khi chain là STALE/UNKNOWN. Danh sách narration chỉ trả artifact CURRENT.
+- `GET /api/projects/:id/results/:resultId` và endpoint file trả `409 RESULT_PROVENANCE_INVALID` khi chain là STALE/UNKNOWN. Danh sách result chỉ trả artifact CURRENT.
+- Translation detail tiếp tục trả `409 TRANSLATION_PROVENANCE_INVALID`; Translation list có `provenanceState` để phân biệt CURRENT/STALE/UNKNOWN.
+- Legacy artifact thiếu revision/provenance là UNKNOWN, không được tự gán CURRENT hoặc backfill.

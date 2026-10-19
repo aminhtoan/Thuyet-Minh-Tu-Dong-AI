@@ -1,5 +1,19 @@
 # System Architecture
 
+## UI07.6.6.1 — Revision and provenance chain
+
+Chuỗi phụ thuộc được định danh theo revision thay vì chỉ theo segment ID:
+
+`Transcript(id, revision)` → `Translation(id, revision, sourceTranscriptRevision)` → `Narration(id, revision, sourceTranslationRevision)` → `Result(sourceNarrationRevision)`.
+
+Revision là số nguyên tăng đơn điệu và chỉ thay đổi khi content write thành công. API chỉnh sửa tương lai phải dùng compare-and-set `{ _id, revision: expectedRevision }`, cập nhật segment/fullText/revision trong cùng transaction và trả conflict khi matched count bằng 0. Segment ID, sequence và timestamp không thuộc nội dung cho phép sửa.
+
+Translation/TTS/video jobs chụp source ID + revision khi bắt đầu. Ngay trước commit, transaction đọc lại toàn bộ source cần thiết, kiểm tra provenance chain và conditionally chuyển job từ PROCESSING sang COMPLETED. Job cũ hoàn tất muộn hoặc retry dùng revision cũ không thể tạo artifact CURRENT. Unique constraints và job status predicate giữ duplicate completion idempotent/fail-closed.
+
+Legacy records không bị sửa/xóa/backfill. Field revision/provenance đều optional ở schema để đọc được dữ liệu cũ, nhưng helper trả UNKNOWN khi thiếu bằng chứng. Workflow batch chỉ nhận CURRENT artifacts; UNKNOWN/STALE dẫn tới recovery BLOCKED thay vì suy đoán. Không có index hoặc migration mới trong bước này.
+
+Transaction MongoDB hiện có đủ cho atomic completion khi deployment hỗ trợ transactions. Chưa chạy integration test Database cách ly, vì vậy guarantees runtime trên deployment thật vẫn PENDING cho đến khi có MongoDB test riêng.
+
 ## S25.7.9.3.3 — Group Translation implementation
 
 Đã triển khai source theo [thiết kế](TRANSLATION_GROUP_DESIGN.md): optional GROUPS_V1 embedded/review trong Translation; không tạo collection/index/migration. Nguồn được hash canonical SHA256 (ID/lang/fullText/all ordered IDs/text/time/sequence). Server tạo candidate plan versioned, chỉ cho gộp các candidate liên tiếp. Output của Gemini chỉ có groupId/text; metadata nguồn được server gắn lại, không fake21 segments.
@@ -247,3 +261,20 @@ Customer Web hiện dùng authenticated API client cho toàn bộ workflow Custo
 S24.1 adds no collections. Customer voice discovery reads active `Language` and `Voice` documents and limits results to the configured TTS provider. Admin routes build safe read DTOs from existing User, Project, Media, Translation, ProcessingJob, Language, Voice and ActivityLog collections.
 
 Admin monitoring is read-only except Customer `ACTIVE`/`BLOCKED` transitions. Blocking also deletes that Customer's refresh sessions. Projects and jobs have no Admin mutation routes, preventing the monitoring UI from bypassing pipeline invariants. Settings are a read-only projection of safe effective runtime limits and capability flags; secrets and filesystem paths remain server-only.
+## Transcript segment edit transaction
+
+UI07.6.6.2 bổ sung mutation hẹp cho một `TranscriptSegment`. Middleware xác thực CUSTOMER và ownership trước controller; service vẫn kiểm tra project/user trong transaction để phòng thủ nhiều lớp.
+
+Transaction thực hiện theo thứ tự: đọc Project và active transcription job, đọc Transcript/segment, kiểm tra revision, dựng lại `fullText` theo toàn bộ segment đã sắp xếp, CAS Transcript bằng `{ _id, projectId, revision }`, rồi cập nhật đúng segment với điều kiện text cũ. Bất kỳ bước nào thất bại đều rollback. Hai request dùng cùng `expectedRevision`, kể cả sửa hai segment khác nhau, chỉ tối đa một request commit.
+
+Edit không reset `ProjectStatus`, không xóa artifact và không tự tạo job. Provenance chain `Transcript -> Translation -> Narration -> Result` cùng source snapshot của ProcessingJob làm downstream cũ không còn CURRENT. Job hoàn tất muộn bị các completion guard từ chối; workflow summary fail-closed khi không đủ bằng chứng. Transcript legacy thiếu revision không được chỉnh sửa cho tới khi có quy trình migration riêng được phê duyệt.
+
+## Downstream revision fences
+
+Đọc lại provenance trong transaction là cần thiết nhưng chưa đủ khi upstream edit và downstream completion ghi các document khác nhau. UI07.6.6.3 dùng một no-increment CAS write-fence (`$set revision` về đúng revision đang kỳ vọng) trên từng upstream document trước khi tạo artifact hoặc hoàn tất job.
+
+- Translation/approve khóa revision của Transcript.
+- TTS khóa revision của Transcript và Translation.
+- Video khóa revision của Transcript, Translation và Narration.
+
+PATCH transcript và các completion transaction vì vậy cùng tham gia ghi Transcript; concurrent approve/edit hoặc late completion/edit không thể cùng commit từ cùng snapshot. Fence không đổi revision, nội dung hay ProjectStatus. Artifact cũ vẫn được giữ, nhưng workflow batch chỉ đưa CURRENT evidence vào resolver; endpoint đọc/phát Narration và Result cũng fail-closed với STALE/UNKNOWN.

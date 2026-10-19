@@ -7,6 +7,9 @@ const transcriptSchema = new Schema(
     languageCode: { type: String, required: true, trim: true, lowercase: true },
     fullText: { type: String, required: true, default: '' },
     status: { type: String, enum: CONTENT_STATUSES, required: true, default: 'READY' },
+    // Optional for backward compatibility. New content writes initialize this to 1;
+    // later text edits must use it as an atomic compare-and-set precondition.
+    revision: { type: Number, min: 1, validate: Number.isInteger },
   },
   { timestamps: true },
 );

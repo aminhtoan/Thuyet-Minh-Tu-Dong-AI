@@ -14,8 +14,15 @@ export type Transcript = {
   projectId: string
   languageCode: LanguageCode
   fullText: string
+  revision: number | null
   status: 'READY' | 'SAVED'
   segments: TranscriptSegment[]
   createdAt: string
   updatedAt: string
+}
+
+export type TranscriptSegmentUpdate = {
+  transcript: { id: string; revision: number; fullText: string }
+  segment: { id: string; index: number; startTime: number; endTime: number; text: string }
+  downstream: { requiresRevalidation: boolean; artifactsPreserved: boolean; regenerationStarted: boolean }
 }

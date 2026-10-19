@@ -27,6 +27,7 @@ test('real JWT/ownership routes + translation service, all persistence mocked', 
   const user = { _id: owner, fullName: 'Mock test', email: 'mock@example.test', role: 'CUSTOMER', status: 'ACTIVE' };
   const project = { _id: projectId, userId: owner, sourceLanguage: 'vi', status: 'TRANSCRIBED' };
   const transcript = { _id: transcriptId, languageCode: 'vi', fullText: 'Nguyễn Hữu Huân, 12 Long Châu' };
+  (transcript as typeof transcript & { revision: number }).revision = 1;
   const sources = [{ _id: new Types.ObjectId(), sequence: 1, startTime: .12, endTime: 1.2, text: 'Nguyễn Hữu Huân' }, { _id: new Types.ObjectId(), sequence: 2, startTime: 1.2, endTime: 3.45, text: '12 Long Châu' }];
   let saved: any = null, savedSegments: any[] = [], missing = false, generated = 0, writes = 0, jobs = 0, race = false;
   t.mock.method(User, 'findById', async (id: string) => id === owner.toString() ? user : { ...user, _id: other });
@@ -36,15 +37,17 @@ test('real JWT/ownership routes + translation service, all persistence mocked', 
   t.mock.method(Project, 'findOneAndUpdate', async () => ({ ...project }));
   t.mock.method(Project, 'updateOne', async () => ({}));
   t.mock.method(Transcript, 'findOne', async () => missing ? null : transcript);
+  t.mock.method(Transcript, 'updateOne', async (filter: any) => ({ matchedCount: filter.revision === transcript.revision ? 1 : 0 }));
   t.mock.method(TranscriptSegment, 'find', () => query(race ? [{ ...sources[0], _id: new Types.ObjectId() }, sources[1]] : sources));
   t.mock.method(Translation, 'findOne', async () => saved);
-  t.mock.method(Translation, 'findOneAndUpdate', async (_filter: any, update: any) => { writes++; saved = { ...update, _id: saved?._id ?? new Types.ObjectId(), createdAt: new Date(), updatedAt: new Date() }; return saved; });
+  t.mock.method(Translation, 'findOneAndUpdate', async (_filter: any, update: any) => { writes++; saved = { ...(saved ?? {}), ...(update.$set ?? update), _id: saved?._id ?? new Types.ObjectId(), createdAt: saved?.createdAt ?? new Date(), updatedAt: new Date() }; return saved; });
+  t.mock.method(Translation, 'create', async (rows: any[]) => { writes++; saved = { ...rows[0], _id: new Types.ObjectId(), createdAt: new Date(), updatedAt: new Date() }; return [saved]; });
   t.mock.method(TranslationSegment, 'find', async () => savedSegments);
   t.mock.method(TranslationSegment, 'countDocuments', async () => savedSegments.length);
   t.mock.method(TranslationSegment, 'deleteMany', async () => { savedSegments = []; });
   t.mock.method(TranslationSegment, 'insertMany', async (rows: any[]) => { savedSegments = rows; });
   t.mock.method(ProcessingJob, 'create', async () => { jobs++; return { _id: new Types.ObjectId() }; });
-  t.mock.method(ProcessingJob, 'updateOne', async () => ({}));
+  t.mock.method(ProcessingJob, 'updateOne', async () => ({ matchedCount: 1 }));
   t.mock.method(ActivityLog, 'create', async () => ({}));
   t.mock.method(mongoose, 'startSession', async () => ({ async withTransaction(action: () => Promise<void>) { await action(); }, async endSession() {} }));
   const provider = { async translate(input: any) { generated++; return { ...input, segments: input.segments.map((segment: any) => ({ index: segment.index, text: segment.text })) }; } };

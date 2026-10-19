@@ -3,7 +3,7 @@ import { AppError } from '../../utils/app-error.js';
 
 export const GROUPING_VERSION = 'phrase-candidates-v1';
 export type SourceSegment = { id: string; sequence: number; text: string; startTime: number; endTime: number };
-export type SourceSnapshot = { transcriptId: string; languageCode: string; fullText: string; segments: SourceSegment[] };
+export type SourceSnapshot = { transcriptId: string; transcriptRevision?: number | null; languageCode: string; fullText: string; segments: SourceSegment[] };
 export type TranslationGroup = { groupId: string; sequence: number; sourceSegmentIds: string[]; sourceText: string; translatedText: string; startTime: number; endTime: number };
 function canonical(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonical);

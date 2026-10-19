@@ -15,6 +15,7 @@ import { GeminiTranslationError, GEMINI_TRANSLATION_ERRORS, assertGeminiTranslat
 import { isTranslationMappingCurrent } from './translation/translation-mapping.js';
 import type { TranslationProviderSegment } from './translation/translation-provider.interface.js';
 import { groupedDto } from './translation/group-translation.service.js';
+import { isRevision, nextRevision, revisionFenceOperation, translationProvenance, type ProvenanceState } from './artifact-provenance.service.js';
 
 const writeLog = async (userId: string, action: string, projectId: Types.ObjectId, targetLanguage: string) => {
   try {
@@ -22,20 +23,24 @@ const writeLog = async (userId: string, action: string, projectId: Types.ObjectI
   } catch { /* best effort */ }
 };
 
-const summary = async (translation: { _id: Types.ObjectId; projectId: Types.ObjectId; sourceLanguage: string; targetLanguage: string; fullText: string; createdAt: Date; updatedAt: Date; alignmentFormat?: string | null; groups?: { sourceSegmentIds: Types.ObjectId[] }[] | null; review?: unknown }) => ({
+const summary = async (translation: { _id: Types.ObjectId; projectId: Types.ObjectId; sourceLanguage: string; targetLanguage: string; fullText: string; createdAt: Date; updatedAt: Date; alignmentFormat?: string | null; groups?: { sourceSegmentIds: Types.ObjectId[] }[] | null; review?: unknown }, provenanceState?: ProvenanceState) => ({
   id: translation._id.toString(), projectId: translation.projectId.toString(), sourceLanguage: translation.sourceLanguage,
   targetLanguage: translation.targetLanguage, fullText: translation.fullText,
+  ...(provenanceState ? { provenanceState } : {}),
   ...(translation.alignmentFormat === 'GROUPS_V1' ? { alignmentFormat: 'GROUPS_V1', groupCount: translation.groups?.length ?? 0, sourceSegmentCount: translation.groups?.reduce((n, g) => n + g.sourceSegmentIds.length, 0) ?? 0, reviewed: Boolean(translation.review) } : { alignmentFormat: 'SEGMENTS_V1', segmentCount: await TranslationSegment.countDocuments({ translationId: translation._id }) }),
   createdAt: translation.createdAt, updatedAt: translation.updatedAt,
 });
 
 export const listTranslations = async (projectId: string) => {
   const translations = await Translation.find({ projectId, status: 'READY' }).sort({ createdAt: 1 });
-  return Promise.all(translations.map((translation) => summary(translation)));
+  const transcript = await Transcript.findOne({ projectId });
+  return Promise.all(translations.map((translation) => summary(translation, translationProvenance(translation, transcript))));
 };
 
 export const getTranslation = async (projectId: string, targetLanguage: string, supportsGroups = false) => {
   const translation = await Translation.findOne({ projectId, targetLanguage, status: 'READY' });
+  const currentTranscript = translation ? await Transcript.findOne({ _id: translation.transcriptId, projectId }) : null;
+  if (translation && translationProvenance(translation, currentTranscript) !== 'CURRENT') throw new AppError(409, 'TRANSLATION_PROVENANCE_INVALID', 'Translation provenance is missing or stale.');
   if (!translation) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Không tìm thấy bản dịch.');
   if (translation.alignmentFormat === 'GROUPS_V1') {
     if (!supportsGroups) throw new AppError(409, 'TRANSLATION_FORMAT_UNSUPPORTED', 'Bản dịch theo cụm cần ứng dụng hỗ trợ GROUPS_V1.');
@@ -46,7 +51,7 @@ export const getTranslation = async (projectId: string, targetLanguage: string, 
   if (!isTranslationMappingCurrent(sourceSegments, translatedSegments)) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Bản dịch không còn khớp bản ghi hiện tại. Vui lòng dịch lại.');
   const bySource = new Map(translatedSegments.map((segment) => [segment.transcriptSegmentId.toString(), segment]));
   return {
-    ...(await summary(translation)),
+    ...(await summary(translation, 'CURRENT')),
     segments: sourceSegments.map((source) => ({
       index: source.sequence - 1, sourceSegmentId: source._id.toString(), text: bySource.get(source._id.toString())?.translatedText ?? '',
     })),
@@ -72,12 +77,13 @@ export const translate = async (projectId: string, userId: string, targetLanguag
   if (project.sourceLanguage === targetLanguage) throw new AppError(400, 'SAME_SOURCE_TARGET_LANGUAGE', 'Ngôn ngữ đích phải khác ngôn ngữ nguồn.');
   if (!await Language.exists({ code: targetLanguage, isActive: true })) throw new AppError(400, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED', 'Ngôn ngữ đích chưa được hệ thống hỗ trợ.');
   const transcript = await Transcript.findOne({ projectId });
+  if (transcript && !isRevision(transcript.revision)) throw new AppError(409, 'TRANSCRIPT_REVISION_UNAVAILABLE', 'Transcript revision is unavailable for safe artifact creation.');
   if (!transcript) throw new AppError(404, 'TRANSCRIPT_NOT_FOUND', 'Không tìm thấy bản ghi.');
   const sourceSegments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 });
   if (!transcript.fullText.trim() || !sourceSegments.length || sourceSegments.some((segment) => !segment.text.trim())) throw new AppError(409, 'TRANSCRIPT_NOT_FOUND', 'Bản ghi không có nội dung có thể dịch.');
   const existing = await Translation.findOne({ transcriptId: transcript._id, targetLanguage, status: 'READY' });
   if (existing?.alignmentFormat === 'GROUPS_V1') throw new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Đã có bản dịch theo cụm; không ghi đè bằng luồng cũ.');
-  if (existing && isTranslationMappingCurrent(sourceSegments, await TranslationSegment.find({ translationId: existing._id }))) return { project: { id: projectId, status: project.status }, translation: await getTranslation(projectId, targetLanguage), idempotent: true };
+  if (existing && translationProvenance(existing, transcript) === 'CURRENT' && isTranslationMappingCurrent(sourceSegments, await TranslationSegment.find({ translationId: existing._id }))) return { project: { id: projectId, status: project.status }, translation: await getTranslation(projectId, targetLanguage), idempotent: true };
   if (!['TRANSCRIBED', 'TRANSLATED', 'FAILED'].includes(project.status)) {
     if (project.status === 'TRANSLATING') throw new AppError(409, 'TRANSLATION_ALREADY_RUNNING', 'Dự án đang được dịch.');
     throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép dịch.');
@@ -89,7 +95,8 @@ export const translate = async (projectId: string, userId: string, targetLanguag
 
   let job;
   try {
-    job = await ProcessingJob.create({ projectId, type: 'TRANSLATION', targetLanguage, status: 'PROCESSING', progress: 0, startedAt: new Date() });
+    job = await ProcessingJob.create({ projectId, type: 'TRANSLATION', targetLanguage, sourceTranscriptId: transcript._id,
+      sourceTranscriptRevision: transcript.revision, status: 'PROCESSING', progress: 0, startedAt: new Date() });
   } catch (error) {
     if (isDuplicateKey(error)) throw new AppError(409, 'TRANSLATION_ALREADY_RUNNING', 'Bản dịch cho ngôn ngữ này đang được xử lý.');
     throw error;
@@ -112,19 +119,35 @@ export const translate = async (projectId: string, userId: string, targetLanguag
     let translationId = '';
     try {
       await session.withTransaction(async () => {
+        const currentTranscript = await Transcript.findOne({ _id: transcript._id }, undefined, { session });
+        if (!currentTranscript || currentTranscript.revision !== transcript.revision) throw new Error('TRANSLATION_MAPPING_FAILED');
+        const transcriptFence = revisionFenceOperation(currentTranscript._id, transcript.revision);
+        const fencedTranscript = await Transcript.updateOne(transcriptFence.filter, transcriptFence.update, { session });
+        if (fencedTranscript.matchedCount !== 1) throw new Error('TRANSLATION_MAPPING_FAILED');
         const existingFormat = await Translation.findOne({ transcriptId: transcript._id, targetLanguage }, undefined, { session });
         if (existingFormat?.alignmentFormat === 'GROUPS_V1') throw new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Đã có bản dịch theo cụm; không ghi đè bằng luồng cũ.');
         const current = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 }).session(session);
         if (current.length !== sourceSegments.length || current.some((segment, index) => segment._id.toString() !== sourceSegments[index]?._id.toString() || segment.text !== sourceSegments[index]?.text || segment.startTime !== sourceSegments[index]?.startTime || segment.endTime !== sourceSegments[index]?.endTime)) throw new Error('TRANSLATION_MAPPING_FAILED');
-        const translation = await Translation.findOneAndUpdate(
-          { transcriptId: transcript._id, targetLanguage },
-          { projectId, transcriptId: transcript._id, sourceLanguage: transcript.languageCode, targetLanguage, fullText: translated.map((segment) => segment.text).join(' '), status: 'READY' },
-          { upsert: true, returnDocument: 'after', session },
-        );
+        const translationRevision = nextRevision(existingFormat?.revision);
+        const values = { projectId, transcriptId: transcript._id, sourceLanguage: transcript.languageCode, targetLanguage,
+          fullText: translated.map((segment) => segment.text).join(' '), status: 'READY' as const, alignmentFormat: 'SEGMENTS_V1' as const,
+          revision: translationRevision, sourceTranscriptRevision: transcript.revision };
+        const translation = existingFormat
+          ? await Translation.findOneAndUpdate(
+            { _id: existingFormat._id, ...(existingFormat.revision === undefined ? { revision: { $exists: false } } : { revision: existingFormat.revision }) },
+            { $set: values, $unset: { sourceRevision: 1, groupingVersion: 1, groups: 1, review: 1 } },
+            { returnDocument: 'after', session },
+          )
+          : (await Translation.create([values], { session }))[0];
+        if (!translation) throw new Error('TRANSLATION_MAPPING_FAILED');
         translationId = translation._id.toString();
         await TranslationSegment.deleteMany({ translationId: translation._id }, { session });
         await TranslationSegment.insertMany(translated.map((segment, index) => ({ translationId: translation._id, transcriptSegmentId: sourceSegments[index]?._id, translatedText: segment.text })), { session });
-        await ProcessingJob.updateOne({ _id: job._id }, { status: 'COMPLETED', progress: 100, completedAt: new Date() }, { session });
+        const completed = await ProcessingJob.updateOne(
+          { _id: job._id, status: 'PROCESSING', sourceTranscriptId: transcript._id, sourceTranscriptRevision: transcript.revision },
+          { status: 'COMPLETED', progress: 100, completedAt: new Date() }, { session },
+        );
+        if (completed.matchedCount !== 1) throw new Error('TRANSLATION_MAPPING_FAILED');
         await Project.updateOne({ _id: projectId }, { status: 'TRANSLATED', progress: 100 }, { session });
       });
     } finally { await session.endSession(); }

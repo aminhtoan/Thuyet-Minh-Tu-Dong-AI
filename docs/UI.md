@@ -1,5 +1,21 @@
 # UI Specification
 
+## UI07.6.6.1 — Transcript revision foundation (2026-10-19)
+
+- Backend foundation đã có revision/provenance fail-closed nhưng Customer Web vẫn read-only; không thêm nút “Chỉnh sửa”, textarea hoặc PATCH call trong bước này.
+- `GET transcript` có revision additive; artifact legacy thiếu provenance được Backend phân loại UNKNOWN và workflow không coi là CURRENT. UI hiện tại tiếp tục dùng recovery/blocked state thay vì tự suy đoán hoặc tự chạy lại AI.
+- Bước UI edit tương lai phải gửi `expectedRevision`, giữ nguyên segment ID/timestamp/sequence, xử lý conflict 409 và refresh dữ liệu trước khi người dùng quyết định lại. Không optimistic-success trước response server.
+
+## UI07.6.6 — Manual Transcript Segment Editing (BLOCKED, 2026-10-19)
+
+- Audit xác nhận Transcript Web hiện cố ý read-only: editor hook không mutation, `saveTranscript` báo Backend chưa hỗ trợ và mỗi segment chỉ render nội dung/timestamp. Vì Backend chưa có revision compare-and-set và downstream artifacts chưa có invalidation an toàn, nút “Chỉnh sửa” chưa được đưa vào giao diện để tránh hứa một thao tác có thể làm bản dịch/TTS/Kết quả cũ trở nên sai mà hệ thống vẫn coi là hợp lệ.
+- Thiết kế sẵn sàng triển khai sau khi contract được duyệt: mỗi segment có nút “Chỉnh sửa”; editor inline dùng label rõ ràng và textarea chứa nội dung hiện tại; “Lưu thay đổi”/“Hủy” có touch target tối thiểu 44px, focus-visible, trạng thái loading chống double-submit, validation inline tiếng Việt và vùng `role=status`/`alert` phù hợp. Hủy không mutation; lỗi conflict giữ bản server và yêu cầu người dùng tải lại thay vì ghi đè âm thầm.
+- Timestamp, sequence, segment ID và Workflow Stepper phải bất biến. UI chỉ bật chỉnh sửa khi Backend xác nhận transcript READY, workflow cho phép và không có STT đang xử lý; `BLOCKED/UNKNOWN` fail-closed.
+- Sau khi lưu, UI phải đồng bộ revision từ response và trình bày rõ các bản dịch/narration/result đã stale theo policy Backend. Không tự chạy STT, dịch, TTS hoặc tự xóa artifact đã duyệt.
+- Hướng dẫn UI UX Pro Max được áp dụng cho phương án tương lai: validation gần control, async state ổn định, thông báo lỗi truy cập được bằng bàn phím/screen reader và không dùng optimistic success trước response server.
+
+Không có application UI/CSS nào được thay đổi trong bước audit này.
+
 ## UI07.6.5 — Remove Transcript Helper Text (2026-10-18)
 
 - Transcript bỏ năm dòng helper được chỉ định tại PageHeader, read-only notice, protected-player note, số cụm/phân đoạn động và footer read-only để giảm nhiễu thị giác. Chỉ presentation của Transcript thay đổi; dữ liệu transcript, phép nhóm hiển thị và timestamp vẫn nguyên vẹn.
@@ -1188,3 +1204,57 @@ S25.7.6.1: bộ lọc riêng History có tên, thời gian theo `createdAt` vớ
 - Divider nhẹ, Thông tin cá nhân và semantic dl grid2 cột desktop/1 mobile. Label trên, giá trị ngay dưới gap6px; field gap20px/nền background/padding16px, không input/icon hoặc value căn mép phải.
 - Tablet card padding24px/mobile20px; summary wrap khi thiếu chỗ, tên/email overflow-wrap:anywhere. Giữ Header/Sidebar/auth/load/retry/logout dropdown. Card offset dùng main padding24px; mobile16+margin8px.
 - Tests58/58/lint/typecheck/build/diff check PASS; browser1440/768/375/dữ liệu phiên/logout NOT RUN. Chờ người dùng duyệt, không commit/push.
+## UI07.6.6.2 — Transcript edit API foundation
+
+Backend đã có API chỉnh sửa một phân đoạn với ownership, optimistic concurrency và transaction. Customer Web chưa được sửa trong bước này: chưa có nút/textarea chỉnh sửa. Khi UI được triển khai sau, client phải gửi revision đang hiển thị, xử lý `409 TRANSCRIPT_REVISION_CONFLICT` bằng yêu cầu tải lại và không tự chạy lại Translation/TTS/Video. Response cho biết downstream cần được xác minh lại nhưng giữ nguyên artifact cũ.
+
+## UI07.6.6.3 — Workflow stale safety
+
+Không thay đổi Customer Web. Contract workflow hiện chỉ xem CURRENT artifact là bằng chứng hoàn thành; ProjectStatus cũ không tự mở khóa bước khi provenance đã stale. API chi tiết/file của Narration và Result trả lỗi provenance rõ ràng thay vì phát artifact STALE/UNKNOWN. API list loại artifact không CURRENT; Translation list tiếp tục cung cấp `provenanceState`. WorkflowRouteGuard/Web navigation đã được audit và vẫn fail-closed khi Backend trả `UNKNOWN/BLOCKED`.
+## UI07.6.6.4 — Manual Transcript Segment Editor (2026-10-19)
+
+- Customer Web đã có editor theo từng `TranscriptSegment` nguồn: số thứ tự/timestamp chỉ đọc, textarea tối đa 4000 ký tự, bộ đếm, Lưu/Hủy, focus khi mở và trả focus khi đóng. Chỉ một editor được mở tại một thời điểm; lưu có synchronous lock chống double-submit và giữ draft khi request lỗi.
+- Editor gọi đúng `PATCH /api/projects/:id/transcript/segments/:segmentId` với `expectedRevision`, cập nhật response tại chỗ rồi refetch Transcript và Project workflow. Conflict `TRANSCRIPT_REVISION_CONFLICT` giữ nội dung đang nhập và cung cấp thao tác tải lại; không tự retry hay gọi AI.
+- Vì MongoDB replica-set transaction integration còn PENDING, runtime gate `VITE_TRANSCRIPT_SEGMENT_EDIT_ENABLED` chỉ hoạt động trong Vite development và mặc định `false`. Khi gate tắt, UI tiếp tục dùng grouped read-only presentation hiện tại và tuyệt đối không gửi PATCH.
+- Khi gate bật, trang hiển thị các segment nguồn thay vì cụm presentation để không bao giờ ghi text của một cụm vào một segment đơn. Quyền chỉnh sửa fail-closed khi thiếu revision/backend segment ID, workflow UNKNOWN/BLOCKED/PROCESSING/FAILED hoặc chưa qua bước transcript.
+- Thông báo downstream chỉ xuất hiện khi workflow trước mutation xác nhận đã đi đến Voice/Generate/Result hoặc có artifact narration/result; response `requiresRevalidation` đơn lẻ không được dùng để suy đoán có artifact.
+- Browser Desktop: NOT RUN. Việc bật gate và PATCH thật phải chờ MongoDB replica-set integration trên database test cách ly.
+
+## UI07.6.7 — Translation Desktop UI Polish (2026-10-19)
+
+- Page Header chỉ giữ tiêu đề “Bản dịch” và hành động quay lại; project context dùng nhãn “DỰ ÁN”, tên thật và badge trạng thái Backend. Trạng thái editor vẫn hiển thị riêng để không làm mất phản hồi tải/dịch/lưu.
+- Card chọn ngôn ngữ được thu gọn thành ba vùng: ngôn ngữ nguồn, catalog ngôn ngữ đích và nút Dịch. Catalog/API, workflow guard và provenance giữ nguyên; loading/error/empty của catalog vẫn được thông báo rõ ràng.
+- Đã loại bỏ các helper text và dòng thống kê cụm/phân đoạn dư thừa theo UI07.6.7. So sánh Bản gốc/Bản dịch vẫn dùng timestamp chính xác, hai cột desktop, wrapping an toàn và chuyển một cột ở màn hình hẹp.
+- GROUPS_V1 dùng cùng Page Header, project context và language card compact; lifecycle preview/approve không thay đổi.
+- Browser Desktop 1024/1280/1440: NOT RUN; không kết luận visual PASS khi chưa đo trong trình duyệt thực tế.
+
+## UI07.7.1 — Voice UI Audit & Safe Design Preview (2026-10-19)
+
+### Audit hiện trạng
+
+- Route thật `/projects/:projectId/voice` gọi `resolveWorkflowRouteAccess` trước khi mount `useVoiceEditor`; workflow UNKNOWN/BLOCKED tiếp tục fail-closed về recovery, không tải catalog, không tạo narration và không bị preview bypass.
+- Header “Giọng đọc và thuyết minh” cùng subtitle dài chưa đồng nhất thuật ngữ ngắn “Giọng đọc” ở stepper. Project context mới chỉ có tên + trạng thái editor, chưa có eyebrow “DỰ ÁN” hoặc badge ProjectStatus thật.
+- Summary đang lặp số cụm/ký tự và trích đoạn bản dịch, làm card cao. Toolbar ép tiêu đề chiếm cả hàng; filter/search và card giọng đọc cần được gom compact hơn ở bước polish thực tế.
+- `voiceService.previewVoice` chủ động từ chối phát cả khi có `previewUrl` vì chưa xác minh cơ chế authenticated media; vì vậy Audio Preview hiện chỉ có unavailable/error state, chưa thể coi là hoàn thiện.
+- Speed range bị disabled vì Backend chỉ hỗ trợ 1.0x nhưng vẫn chiếm một card lớn. Các helper có thể cân nhắc bỏ/gộp: subtitle PageHeader, thống kê cụm/ký tự, trích đoạn dài, “Máy chủ hiện hỗ trợ tốc độ đọc cố định 1.0x.” và “Tạo giọng đọc sẽ gọi dịch vụ TTS sau khi bạn xác nhận.”; vẫn phải giữ confirmation và lỗi thật.
+- Grid 3 cột chuyển 2 cột dưới 1100px và 1 cột dưới 650px; không có min-width gây tràn rõ ràng trong source. Browser 1024/1280/1440 chưa được đo thực tế.
+
+### Design Preview an toàn
+
+- Route `/design-preview/voice` chỉ tồn tại khi đồng thời là Vite development và `VITE_VOICE_DESIGN_PREVIEW_ENABLED=true`; mặc định OFF và vẫn nằm sau `RequireAuth` + `AppShell`. Không có link trong Sidebar và route không tồn tại ở production.
+- Preview không mount `useVoiceEditor`, không import/call service, không gọi Voice/TTS/AI API và không có control mutation khả dụng. Stepper nhận workflow không xác định nên mọi bước fail-closed; route workflow thật không thay đổi.
+- Mọi voice/project nội dung minh họa được gắn banner `DESIGN PREVIEW`; toàn bộ filter, search, chọn/nghe thử và CTA đều disabled. Preview chỉ đánh giá hierarchy, card density, wrapping và responsive; không xác minh dữ liệu, ownership, audio playback hay workflow thật.
+
+## UI07.7.1.2 — Smart Project Resume Navigation (2026-10-19)
+
+- Hành động tại bảng Dự án gần đây trên Dashboard tải lại Project Detail DTO trước khi điều hướng, sau đó tái sử dụng duy nhất `projectAction`/`WorkflowRouteGuard`; không suy luận bước từ `ProjectStatus` hoặc tạo bộ mapping độc lập.
+- Workflow có `canResume=true` và route hợp lệ mở trực tiếp bước `UPLOAD`, `TRANSCRIPT`, `TRANSLATION`, `VOICE`, `GENERATE` hoặc `RESULT`. Ngôn ngữ đích chỉ được đưa vào URL khi helper hiện có xác minh provenance tin cậy.
+- Workflow thiếu, `UNKNOWN`, `BLOCKED`, không thể resume, response không khớp hoặc request lỗi đều fail-closed về Project Detail. Trang chi tiết hiển thị thông báo phục hồi cục bộ; route và link tên dự án tới Project Detail vẫn được giữ nguyên.
+- Nút dùng loading/disabled state và synchronous lock chống double-click. Việc mở dự án không gọi mutation, không retry job và lớp deep-link guard vẫn là kiểm tra cuối cùng.
+
+## UI07.7.1.3 — Smart Resume Infinite Loading Fix (2026-10-19)
+
+- Root cause là lifecycle guard không tương thích React StrictMode: cleanup thử nghiệm đặt `mountedRef=false`, setup kế tiếp không khôi phục `true`, nên response thành công bị bỏ qua trước `navigate` và loading không được reset. Effect nay đặt lại ref ở mỗi setup và chỉ abort request trong cleanup thực tế.
+- Dashboard resume chỉ gọi Project Detail DTO để lấy workflow; không còn chờ enrichment Media/Translation không cần thiết. Thao tác có timeout 8 giây, truyền AbortSignal xuống transport và luôn giải phóng loading/lock trong `finally`.
+- Refresh-token request có timeout 15 giây và fail-closed bằng cách xóa session khi refresh thất bại; không còn shared refresh promise pending vô hạn.
+- Timeout/reject/workflow không tin cậy vẫn mở Project Detail cùng thông báo phục hồi. Chỉ khi bản thân `navigate` thất bại và trang không đổi, lỗi ngắn xuất hiện ngay tại action để người dùng thử lại.

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { transcriptService } from './transcriptService'
 import { getSegmentErrors, hasTranscriptChanges } from './transcriptUtils'
-import type { Transcript, TranscriptStatus } from './types'
+import type { Transcript, TranscriptSegmentUpdate, TranscriptStatus } from './types'
 
 type FailedAction = 'load' | 'generate' | 'save' | null
 
@@ -52,6 +52,23 @@ export function useTranscriptEditor(projectId: string) {
     setError(null)
     setFailedAction(null)
     requestTranscript()
+  }
+
+  function applySegmentUpdate(update: TranscriptSegmentUpdate) {
+    const apply = (value: Transcript | null) => value ? {
+      ...value,
+      fullText: update.transcript.fullText,
+      revision: update.transcript.revision,
+      segments: value.segments.map((segment) => segment.backendSegmentId === update.segment.id
+        ? { ...segment, text: update.segment.text }
+        : segment),
+    } : value
+    setDraft((value) => apply(value))
+    setSaved((value) => apply(value))
+    setGeneratedBaseline((value) => apply(value))
+    setStatus('SAVED')
+    setError(null)
+    setFailedAction(null)
   }
 
   async function generate() {
@@ -113,5 +130,5 @@ export function useTranscriptEditor(projectId: string) {
     setFailedAction(null)
   }
 
-  return { status, draft, dirty, segmentErrors, hasInvalidSegments, canSave, canReset, error, failedAction, generate, updateSegment, saveTranscript, resetChanges, retryLoad }
+  return { status, draft, dirty, segmentErrors, hasInvalidSegments, canSave, canReset, error, failedAction, generate, updateSegment, saveTranscript, resetChanges, retryLoad, refreshTranscript: requestTranscript, applySegmentUpdate }
 }

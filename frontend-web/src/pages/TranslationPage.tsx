@@ -9,6 +9,7 @@ import { WorkflowSteps } from '../components/common/WorkflowSteps';
 import { WorkflowReadOnlyNotice, WorkflowRouteRecovery } from '../components/common/WorkflowRouteGuard';
 import { PageHeader } from '../components/layout/PageHeader';
 import { resolveWorkflowRouteAccess } from '../features/projects/workflowRouteGuard';
+import { ProjectStatusBadge } from '../features/projects/ProjectStatusBadge';
 import { useProject } from '../features/projects/useProjects';
 import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
@@ -28,13 +29,13 @@ export function TranslationPage() {
   if (isLoading) return <Card><Spinner label="Đang tải dự án" /></Card>;
   if (error) return <Card><ErrorState title="Không thể tải dự án" description={error} /></Card>;
   if (!project) return <>
-    <PageHeader title="Bản dịch" description="Kiểm tra nội dung bản ghi đã dịch." />
+    <PageHeader title="Bản dịch" />
     <Card><ErrorState title="Không tìm thấy dự án" description="Dự án này không khả dụng." />
       <Link to="/projects" className="button button--secondary button--md">Quay lại dự án</Link>
     </Card>
   </>;
   const access = resolveWorkflowRouteAccess(project.workflow, 'TRANSLATION', language);
-  if (!access.allowed) return <><PageHeader title="Bản dịch" description="Kiểm tra nội dung bản ghi đã dịch." /><WorkflowRouteRecovery projectId={project.id} access={access} /></>;
+  if (!access.allowed) return <><PageHeader title="Bản dịch" /><WorkflowRouteRecovery projectId={project.id} access={access} /></>;
   const preferredTarget = language?.trim().toLowerCase() || access.targetLanguage || '';
   if (import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true') return <GroupTranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} />;
   return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} />;
@@ -51,11 +52,21 @@ function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: {
   const presentation = buildTranslationPresentation(editor.transcript?.segments ?? [], matchesSource ? editor.draft?.segments : []);
   const sourceLanguage = editor.transcript?.languageCode ?? project.sourceLanguage;
   const showSource = editor.transcript && editor.status !== 'LOADING';
+  const languageStatusMessage = editor.languageStatus === 'LOADING'
+    ? 'Đang tải danh sách ngôn ngữ...'
+    : editor.languageStatus === 'ERROR'
+      ? 'Không thể tải danh sách ngôn ngữ. Chọn Thử lại để tải lại.'
+      : editor.languageStatus === 'EMPTY'
+        ? 'Chưa có ngôn ngữ đích được cấu hình. Vui lòng liên hệ quản trị viên để bổ sung ngôn ngữ được hỗ trợ.'
+        : null;
   return <>
-    <PageHeader title="Bản dịch" description="So sánh bản ghi gốc và kiểm tra từng phân đoạn đã dịch."
+    <PageHeader title="Bản dịch"
       actions={<Button variant="secondary" disabled={editor.busy} onClick={backToTranscript}>Quay lại bản ghi</Button>} />
-    <div className="translation-heading"><div><span className="translation-label">KHÔNG GIAN DỰ ÁN</span><h2>{project.name}</h2></div>
-      <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{translationStatusLabels[editor.status]}</Badge>
+    <div className="translation-heading"><div><span className="translation-label">DỰ ÁN</span><h2>{project.name}</h2></div>
+      <div className="translation-heading__statuses">
+        <ProjectStatusBadge status={project.status} />
+        <Badge variant={editor.status === 'SAVED' ? 'success' : editor.status === 'FAILED' ? 'error' : 'info'}>{translationStatusLabels[editor.status]}</Badge>
+      </div>
     </div>
       <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="TRANSLATION" />
     <WorkflowReadOnlyNotice reason={notice} />
@@ -72,7 +83,7 @@ function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: {
         <div className="translation-language-field">
           <label htmlFor="target-language">Ngôn ngữ đích</label>
           <select id="target-language" value={editor.targetLanguage ?? ''} disabled={!canMutate || !editor.canChangeTarget}
-            aria-describedby="translation-language-help translation-language-status"
+            aria-describedby={languageStatusMessage ? 'translation-language-status' : undefined}
             onChange={(event) => editor.changeTarget(event.target.value)}>
             <option value="" disabled>Chọn ngôn ngữ cần dịch</option>
             {editor.targetChoices.map((language) => <option key={language.code} value={language.code}>
@@ -81,14 +92,11 @@ function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: {
           </select>
         </div>
         {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={!canMutate || !editor.targetLanguage || editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
-        <p id="translation-language-help" className="translation-note">Chọn ngôn ngữ để tạo hoặc mở lại bản dịch đã lưu.</p>
-        <p id="translation-language-status" className="translation-note" role="status">{editor.languageStatus === 'LOADING' ? 'Đang tải danh sách ngôn ngữ...' : editor.languageStatus === 'ERROR' ? 'Không thể tải danh sách ngôn ngữ. Chọn Thử lại để tải lại.' : editor.languageStatus === 'EMPTY' ? 'Chưa có ngôn ngữ đích được cấu hình. Vui lòng liên hệ quản trị viên để bổ sung ngôn ngữ được hỗ trợ.' : `${editor.targetChoices.length} ngôn ngữ đích khả dụng.`}</p>
-        <p className="translation-note">Bản dịch được tạo bởi dịch vụ trên máy chủ và lưu theo dự án.</p>
+        {languageStatusMessage && <p id="translation-language-status" className="translation-note" role="status">{languageStatusMessage}</p>}
       </Card>
       {editor.status === 'TRANSLATING' && <Card className="translation-loading"><Spinner label="Đang dịch bằng AI" /><p role="status">Đang dịch bằng AI...</p></Card>}
-      {!editor.draft && editor.status === 'NOT_STARTED' && <p className="translation-note" role="status">{editor.targetLanguage ? 'Chưa có bản dịch cho ngôn ngữ đã chọn.' : 'Chọn ngôn ngữ cần dịch để bắt đầu.'}</p>}
+      {!editor.draft && editor.status === 'NOT_STARTED' && editor.targetLanguage && <p className="translation-note" role="status">Chưa có bản dịch cho ngôn ngữ đã chọn.</p>}
       {presentation.notice && <p className="translation-note" role="status">{presentation.notice}</p>}
-      <p className="translation-note">{presentation.rows.length} cụm hiển thị · {editor.transcript?.segments.length ?? 0} phân đoạn gốc · Thời gian phút:giây.mili giây</p>
       <div className="translation-segments" aria-label="Phân đoạn gốc và phân đoạn đã dịch">
         {presentation.rows.map(({ source, translation }) => {
           return <TranslationSegmentRow key={source.id} source={source} translation={translation}

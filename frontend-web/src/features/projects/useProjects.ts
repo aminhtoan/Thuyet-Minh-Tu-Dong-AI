@@ -58,5 +58,12 @@ export function useProject(projectId?: string) {
     return () => { active = false; };
   }, [projectId]);
 
-  return { project, isLoading, error };
+  async function reload() {
+    if (!projectId) return;
+    setError(null);
+    try { setProject(await projectRepository.getProject(projectId)); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : 'Không thể tải dự án.'); }
+  }
+
+  return { project, isLoading, error, reload };
 }

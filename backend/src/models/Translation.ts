@@ -9,6 +9,8 @@ const translationSchema = new Schema(
     targetLanguage: { type: String, required: true, trim: true, lowercase: true },
     fullText: { type: String, required: true, trim: true },
     status: { type: String, enum: CONTENT_STATUSES, required: true, default: 'READY' },
+    revision: { type: Number, min: 1, validate: Number.isInteger },
+    sourceTranscriptRevision: { type: Number, min: 1, validate: Number.isInteger },
     alignmentFormat: { type: String, enum: ['SEGMENTS_V1', 'GROUPS_V1'] },
     sourceRevision: String,
     groupingVersion: String,

@@ -7,6 +7,7 @@ import { ProcessingJob } from '../models/ProcessingJob.js';
 import { Result } from '../models/Result.js';
 import { Transcript } from '../models/Transcript.js';
 import { Translation } from '../models/Translation.js';
+import { isRevision, jobProvenance, narrationProvenance, resultProvenance, translationProvenance, type ProvenanceState } from './artifact-provenance.service.js';
 
 export type WorkflowStep = 'UPLOAD' | 'TRANSCRIPT' | 'TRANSLATION' | 'VOICE' | 'GENERATE' | 'RESULT' | 'UNKNOWN';
 export type WorkflowState = 'READY' | 'PROCESSING' | 'FAILED' | 'COMPLETED' | 'BLOCKED';
@@ -35,10 +36,10 @@ export interface ProjectWorkflowSummary {
 
 export interface WorkflowProjectInput { id: string; status: ProjectStatus }
 export interface WorkflowMediaRecord { projectId: string; mediaType: MediaType }
-export interface WorkflowTranscriptRecord { projectId: string }
-export interface WorkflowTranslationRecord { projectId: string; targetLanguage: string }
-export interface WorkflowNarrationRecord { id: string; projectId: string; languageCode: string }
-export interface WorkflowResultRecord { projectId: string; languageCode: string }
+export interface WorkflowTranscriptRecord { id?: string; projectId: string; revision?: number | null }
+export interface WorkflowTranslationRecord { id?: string; projectId: string; transcriptId?: string; revision?: number | null; sourceTranscriptRevision?: number | null; targetLanguage: string }
+export interface WorkflowNarrationRecord { id: string; projectId: string; translationId?: string; revision?: number | null; sourceTranslationRevision?: number | null; languageCode: string }
+export interface WorkflowResultRecord { id?: string; projectId: string; narrationId?: string; sourceNarrationRevision?: number | null; languageCode: string }
 export interface WorkflowJobRecord {
   id: string;
   projectId: string;
@@ -49,6 +50,12 @@ export interface WorkflowJobRecord {
   narrationId?: string;
   errorMessage?: string;
   completedAt?: Date;
+  sourceTranscriptId?: string;
+  sourceTranscriptRevision?: number;
+  sourceTranslationId?: string;
+  sourceTranslationRevision?: number;
+  sourceNarrationId?: string;
+  sourceNarrationRevision?: number;
 }
 
 export interface ProjectWorkflowEvidence {
@@ -213,28 +220,33 @@ const mongoBatchReader: ProjectWorkflowBatchReader = {
     return rows.map((row) => ({ projectId: String(row.projectId), mediaType: row.mediaType }));
   },
   async readTranscripts(projectIds) {
-    const rows = await Transcript.find({ projectId: { $in: objectIds(projectIds) }, status: 'READY' }).select('projectId').lean();
-    return rows.map((row) => ({ projectId: String(row.projectId) }));
+    const rows = await Transcript.find({ projectId: { $in: objectIds(projectIds) }, status: 'READY' }).select('projectId revision').lean();
+    return rows.map((row) => ({ id: String(row._id), projectId: String(row.projectId), revision: row.revision }));
   },
   async readTranslations(projectIds) {
     const rows = await Translation.find({ projectId: { $in: objectIds(projectIds) }, status: 'READY' })
-      .sort({ updatedAt: -1, _id: -1 }).select('projectId targetLanguage').lean();
-    return rows.map((row) => ({ projectId: String(row.projectId), targetLanguage: row.targetLanguage }));
+      .sort({ updatedAt: -1, _id: -1 }).select('projectId transcriptId targetLanguage revision sourceTranscriptRevision').lean();
+    return rows.map((row) => ({ id: String(row._id), projectId: String(row.projectId), transcriptId: String(row.transcriptId),
+      targetLanguage: row.targetLanguage, revision: row.revision, sourceTranscriptRevision: row.sourceTranscriptRevision }));
   },
   async readNarrations(projectIds) {
     const rows = await Narration.find({ projectId: { $in: objectIds(projectIds) }, status: 'READY' })
-      .sort({ updatedAt: -1, _id: -1 }).select('projectId languageCode').lean();
-    return rows.map((row) => ({ id: String(row._id), projectId: String(row.projectId), languageCode: row.languageCode }));
+      .sort({ updatedAt: -1, _id: -1 }).select('projectId translationId languageCode revision sourceTranslationRevision').lean();
+    return rows.map((row) => ({ id: String(row._id), projectId: String(row.projectId), translationId: String(row.translationId),
+      languageCode: row.languageCode, revision: row.revision, sourceTranslationRevision: row.sourceTranslationRevision }));
   },
   async readResults(projectIds) {
     const rows = await Result.find({ projectId: { $in: objectIds(projectIds) } })
-      .sort({ updatedAt: -1, _id: -1 }).select('projectId languageCode').lean();
-    return rows.map((row) => ({ projectId: String(row.projectId), languageCode: row.languageCode }));
+      .sort({ updatedAt: -1, _id: -1 }).select('projectId narrationId languageCode sourceNarrationRevision').lean();
+    return rows.map((row) => ({ id: String(row._id), projectId: String(row.projectId), narrationId: String(row.narrationId),
+      languageCode: row.languageCode, sourceNarrationRevision: row.sourceNarrationRevision }));
   },
   async readLatestJobs(projectIds) {
     const rows = await ProcessingJob.aggregate<{ job: {
       _id: Types.ObjectId; projectId: Types.ObjectId; type: ProcessingJobType; status: ProcessingJobStatus;
       progress: number; targetLanguage?: string; narrationId?: Types.ObjectId; errorMessage?: string; completedAt?: Date;
+      sourceTranscriptId?: Types.ObjectId; sourceTranscriptRevision?: number; sourceTranslationId?: Types.ObjectId;
+      sourceTranslationRevision?: number; sourceNarrationId?: Types.ObjectId; sourceNarrationRevision?: number;
     } }>([
       { $match: { projectId: { $in: objectIds(projectIds) } } },
       { $sort: { projectId: 1, createdAt: -1, _id: -1 } },
@@ -244,6 +256,12 @@ const mongoBatchReader: ProjectWorkflowBatchReader = {
       id: String(job._id), projectId: String(job.projectId), type: job.type, status: job.status,
       progress: job.progress, targetLanguage: job.targetLanguage,
       narrationId: job.narrationId ? String(job.narrationId) : undefined,
+      sourceTranscriptId: job.sourceTranscriptId ? String(job.sourceTranscriptId) : undefined,
+      sourceTranscriptRevision: job.sourceTranscriptRevision,
+      sourceTranslationId: job.sourceTranslationId ? String(job.sourceTranslationId) : undefined,
+      sourceTranslationRevision: job.sourceTranslationRevision,
+      sourceNarrationId: job.sourceNarrationId ? String(job.sourceNarrationId) : undefined,
+      sourceNarrationRevision: job.sourceNarrationRevision,
       errorMessage: job.errorMessage, completedAt: job.completedAt,
     }));
   },
@@ -275,12 +293,46 @@ export const resolveProjectWorkflows = async (
   const narrationsByProject = groupByProject(narrations);
   const resultsByProject = groupByProject(results);
   const jobByProject = new Map(jobs.map((item) => [item.projectId, item]));
-  return new Map(projects.map((project) => [project.id, resolveProjectWorkflow(project, {
-    media: mediaByProject.get(project.id) ?? null,
-    transcript: transcriptByProject.get(project.id) ?? null,
-    translations: translationsByProject.get(project.id) ?? [],
-    narrations: narrationsByProject.get(project.id) ?? [],
-    results: resultsByProject.get(project.id) ?? [],
-    latestJob: jobByProject.get(project.id) ?? null,
-  })]));
+  return new Map(projects.map((project) => {
+    const storedTranscript = transcriptByProject.get(project.id) ?? null;
+    const transcript = storedTranscript && isRevision(storedTranscript.revision) ? storedTranscript : null;
+    const rawTranslations = translationsByProject.get(project.id) ?? [];
+    const translationStates = new Map<string, ProvenanceState>();
+    for (const translation of rawTranslations) if (translation.id) translationStates.set(translation.id, translationProvenance(translation, transcript));
+    const currentTranslations = rawTranslations.filter((translation) => translation.id && translationStates.get(translation.id) === 'CURRENT');
+    const translationById = new Map(rawTranslations.filter((item) => item.id).map((item) => [item.id!, item]));
+
+    const rawNarrations = narrationsByProject.get(project.id) ?? [];
+    const narrationStates = new Map<string, ProvenanceState>();
+    for (const narration of rawNarrations) {
+      const translation = narration.translationId ? translationById.get(narration.translationId) : undefined;
+      const upstream = translation?.id ? translationStates.get(translation.id) ?? 'UNKNOWN' : 'UNKNOWN';
+      narrationStates.set(narration.id, narrationProvenance(narration, translation, upstream));
+    }
+    const currentNarrations = rawNarrations.filter((narration) => narrationStates.get(narration.id) === 'CURRENT');
+    const narrationById = new Map(rawNarrations.map((item) => [item.id, item]));
+
+    const rawResults = resultsByProject.get(project.id) ?? [];
+    const currentResults = rawResults.filter((result) => {
+      const narration = result.narrationId ? narrationById.get(result.narrationId) : undefined;
+      const upstream = narration ? narrationStates.get(narration.id) ?? 'UNKNOWN' : 'UNKNOWN';
+      return resultProvenance(result, narration, upstream) === 'CURRENT';
+    });
+
+    const rawJob = jobByProject.get(project.id) ?? null;
+    const latestJob = rawJob && jobProvenance(rawJob, {
+      transcript,
+      translation: rawJob.sourceTranslationId ? translationById.get(rawJob.sourceTranslationId) : null,
+      narration: rawJob.sourceNarrationId ? narrationById.get(rawJob.sourceNarrationId) : null,
+    }) === 'CURRENT' ? rawJob : null;
+
+    return [project.id, resolveProjectWorkflow(project, {
+      media: mediaByProject.get(project.id) ?? null,
+      transcript,
+      translations: currentTranslations,
+      narrations: currentNarrations,
+      results: currentResults,
+      latestJob,
+    })];
+  }));
 };

@@ -37,6 +37,10 @@ export const projectRepository = {
     return { projects: await Promise.all(response.projects.map(enrich)), pagination: response.pagination };
   },
   async getProject(id: string) { const response = await api<{ project: ProjectDto }>(`/projects/${id}`); const project = await enrich(response.project); const projects = state.projects.some((item) => item.id === id) ? state.projects.map((item) => item.id === id ? project : item) : [project, ...state.projects]; setState({ projects }); return project; },
+  async getProjectForResume(id: string, signal?: AbortSignal): Promise<Project> {
+    const response = await api<{ project: ProjectDto }>(`/projects/${id}`, { signal });
+    return response.project;
+  },
   async updateProject(id: string, patch: { name?: string; description?: string; sourceLanguage?: string }) { await api(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }); await projectRepository.refresh(); },
   async deleteProject(id: string) { await api(`/projects/${id}`, { method: 'DELETE' }); setState({ projects: state.projects.filter((item) => item.id !== id) }); },
   update: (id: string, patch: Partial<Project>) => setState({ projects: state.projects.map((project) => project.id === id ? { ...project, ...patch } : project) }),

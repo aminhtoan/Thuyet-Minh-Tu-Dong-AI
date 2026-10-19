@@ -1,5 +1,21 @@
 # Project Progress
 
+## UI07.6.6.1 — Transcript Revision & Downstream Provenance Foundation (2026-10-19)
+
+- **COMPLETED — source/unit/mock validation; DB integration NOT RUN.** Đã thêm schema additive cho monotonic Transcript/Translation/Narration revision, source provenance trên Translation/Narration/Result và source snapshots trên ProcessingJob. Không có default giả: legacy thiếu field vẫn UNKNOWN.
+- Helper chung phân loại CURRENT/STALE/UNKNOWN trên toàn chuỗi. Translation/TTS/video capture source revision khi bắt đầu và revalidate trong transaction trước commit; workflow batch loại STALE/UNKNOWN khỏi evidence. Không xóa artifact cũ, không đổi status hàng loạt, không migration/seed và không thêm index.
+- Transcription content write mới khởi tạo revision 1 hoặc tăng revision hiện hành bằng compare condition; `GET transcript` trả revision additive. Chưa thêm PATCH segment hoặc UI edit.
+- Focused unit/mock tests bao phủ initialization/CAS, current-stale-unknown, legacy, chain mismatch, late job, STT revision initialization và workflow fail-closed: **57/57 PASS**. Backend lint/typecheck/build và `git diff --check` PASS.
+- Database writes: 0; AI/TTS requests: 0; integration với MongoDB transaction cách ly: NOT RUN.
+
+## UI07.6.6 — Manual Transcript Segment Editing (2026-10-19)
+
+- **BLOCKED — audit completed; unsafe mutation not implemented.** Backend chưa có PUT/PATCH transcript, Transcript/Segment chưa có revision để chống concurrent overwrite, và frontend editor hiện read-only đúng với API contract.
+- GROUPS_V1 có source revision/digest nhưng legacy `SEGMENTS_V1` chỉ kiểm tra segment IDs, nên sửa text tại chỗ có thể làm bản dịch cũ vẫn bị coi là current. Narration/Result không lưu source revision; workflow summary vẫn có thể đọc artifact READY cũ. Vì vậy chưa thể bảo đảm translation consistency hoặc ngăn TTS/Result dùng dữ liệu lỗi thời mà không mở rộng contract/schema.
+- Đã ghi proposal fail-closed trong `docs/API.md`: compare-and-set bằng `expectedRevision`, owner-only single-segment mutation, transaction cập nhật segment/fullText/revision, lỗi 409 khi conflict và provenance/stale state không phá hủy cho Translation/Narration/Result. Cần người dùng phê duyệt schema/backward compatibility và policy artifact trước khi triển khai.
+- Không sửa application source, không ghi Database, không gọi AI, không chạy migration/seed và không thay đổi Mobile/Admin. Browser verification không áp dụng cho UI chưa được triển khai.
+- Validation không ghi DB: Web tests **197/197 PASS**, Web lint/typecheck/build PASS; Backend workflow + GROUPS_V1/Gemini translation mock tests **55/55 PASS**, Backend lint/typecheck/build PASS. Lần chạy test đầu trong sandbox gặp `spawn EPERM`; kết quả PASS là lần chạy lại ngoài sandbox, không có provider/Database write.
+
 ## UI07.6.5 — Remove Transcript Helper Text (2026-10-18)
 
 - **PARTIAL — source validation; Browser Desktop NOT RUN.** Đã bỏ đúng năm chú thích được yêu cầu khỏi Transcript, gồm mô tả PageHeader, read-only notice, player security helper, thống kê cụm/phân đoạn và footer read-only. Empty-state instruction “Tạo bản ghi để bắt đầu kiểm tra” chỉ còn khi chưa có transcript và không phải thống kê động bị yêu cầu xóa.
@@ -856,3 +872,56 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - Header riêng Lịch sử, semantic table sáu cột từ dữ liệu thật, ngày giờ vi-VN, dictionary trạng thái, Project Detail link, empty/loading/error và responsive card/scroll. Bỏ các CTA tạo mới.
 - Không đổi service/API/search/filter nghiệp vụ. Giới hạn sẵn có: repository đọc tối đa 100 dự án, History chưa có pagination riêng; không suy diễn tổng bản ghi.
 - Web tests 36/36 PASS; lint/typecheck/build PASS. Không gọi paid AI, không commit; chờ người dùng duyệt.
+## UI07.6.6.2 — Safe Transcript Segment Edit API
+
+- Backend bổ sung `PATCH /api/projects/:id/transcript/segments/:segmentId`, strict validation, JWT CUSTOMER ownership và kiểm tra ownership lần nữa trong transaction.
+- CAS bắt buộc `expectedRevision`; text segment, `Transcript.fullText` và revision được ghi nguyên tử. No-op không tăng revision; concurrent request cùng revision nhận `409 TRANSCRIPT_REVISION_CONFLICT`.
+- Chặn chỉnh sửa khi STT đang chạy. Transcript legacy thiếu revision fail-closed; không backfill/migration, không reset ProjectStatus, không xóa downstream artifact và không tự chạy AI/TTS/video.
+- Downstream stale safety tiếp tục dựa trên provenance UI07.6.6.1; job cũ hoàn tất muộn không thể trở thành CURRENT.
+- Unit/mock tests: 21/21 PASS (gồm provenance, validation Unicode/strict body, fullText, no-op, CAS, rollback, ownership, not-found, active STT và legacy). Backend lint/typecheck/build PASS. Database writes: 0; AI requests: 0. Integration MongoDB transaction test vẫn PENDING cho database test replica-set cách ly.
+
+## UI07.6.6.3 — Workflow Stale Guards & Downstream Safety
+
+- Workflow batch đã được xác nhận chỉ chuyển CURRENT Translation/Narration/Result/job vào resolver; status TRANSLATED/GENERATING_AUDIO/COMPLETED với evidence stale/legacy trả UNKNOWN/BLOCKED và không sửa ProjectStatus.
+- Bổ sung no-increment revision fence tại transaction commit của Translation, GROUPS_V1 approve, TTS và video để đóng race với PATCH transcript.
+- Narration/Result detail và protected file fail-closed bằng mã provenance; list không trả artifact STALE/UNKNOWN như dữ liệu sử dụng được. Artifact/file cũ không bị xóa.
+- Focused stale-guard tests 23/23 PASS; provenance/workflow/GROUPS_V1/translation/audio-terminal regression 58/58 PASS. Backend lint/typecheck/build PASS; `git diff --check` PASS sau validation cuối.
+- Database writes: 0; AI/TTS requests: 0. MongoDB transaction integration trên replica-set test cách ly vẫn PENDING; không sử dụng development database.
+## UI07.6.6.4 — Manual Transcript Segment Editor
+
+- **PARTIAL (SOURCE/UNIT READY, RUNTIME WRITE GATED OFF)** ngày 2026-10-19.
+- Customer Web đã tích hợp editor một-segment-mỗi-lần, validation trim/rỗng/4000 ký tự/no-op, loading/double-submit guard, cancel không gọi API, giữ draft khi lỗi và xử lý riêng conflict 409.
+- Transcript DTO nay nhận `revision`; service dùng endpoint PATCH hiện có và Bearer/refresh flow chung. Sau save, state cập nhật theo response rồi refetch transcript/workflow; timestamp, sequence và segment ID không thể chỉnh trong UI.
+- Feature flag `VITE_TRANSCRIPT_SEGMENT_EDIT_ENABLED=false` là mặc định và bị giới hạn `import.meta.env.DEV`; chưa bật ghi runtime vì MongoDB transaction integration trên replica-set test cách ly vẫn PENDING.
+- Không sửa Backend/Database/Mobile/Admin, không gọi AI và không chạy PATCH trên development database. Browser verification NOT RUN.
+
+## UI07.6.7 — Translation Desktop UI Polish
+
+- **SOURCE COMPLETE** ngày 2026-10-19: tinh gọn Header, project context, language selector và khoảng cách của Translation; xóa đúng các helper text dư thừa, giữ nguyên thông báo lỗi/loading/processing và bảo vệ workflow/provenance.
+- Bản gốc/Bản dịch tiếp tục hiển thị hai cột trên desktop với timestamp chính xác, border phân tách, text wrapping và không dùng overflow hidden để che nội dung. Responsive hiện có vẫn chuyển một cột dưới 700px.
+- Không sửa Backend/API/Database, không bật transcript edit, không gọi AI và không thay đổi language catalog hoặc business logic.
+- Browser Desktop 1024/1280/1440: **NOT RUN**.
+
+## UI07.7.1 — Voice UI Audit & Safe Design Preview
+
+- **AUDIT COMPLETED / PREVIEW SOURCE READY** ngày 2026-10-19. Voice route thật vẫn fail-closed bằng Backend workflow; không sửa resolver, guard, Backend hay Database.
+- Bổ sung route preview opt-in `/design-preview/voice`, chỉ render trong Vite development khi `VITE_VOICE_DESIGN_PREVIEW_ENABLED=true`, mặc định OFF và vẫn yêu cầu `RequireAuth`.
+- Preview dùng dữ liệu minh họa có banner `DESIGN PREVIEW`, không mount hooks/services, không gọi API/TTS/AI và khóa toàn bộ control có thể tạo mutation. Transcript edit flag không thay đổi.
+- Audit ghi nhận P1: header/project context chưa đồng bộ Transcript/Translation, summary/helper text còn dài, speed fixed 1.0x chiếm card riêng; P0 contract gap: preview audio chưa có cơ chế authenticated playback đáng tin cậy.
+- Browser Desktop 1024/1280/1440: **NOT RUN**.
+
+## UI07.7.1.2 — Smart Project Resume Navigation
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Dashboard recent projects refetch workflow summary qua Project Detail API trước khi gọi `projectAction`; các route upload/transcript/translation/voice/generate/result dùng chung contract điều hướng đã có.
+- Chỉ điều hướng trực tiếp khi Backend trả `workflow.canResume=true` và guard xác nhận route hợp lệ. UNKNOWN/BLOCKED/missing/API error/mismatched project fail-closed về Project Detail kèm thông báo; không suy luận từ status, không mutation và không bypass deep-link guard.
+- Nút hành động hiển thị `Tiếp tục` khi workflow đã tải trong danh sách cho phép resume, nếu không giữ `Xem chi tiết`; click có loading và synchronous lock chống gửi lặp. Link tên dự án và route Project Detail vẫn còn nguyên.
+- Web tests **213/213 PASS**; lint, typecheck, production build và `git diff --check` PASS.
+- Browser Desktop: **NOT RUN**.
+
+## UI07.7.1.3 — Fix Dashboard Smart Resume Infinite Loading
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Sửa guard mount bị giữ `false` sau StrictMode effect replay — nguyên nhân response bị bỏ qua, không `navigate` và spinner không kết thúc trong development.
+- Resume fetch nay chỉ đọc Project Detail DTO thay vì chờ Media/Translation enrichment; timeout 8 giây + AbortController, cleanup khi unmount và `finally` bảo đảm mở khóa/loading. Auth refresh được giới hạn 15 giây.
+- Success tiếp tục dùng mapping workflow chung. Reject/timeout/UNKNOWN/BLOCKED fail-closed về Project Detail; navigation exception giữ Dashboard, hiện lỗi ngắn và cho phép thử lại.
+- Không sửa Backend/Database/Mobile/Admin, không gọi AI/TTS và không bật feature flag.
+- Web tests **216/216 PASS**; lint và typecheck PASS. Browser verification: NOT RUN.

@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Spinner } from '../../components/common/Spinner';
 import { voiceService } from '../voice/voiceService';
 import { projectRepository } from '../projects/projectRepository';
+import { ProjectStatusBadge } from '../projects/ProjectStatusBadge';
 import type { Project } from '../projects/types';
 import { transcriptService } from '../transcript/transcriptService';
 import type { Transcript } from '../transcript/types';
@@ -101,12 +102,15 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
   const displayGroups = groupedSaved?.groups ?? draft?.groups ?? groups;
   const legacy = saved && saved.alignmentFormat !== 'GROUPS_V1' && transcript ? buildTranslationPresentation(transcript.segments, mapTranslationSegments(saved.id, saved.segments, transcript.segments)) : null;
   return <>
-    <PageHeader title="Bản dịch" description="Kiểm tra cụm nguồn, xem trước bản dịch và duyệt ngữ nghĩa trước khi lưu."
+    <PageHeader title="Bản dịch"
       actions={<Link className="button button--secondary button--md" to={`/projects/${project.id}/transcript`}>Quay lại bản ghi</Link>} />
+    <div className="translation-heading"><div><span className="translation-label">DỰ ÁN</span><h2>{project.name}</h2></div>
+      <ProjectStatusBadge status={project.status} />
+    </div>
     <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="TRANSLATION" />
     <WorkflowReadOnlyNotice reason={notice} />
     <div className="group-translation-workspace">
-      <Card className="translation-language-card"><div><h2>{project.name}</h2><p>Ngôn ngữ nguồn: {translationLanguageLabel({ code: project.sourceLanguage, name: project.sourceLanguage, nativeName: '' })}</p></div>
+      <Card className="translation-language-card"><div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{translationLanguageLabel({ code: project.sourceLanguage, name: project.sourceLanguage, nativeName: '' })}</p></div>
         <div className="translation-language-field"><label htmlFor="group-target">Ngôn ngữ đích</label><select id="group-target" value={target} disabled={!canMutate || Boolean(busy)} onChange={e => changeTarget(e.target.value)}>
           <option value="">Chọn ngôn ngữ cần dịch</option>{languages.map(l => <option key={l.code} value={l.code}>{translationLanguageLabel(l)}</option>)}
         </select></div>

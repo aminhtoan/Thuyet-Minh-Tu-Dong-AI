@@ -21,29 +21,41 @@ import { activeTranscriptSegment, seekSourceMedia } from '../features/transcript
 import { WorkflowSteps } from '../components/common/WorkflowSteps'
 import { WorkflowRouteRecovery } from '../components/common/WorkflowRouteGuard'
 import { resolveWorkflowRouteAccess } from '../features/projects/workflowRouteGuard'
+import { transcriptSegmentEditingEnabled } from '../config/transcriptEditing'
+import { hasConfirmedDownstreamArtifact, transcriptEditAccess, validateTranscriptSegmentText } from '../features/transcript/transcriptEditing.mjs'
+import { transcriptService } from '../features/transcript/transcriptService'
+import type { TranscriptSegment } from '../features/transcript/types'
+import { ApiError } from '../lib/api'
 import { projectStatusLabels, transcriptStatusLabels } from '../localization/statusLabels.mjs'
 import '../styles/transcript.css'
 
 export function TranscriptPage() {
   const { projectId } = useParams<{ projectId: string }>()
-  const { project, isLoading, error } = useProject(projectId)
+  const { project, isLoading, error, reload } = useProject(projectId)
   if (isLoading) return <Card padding="lg"><Spinner label="Đang tải dự án" /></Card>
   if (error) return <Card padding="lg"><ErrorState title="Không thể tải dự án" description={error} /></Card>
   if (!project || !projectId) return <><PageHeader title="Bản ghi" description="Kiểm tra nội dung lời nói trong dự án." /><Card padding="lg"><ErrorState title="Không tìm thấy dự án" description="Dự án không tồn tại hoặc bạn không có quyền truy cập." /><Link className="button button--secondary button--md" to="/projects">Quay lại dự án</Link></Card></>
   const access = resolveWorkflowRouteAccess(project.workflow, 'TRANSCRIPT')
   if (!access.allowed) return <><PageHeader title="Bản ghi" description="Kiểm tra nội dung lời nói trong dự án." /><WorkflowRouteRecovery projectId={project.id} access={access} /></>
-  return <TranscriptWorkspace key={projectId} project={project} canMutate={access.canMutate} />
+  return <TranscriptWorkspace key={projectId} project={project} canMutate={access.canMutate} onProjectReload={reload} />
 }
 
-function TranscriptWorkspace({ project, canMutate }: { project: Project; canMutate: boolean }) {
+type SegmentEditState = { segmentId: string; originalText: string; draftText: string; error: string | null; saving: boolean; conflict: boolean }
+
+function TranscriptWorkspace({ project, canMutate, onProjectReload }: { project: Project; canMutate: boolean; onProjectReload: () => void | Promise<void> }) {
   const editor = useTranscriptEditor(project.id)
   const playerRef = useRef<HTMLMediaElement | null>(null)
   const [mediaReady, setMediaReady] = useState(false)
   const [mediaTime, setMediaTime] = useState(Number.NaN)
   const [seekError, setSeekError] = useState<string | null>(null)
+  const [segmentEdit, setSegmentEdit] = useState<SegmentEditState | null>(null)
+  const [saveFeedback, setSaveFeedback] = useState<{ saved: boolean; downstream: boolean } | null>(null)
+  const saveLockRef = useRef(false)
   let displaySegments = editor.draft?.segments ?? []
   let groupingError: string | null = null
-  try { displaySegments = groupTranscriptSegments(displaySegments) } catch (error) { groupingError = error instanceof Error ? error.message : 'Không thể hiển thị phân đoạn bản ghi.' }
+  if (!transcriptSegmentEditingEnabled) {
+    try { displaySegments = groupTranscriptSegments(displaySegments) } catch (error) { groupingError = error instanceof Error ? error.message : 'Không thể hiển thị phân đoạn bản ghi.' }
+  }
   const activeSegment = activeTranscriptSegment(displaySegments, mediaTime)
   async function seek(time: number) {
     setSeekError(null)
@@ -58,6 +70,64 @@ function TranscriptWorkspace({ project, canMutate }: { project: Project; canMuta
   const mediaIdentity = `${project.id}:${mediaState}:${project.mediaType ?? 'unknown'}:${project.mediaName ?? 'unknown'}:${project.mediaSize ?? 'unknown'}`
   const retry = editor.failedAction === 'load' ? editor.retryLoad : canMutate ? editor.failedAction === 'save' ? editor.saveTranscript : editor.generate : undefined
 
+  function returnFocus(segmentId: string) {
+    requestAnimationFrame(() => document.getElementById(`transcript-segment-${segmentId}-edit`)?.focus())
+  }
+
+  function beginSegmentEdit(segment: TranscriptSegment) {
+    const access = transcriptEditAccess(transcriptSegmentEditingEnabled, project.workflow, editor.draft?.revision ?? null, Boolean(segment.backendSegmentId))
+    if (!access.allowed) return
+    setSaveFeedback(null)
+    setSegmentEdit({ segmentId: segment.id, originalText: segment.text, draftText: segment.text, error: null, saving: false, conflict: false })
+  }
+
+  function cancelSegmentEdit() {
+    if (!segmentEdit || segmentEdit.saving) return
+    const segmentId = segmentEdit.segmentId
+    setSegmentEdit(null)
+    returnFocus(segmentId)
+  }
+
+  async function saveSegment(segment: TranscriptSegment) {
+    if (!segmentEdit || segmentEdit.segmentId !== segment.id || saveLockRef.current) return
+    const validation = validateTranscriptSegmentText(segmentEdit.draftText, segmentEdit.originalText)
+    const access = transcriptEditAccess(transcriptSegmentEditingEnabled, project.workflow, editor.draft?.revision ?? null, Boolean(segment.backendSegmentId))
+    if (!validation.valid || !validation.changed || !access.allowed || !segment.backendSegmentId || !editor.draft?.revision) {
+      setSegmentEdit((value) => value ? { ...value, error: validation.error ?? access.reason ?? 'Không thể chỉnh sửa phân đoạn này.' } : value)
+      return
+    }
+    saveLockRef.current = true
+    setSegmentEdit((value) => value ? { ...value, saving: true, error: null, conflict: false } : value)
+    const downstreamConfirmed = hasConfirmedDownstreamArtifact(project.workflow)
+    try {
+      const update = await transcriptService.updateSegment(project.id, segment.backendSegmentId, validation.text, editor.draft.revision)
+      editor.applySegmentUpdate(update)
+      setSegmentEdit(null)
+      setSaveFeedback({ saved: true, downstream: downstreamConfirmed && update.downstream.requiresRevalidation })
+      returnFocus(segment.id)
+      editor.refreshTranscript()
+      void onProjectReload()
+    } catch (cause) {
+      const conflict = cause instanceof ApiError && cause.status === 409 && cause.code === 'TRANSCRIPT_REVISION_CONFLICT'
+      const message = conflict
+        ? 'Bản ghi đã được thay đổi ở một phiên khác. Nội dung bạn nhập vẫn được giữ; hãy tải lại dữ liệu trước khi chỉnh sửa tiếp.'
+        : cause instanceof ApiError && [401, 403, 404].includes(cause.status)
+          ? 'Không thể lưu vì phiên đăng nhập hoặc quyền truy cập dự án đã thay đổi.'
+          : cause instanceof Error ? cause.message : 'Không thể lưu thay đổi. Vui lòng thử lại.'
+      setSegmentEdit((value) => value ? { ...value, saving: false, error: message, conflict } : value)
+    } finally {
+      saveLockRef.current = false
+    }
+  }
+
+  function reloadAfterConflict() {
+    if (!segmentEdit || segmentEdit.saving) return
+    setSegmentEdit(null)
+    setSaveFeedback(null)
+    editor.retryLoad()
+    void onProjectReload()
+  }
+
   return <>
     <PageHeader title="Bản ghi" actions={<Link className="button button--secondary button--md" to="/projects">Quay lại dự án</Link>} />
     <div className="transcript-intro"><div><span className="transcript-eyebrow">KHÔNG GIAN DỰ ÁN</span><h2>{project.name}</h2><p>Ngôn ngữ nguồn: {languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()} · Bản ghi được lưu trên máy chủ.</p></div><Badge variant={stage === 'TRANSCRIBED' ? 'success' : stage === 'FAILED' ? 'error' : 'info'}>{projectStatusLabels[stage]}</Badge></div>
@@ -70,7 +140,13 @@ function TranscriptWorkspace({ project, canMutate }: { project: Project; canMuta
         {editor.status === 'NOT_STARTED' && <EmptyState title="Chưa có bản ghi" description={canGenerate ? 'Phương tiện đã sẵn sàng để tạo bản ghi bằng dịch vụ nhận dạng giọng nói.' : 'Hãy tải phương tiện lên trước khi tạo bản ghi.'} action={canGenerate ? <Button onClick={editor.generate}>Tạo bản ghi</Button> : undefined} />}
         {editor.status === 'FAILED' && <ErrorState title={editor.failedAction === 'save' ? 'Không thể lưu bản ghi' : editor.failedAction === 'load' ? 'Không thể tải bản ghi' : 'Không thể tạo bản ghi'} description={editor.error ?? 'Vui lòng thử lại.'} onRetry={retry} retryLabel="Thử lại" />}
         {groupingError && <ErrorState title="Không thể hiển thị mốc thời gian" description={groupingError} onRetry={editor.retryLoad} />}
-        {editor.draft && !groupingError && displaySegments.length > 0 && editor.status !== 'LOADING' && editor.status !== 'GENERATING' && <div className="transcript-segment-list" aria-label="Các phân đoạn bản ghi">{displaySegments.map((segment) => <TranscriptSegmentEditor key={segment.id} segment={segment} error={editor.segmentErrors[segment.id]} onSeek={(time) => void seek(time)} canSeek={mediaReady} active={activeSegment === segment.id} />)}</div>}
+        {saveFeedback?.saved && <div className="transcript-edit-feedback" role="status"><strong>Đã lưu thay đổi.</strong>{saveFeedback.downstream && <span>Bản ghi đã thay đổi. Bản dịch và kết quả liên quan cần được xác minh lại.</span>}</div>}
+        {editor.draft && !groupingError && displaySegments.length > 0 && editor.status !== 'LOADING' && editor.status !== 'GENERATING' && <div className="transcript-segment-list" aria-label="Các phân đoạn bản ghi">{displaySegments.map((segment) => {
+          const editAccess = transcriptEditAccess(transcriptSegmentEditingEnabled, project.workflow, editor.draft?.revision ?? null, Boolean(segment.backendSegmentId))
+          const editing = segmentEdit?.segmentId === segment.id
+          return <TranscriptSegmentEditor key={segment.id} segment={segment} error={editor.segmentErrors[segment.id]} onSeek={(time) => void seek(time)} canSeek={mediaReady} active={activeSegment === segment.id} showEditControl={transcriptSegmentEditingEnabled} canEdit={editAccess.allowed && !segmentEdit} editDisabledReason={segmentEdit && !editing ? 'Hãy lưu hoặc hủy phân đoạn đang chỉnh sửa trước.' : editAccess.reason} editing={editing} draftText={editing ? segmentEdit.draftText : ''} editError={editing ? segmentEdit.error : null} saving={editing && segmentEdit.saving} onEdit={() => beginSegmentEdit(segment)} onDraftChange={(value) => setSegmentEdit((current) => current?.segmentId === segment.id ? { ...current, draftText: value, error: null, conflict: false } : current)} onSave={() => void saveSegment(segment)} onCancel={cancelSegmentEdit} />
+        })}</div>}
+        {segmentEdit?.conflict && <div className="transcript-edit-conflict" role="alert"><p>{segmentEdit.error}</p><Button variant="secondary" onClick={reloadAfterConflict}>Tải lại dữ liệu</Button></div>}
         {editor.draft && editor.draft.segments.length === 0 && <EmptyState title="Không có phân đoạn bản ghi" description="Thử tạo lại bản ghi từ phương tiện nguồn." action={canMutate ? <Button onClick={editor.generate}>Tạo lại bản ghi</Button> : undefined} />}
         {editor.draft && <div className="transcript-actions"><div className="transcript-actions__next"><Button variant="secondary" disabled={!canContinue} onClick={() => navigate(`/projects/${project.id}/translation`)}>Tiếp tục đến bản dịch</Button><span>{canContinue ? 'Bản ghi sẵn sàng để dịch.' : 'Bản ghi chưa sẵn sàng.'}</span></div></div>}
       </Card>

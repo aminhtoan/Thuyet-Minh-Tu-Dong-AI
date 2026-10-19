@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { ErrorState } from '../components/common/ErrorState';
@@ -21,6 +21,7 @@ import '../styles/project-detail.css';
 
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
+  const location = useLocation();
   const { project, isLoading, error } = useProject(projectId);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -35,6 +36,12 @@ export function ProjectDetailPage() {
   const uploadController = useRef<AbortController | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const resumeNavigationNotice = typeof location.state === 'object'
+    && location.state !== null
+    && 'resumeNavigationNotice' in location.state
+    && typeof location.state.resumeNavigationNotice === 'string'
+    ? location.state.resumeNavigationNotice
+    : null;
   useEffect(() => {
     if (project) {
       // Populate the editable draft after the async project detail arrives.
@@ -99,6 +106,7 @@ export function ProjectDetailPage() {
   }
   function cancelUpload() { uploadController.current?.abort(); }
   return <><PageHeader title={project.name} description={project.description || 'Chưa có mô tả cho dự án này.'} actions={<div className="project-detail-header-actions"><ProjectStatusBadge status={project.status} /><Link className="button button--secondary button--md project-detail-back" to="/projects"><Icon name="arrow" width="16" />Quay lại dự án</Link></div>} />
+    {resumeNavigationNotice && <p className="project-workflow-warning project-detail-resume-notice" role="status"><strong>Đã mở trang chi tiết an toàn.</strong> {resumeNavigationNotice}</p>}
     <div className="project-detail-layout">
       <Card padding="lg" className="project-detail-summary"><section aria-labelledby="workflow-heading"><div className="project-detail-section-heading"><span className="project-detail-section-icon" aria-hidden="true"><Icon name="sparkles" width="20" /></span><div><h2 id="workflow-heading">Tiến độ dự án</h2><p>Theo dõi các bước xử lý và tiếp tục khi dự án sẵn sàng.</p></div></div><WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="UPLOAD" />
         {project.workflow?.state === 'PROCESSING' && <div className="project-workflow-state" role="status"><strong>Dự án đang được xử lý.</strong><span>Vui lòng chờ bước hiện tại hoàn tất; trang này không tự tạo thêm tác vụ.</span>{project.workflow.processing && <ProgressBar value={project.workflow.processing.progress} label="Tiến độ xử lý" />}</div>}

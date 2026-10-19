@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { Icon, type IconName } from '../components/common/Icon';
 import { EmptyState } from '../components/common/EmptyState';
 import { ErrorState } from '../components/common/ErrorState';
 import { Spinner } from '../components/common/Spinner';
 import { ProjectStatusBadge } from '../features/projects/ProjectStatusBadge';
+import { resolveDashboardResume } from '../features/projects/dashboardResume.mjs';
+import { projectAction } from '../features/projects/projectAction';
+import { projectRepository } from '../features/projects/projectRepository';
 import { buildLinearProjectScale, buildProjectStatusDistribution, buildProjectTimeSeries, hasCompleteProjectDataset, type ProjectStatusDistributionDatum, type ProjectTimeRange } from '../features/projects/dashboardMetrics.mjs';
 import { calculateProjectStatistics, formatRelativeDate, getProjectStatusLabel, getRecentProjects, languageNames } from '../features/projects/projectUtils';
 import { useProjects } from '../features/projects/useProjects';
@@ -223,6 +227,69 @@ function StatusDonutChart({ statistics, complete }: { statistics: ReturnType<typ
   </div>;
 }
 
+function DashboardProjectAction({ project }: { project: Project }) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const resumeLock = useRef(false);
+  const mountedRef = useRef(true);
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const cachedAction = projectAction(project);
+  const cachedCanResume = project.workflow?.canResume === true && cachedAction.available && cachedAction.step !== 'unknown';
+  const label = cachedCanResume ? 'Tiếp tục' : 'Xem chi tiết';
+
+  useEffect(() => {
+    // React StrictMode replays setup/cleanup in development. Resetting the ref
+    // in every setup prevents the rehearsal cleanup from looking like a real
+    // unmount and suppressing navigation forever.
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      requestControllerRef.current?.abort();
+    };
+  }, []);
+
+  async function openProject() {
+    if (resumeLock.current) return;
+    resumeLock.current = true;
+    setLoading(true);
+    setResumeError(null);
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+    try {
+      const destination = await resolveDashboardResume(
+        project.id,
+        (projectId, signal) => projectRepository.getProjectForResume(projectId, signal),
+        projectAction,
+        { signal: controller.signal },
+      );
+      if (!mountedRef.current || controller.signal.aborted) return;
+      navigate(destination.path, {
+        state: destination.notice ? { resumeNavigationNotice: destination.notice } : undefined,
+      });
+    } catch {
+      if (mountedRef.current && !controller.signal.aborted) {
+        setResumeError('Không thể mở dự án. Vui lòng thử lại.');
+      }
+    } finally {
+      if (requestControllerRef.current === controller) requestControllerRef.current = null;
+      resumeLock.current = false;
+      if (mountedRef.current) setLoading(false);
+    }
+  }
+
+  return <div className="dashboard-recent-row__action-cell"><Button
+    type="button"
+    variant="ghost"
+    size="sm"
+    className="dashboard-recent-row__action"
+    loading={loading}
+    disabled={loading}
+    aria-label={`${label} dự án ${project.name}`}
+    onClick={() => void openProject()}
+  >{loading ? 'Đang mở' : label}</Button>{resumeError && <small role="alert">{resumeError}</small>}</div>;
+}
+
 export function DashboardPlaceholder() {
   const { projects, pagination, isLoading, error, reload } = useProjects();
   const [chartMode, setChartMode] = useState<ProjectTimeRange>('day');
@@ -245,7 +312,7 @@ export function DashboardPlaceholder() {
       </div>
       <div className="dashboard-grid">
         <Card className="dashboard-projects"><div className="section-heading"><h2>Dự án gần đây</h2><Link to="/projects">Xem tất cả <Icon name="arrow" width="14" /></Link></div>
-          {recent.length ? <div className="dashboard-recent-table"><div className="dashboard-recent-table__head" aria-hidden="true"><span>Tên dự án</span><span>Cập nhật</span><span>Ngôn ngữ nguồn</span><span>Trạng thái</span><span>Thao tác</span></div>{recent.map((project) => <article className="dashboard-recent-row" key={project.id}><strong><Link to={`/projects/${project.id}`}>{project.name}</Link></strong><time dateTime={project.updatedAt}>{formatRelativeDate(project.updatedAt)}</time><span>{languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()}</span><ProjectStatusBadge status={project.status} /><Link className="dashboard-recent-row__action" to={`/projects/${project.id}`}>Xem chi tiết</Link></article>)}</div> : <EmptyState title="Chưa có dự án" description="Tạo dự án đầu tiên để bắt đầu quy trình thuyết minh." action={<Link className="button button--primary button--sm" to="/projects/new">Tạo thuyết minh</Link>} />}
+          {recent.length ? <div className="dashboard-recent-table"><div className="dashboard-recent-table__head" aria-hidden="true"><span>Tên dự án</span><span>Cập nhật</span><span>Ngôn ngữ nguồn</span><span>Trạng thái</span><span>Thao tác</span></div>{recent.map((project) => <article className="dashboard-recent-row" key={project.id}><strong><Link to={`/projects/${project.id}`}>{project.name}</Link></strong><time dateTime={project.updatedAt}>{formatRelativeDate(project.updatedAt)}</time><span>{languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()}</span><ProjectStatusBadge status={project.status} /><DashboardProjectAction project={project} /></article>)}</div> : <EmptyState title="Chưa có dự án" description="Tạo dự án đầu tiên để bắt đầu quy trình thuyết minh." action={<Link className="button button--primary button--sm" to="/projects/new">Tạo thuyết minh</Link>} />}
         </Card>
         <Card className="dashboard-activity"><div className="section-heading"><div><h2>Hoạt động gần đây</h2><p>Cập nhật trạng thái dự án</p></div></div>{recent.length ? <ul>{recent.slice(0, 4).map((project) => <li key={project.id}><span className={`activity-icon activity-icon--${project.status.toLowerCase()}`}><Icon name={project.status === 'COMPLETED' ? 'check' : project.status === 'FAILED' ? 'alert' : 'history'} width="14" /></span><div><p><strong>{project.name}</strong> · {getProjectStatusLabel(project.status)}</p><time dateTime={project.updatedAt}>{formatRelativeDate(project.updatedAt)}</time></div></li>)}</ul> : <p className="dashboard-activity__empty">Chưa có hoạt động gần đây</p>}<Link className="activity-history" to="/history">Xem lịch sử <Icon name="arrow" width="14" /></Link></Card>
       </div>

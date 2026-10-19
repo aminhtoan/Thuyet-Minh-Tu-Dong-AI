@@ -25,6 +25,12 @@
   margin: 0 auto;
 }
 
+.project-detail-resume-notice {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto var(--space-lg);
+}
+
 .project-detail-summary,
 .project-detail-card { min-width: 0; }
 

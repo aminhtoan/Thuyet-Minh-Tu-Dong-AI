@@ -37,8 +37,10 @@ test('STT service integration with mock persistence and no external provider cal
   t.mock.method(ProcessingJob, 'updateOne', async (_filter: unknown, update: unknown) => { lastJob = update; });
   t.mock.method(ActivityLog, 'create', async () => ({}));
   t.mock.method(mongoose, 'startSession', async () => ({ withTransaction: async (fn: () => Promise<void>) => fn(), endSession: async () => {} }));
-  t.mock.method(Transcript, 'findOneAndUpdate', async (_filter: unknown, value: any) => { stored = { ...value, _id: transcriptId }; return stored; });
-  t.mock.method(Transcript, 'findOne', async () => stored);
+  const query = (value: unknown) => ({ session() { return this; }, then(resolve: (item: unknown) => void, reject: (error: unknown) => void) { return Promise.resolve(value).then(resolve, reject); } });
+  t.mock.method(Transcript, 'findOneAndUpdate', async (_filter: unknown, value: any) => { stored = { ...(stored ?? {}), ...(value.$set ?? value), _id: transcriptId }; return stored; });
+  t.mock.method(Transcript, 'create', async (rows: any[]) => { stored = { ...rows[0], _id: transcriptId }; return [stored]; });
+  t.mock.method(Transcript, 'findOne', () => query(stored));
   t.mock.method(TranscriptSegment, 'deleteMany', async () => { segments = []; });
   t.mock.method(TranscriptSegment, 'insertMany', async (items: any[]) => { segments = items.map((s) => ({ ...s, _id: new Types.ObjectId() })); });
   t.mock.method(TranscriptSegment, 'find', () => ({ sort: () => segments }));

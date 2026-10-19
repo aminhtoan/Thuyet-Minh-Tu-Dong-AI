@@ -6,6 +6,7 @@ import { navigationLabels } from '../../localization/navigationLabels.mjs'
 import { getDrawerTabTarget } from './drawerFocus.mjs'
 
 const titles: Record<string, string> = { '/dashboard': navigationLabels.dashboard, '/projects': navigationLabels.projects, '/projects/new': navigationLabels.create, '/history': navigationLabels.history, '/settings': navigationLabels.account }
+if (import.meta.env.DEV) titles['/design-preview/voice'] = 'Giọng đọc — Design Preview'
 const drawerQuery = '(max-width: 1023px)'
 const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 

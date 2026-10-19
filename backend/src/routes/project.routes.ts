@@ -15,6 +15,7 @@ import { createProjectSchema, listProjectsSchema, projectIdSchema, updateProject
 import { startTranslationSchema, targetTranslationSchema, previewTranslationSchema, draftTranslationSchema, approveTranslationSchema } from '../validators/translation.validator.js';
 import { narrationIdSchema, startNarrationSchema } from '../validators/narration.validator.js';
 import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
+import { updateTranscriptSegmentSchema } from '../validators/transcription.validator.js';
 
 export const projectRouter = Router();
 projectRouter.use(authenticate, authorize('CUSTOMER'));
@@ -29,6 +30,7 @@ projectRouter.get('/:id/media/file', requireProjectOwner, streamSourceMedia);
 projectRouter.delete('/:id/media', requireProjectOwner, mediaController.remove);
 projectRouter.post('/:id/transcription', requireProjectOwner, transcriptionController.start);
 projectRouter.get('/:id/transcript', requireProjectOwner, transcriptionController.get);
+projectRouter.patch('/:id/transcript/segments/:segmentId', validate(updateTranscriptSegmentSchema), requireProjectOwner, transcriptionController.updateSegment);
 projectRouter.post('/:id/translations', validate(startTranslationSchema), requireProjectOwner, translationController.start);
 projectRouter.get('/:id/translations', requireProjectOwner, translationController.list);
 projectRouter.get('/:id/translations/plan/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, translationController.plan);

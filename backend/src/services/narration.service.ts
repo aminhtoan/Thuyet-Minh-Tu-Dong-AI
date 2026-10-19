@@ -9,6 +9,7 @@ import { Narration } from '../models/Narration.js';
 import { ProcessingJob } from '../models/ProcessingJob.js';
 import { Project } from '../models/Project.js';
 import { Translation } from '../models/Translation.js';
+import { Transcript } from '../models/Transcript.js';
 import { Voice } from '../models/Voice.js';
 import { AppError } from '../utils/app-error.js';
 import { assertInsideUploadRoot, resolveStoredFile, safeDeleteStoredFile, uploadRoot } from '../utils/file.js';
@@ -17,6 +18,7 @@ import { getTtsProvider } from './tts/tts.service.js';
 import { OpenAiTtsError } from './tts/openai-tts.provider.js';
 import { resolveTtsTerminalStatus } from './tts/tts-terminal-state.js';
 import { assertApprovedCurrent, loadSource } from './translation/group-translation.service.js';
+import { isRevision, narrationProvenance, revisionFenceOperation, translationProvenance } from './artifact-provenance.service.js';
 
 const speed = 1;
 const log = async (userId: string, action: string, projectId: Types.ObjectId, language: string, voiceId: Types.ObjectId) => {
@@ -33,15 +35,40 @@ const serialize = async (narration: { _id: Types.ObjectId; projectId: Types.Obje
     audioUrl: `/api/projects/${narration.projectId.toString()}/narrations/${narration._id.toString()}/audio`, createdAt: narration.createdAt, updatedAt: narration.updatedAt };
 };
 
-export const listNarrations = async (projectId: string) => Promise.all((await Narration.find({ projectId, status: 'READY' }).sort({ createdAt: 1 })).map(serialize));
+const narrationState = async (projectId: string, narration: { translationId: Types.ObjectId; sourceTranslationRevision?: number | null }) => {
+  const translation = await Translation.findOne({ _id: narration.translationId, projectId, status: 'READY' });
+  const transcript = translation ? await Transcript.findOne({ _id: translation.transcriptId, projectId }) : null;
+  const upstream = translation ? translationProvenance(translation, transcript) : 'UNKNOWN';
+  return narrationProvenance(narration, translation, upstream);
+};
+const requireCurrentNarration = async (projectId: string, narration: { translationId: Types.ObjectId; sourceTranslationRevision?: number | null }) => {
+  if (await narrationState(projectId, narration) !== 'CURRENT') throw new AppError(409, 'NARRATION_PROVENANCE_INVALID', 'Narration provenance is missing or stale.');
+};
+
+export const listNarrations = async (projectId: string) => {
+  const narrations = await Narration.find({ projectId, status: 'READY' }).sort({ createdAt: 1 });
+  const translations = await Translation.find({ _id: { $in: narrations.map((item) => item.translationId) }, projectId, status: 'READY' });
+  const transcripts = await Transcript.find({ _id: { $in: translations.map((item) => item.transcriptId) }, projectId });
+  const translationById = new Map(translations.map((item) => [item._id.toString(), item]));
+  const transcriptById = new Map(transcripts.map((item) => [item._id.toString(), item]));
+  const current = narrations.filter((item) => {
+    const translation = translationById.get(item.translationId.toString());
+    const transcript = translation ? transcriptById.get(translation.transcriptId.toString()) : undefined;
+    const upstream = translation ? translationProvenance(translation, transcript) : 'UNKNOWN';
+    return narrationProvenance(item, translation, upstream) === 'CURRENT';
+  });
+  return Promise.all(current.map(serialize));
+};
 export const getNarration = async (projectId: string, narrationId: string) => {
   const narration = await Narration.findOne({ _id: narrationId, projectId, status: 'READY' });
   if (!narration) throw new AppError(404, 'NARRATION_NOT_FOUND', 'Không tìm thấy bản thuyết minh.');
+  await requireCurrentNarration(projectId, narration);
   return serialize(narration);
 };
 export const getAudio = async (projectId: string, narrationId: string) => {
   const narration = await Narration.findOne({ _id: narrationId, projectId, status: 'READY' });
   if (!narration) throw new AppError(404, 'NARRATION_NOT_FOUND', 'Không tìm thấy bản thuyết minh.');
+  await requireCurrentNarration(projectId, narration);
   try { return { audio: await readFile(resolveStoredFile(narration.audioPath)), mimeType: narration.mimeType }; }
   catch { throw new AppError(404, 'NARRATION_AUDIO_NOT_FOUND', 'Không tìm thấy tệp âm thanh thuyết minh.'); }
 };
@@ -70,10 +97,20 @@ const finalizeIdleAudioProject = async (projectId: string, userId: string) => {
       if (currentProject.status !== 'GENERATING_AUDIO') return;
       const currentMedia = await Media.findOne({ projectId }).select('mediaType').session(session);
       if (currentMedia?.mediaType !== 'AUDIO') { status = 'GENERATING_AUDIO'; return; }
-      const [readyNarration, activeJob] = await Promise.all([
-        Narration.exists({ projectId, status: 'READY' }).session(session),
+      const [readyNarrations, activeJob] = await Promise.all([
+        Narration.find({ projectId, status: 'READY' }).session(session),
         ProcessingJob.exists({ projectId, status: { $in: ['QUEUED', 'PROCESSING'] } }).session(session),
       ]);
+      const translations = await Translation.find({ _id: { $in: readyNarrations.map((item) => item.translationId) }, projectId, status: 'READY' }).session(session);
+      const transcripts = await Transcript.find({ _id: { $in: translations.map((item) => item.transcriptId) }, projectId }).session(session);
+      const translationById = new Map(translations.map((item) => [item._id.toString(), item]));
+      const transcriptById = new Map(transcripts.map((item) => [item._id.toString(), item]));
+      const readyNarration = readyNarrations.find((item) => {
+        const translation = translationById.get(item.translationId.toString());
+        const transcript = translation ? transcriptById.get(translation.transcriptId.toString()) : undefined;
+        const upstream = translation ? translationProvenance(translation, transcript) : 'UNKNOWN';
+        return narrationProvenance(item, translation, upstream) === 'CURRENT';
+      });
       const terminal = resolveTtsTerminalStatus({
         mediaType: currentMedia.mediaType, ttsSucceeded: true, narrationReady: Boolean(readyNarration),
         narrationProjectMatches: Boolean(readyNarration), hasConflictingActiveJob: Boolean(activeJob),
@@ -96,7 +133,10 @@ export const generate = async (projectId: string, userId: string, targetLanguage
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
   const translation = await Translation.findOne({ projectId, targetLanguage, status: 'READY' });
   if (!translation) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Không tìm thấy bản dịch.');
-  if (translation.alignmentFormat === 'GROUPS_V1') assertApprovedCurrent(translation, await loadSource(projectId));
+  const source = await loadSource(projectId);
+  const translationState = translationProvenance(translation, { id: source.transcriptId, revision: source.transcriptRevision });
+  if (translationState !== 'CURRENT' || !isRevision(translation.revision)) throw new AppError(409, 'TRANSLATION_PROVENANCE_INVALID', 'Translation provenance is missing or stale.');
+  if (translation.alignmentFormat === 'GROUPS_V1') assertApprovedCurrent(translation, source);
   if (!translation.fullText.trim()) throw new AppError(409, 'TRANSLATION_EMPTY', 'Bản dịch không có nội dung để tạo giọng đọc.');
   if (translation.fullText.length > 4096) throw new AppError(413, 'TTS_TEXT_TOO_LARGE', 'Nội dung vượt quá giới hạn của dịch vụ giọng đọc.');
   const media = await Media.findOne({ projectId }).select('mediaType');
@@ -104,13 +144,16 @@ export const generate = async (projectId: string, userId: string, targetLanguage
   const voice = await resolveVoice(targetLanguage, requestedVoiceId);
   const existing = await Narration.findOne({ projectId, translationId: translation._id, voiceId: voice._id, speed, status: 'READY' });
   if (existing) {
+    if (narrationProvenance(existing, translation, translationState) !== 'CURRENT') throw new AppError(409, 'NARRATION_PROVENANCE_INVALID', 'Narration provenance is missing or stale.');
     const reconciled = media.mediaType === 'AUDIO' ? await finalizeIdleAudioProject(projectId, userId) : null;
     return { project: { id: projectId, status: reconciled ?? project.status }, narration: await serialize(existing), idempotent: true };
   }
   if (!['TRANSLATED', 'GENERATING_AUDIO', 'FAILED'].includes(project.status)) throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép tạo giọng đọc.');
 
   let job;
-  try { job = await ProcessingJob.create({ projectId, type: 'TTS', targetLanguage, voiceId: voice._id, status: 'PROCESSING', progress: 0, startedAt: new Date() }); }
+  try { job = await ProcessingJob.create({ projectId, type: 'TTS', targetLanguage, voiceId: voice._id,
+    sourceTranslationId: translation._id, sourceTranslationRevision: translation.revision,
+    status: 'PROCESSING', progress: 0, startedAt: new Date() }); }
   catch (error) { if (duplicateKey(error)) throw new AppError(409, 'TTS_ALREADY_RUNNING', 'Giọng đọc này đang được tạo.'); throw error; }
   await Project.updateOne({ _id: projectId }, { status: 'GENERATING_AUDIO', progress: 0 });
   void log(userId, project.status === 'FAILED' ? 'TTS_RETRIED' : 'TTS_STARTED', project._id, targetLanguage, voice._id);
@@ -125,14 +168,26 @@ export const generate = async (projectId: string, userId: string, targetLanguage
     const session = await mongoose.startSession(); let narrationId = ''; let completedProjectStatus: 'GENERATING_AUDIO' | 'COMPLETED' = 'GENERATING_AUDIO';
     try {
       await session.withTransaction(async () => {
-        const [currentProject, currentMedia, currentJob, conflictingActiveJob] = await Promise.all([
+        const [currentProject, currentMedia, currentJob, conflictingActiveJob, currentTranslation, currentTranscript] = await Promise.all([
           Project.findOne({ _id: projectId, userId, status: 'GENERATING_AUDIO' }).session(session),
           Media.findOne({ projectId }).select('mediaType').session(session),
           ProcessingJob.findOne({ _id: job._id, projectId, type: 'TTS', status: 'PROCESSING' }).session(session),
           ProcessingJob.exists({ projectId, _id: { $ne: job._id }, status: { $in: ['QUEUED', 'PROCESSING'] } }).session(session),
+          Translation.findOne({ _id: translation._id, projectId, status: 'READY' }).session(session),
+          Transcript.findOne({ _id: translation.transcriptId, projectId }).session(session),
         ]);
-        if (!currentProject || !currentMedia || !currentJob) throw completionConflict();
+        if (!currentProject || !currentMedia || !currentJob || !currentTranslation || !currentTranscript ||
+          currentTranslation.revision !== translation.revision || translationProvenance(currentTranslation, currentTranscript) !== 'CURRENT') throw completionConflict();
+        if (currentTranslation.alignmentFormat === 'GROUPS_V1') assertApprovedCurrent(currentTranslation, await loadSource(projectId, session));
+        const transcriptFence = revisionFenceOperation(currentTranscript._id, currentTranscript.revision);
+        const translationFence = revisionFenceOperation(currentTranslation._id, currentTranslation.revision);
+        const [fencedTranscript, fencedTranslation] = await Promise.all([
+          Transcript.updateOne(transcriptFence.filter, transcriptFence.update, { session }),
+          Translation.updateOne(translationFence.filter, translationFence.update, { session }),
+        ]);
+        if (fencedTranscript.matchedCount !== 1 || fencedTranslation.matchedCount !== 1) throw completionConflict();
         const [narration] = await Narration.create([{ projectId, translationId: translation._id, voiceId: voice._id, languageCode: targetLanguage, speed,
+          revision: 1, sourceTranslationRevision: translation.revision,
           audioPath: storedPath, mimeType: result.mimeType, fileSize: result.audio.byteLength, provider: result.provider, model: result.model ?? process.env.TTS_MODEL ?? 'unknown', status: 'READY' }], { session });
         if (!narration) throw new Error('TTS_INVALID_RESPONSE'); narrationId = narration._id.toString();
         const terminal = resolveTtsTerminalStatus({
@@ -141,7 +196,7 @@ export const generate = async (projectId: string, userId: string, targetLanguage
         });
         if (!terminal) throw completionConflict();
         const completedJob = await ProcessingJob.updateOne(
-          { _id: job._id, projectId, type: 'TTS', status: 'PROCESSING' },
+          { _id: job._id, projectId, type: 'TTS', status: 'PROCESSING', sourceTranslationId: translation._id, sourceTranslationRevision: translation.revision },
           { status: 'COMPLETED', progress: 100, completedAt: new Date() },
           { session },
         );

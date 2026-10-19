@@ -35,13 +35,29 @@
 .transcript-segment--invalid { border-color: var(--color-error); background: var(--color-error-light); }
 .transcript-segment__header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .transcript-segment__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--color-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
+.transcript-segment__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.transcript-segment__edit { min-height: 44px; padding: 6px 12px; border: 1px solid var(--color-primary); border-radius: var(--radius-md); color: var(--color-primary); background: var(--color-surface); cursor: pointer; font: inherit; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.transcript-segment__edit:hover:not(:disabled) { background: var(--color-primary-light); }
+.transcript-segment__edit:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.transcript-segment__edit:disabled { border-color: var(--color-border); color: var(--color-text-muted); cursor: not-allowed; opacity: .72; }
 .transcript-segment__text { min-width: 0; color: var(--color-text-primary); font-size: 1rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
 .transcript-segment__text:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
 .transcript-segment__error { margin: 0; color: var(--color-error); font-size: var(--font-size-sm); }
+.transcript-segment__editor { display: grid; gap: 8px; min-width: 0; }
+.transcript-segment__editor label { color: var(--color-text-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.transcript-segment__editor textarea { width: 100%; min-height: 112px; resize: vertical; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-surface); font: inherit; line-height: 1.6; }
+.transcript-segment__editor textarea:focus-visible { border-color: var(--color-primary); outline: 2px solid var(--color-primary-light); outline-offset: 2px; }
+.transcript-segment__editor textarea[aria-invalid="true"] { border-color: var(--color-error); }
+.transcript-segment__editor-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.transcript-segment__editor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.transcript-edit-feedback, .transcript-edit-conflict { display: grid; gap: 6px; padding: 12px 14px; border-radius: var(--radius-md); font-size: var(--font-size-sm); line-height: 1.5; }
+.transcript-edit-feedback { border: 1px solid var(--color-success); color: var(--color-text-primary); background: var(--color-success-light); }
+.transcript-edit-conflict { justify-items: start; border: 1px solid var(--color-error); color: var(--color-error); background: var(--color-error-light); }
+.transcript-edit-conflict p { margin: 0; }
 .transcript-actions { display: grid; gap: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border); }
 .transcript-actions__error { display: block; color: var(--color-error); font-weight: var(--font-weight-medium); }
 .transcript-actions__buttons { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 .transcript-actions__next { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); color: var(--color-text-muted); font-size: var(--font-size-sm); }
 @media (max-width: 900px) { .transcript-layout { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .transcript-intro { flex-direction: column; }.transcript-segment-list { max-height: none; overflow: visible; }.transcript-actions__buttons .button { flex: 1 1 10rem; } }
+@media (max-width: 600px) { .transcript-intro { flex-direction: column; }.transcript-segment-list { max-height: none; overflow: visible; }.transcript-actions__buttons .button, .transcript-segment__editor-actions .button { flex: 1 1 10rem; }.transcript-segment__controls { width: 100%; }.transcript-segment__seek, .transcript-segment__edit { flex: 1 1 auto; justify-content: center; } }
 @media (prefers-reduced-motion: reduce) { .source-player__loading { animation: none; } }

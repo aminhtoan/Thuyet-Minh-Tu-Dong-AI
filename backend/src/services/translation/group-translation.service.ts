@@ -9,6 +9,7 @@ import { GROUPING_VERSION, assertStoredGroups, candidateGroups, digest, outputDi
 import { type GroupDraftStore, groupDraftStore } from './group-draft-store.js';
 import { GeminiGroupTranslationProvider, mapGroupResponse, type GroupProvider } from './gemini-group-translation.provider.js';
 import { GeminiTranslationError } from './gemini-translation.provider.js';
+import { isRevision, revisionFenceOperation, translationProvenance } from '../artifact-provenance.service.js';
 
 function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true') throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
@@ -17,15 +18,16 @@ export async function loadSource(projectId: string, session: ClientSession | nul
   const transcript = await Transcript.findOne({ projectId }).session(session);
   if (!transcript || !['READY', 'SAVED'].includes(transcript.status)) throw new AppError(409, 'TRANSCRIPT_NOT_FOUND', 'Chưa có bản ghi hợp lệ để dịch.');
   const segments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 }).session(session);
-  return { transcriptId: String(transcript._id), languageCode: transcript.languageCode, fullText: transcript.fullText,
+  return { transcriptId: String(transcript._id), transcriptRevision: transcript.revision, languageCode: transcript.languageCode, fullText: transcript.fullText,
     segments: segments.map(s => ({ id: String(s._id), sequence: s.sequence, text: s.text, startTime: s.startTime, endTime: s.endTime })) };
 }
-type GroupedRecord = Pick<TranslationDocument, 'alignmentFormat' | 'sourceRevision' | 'groupingVersion' | 'groups' | 'review' | 'fullText' | 'targetLanguage' | 'transcriptId' | 'sourceLanguage'>;
+type GroupedRecord = Pick<TranslationDocument, 'alignmentFormat' | 'sourceRevision' | 'sourceTranscriptRevision' | 'groupingVersion' | 'groups' | 'review' | 'fullText' | 'targetLanguage' | 'transcriptId' | 'sourceLanguage'>;
 export function storedGroups(record: GroupedRecord): TranslationGroup[] {
   return (record.groups ?? []).map(g => ({ groupId: g.groupId, sequence: g.sequence, sourceSegmentIds: g.sourceSegmentIds.map(String), sourceText: g.sourceText, translatedText: g.translatedText, startTime: g.startTime, endTime: g.endTime }));
 }
 export function assertApprovedCurrent(record: GroupedRecord, source: SourceSnapshot): void {
   if (record.alignmentFormat !== 'GROUPS_V1') return;
+  if (translationProvenance(record, { id: source.transcriptId, revision: source.transcriptRevision }) !== 'CURRENT') throw mismatch();
   if (!record.review || record.review.method !== 'MANUAL_V1' || !record.review.reviewedBy || !record.review.reviewedAt || record.review.sourceRevision !== record.sourceRevision) throw new AppError(409, 'TRANSLATION_REVIEW_REQUIRED', 'Bản dịch phải được duyệt trước khi sử dụng.');
   if (record.groupingVersion !== GROUPING_VERSION || record.sourceRevision !== revision(source) || String(record.transcriptId) !== source.transcriptId || record.sourceLanguage !== source.languageCode) throw mismatch();
   const groups = storedGroups(record); assertStoredGroups(source, groups);
@@ -35,7 +37,8 @@ export async function groupedDto(record: TranslationDocument & { _id: unknown })
   assertApprovedCurrent(record, await loadSource(String(record.projectId)));
   const groups = storedGroups(record);
   return { id: String(record._id), projectId: String(record.projectId), sourceLanguage: record.sourceLanguage, targetLanguage: record.targetLanguage,
-    alignmentFormat: 'GROUPS_V1' as const, state: 'APPROVED' as const, sourceRevision: record.sourceRevision, groupingVersion: record.groupingVersion,
+    alignmentFormat: 'GROUPS_V1' as const, state: 'APPROVED' as const, provenanceState: 'CURRENT' as const,
+    sourceRevision: record.sourceRevision, transcriptRevision: record.sourceTranscriptRevision, groupingVersion: record.groupingVersion,
     fullText: record.fullText, groups: groups.map(g => ({ ...g, targetLanguageCode: record.targetLanguage })), sourceSegmentCount: groups.reduce((n, g) => n + g.sourceSegmentIds.length, 0), groupCount: groups.length,
     review: { method: record.review!.method, reviewedAt: record.review!.reviewedAt, outputDigest: record.review!.outputDigest }, createdAt: record.createdAt, updatedAt: record.updatedAt };
 }
@@ -54,10 +57,14 @@ export class GroupTranslationService {
   async plan(projectId: string, ownerId: string, targetLanguage: string) {
     enabled(); const source = await this.context(projectId, ownerId, targetLanguage);
     if (await Translation.exists({ transcriptId: source.transcriptId, targetLanguage })) throw exists();
-    return { projectId, targetLanguage, sourceLanguage: source.languageCode, sourceRevision: revision(source), groupingVersion: GROUPING_VERSION, groups: candidateGroups(source), sourceSegmentCount: source.segments.length };
+    if (!isRevision(source.transcriptRevision)) throw new AppError(409, 'TRANSCRIPT_REVISION_UNAVAILABLE', 'Transcript revision is unavailable for safe artifact creation.');
+    const transcriptRevision = source.transcriptRevision;
+    return { projectId, targetLanguage, sourceLanguage: source.languageCode, transcriptRevision, sourceRevision: revision(source), groupingVersion: GROUPING_VERSION, groups: candidateGroups(source), sourceSegmentCount: source.segments.length };
   }
   async preview(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {
     enabled(); const source = await this.context(projectId, ownerId, body.targetLanguage);
+    if (!isRevision(source.transcriptRevision)) throw new AppError(409, 'TRANSCRIPT_REVISION_UNAVAILABLE', 'Transcript revision is unavailable for safe artifact creation.');
+    const transcriptRevision = source.transcriptRevision;
     if (revision(source) !== body.sourceRevision || body.groupingVersion !== GROUPING_VERSION) throw mismatch();
     const groups = validatePlan(source, body.groups);
     if (groups.length > 1000 || Buffer.byteLength(JSON.stringify(source)) > 96 * 1024) throw new AppError(413, 'TRANSLATION_DRAFT_TOO_LARGE', 'Bản ghi vượt giới hạn dịch theo cụm.');
@@ -70,7 +77,7 @@ export class GroupTranslationService {
         const output = await this.provider.translate(input);
         const validated = mapGroupResponse(JSON.stringify({ outcome: 'translated', groups: output }), input);
         const translated = groups.map((g, i) => ({ ...g, translatedText: validated[i]!.translatedText }));
-        return { ownerId, projectId, transcriptId: source.transcriptId, sourceLanguage: source.languageCode, targetLanguage: body.targetLanguage,
+        return { ownerId, projectId, transcriptId: source.transcriptId, transcriptRevision, sourceLanguage: source.languageCode, targetLanguage: body.targetLanguage,
           sourceRevision: body.sourceRevision, groupingVersion: GROUPING_VERSION, groups: translated, outputDigest: outputDigest(body.sourceRevision, body.targetLanguage, translated) };
       } catch (error) {
         if (error instanceof AppError) throw error;
@@ -106,8 +113,11 @@ export class GroupTranslationService {
           const claimed = await Project.findOneAndUpdate({ _id: projectId, userId: ownerId, status: { $in: ['TRANSCRIBED', 'TRANSLATED', 'FAILED'] } }, { $set: { status: 'TRANSLATED' } }, { session, returnDocument: 'after' });
           if (!claimed) throw new AppError(409, 'INVALID_PROJECT_STATE', 'Dự án đang xử lý hoặc không còn khả dụng.');
           const source = await this.context(projectId, ownerId, draft.targetLanguage, session);
-          if (revision(source) !== draft.sourceRevision || source.transcriptId !== draft.transcriptId) throw mismatch();
+          if (revision(source) !== draft.sourceRevision || source.transcriptId !== draft.transcriptId || source.transcriptRevision !== draft.transcriptRevision) throw mismatch();
           assertStoredGroups(source, draft.groups);
+          const transcriptFence = revisionFenceOperation(source.transcriptId, source.transcriptRevision);
+          const fencedTranscript = await Transcript.updateOne(transcriptFence.filter, transcriptFence.update, { session });
+          if (fencedTranscript.matchedCount !== 1) throw mismatch();
           const current = await Translation.findOne({ transcriptId: source.transcriptId, targetLanguage: draft.targetLanguage }).session(session);
           if (current) {
             if (current.alignmentFormat !== 'GROUPS_V1' || String(current.review?.reviewedBy) !== ownerId || current.review?.outputDigest !== draft.outputDigest) throw exists();
@@ -115,7 +125,8 @@ export class GroupTranslationService {
           }
           this.store.get(draftId, ownerId, projectId);
           const [record] = await Translation.create([{ projectId, transcriptId: source.transcriptId, sourceLanguage: source.languageCode, targetLanguage: draft.targetLanguage,
-            fullText: draft.groups.map(g => g.translatedText).join(' '), status: 'READY', alignmentFormat: 'GROUPS_V1', sourceRevision: draft.sourceRevision, groupingVersion: GROUPING_VERSION,
+            fullText: draft.groups.map(g => g.translatedText).join(' '), status: 'READY', alignmentFormat: 'GROUPS_V1', revision: 1,
+            sourceTranscriptRevision: draft.transcriptRevision, sourceRevision: draft.sourceRevision, groupingVersion: GROUPING_VERSION,
             groups: draft.groups, review: { reviewedBy: ownerId, reviewedAt: new Date(), sourceRevision: draft.sourceRevision, outputDigest: draft.outputDigest, method: 'MANUAL_V1' } }], { session });
           if (!record) throw new AppError(500, 'TRANSLATION_SAVE_FAILED', 'Không thể lưu bản dịch.'); saved = record;
         });

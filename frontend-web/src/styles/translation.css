@@ -1,20 +1,22 @@
-.translation-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-md); }
-.translation-heading h2 { margin: var(--space-xs) 0; }
+.translation-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-sm); }
+.translation-heading h2 { margin: 4px 0 0; line-height: 1.35; overflow-wrap: anywhere; }
+.translation-heading__statuses { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-sm); }
 .translation-label { display: block; color: var(--color-text-secondary); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
-.translation-workspace { display: grid; gap: var(--space-lg); min-width: 0; }
-.translation-language-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: var(--space-md); }
-.translation-source-language { margin: var(--space-sm) 0; font-weight: var(--font-weight-semibold); }
-.translation-language-field { display: grid; gap: var(--space-sm); min-width: 0; }
+.translation-workspace { display: grid; gap: var(--space-md); min-width: 0; }
+.translation-language-card { display: grid; grid-template-columns: minmax(10rem, .7fr) minmax(16rem, 1fr) auto; align-items: end; gap: var(--space-md); padding: 20px 24px; }
+.translation-source-language { margin: 6px 0 0; font-weight: var(--font-weight-semibold); line-height: 1.5; overflow-wrap: anywhere; }
+.translation-language-field { display: grid; gap: 6px; min-width: 0; }
 .translation-language-field select { width: 100%; min-width: 0; min-height: 48px; padding: var(--space-sm) var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-surface); }
 .translation-language-card > .translation-note { grid-column: 1 / -1; }
 .translation-note { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-sm); }
 .translation-loading { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--space-md); }
-.translation-segments { display: grid; gap: var(--space-md); }
+.translation-segments { display: grid; gap: 12px; min-width: 0; }
 .translation-segment { min-width: 0; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); overflow: hidden; }
 .translation-segment__meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); color: var(--color-primary); background: var(--color-primary-light); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
 .translation-segment__columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.translation-original, .translation-target { min-width: 0; padding: 12px; overflow-wrap: anywhere; }
+.translation-original, .translation-target { min-width: 0; padding: var(--space-md); overflow-wrap: anywhere; }
 .translation-original { background: var(--color-surface-secondary); }
+.translation-target { border-left: 1px solid var(--color-border); }
 .translation-original p, .translation-target__text { margin: 8px 0 0; white-space: pre-wrap; line-height: 1.6; font-size: 1rem; color: var(--color-text-primary); user-select: text; }
 .translation-target { display: grid; align-content: start; gap: var(--space-sm); }
 .translation-target__text { margin: 0; min-width: 0; }
@@ -27,9 +29,11 @@
 .translation-action-buttons { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 @media (max-width: 700px) {
   .translation-language-card, .translation-segment__columns { grid-template-columns: minmax(0, 1fr); }
+  .translation-language-card { padding: var(--space-md); }
+  .translation-target { border-top: 1px solid var(--color-border); border-left: 0; }
   .translation-action-buttons .button { flex: 1 1 12rem; }
 }
-.group-translation-workspace { display: grid; gap: 20px; min-width: 0; }
+.group-translation-workspace { display: grid; gap: var(--space-md); min-width: 0; }
 .group-translation-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .group-translation-columns section { min-width: 0; }
 .group-translation-columns p { overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.65; }
