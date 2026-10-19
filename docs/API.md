@@ -436,3 +436,11 @@ All are proposed and unimplemented. `/api/admin/**` requires authenticated ADMIN
 - `GET /api/projects/:id/results/:resultId` và endpoint file trả `409 RESULT_PROVENANCE_INVALID` khi chain là STALE/UNKNOWN. Danh sách result chỉ trả artifact CURRENT.
 - Translation detail tiếp tục trả `409 TRANSLATION_PROVENANCE_INVALID`; Translation list có `provenanceState` để phân biệt CURRENT/STALE/UNKNOWN.
 - Legacy artifact thiếu revision/provenance là UNKNOWN, không được tự gán CURRENT hoặc backfill.
+
+# ADMIN07.2 soft-delete compatibility
+
+- `User.deletedAt`, `deletedReason` and `deletedBy` are internal additive fields; legacy Users without `deletedAt` remain available.
+- Login returns the existing generic invalid-credentials response for a soft-deleted identity. Refresh and protected access return the existing generic invalid-token response. Registration does not reclaim an existing soft-deleted email.
+- `GET /api/admin/users`, customer detail/status mutation and Admin Dashboard customer counts exclude soft-deleted CUSTOMER records by default. Response DTOs remain unchanged and do not expose lifecycle fields.
+- ActivityLog actor resolution intentionally reads the retained User document even after soft-delete.
+- ADMIN07.2 adds no cleanup HTTP endpoint and performs no database mutation.

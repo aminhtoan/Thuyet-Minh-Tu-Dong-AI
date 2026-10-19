@@ -24,9 +24,11 @@
     "test:provenance": "node --import tsx --test --test-force-exit tests/artifact-provenance.test.ts tests/project-workflow.test.ts tests/group-translation.test.ts tests/translation-mock.test.ts tests/tts-terminal.test.ts tests/stt-debug.test.ts",
     "test:transcript-edit": "node --import tsx --test tests/transcript-edit.test.ts tests/artifact-provenance.test.ts",
     "test:stale-guards": "node --import tsx --test tests/downstream-stale-guards.test.ts tests/artifact-provenance.test.ts tests/project-workflow.test.ts tests/tts-terminal.test.ts",
+    "test:customer-soft-delete": "node --import tsx --test tests/customer-soft-delete.test.ts",
     "seed:admin": "tsx src/scripts/seed-admin.ts",
     "seed:voices": "tsx src/scripts/seed-voice-catalog.ts",
     "seed:languages": "tsx src/scripts/seed-language-catalog.ts",
+    "audit:s24-customers": "tsx src/scripts/soft-delete-s24-customers.ts dry-run",
     "test:language-catalog": "node --import tsx --test tests/language-catalog.test.ts"
   },
   "dependencies": {

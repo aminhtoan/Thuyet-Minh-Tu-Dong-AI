@@ -1271,3 +1271,118 @@ Không thay đổi Customer Web. Contract workflow hiện chỉ xem CURRENT arti
 - Nhãn được thống nhất chỉ ở lớp trình bày. Smart Resume vẫn tải Project DTO mới nhất, dùng `projectAction` và chỉ mở bước workflow khi `canResume=true` cùng dữ liệu đáng tin cậy.
 - Workflow UNKNOWN/BLOCKED/thiếu dữ liệu hoặc lỗi API tiếp tục fail-closed về Project Detail kèm thông báo an toàn. Link tên dự án vẫn luôn mở Project Detail.
 - Kích thước và căn chỉnh cột Thao tác từ UI07.7.1.4 được giữ nguyên, không thay đổi layout Dashboard hoặc WorkflowRouteGuard.
+
+## MUSEUM-02 — Museum Design System Foundation (2026-10-19)
+
+- Customer Web có namespace `.museum-theme` độc lập cho hướng giao diện Bảo tàng Chứng tích Chiến tranh. Theme dùng nền kem `#F3EBDD`, surface `#FFFDF8`, đỏ trầm `#7A292E`, than `#242321`, vàng đồng `#B08A52`, border `#D8CCB8` và muted text `#625D55`.
+- Token Museum bao phủ typography Be Vietnam Pro, thang spacing 4/8px, radius, shadow, content/readable/wide containers, breakpoint tham chiếu 375/768/1024/1280/1440, focus ring và motion. Các alias token Customer chỉ được remap bên trong `.museum-theme`; `:root`, Dashboard, Projects, Workflow, Auth, Admin và Mobile không thay đổi.
+- Primitive dùng lại `Button`, `Card` và `Badge` qua `MuseumButton`, `MuseumCard`, `MuseumBadge`; `MuseumContainer` và `MuseumSectionHeading` bổ sung bố cục public page. Section heading dùng ID tạo bởi React cho quan hệ title/description và hỗ trợ h1/h2/h3.
+- Chưa route nào mount `.museum-theme` trong MUSEUM-02. Theme chỉ là foundation cho Public Museum shell ở MUSEUM-03; không có thay đổi route, API, dữ liệu hoặc nghiệp vụ.
+
+## MUSEUM-03 — Public Museum Layout & Routing (2026-10-19)
+
+- `PublicMuseumLayout` mount `.museum-theme` riêng, dùng MuseumContainer, MuseumButton và MuseumCard từ MUSEUM-02. Có semantic header/nav/main/footer, skip link và focus main khi đổi trang public.
+- Public routes: `/`, `/kham-pha`, `/thuyet-minh`, `/ve-bao-tang`. React Router nhận cả `/kham-pha/` và `/thuyet-minh/`. Root không còn redirect tới Dashboard. Các trang là placeholder công khai ghi rõ nội dung đang chuẩn bị; URL không khớp hiển thị 404 trong Museum layout.
+- Header dùng brand chữ BẢO TÀNG CHỨNG TÍCH CHIẾN TRANH, bốn liên kết với active state, Đăng nhập hoặc Không gian biên tập theo session hiện có. Kiểm tra session chỉ quyết định link hiển thị; RequireAuth và Backend vẫn quyết định quyền truy cập.
+- Bộ chọn ngôn ngữ chỉ là shell disabled, hiện Tiếng Việt và thông báo giới hạn giao diện. Các mã dự kiến `en`, `th`, `ko`, `zh-CN` chưa khả dụng; không bật i18n hoặc tuyên bố có bản dịch/giọng đọc.
+- Dưới 1280px chuyển sang menu dialog native: focus containment, Escape, nút đóng, trả focus, body scroll lock và cleanup. Menu đóng khi điều hướng hoặc chuyển sang desktop. Controls tối thiểu 44px; giữ focus/reduced-motion tokens của Museum.
+- Routes Customer, Auth, WorkflowRouteGuard và protected media không thay đổi. Public components không tải Project/Result, không gọi mutation và không public hóa endpoint/Blob URL.
+- Validation source/regression: 227/227 Web tests PASS; lint, typecheck, production build và diff-check PASS. Browser tại 375/768/1024/1280/1440: NOT RUN vì không có browser khả dụng; keyboard/focus/overflow thực tế còn cần visual QA.
+
+## MUSEUM-04 — War Remnants Museum Homepage (2026-10-19)
+
+- `/` dùng `MuseumHomePage` trong PublicMuseumLayout. Sáu section: Hero, Giới thiệu, Không gian trưng bày, Thuyết minh đa ngôn ngữ, Video nổi bật và CTA cuối trang. Giữ Museum tokens, Be Vietnam Pro và CSS scope `.museum-theme .museum-home…`.
+- Hero dùng nền than đậm, chữ kem, CTA Khám phá/Thuyết minh và visual typography trừu tượng có caption “Hình ảnh bảo tàng đang được chuẩn bị”. Không có ảnh/video bảo tàng hợp lệ trong repository, không tải ảnh ngoài hay mô phỏng tư liệu lịch sử.
+- Giới thiệu không có số liệu lịch sử. Ba card nội dung là chủ đề biên tập dự kiến được ghi rõ đang chuẩn bị, không phải danh mục hiện vật/trưng bày đã xác minh. Bốn ngôn ngữ `en/th/ko/zh-CN` được trình bày thành danh sách dự kiến, nguồn `vi`; chưa có thao tác dịch, TTS hoặc phát video.
+- Video giữ tỷ lệ 16:9 với “Video đang được chuẩn bị” và link `/thuyet-minh`, không dùng Project/Result API hoặc Blob URL. CTA vào Không gian biên tập chỉ hiện khi có session; authorization tiếp tục do RequireAuth/Backend kiểm tra.
+- Responsive: hero/intro/video chuyển một cột dưới 768px; nhóm ngôn ngữ 4/2/1 cột; text dài wrap và CTA xếp dọc trên màn hình hẹp. Focus trên hero dùng màu sáng, link tối thiểu 44px, visual có tỷ lệ dành chỗ trước, giảm motion kế thừa Museum theme.
+- Asset cần bổ sung: ảnh thật bảo tàng cho hero; ảnh giới thiệu và ảnh đại diện chủ đề đã duyệt kèm quyền sử dụng/caption; video public và poster hợp lệ. Chỉ công bố phiên bản ngôn ngữ nào đã có nội dung thực và được duyệt. Hình minh họa chọn trước không có trong context hiện tại nên chưa thể đối chiếu bố cục theo ảnh.
+- Browser 375/768/1024/1280/1440: NOT RUN vì không có browser khả dụng; responsive/contrast/focus mới được review ở mức source và test render.
+- Validation: Web tests **232/232 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build giữ cảnh báo chunking có sẵn của `projectRepository.ts`.
+
+## MUSEUM-05 — Museum Explore & Exhibition Pages (2026-10-19)
+
+- `/kham-pha` và `/kham-pha/` dùng MuseumExplorePage trong PublicMuseumLayout. Hero có breadcrumb, tiêu đề Khám phá bảo tàng, giới thiệu editorial hai cột và vùng Các chuyên đề. Không có catalog được xác minh trong repository, nên runtime hiển thị “Chuyên đề đang được chuẩn bị”, không dùng ba chủ đề dự kiến của homepage như chuyên đề thật.
+- Thêm `/kham-pha/:slug` với MuseumExhibitionPage: breadcrumb, title/summary, nội dung theo section, ảnh/caption/credit hoặc placeholder, nguồn tham chiếu, quay lại Khám phá và CTA `/thuyet-minh`. Slug không công bố/không hợp lệ hiển thị Not Found trong Museum layout. Đây là fallback giao diện SPA, không thay đổi HTTP server routing.
+- `features/museum/exhibitions.ts` định nghĩa MuseumExhibition typed với slug, title, summary, sections, nguồn và ngày xác minh, trạng thái draft/ready, ảnh tùy chọn. Catalog thực tế là mảng rỗng. Chỉ render entry ready có nguồn/nội dung đầy đủ và slug duy nhất; trạng thái ready là quyết định biên tập website, không chứng minh bảo tàng đã phê duyệt. Việc xác minh nội dung vẫn phải do người biên tập thực hiện trước khi đưa vào catalog.
+- Ảnh chỉ nhận đường dẫn local `/museum-media/...` có alt/caption/credit; chặn external URL, traversal, protected API và Blob URL. Quy tắc đường dẫn không chứng minh quyền sử dụng: chỉ thêm file đã kiểm tra nguồn/quyền vào `frontend-web/public/museum-media/` khi có asset được duyệt. Bước này không thêm ảnh hay tạo thư mục chứa media giả.
+- Asset/nội dung cần cung cấp: tên và mô tả chuyên đề chính xác, nội dung từng mục và nguồn tham chiếu, quyết định cho phép công bố; ảnh tổng quan/chuyên đề thật kèm alt, chú thích, tác giả/quyền sử dụng. Nội dung minh họa chỉ có trong test fixtures, không đi vào ứng dụng.
+- CSS scope `.museum-theme .museum-explore…`: card grid 3/2/1 cột, intro/empty state chuyển một cột dưới 768px; breadcrumb và CTA wrap, focus kế thừa Museum theme, control tối thiểu 44px, hình có kích thước dành chỗ trước. Không đổi homepage, auth/workflow guards hay Customer routes.
+- Browser 375/768/1024/1280/1440: NOT RUN, không có browser khả dụng. Detail với nội dung thực còn chờ catalog/asset được cung cấp; render chỉ kiểm thử bằng fixture được ghi rõ nội bộ.
+- Validation: Web tests **237/237 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build còn cảnh báo chunking có sẵn của `projectRepository.ts`.
+
+## MUSEUM-05.2 — Real UI Polish (2026-10-19)
+
+- Header thu từ min-height 100px xuống 80px, mobile 72px; select rộng 124px để tránh intrinsic width của tên ngôn ngữ dài chiếm quá nhiều chỗ. Bỏ helper “Hiện hỗ trợ giao diện tiếng Việt” và aria-describedby tương ứng; giữ label liên kết qua htmlFor ở dạng visually-hidden, select vẫn disabled và menu mobile giữ cơ chế dialog/focus/Escape/scroll lock.
+- Hero giảm cỡ chữ tối đa 72px → 60px, line-height 1.22, padding tối đa 64px, khoảng cách hai cột tối đa 56px; visual typography giới hạn 430px và không thêm ảnh.
+- Ba card editorial giữ nguyên nội dung/trạng thái dự kiến, bố cục ba cột desktop và một cột dưới 768px. Cải thiện padding, border vàng đồng, khoảng cách nhãn/số/tiêu đề và hover nhẹ. Không thêm tabindex hoặc hành vi giả cho card chưa có chuyên đề thật.
+- Language cards giữ đủ English/Thai/Korean/Simplified Chinese với trạng thái chuẩn bị, trình bày code như nhãn nhỏ; không bật chức năng. Video placeholder 16:9 chuyển nền than đậm với icon trang trí, không có nút phát giả hoặc media URL.
+- CTA cuối dùng grid cân đối và xếp dọc trên mobile. Footer nền than, đường nhấn vàng đồng, brand hai dòng và link công khai; không thêm liên hệ chưa xác minh. Focus ring sáng trên hero/footer tối.
+- Tính contrast theo token: chữ kem trên nền than 15.45:1, chữ border trên nền than 9.91:1, muted trên surface-muted 5.10:1, primary trên surface 9.46:1. Các cặp chữ này đạt WCAG AA; không thay thế audit accessibility trên browser.
+- Web tests **238/238 PASS**; lint, typecheck, production build và `git diff --check` PASS. Browser 375/768/1024/1280/1440: **NOT RUN**, inventory không có browser; ba ảnh tham khảo không có trong context hiện tại nên chưa đối chiếu bằng ảnh. Giữ breakpoint/responsive source, chưa xác nhận overflow thực tế. Vẫn cần ảnh/video bảo tàng thật có quyền sử dụng.
+
+### Bổ sung MUSEUM-05.2 — Explore Page UI Polish
+
+- Trang listing có modifier `.museum-explore--listing` để thu gọn hero riêng: padding 16/32px, breadcrumb margin dưới 16px, h1 tối đa 36px. Breadcrumb vẫn là nav với Trang chủ → Khám phá và chỉ một h1; không thêm tiêu đề trùng.
+- Phần giới thiệu giữ hai cột cân đối, gap tối đa 48px, padding tối đa 48px, h2 tối đa 32px và body line-height 1.75. Đường nhấn vàng đồng ở cạnh heading tạo nhịp editorial; không thêm ảnh, số liệu hoặc nội dung lịch sử mới.
+- Empty state giảm vùng trang trí xuống 156px desktop/112px mobile, border nhấn nhẹ và spacing ngắn hơn. Catalog vẫn rỗng, không tạo slug/chuyên đề. Trên màn hình dưới 768px intro/empty state vẫn xếp một cột.
+- Header 80px/mobile 72px, language selector disabled, MuseumContainer và footer dùng chung với homepage từ MUSEUM-05.2; không sửa shared shell hoặc trang chi tiết trong phần bổ sung này.
+- Web tests **238/238 PASS**; lint, typecheck, build và `git diff --check` PASS. Browser desktop/mobile **NOT RUN**, không có browser khả dụng và chưa có ảnh chụp tham khảo trong context; chưa xác nhận overflow thực tế.
+
+### Bổ sung MUSEUM-05.2 — Final Homepage Polish
+
+- Ba card editorial giữ nguyên nội dung dự kiến và nhãn chuẩn bị; số thứ tự dùng tabular numerals 32px, có divider tách phần đầu, tiêu đề 18–20px và body line-height 1.75. Hover chỉ đổi border/shadow; card vẫn không có link slug hoặc thao tác giả.
+- Language cards hiển thị tên tiếng Việt ở h3, tên tiếng Anh bên dưới với lang=en, mã en/th/ko/zh-CN giữ đúng cách viết và trạng thái chuẩn bị. Giữ nguồn vi và không thêm chọn/dịch/phát media.
+- Video placeholder chuyển thành poster typography với hình khối CSS và dải trạng thái, không phải poster chụp bảo tàng hay media thật. Vùng 16:9 có min-block-size 224px để có chỗ cho chữ ở màn hình hẹp, không nút phát/URL video.
+- Section padding 40–64px, CTA cuối có primary link và workspace link xếp theo nhóm. Footer padding 40–64px, chia brand/Khám phá/Thuyết minh; mobile chuyển hai nhóm link dưới brand. Không thêm liên hệ hoặc tuyên bố bản quyền chưa xác minh.
+- Web tests **238/238 PASS**, lint/typecheck/build/diff-check PASS. Browser desktop/mobile **NOT RUN**, inventory không có browser và ảnh toàn trang không có trong context. Chưa xác nhận wrapping, alignment hoặc overflow thực tế ở 375/768/1024/1280/1440; các breakpoint/keyboard/reduced-motion được giữ ở source.
+
+## MUSEUM-06 — Public Video Narration Experience (2026-10-19)
+
+### Routes và giao diện
+
+- `/thuyet-minh` và `/thuyet-minh/` dùng MuseumVideosPage: hero, breadcrumb, danh sách video đã công bố hoặc “Video đang được chuẩn bị”. `/thuyet-minh/:slug` dùng MuseumVideoDetailPage với breadcrumb, heading/description, language selector, player, transcript/chapters nếu có, nguồn/quyền và CTA về danh sách/Khám phá. Slug không công bố hiển thị Not Found trong PublicMuseumLayout (fallback SPA, không sửa HTTP server).
+- Giữ Museum Design System/Be Vietnam Pro, shell/guards hiện tại. Desktop có player lớn bên cạnh bản ghi; dưới 1024px bản ghi xuống dưới, dưới 768px language controls hai cột và danh sách video một cột. Radio label tối thiểu 44px, focus-visible, thông báo role=status/alert, text wrap và reduced motion kế thừa theme. Browser chưa chạy nên chưa xác nhận overflow/keyboard thực tế.
+
+### Public video contract
+
+- `features/museum/publicVideos.ts` định nghĩa MuseumPublicVideo: slug/title/description, posterUrl tùy chọn, sourceAttribution, rights (confirmed/license/credit/verificationReference), visibility PUBLIC/PRIVATE, publishedStatus DRAFT/PUBLISHED, sourceLanguage vi và languageVariants. Catalog `museumPublicVideos` mặc định rỗng, không đọc Project/Result hoặc API private.
+- Variant gắn với đúng một mã vi/en/th/ko/zh-CN, state AVAILABLE/PROCESSING/UNAVAILABLE, videoUrl, captionUrl/captionLanguage tùy chọn, transcript có language/text và chapters tùy chọn với startTime/title. Chapters phải có thời gian hữu hạn, không âm và tăng dần. Không tạo segment, transcript hoặc dữ liệu AI để lấp giao diện.
+- Chỉ xuất bản khi PUBLIC + PUBLISHED, title/description/source/quyền đầy đủ, confirmed=true, slug duy nhất/hợp lệ và video vi AVAILABLE tồn tại trong asset inventory. Khai báo quyền/nguồn là quyết định biên tập có trách nhiệm, không phải xác minh bản quyền tự động hoặc xác nhận bảo tàng phê duyệt.
+- `publicMediaAssets.ts` dùng Object.keys(import.meta.glob) để lập inventory tên file local tại build/dev startup, không import bytes video vào JS. Chỉ nhận đường dẫn `/museum-media/...` (ASCII chữ/số/gạch ngang/gạch dưới, thư mục con được phép); video mp4/webm, poster avif/webp/png/jpg/jpeg, caption vtt. File thiếu/extension sai, URL ngoài, query/hash, traversal, protected endpoint/Blob URL bị từ chối. Inventory xác nhận file có mặt, không xác minh codec/nội dung/quyền của file.
+
+### Player và ngôn ngữ
+
+- MuseumVideoPlayer dùng HTML5 video controls, playsInline, preload=metadata, không autoplay, có poster nếu file hợp lệ. Loading tối đa 15 giây rồi error có retry; retry chỉ tải lại media local. Khi error không hiển thị nút phát giả; late metadata/canPlay không hồi sinh player đã báo lỗi. Unmount/source switch pause video cũ và cleanup timer.
+- Chỉ variant AVAILABLE có media trong inventory và metadata ngôn ngữ nhất quán mới được chọn. PROCESSING hiển thị “Đang xử lý”; variant thiếu/không khả dụng hiển thị “Đang chuẩn bị”. Radio disabled không đổi lựa chọn; không tự chọn ngôn ngữ thay thế, không đọc video URL từ query string.
+- Chuyển ngôn ngữ cập nhật player/transcript cùng lúc và tạo instance player mới theo slug/language/video/caption; không giữ audio/text track cũ. Transcript sai mã ngôn ngữ hoặc captionLanguage không khớp chặn variant. Caption hợp lệ dùng track kind=captions, srcLang đúng variant; thiếu/lỗi file VTT không gắn track hoặc báo lỗi, không lấy phụ đề ngôn ngữ khác. Nội dung thực của media/transcript/VTT vẫn cần duyệt thủ công và playback QA.
+
+### Tích hợp video thật
+
+1. Cung cấp video tiếng Việt có quyền công bố, nguồn tham chiếu và credit/license đã xác nhận. Cung cấp riêng các bản en/th/ko/zh-CN thực sự có sẵn; không khai báo AVAILABLE khi chưa có file.
+2. Sau khi được duyệt, đặt file tại `frontend-web/public/museum-media/` bằng tên tương thích quy tắc đường dẫn; chỉ đưa tài liệu được phép public vào thư mục này. Đây là public directory: catalog gate không phải access control cho file đã đặt trong đó. Không sao chép upload/result riêng tư vào public directory. Bước MUSEUM-06 chưa thêm file hoặc tạo media giả.
+3. Thêm một entry typed trong museumPublicVideos; giữ draft cho đến khi nguồn/quyền/nội dung được duyệt. Ghi nhận verificationReference nội bộ trong source, không đưa secrets vào bất kỳ field nào. Quyền phải bao phủ mọi variant/poster/caption được công bố.
+4. Chỉ thêm transcript và VTT thật cho đúng language variant. Kiểm tra WebVTT syntax, lời thoại, timing và chapters theo thời lượng video; kiểm tra container/codec trước khi công bố. Không có AI/TTS hoặc hệ thống biên tập VTT trong bước này.
+5. Restart Vite/rebuild để cập nhật asset inventory. Kiểm tra list/detail, từng lựa chọn ngôn ngữ, pause khi chuyển, playback/captions, lỗi file và responsive 375/768/1024/1280/1440 trước phát hành. Nếu file bị gỡ sau build, runtime player báo lỗi; sửa catalog/assets và rebuild.
+
+- Asset còn thiếu: video vi, các bản ngôn ngữ thực, poster được phép dùng, nguồn/quyền sử dụng, transcript/VTT và chapters đã duyệt nếu có. Không có bản video thật nào được công bố trong MUSEUM-06. Không có Backend/API mới, không mutation/AI request.
+- Focused tests: **28/28 PASS** với asset inventory/metadata mock và fixture chỉ trong tests. Browser: **NOT RUN**, không có browser khả dụng. Real-video playback, semantic caption matching và build với media thật còn chờ asset.
+- Validation cuối: Web tests **249/249 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build còn cảnh báo dynamic/static import có sẵn của projectRepository.ts. Database reads/writes: 0; AI/TTS requests: 0.
+
+## MUSEUM-06.1 — Thư mục và chuẩn bị video thật (2026-10-19)
+
+- Đã tạo `frontend-web/public/museum/videos/`, `posters/`, `captions/`, mỗi thư mục có `.gitkeep`. File dự kiến `frontend-web/public/museum/videos/bao-tang-chung-tich-chien-tranh.mp4` **chưa tồn tại**; chưa kiểm tra codec/playback và chưa có xác nhận quyền sử dụng. Không tạo hoặc copy video, audio, transcript, subtitle hay poster giả.
+- URL dự kiến: `/museum/videos/bao-tang-chung-tich-chien-tranh.mp4`. Asset inventory MUSEUM-06 được mở rộng cho `/museum/videos/` (mp4/webm), `/museum/posters/` (avif/webp/png/jpg/jpeg), `/museum/captions/` (vtt), giữ đường dẫn legacy `/museum-media/`. Guard yêu cầu đúng thư mục theo loại asset và file thực có trong inventory; vẫn chặn protected/external/query/traversal URLs.
+- Tái sử dụng catalog `museumPublicVideos` trong `features/museum/publicVideos.ts`, không tạo catalog mới. Chuẩn bị đúng một entry slug `bao-tang-chung-tich-chien-tranh`, trạng thái PRIVATE/DRAFT, rights.confirmed=false, nguồn/license/credit còn trống. Variant vi giữ URL dự kiến và UNAVAILABLE; en/th/ko/zh-CN đều UNAVAILABLE, không có file/transcript/caption giả.
+- Catalog công khai vẫn có **0 video**. `/thuyet-minh` giữ empty state, slug nháp trả Not Found. HTML5 player MUSEUM-06 giữ nguyên và chỉ hoạt động khi publication/rights/source/media gates đều hợp lệ.
+- `frontend-web/.gitignore` bỏ qua toàn bộ file trong `public/museum/videos/`, ngoại trừ `.gitkeep`, để tránh đưa video lớn vào Git ngoài ý muốn. Git ignore không ngăn Vite phục vụ/copy file khi dev/build; chưa có media trong index và không commit/push.
+
+### Các bước người dùng còn cần thực hiện
+
+1. Xác nhận có quyền công bố video và cung cấp nguồn, credit, license cùng bằng chứng/quyết định cho phép sử dụng. Phải thực hiện trước khi đặt file trong public directory: PRIVATE/DRAFT chỉ ẩn catalog, không bảo vệ URL file tĩnh.
+2. Sau xác nhận, đặt video thật tại đường dẫn chính xác ở trên; không lấy từ protected Customer upload/result nếu chưa được phép. Kiểm tra container/codec, track tiếng Việt, thời lượng và chất lượng bằng file thật. Hiện chưa thực hiện bước này do thiếu file.
+3. Sau khi file và quyền được kiểm tra, điền metadata còn thiếu và chuyển vi thành AVAILABLE, visibility PUBLIC, publishedStatus PUBLISHED. Không chuyển en/th/ko/zh-CN cho tới khi có variant hợp lệ riêng. Không tự đặt source/rights chỉ để mở khóa UI.
+4. Restart Vite/rebuild để cập nhật inventory rồi kiểm tra list/detail/HTML5 player. Video được cung cấp riêng ngoài Git khi triển khai; chỉ thêm poster/VTT đã xác minh nếu có. Không yêu cầu tạo phụ đề/transcript mới để công bố video gốc.
+
+- Focused video tests **10/10 PASS**, bao gồm draft không thể công bố chỉ bằng copy file và allowlist thư mục mới/legacy. Browser/real-media validation chưa chạy vì chưa có file thực.
+- Validation cuối: Web tests **251/251 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build giữ cảnh báo chunking có sẵn của projectRepository. Không có media trong Git index; Database/AI/TTS requests: 0.

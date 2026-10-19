@@ -278,3 +278,11 @@ Edit không reset `ProjectStatus`, không xóa artifact và không tự tạo jo
 - Video khóa revision của Transcript, Translation và Narration.
 
 PATCH transcript và các completion transaction vì vậy cùng tham gia ghi Transcript; concurrent approve/edit hoặc late completion/edit không thể cùng commit từ cùng snapshot. Fence không đổi revision, nội dung hay ProjectStatus. Artifact cũ vẫn được giữ, nhưng workflow batch chỉ đưa CURRENT evidence vào resolver; endpoint đọc/phát Narration và Result cũng fail-closed với STALE/UNKNOWN.
+
+# ADMIN07.2 customer lifecycle foundation
+
+- Customer soft-delete is additive on `User` through optional `deletedAt`, `deletedReason` and `deletedBy`. Missing/null `deletedAt` means available; no backfill or migration is required.
+- Authentication performs a database availability check for login, refresh and every protected request, so old access tokens and refresh tokens cannot authorize a soft-deleted User. Unique email remains reserved and registration cannot reactivate the account.
+- Admin customer list/detail/statistics use the same available-CUSTOMER predicate. ActivityLog resolution deliberately does not apply that predicate because the retained User is the audit actor.
+- The cleanup executor is not routed or called at application startup. It is exact-allowlist, transaction-bound and conditional, but execution additionally requires an external maintenance fence: MongoDB snapshot transactions do not by themselves serialize writes from unrelated collections/clients.
+- Projects and all downstream artifacts are preserved. Execution is refused if any allowlisted User has a Project, historical project artifact/job, or AuthSession dependency.

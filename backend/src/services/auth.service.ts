@@ -7,6 +7,7 @@ import type { UserRole, UserStatus } from '../constants/user.constants.js';
 import { AppError } from '../utils/app-error.js';
 import { getTokenExpiration, signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { comparePassword, hashPassword } from '../utils/password.js';
+import { availableUserFilter } from './user-availability.js';
 
 interface RegisterInput {
   fullName: string;
@@ -37,7 +38,7 @@ const hashToken = (token: string): string => createHash('sha256').update(token).
 
 export const updateDisplayName = async (userId: string, fullName: string): Promise<SafeUser> => {
   const user = await User.findOneAndUpdate(
-    { _id: userId, status: 'ACTIVE' },
+    availableUserFilter({ _id: userId, status: 'ACTIVE' }),
     { $set: { fullName } },
     { returnDocument: 'after', runValidators: true },
   );
@@ -104,7 +105,7 @@ export const register = async (input: RegisterInput): Promise<{ user: SafeUser }
 };
 
 export const login = async (input: LoginInput): Promise<{ user: SafeUser } & TokenPair> => {
-  const user = await User.findOne({ email: input.email }).select('+passwordHash');
+  const user = await User.findOne(availableUserFilter({ email: input.email })).select('+passwordHash');
   if (!user || !(await comparePassword(input.password, user.passwordHash))) {
     throw new AppError(401, 'INVALID_CREDENTIALS', 'Email hoặc mật khẩu không chính xác.');
   }
@@ -138,7 +139,7 @@ export const refresh = async (rawToken: string): Promise<TokenPair> => {
   );
   if (!revokedSession) throw new AppError(401, 'INVALID_TOKEN', 'Refresh token không hợp lệ.');
 
-  const user = await User.findById(payload.sub);
+  const user = await User.findOne(availableUserFilter({ _id: payload.sub }));
   if (!user) throw new AppError(401, 'INVALID_TOKEN', 'Refresh token không hợp lệ.');
   if (user.status === 'BLOCKED') throw new AppError(403, 'ACCOUNT_BLOCKED', 'Tài khoản đã bị khóa.');
   return createTokenPair(user);

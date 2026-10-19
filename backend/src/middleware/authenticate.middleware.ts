@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { serializeUser } from '../services/auth.service.js';
 import { AppError } from '../utils/app-error.js';
 import { jwt, verifyAccessToken } from '../utils/jwt.js';
+import { availableUserFilter } from '../services/user-availability.js';
 
 export const authenticate: RequestHandler = async (request, _response, next) => {
   const authorization = request.header('authorization');
@@ -18,7 +19,7 @@ export const authenticate: RequestHandler = async (request, _response, next) => 
 
   try {
     const payload = verifyAccessToken(token);
-    const user = await User.findById(payload.sub);
+    const user = await User.findOne(availableUserFilter({ _id: payload.sub }));
     if (!user) throw new AppError(401, 'INVALID_TOKEN', 'Access token không hợp lệ.');
     if (user.status === 'BLOCKED') throw new AppError(403, 'ACCOUNT_BLOCKED', 'Tài khoản đã bị khóa.');
     request.user = serializeUser(user);

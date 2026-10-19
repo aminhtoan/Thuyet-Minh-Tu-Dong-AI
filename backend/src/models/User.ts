@@ -9,6 +9,9 @@ const userSchema = new Schema(
     role: { type: String, enum: USER_ROLES, required: true, default: 'CUSTOMER' },
     status: { type: String, enum: USER_STATUSES, required: true, default: 'ACTIVE' },
     avatarUrl: { type: String, trim: true },
+    deletedAt: { type: Date, default: null },
+    deletedReason: { type: String, trim: true, maxlength: 200 },
+    deletedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },
 );

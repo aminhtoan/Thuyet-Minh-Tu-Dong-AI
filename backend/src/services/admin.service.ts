@@ -13,11 +13,13 @@ import type { MediaType, ProjectStatus } from '../constants/project.constants.js
 import type { UserStatus } from '../constants/user.constants.js';
 import { AppError } from '../utils/app-error.js';
 import { env } from '../config/env.js';
+import { availableUserFilter } from './user-availability.js';
 
 type PageInput = { page: number; limit: number };
 const pagination = (input: PageInput, total: number) => ({ ...input, total, totalPages: Math.ceil(total / input.limit) });
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const processingStatuses: ProjectStatus[] = ['TRANSCRIBING', 'TRANSLATING', 'GENERATING_AUDIO', 'PROCESSING_VIDEO'];
+const availableCustomerFilter = (filter: mongoose.QueryFilter<UserDocument> = {}): mongoose.QueryFilter<UserDocument> => availableUserFilter({ role: 'CUSTOMER', ...filter });
 
 const userDto = (user: UserDocument & { _id: Types.ObjectId; createdAt: Date; updatedAt: Date }) => ({
   id: user._id.toString(), fullName: user.fullName, email: user.email, role: user.role, status: user.status,
@@ -48,7 +50,7 @@ const jobDto = async (job: InstanceType<typeof ProcessingJob>) => {
 export const dashboard = async () => {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const [totalCustomers, totalProjects, processing, failed, recentProjects, recentJobs, recentActivities, queuedJobs, activeJobs, completedToday, failedJobs] = await Promise.all([
-    User.countDocuments({ role: 'CUSTOMER' }), Project.countDocuments(), Project.countDocuments({ status: { $in: processingStatuses } }), Project.countDocuments({ status: 'FAILED' }),
+    User.countDocuments(availableCustomerFilter()), Project.countDocuments(), Project.countDocuments({ status: { $in: processingStatuses } }), Project.countDocuments({ status: 'FAILED' }),
     Project.find().sort({ updatedAt: -1 }).limit(5), ProcessingJob.find().sort({ updatedAt: -1 }).limit(5), ActivityLog.find().sort({ createdAt: -1 }).limit(6),
     ProcessingJob.countDocuments({ status: 'QUEUED' }), ProcessingJob.countDocuments({ status: 'PROCESSING' }), ProcessingJob.countDocuments({ status: 'COMPLETED', completedAt: { $gte: today } }), ProcessingJob.countDocuments({ status: 'FAILED' }),
   ]);
@@ -59,27 +61,27 @@ export const dashboard = async () => {
 
 type UsersInput = PageInput & { search?: string; status?: UserStatus; sort: 'NEWEST'|'OLDEST'|'NAME_ASC'|'NAME_DESC' };
 export const listUsers = async (input: UsersInput) => {
-  const filter: Record<string, unknown> = { role: 'CUSTOMER' };
+  const filter: Record<string, unknown> = availableCustomerFilter();
   if (input.status) filter.status = input.status;
   if (input.search) { const regex = new RegExp(escapeRegex(input.search), 'i'); filter.$or = [{ fullName: regex }, { email: regex }]; }
   const sort: Record<string, 1 | -1> = input.sort === 'OLDEST' ? { createdAt: 1 } : input.sort === 'NAME_ASC' ? { fullName: 1 } : input.sort === 'NAME_DESC' ? { fullName: -1 } : { createdAt: -1 };
-  const [users, total, active, blocked, newCustomers] = await Promise.all([User.find(filter).sort(sort).skip((input.page - 1) * input.limit).limit(input.limit), User.countDocuments(filter), User.countDocuments({ role: 'CUSTOMER', status: 'ACTIVE' }), User.countDocuments({ role: 'CUSTOMER', status: 'BLOCKED' }), User.countDocuments({ role: 'CUSTOMER', createdAt: { $gte: new Date(Date.now() - 30 * 86400000) } })]);
+  const [users, total, active, blocked, newCustomers] = await Promise.all([User.find(filter).sort(sort).skip((input.page - 1) * input.limit).limit(input.limit), User.countDocuments(filter), User.countDocuments(availableCustomerFilter({ status: 'ACTIVE' })), User.countDocuments(availableCustomerFilter({ status: 'BLOCKED' })), User.countDocuments(availableCustomerFilter({ createdAt: { $gte: new Date(Date.now() - 30 * 86400000) } }))]);
   const items = await Promise.all(users.map(async (user) => {
     const [projectCount, completedProjectCount, processingProjectCount, failedProjectCount, lastActivity] = await Promise.all([Project.countDocuments({ userId: user._id }), Project.countDocuments({ userId: user._id, status: 'COMPLETED' }), Project.countDocuments({ userId: user._id, status: { $in: processingStatuses } }), Project.countDocuments({ userId: user._id, status: 'FAILED' }), ActivityLog.findOne({ userId: user._id }).sort({ createdAt: -1 })]);
     return { ...userDto(user), projectCount, completedProjectCount, processingProjectCount, failedProjectCount, lastActiveAt: lastActivity?.createdAt ?? user.updatedAt };
   }));
-  return { items, summary: { total: await User.countDocuments({ role: 'CUSTOMER' }), active, blocked, newCustomers }, pagination: pagination(input, total) };
+  return { items, summary: { total: await User.countDocuments(availableCustomerFilter()), active, blocked, newCustomers }, pagination: pagination(input, total) };
 };
 
 export const getUser = async (id: string) => {
-  const user = await User.findOne({ _id: id, role: 'CUSTOMER' }); if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'Không tìm thấy khách hàng.');
+  const user = await User.findOne(availableCustomerFilter({ _id: id })); if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'Không tìm thấy khách hàng.');
   const projects = await Project.find({ userId: user._id }).sort({ updatedAt: -1 });
   return { ...userDto(user), projects: await Promise.all(projects.map(projectDto)) };
 };
 
 export const updateUserStatus = async (id: string, status: UserStatus, adminId: string) => {
   if (id === adminId) throw new AppError(400, 'ADMIN_SELF_UPDATE_FORBIDDEN', 'Không thể thay đổi trạng thái tài khoản quản trị hiện tại.');
-  const user = await User.findOneAndUpdate({ _id: id, role: 'CUSTOMER' }, { $set: { status } }, { returnDocument: 'after', runValidators: true });
+  const user = await User.findOneAndUpdate(availableCustomerFilter({ _id: id }), { $set: { status } }, { returnDocument: 'after', runValidators: true });
   if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'Không tìm thấy khách hàng.');
   if (status === 'BLOCKED') await AuthSession.deleteMany({ userId: user._id });
   try { await ActivityLog.create({ userId: adminId, action: status === 'BLOCKED' ? 'CUSTOMER_BLOCKED' : 'CUSTOMER_UNBLOCKED', entityType: 'User', entityId: user._id, description: status === 'BLOCKED' ? 'Quản trị viên đã khóa tài khoản khách hàng.' : 'Quản trị viên đã mở khóa tài khoản khách hàng.' }); } catch { /* best effort */ }

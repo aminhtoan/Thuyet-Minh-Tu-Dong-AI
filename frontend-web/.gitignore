@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Public museum videos are supplied separately; keep only the directory marker.
+public/museum/videos/**
+!public/museum/videos/.gitkeep
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

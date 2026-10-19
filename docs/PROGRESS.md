@@ -939,3 +939,83 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - Thay đổi chỉ thuộc presentation: Smart Resume vẫn dùng Project workflow DTO và helper chung. UNKNOWN/BLOCKED/missing/API error vẫn về Project Detail an toàn; không suy luận từ ProjectStatus và không bypass WorkflowRouteGuard.
 - Link tên dự án vẫn mở Project Detail. Không sửa Backend/Database/Mobile/Admin, không gọi AI/TTS và không thêm dependency.
 - Web tests **218/218 PASS**; lint, typecheck, production build và `git diff --check` PASS. Browser Desktop: **NOT RUN**.
+
+## ADMIN07.2 — Safe Customer Soft-delete Implementation & Precheck
+
+- **IMPLEMENTATION PREPARED, NOT EXECUTED** ngày 2026-10-19. User schema có lifecycle fields additive; legacy User thiếu `deletedAt` vẫn active và không có migration/backfill.
+- Login, refresh, protected access, profile update và Admin customer list/detail/statistics fail-closed cho soft-deleted User. Public DTO không lộ lifecycle metadata; ActivityLog actor vẫn resolve qua User document được giữ lại.
+- Cleanup service/script khóa đúng ba S24 Disposable Customer bằng ID + exact fixture identity, kiểm tra toàn bộ dependency/session/log, dùng transaction và conditional `updateOne`; không có HTTP endpoint hay startup hook.
+- Online dry-run chỉ đọc PASS: `development`, database `multilingual_ai_narration`, replica-set transaction available, 3/3 identities đúng, 80 ActivityLog, 33 historical project IDs và mọi dependency/session bằng 0. Database writes: 0.
+- Execution **BLOCKED** vì production isolation chưa được chứng minh và backup/maintenance fence chưa được thực hiện. Không soft-delete, không migration/seed/cleanup, không AI call và không commit/push.
+
+## MUSEUM-02 — Museum Design System Foundation
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Bổ sung theme `.museum-theme` được scope độc lập, đúng palette kem/đỏ trầm/than/vàng đồng đã duyệt và tiếp tục dùng font Be Vietnam Pro local.
+- Token Museum bao gồm color, typography, spacing, radius, shadow, container, breakpoint tham chiếu, focus và reduced-motion. Token Navy/Purple hiện tại không bị thay đổi hoặc ghi đè ngoài Museum subtree.
+- Thêm các primitive `MuseumButton`, `MuseumCard`, `MuseumBadge`, `MuseumContainer`, `MuseumSectionHeading`; ba primitive control/surface tái sử dụng component Customer hiện có thay vì nhân đôi hành vi.
+- Chưa thêm hoặc đổi route; chưa áp theme lên Dashboard/Projects/Workflow/Auth. Không sửa Backend/Database/Mobile/Admin, không gọi AI/TTS và không đụng cleanup ADMIN07.2.
+- Validation: Web tests **221/221 PASS**; lint, typecheck, production build và `git diff --check` PASS. Browser visual: **NOT RUN** vì chưa có route mount Museum foundation trong MUSEUM-02.
+
+## MUSEUM-03 — Public Museum Layout & Routing
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Thêm PublicMuseumLayout, MuseumHeader, MuseumNavigation, MuseumFooter và trang placeholder dùng Design System MUSEUM-02.
+- Root `/` hiển thị Museum công khai; thêm Khám phá, Thuyết minh và Về bảo tàng, hỗ trợ trailing slash và public 404. Workspace Customer vẫn nằm trong RequireAuth, giữ nguyên workflow/ownership guards.
+- Language selector là shell disabled với vi/en/th/ko/zh-CN; chưa có i18n hoặc dữ liệu thuyết minh công khai. Menu mobile dùng native modal dialog, Escape, focus return, body scroll lock và tự đóng theo navigation/breakpoint.
+- Web tests **227/227 PASS**; lint, typecheck, production build và `git diff --check` PASS. Browser: **NOT RUN**, không có browser khả dụng. Responsive/keyboard thực tế tại các viewport yêu cầu còn chờ QA.
+- Không sửa Backend/Database/Admin/Mobile, không gọi AI/TTS, không chạy ADMIN07 cleanup, không thêm dependency và không commit/push. Foundation sẵn sàng triển khai nội dung MUSEUM-04 sau duyệt.
+
+## MUSEUM-04 — War Remnants Museum Homepage
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Thay root placeholder bằng MuseumHomePage với sáu section theo yêu cầu, Museum tokens và CSS riêng; PublicMuseumLayout/navigation/Customer guards được giữ nguyên.
+- Không có media bảo tàng hợp lệ trong source. Dùng visual typography có nhãn chờ ảnh, ba chủ đề biên tập dự kiến, bốn ngôn ngữ dự kiến vi → en/th/ko/zh-CN và video empty state; không có media giả, gọi API protected, dịch/TTS hoặc mutation.
+- Cần người dùng cung cấp ảnh bảo tàng có quyền sử dụng, nội dung chủ đề được duyệt, video public và poster trước khi hoàn thiện nội dung thực. Browser visual: **NOT RUN**, không có browser khả dụng. Chưa xác nhận visual tại các viewport yêu cầu.
+- Không sửa Backend/Database/Admin/Mobile, không đụng ADMIN07, không thêm dependency và không commit/push. Sẵn sàng phát triển MUSEUM-05 với gate nội dung/asset nêu trên.
+- Validation: Web tests **232/232 PASS**; lint, typecheck, production build và `git diff --check` PASS; Browser **NOT RUN**. Có năm regression mới cho homepage render, CTA, language presentation, video empty state và responsive CSS; các tests public/protected routing vẫn PASS.
+
+## MUSEUM-05 — Museum Explore & Exhibition Pages
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Thêm trang Khám phá editorial và route `/kham-pha/:slug` với breadcrumb, nội dung có nguồn, khu vực ảnh và CTA thuyết minh; giữ PublicMuseumLayout/Museum tokens và protected routes.
+- Catalog typed hiện rỗng do chưa có chuyên đề xác minh. Hiển thị empty state, không đưa chủ đề dự kiến từ homepage thành dữ liệu thật. Filter công bố loại draft, thiếu nguồn/nội dung và slug trùng; ảnh local có alt/caption/credit, không sử dụng Project/Result riêng tư.
+- Focused Museum routing/render tests **16/16 PASS**; gồm listing/detail, trailing slash, breadcrumb/CTA, invalid slug, empty/draft/missing-source, escaping, public image boundary và protected route regression. Nội dung minh họa chỉ nằm trong test.
+- Browser **NOT RUN**, không có browser khả dụng. Cần nội dung chuyên đề/nguồn đã xác minh và ảnh có quyền sử dụng trước khi xuất bản entry thật. Sẵn sàng cho MUSEUM-06 ở mức nền tảng source.
+- Không sửa Backend/Database/Admin/Mobile, không đụng ADMIN07, không gọi AI/TTS, không thêm dependency và không commit/push.
+- Validation MUSEUM-05: Web tests **237/237 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build giữ cảnh báo dynamic/static import có sẵn của `projectRepository.ts`.
+
+## MUSEUM-05.2 — Real UI Polish
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Header 80px/mobile 72px, bỏ language helper và giữ accessible label; hero max 60px/spacing gọn hơn; ba card editorial, language cards, video placeholder, CTA và footer được tinh chỉnh trong Museum scope.
+- Không đổi route, nội dung catalog, auth/workflow guard hoặc tính năng; không tạo slug/media giả. Menu mobile, disabled language shell và thông báo đang chuẩn bị được giữ nguyên. Footer không có thông tin liên hệ chưa xác minh.
+- Web tests **238/238 PASS**; lint, typecheck, production build và `git diff --check` PASS. Các cặp text/background mới kiểm tra được đạt contrast AA; build giữ cảnh báo chunking cũ của projectRepository.
+- Browser verification tại 375/768/1024/1280/1440: **NOT RUN**, không có browser khả dụng. Ba ảnh người dùng đề cập không có trong context hiện tại; chưa khẳng định visual hoặc overflow PASS. Asset ảnh/video thật vẫn còn chờ.
+- Không sửa Backend/Database/Admin/Mobile hoặc ADMIN07; không thêm dependency, không gọi AI/TTS và không commit/push.
+
+### Bổ sung MUSEUM-05.2 — Explore Page UI Polish
+
+- **SOURCE COMPLETE**: thu gọn hero/breadcrumb riêng cho Explore listing, cân typography và hai cột intro, thêm đường nhấn editorial và giảm chiều cao empty state. Giữ catalog rỗng, nội dung, route và Museum Design System hiện có.
+- Header/language selector/footer dùng chung bản polish của homepage; không thêm ảnh, slug hoặc chuyên đề. Responsive source giữ một cột dưới 768px, không dùng overflow hidden để che nội dung.
+- Web tests **238/238 PASS**; lint, typecheck, production build và `git diff --check` PASS. Build còn cảnh báo chunking có sẵn. Browser desktop/mobile **NOT RUN** do không có browser khả dụng; ảnh tham khảo không xuất hiện trong context hiện tại.
+- Chỉ sửa MuseumExplorePage, museum-explore.css và docs; không sửa Backend/Database/Admin/Mobile/ADMIN07, không commit/push.
+
+### Bổ sung MUSEUM-05.2 — Final Homepage Polish
+
+- **SOURCE COMPLETE**: cải thiện thứ bậc số/tiêu đề/spacing của ba card editorial, đưa tên tiếng Việt và mã ngôn ngữ lên rõ hơn, dựng poster chờ video bằng typography/CSS, tăng padding và chia nhóm footer, cân section/CTA cuối.
+- Giữ ba nhóm chưa công bố, bốn ngôn ngữ đang chuẩn bị và video empty state. Không thêm nội dung lịch sử, ảnh, chuyên đề, slug hoặc chức năng chưa xác minh. Không sửa Backend/Database/Admin/Mobile/ADMIN07; không commit/push.
+- Web tests **238/238 PASS**; lint, typecheck, production build và `git diff --check` PASS. Browser desktop/mobile **NOT RUN**, không có browser khả dụng; chưa đối chiếu ảnh toàn trang hoặc đo overflow thực tế. Build giữ cảnh báo chunking có sẵn của projectRepository.
+
+## MUSEUM-06 — Public Video Narration Experience
+
+- **SOURCE COMPLETE** ngày 2026-10-19. Thêm public video list/detail tại `/thuyet-minh` (hỗ trợ trailing slash) và `/thuyet-minh/:slug`, MuseumVideoPlayer HTML5, MuseumVideoLanguages và CSS Museum scope. Catalog mặc định rỗng, chưa công bố video thật.
+- Contract typed kiểm tra visibility/publication, nguồn/quyền, slug và asset local. Vite inventory chỉ lấy tên file; vi phải AVAILABLE trước khi entry xuất bản. Bốn mã đích en/th/ko/zh-CN có available/processing/unavailable rõ ràng, không chọn variant thiếu media hoặc lệch metadata ngôn ngữ.
+- Player metadata preload, không autoplay; loading/error/retry và timeout 15s, pause khi unmount/source switch. Caption/transcript gắn đúng language; thay instance video khi chuyển nguồn, không dùng protected URL, query video URL hoặc token. Không tạo transcript/media giả.
+- Focused tests **28/28 PASS** cho contract/public boundaries, list/detail, trạng thái ngôn ngữ, đồng bộ transcript/caption, native controls, lỗi/timeout/retry và regression routing. Chỉ mock inventory/fixture trong tests, không tạo file video hoặc ghi DB.
+- Browser **NOT RUN**, không có browser khả dụng. Playback/codec/WebVTT thật, quyền/ngữ nghĩa/timing và visual responsive còn chờ asset hợp lệ. Hướng dẫn tích hợp tại docs/UI.md; sẵn sàng nối video thật và tiếp tục MUSEUM-07 ở mức source.
+- Giữ nguyên các thay đổi MUSEUM-05.2/ADMIN07 đang có; không sửa Backend/Database/Admin/Mobile, không gọi AI/TTS, không thêm dependency và không commit/push.
+- Validation cuối: Web tests **249/249 PASS**, lint/typecheck/production build/diff-check PASS. Browser **NOT RUN**. Database reads/writes: **0**; AI/TTS requests: **0**. Build giữ cảnh báo chunking cũ của projectRepository.ts.
+
+## MUSEUM-06.1 — Tạo thư mục và chuẩn bị tích hợp video thật
+
+- **PREPARED — VIDEO/PUBLICATION PENDING** ngày 2026-10-19. Tạo ba thư mục public/museum/videos, posters, captions có .gitkeep. MP4 dự kiến `bao-tang-chung-tich-chien-tranh.mp4` chưa tồn tại; không copy/tạo media giả hoặc dùng private upload.
+- Mở rộng inventory/allowlist đúng loại asset cho đường dẫn mới, giữ tương thích museum-media cũ. Chuẩn bị một draft trong catalog hiện có, PRIVATE/DRAFT, quyền chưa xác nhận, cả vi/en/th/ko/zh-CN đều UNAVAILABLE. Catalog công khai vẫn 0 video.
+- Git ignore chặn file trong museum/videos, cho phép .gitkeep; không stage/commit video. Public directory vẫn phục vụ file trực tiếp: người dùng cần xác nhận quyền trước khi copy video, sau đó kiểm tra file thật và duyệt metadata/publication.
+- Focused tests **10/10 PASS**; tích hợp playback thật **NOT RUN** do chưa có file. Không sửa Backend/Database/Admin/Mobile/ADMIN07, không gọi AI/TTS và không commit/push.
+- Validation cuối: Web tests **251/251 PASS**, lint/typecheck/build/diff-check PASS; build giữ cảnh báo chunking có sẵn. File MP4 chưa tồn tại và chưa công bố entry; không có media được đưa vào Git index.
