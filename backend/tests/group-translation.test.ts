@@ -119,6 +119,12 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
   t.mock.method(Transcript, 'findOne', () => query({ _id: new Types.ObjectId(s.transcriptId), languageCode: s.languageCode, fullText: s.fullText, status: 'READY', revision: 1 }));
   t.mock.method(Transcript, 'updateOne', async (filter: any) => ({ matchedCount: filter.revision === 1 ? 1 : 0 }));
   t.mock.method(TranscriptSegment, 'find', () => query(s.segments.map(v => ({ ...v, _id: new Types.ObjectId(v.id) }))));
+  t.mock.method(Transcript, 'aggregate', () => ({ session: () => Promise.resolve([{ _id: new Types.ObjectId(s.transcriptId), languageCode: s.languageCode, fullText: s.fullText, status: 'READY', revision: s.transcriptRevision }]) }));
+  t.mock.method(TranscriptSegment, 'aggregate', (pipeline: any[]) => ({ session: () => ({ cursor: (options: any) => {
+    assert.equal(options.batchSize, 1);
+    assert.ok(pipeline.some(stage => stage.$limit === 10001));
+    return { async *[Symbol.asyncIterator]() { for (const segment of s.segments) yield { ...segment, _id: new Types.ObjectId(segment.id) }; }, async close() {} };
+  } }) }));
   t.mock.method(Language, 'exists', (f: any) => query(f.code === 'en' ? { _id: 'lang' } : null));
   t.mock.method(Translation, 'findOne', () => query(persisted)); t.mock.method(Translation, 'exists', () => query(persisted ? { _id: persisted._id } : null));
   t.mock.method(Translation, 'create', async (rows: any[]) => { writes++; persisted = new Translation(rows[0]); await persisted.validate(); return [persisted]; });
@@ -181,7 +187,11 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
     await assert.rejects(service.approve(projectId, owner, draft.draftId, { outputDigest: draft.outputDigest, reviewed: true }), code('TRANSLATION_ALREADY_EXISTS'));
     assert.equal(writes, 1); persisted = old;
   });
-  t.mock.method(User, 'findById', async (id: string) => ({ ...user, _id: new Types.ObjectId(id) }));
+  let deletedUser = false;
+  t.mock.method(User, 'findOne', async (filter: any) => {
+    assert.equal(filter.deletedAt, null);
+    return deletedUser ? null : { ...user, _id: new Types.ObjectId(filter._id) };
+  });
   const app = express(); app.use(express.json()); app.use('/api/projects', projectRouter); app.use(errorHandlerMiddleware);
   const server = app.listen(0, '127.0.0.1'); await new Promise<void>(resolve => server.once('listening', resolve));
   const address = server.address(); assert.ok(address && typeof address !== 'string');
@@ -194,9 +204,11 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
     await t.test('all new routes authenticate and reject cross owner, blocked user and ADMIN', async () => {
       for (const [path, payload] of [['plan/en', undefined], ['preview', body], [`drafts/${draft.draftId}`, undefined], [`drafts/${draft.draftId}/approve`, { outputDigest: draft.outputDigest, reviewed: true }]] as const) {
         assert.equal((await call(path, undefined, payload)).status, 401);
+        assert.equal((await call(path, 'invalid-token', payload)).status, 401);
         assert.equal((await call(path, signAccessToken(other, 'CUSTOMER'), payload)).status, 404);
         user.status = 'BLOCKED'; assert.equal((await call(path, token, payload)).status, 403); user.status = 'ACTIVE';
         user.role = 'ADMIN'; assert.equal((await call(path, token, payload)).status, 403); user.role = 'CUSTOMER';
+        deletedUser = true; assert.equal((await call(path, token, payload)).status, 401); deletedUser = false;
       }
     });
     await t.test('authorized grouped GET and feature off without writes/AI; invalid params/payload', async () => {

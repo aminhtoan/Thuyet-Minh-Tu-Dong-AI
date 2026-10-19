@@ -10,16 +10,33 @@ import { type GroupDraftStore, groupDraftStore } from './group-draft-store.js';
 import { GeminiGroupTranslationProvider, mapGroupResponse, type GroupProvider } from './gemini-group-translation.provider.js';
 import { GeminiTranslationError } from './gemini-translation.provider.js';
 import { isRevision, revisionFenceOperation, translationProvenance } from '../artifact-provenance.service.js';
+import { boundedTextProjection, collectBoundedSource, sourceTooLarge, SOURCE_SEGMENT_LIMIT } from './bounded-source.js';
 
 function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true') throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
 const exists = () => new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Ngôn ngữ này đã có bản dịch. Không ghi đè bản dịch hiện có.');
 export async function loadSource(projectId: string, session: ClientSession | null = null): Promise<SourceSnapshot> {
-  const transcript = await Transcript.findOne({ projectId }).session(session);
+  const [transcript] = await Transcript.aggregate([
+    { $match: { projectId: new mongoose.Types.ObjectId(projectId) } }, { $limit: 1 },
+    { $project: { _id: 1, revision: { $cond: [{ $isNumber: '$revision' }, '$revision', null] }, status: boundedTextProjection('status', 20), languageCode: boundedTextProjection('languageCode', 20), fullText: boundedTextProjection('fullText') } },
+  ]).session(session);
   if (!transcript || !['READY', 'SAVED'].includes(transcript.status)) throw new AppError(409, 'TRANSCRIPT_NOT_FOUND', 'Chưa có bản ghi hợp lệ để dịch.');
-  const segments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 }).session(session);
-  return { transcriptId: String(transcript._id), transcriptRevision: transcript.revision, languageCode: transcript.languageCode, fullText: transcript.fullText,
-    segments: segments.map(s => ({ id: String(s._id), sequence: s.sequence, text: s.text, startTime: s.startTime, endTime: s.endTime })) };
+  if (!isRevision(transcript.revision)) throw new AppError(409, 'TRANSCRIPT_REVISION_UNAVAILABLE', 'Transcript revision is unavailable for safe artifact creation.');
+  if (typeof transcript.fullText !== 'string' || typeof transcript.languageCode !== 'string') throw sourceTooLarge();
+  const cursor = TranscriptSegment.aggregate([
+    { $match: { transcriptId: transcript._id } }, { $sort: { sequence: 1 } }, { $limit: SOURCE_SEGMENT_LIMIT + 1 },
+    { $project: { _id: 1,
+      sequence: { $cond: [{ $isNumber: '$sequence' }, '$sequence', null] },
+      startTime: { $cond: [{ $isNumber: '$startTime' }, '$startTime', null] },
+      endTime: { $cond: [{ $isNumber: '$endTime' }, '$endTime', null] }, text: boundedTextProjection('text') } },
+  ]).session(session).cursor({ batchSize: 1 });
+  try {
+    const rows = (async function* () { for await (const s of cursor) yield { id: String(s._id), sequence: s.sequence, text: s.text, startTime: s.startTime, endTime: s.endTime }; })();
+    const source = await collectBoundedSource({ transcriptId: String(transcript._id), transcriptRevision: transcript.revision, languageCode: transcript.languageCode, fullText: transcript.fullText }, rows);
+    const current = await Transcript.findOne({ _id: transcript._id, projectId }).select('_id revision').session(session);
+    if (!current || current.revision !== transcript.revision) throw mismatch();
+    return source;
+  } finally { await cursor.close(); }
 }
 type GroupedRecord = Pick<TranslationDocument, 'alignmentFormat' | 'sourceRevision' | 'sourceTranscriptRevision' | 'groupingVersion' | 'groups' | 'review' | 'fullText' | 'targetLanguage' | 'transcriptId' | 'sourceLanguage'>;
 export function storedGroups(record: GroupedRecord): TranslationGroup[] {
@@ -45,7 +62,7 @@ export async function groupedDto(record: TranslationDocument & { _id: unknown })
 export class GroupTranslationService {
   constructor(private readonly provider: GroupProvider = new GeminiGroupTranslationProvider(), private readonly store: GroupDraftStore = groupDraftStore) {}
   private async context(projectId: string, ownerId: string, targetLanguage: string, session: ClientSession | null = null) {
-    const project = await Project.findOne({ _id: projectId, userId: ownerId }).session(session);
+    const project = await Project.findOne({ _id: projectId, userId: ownerId }).select('_id status sourceLanguage').session(session);
     if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
     if (!['TRANSCRIBED', 'TRANSLATED', 'FAILED'].includes(project.status)) throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép dịch theo cụm.');
     if (project.sourceLanguage === targetLanguage) throw new AppError(400, 'SAME_SOURCE_TARGET_LANGUAGE', 'Ngôn ngữ đích phải khác ngôn ngữ nguồn.');

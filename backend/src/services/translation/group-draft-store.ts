@@ -3,16 +3,21 @@ import { AppError } from '../../utils/app-error.js';
 import type { TranslationGroup } from './group-plan.js';
 
 export type GroupDraft = { draftId: string; ownerId: string; projectId: string; transcriptId: string; transcriptRevision: number; sourceLanguage: string; targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: TranslationGroup[]; outputDigest: string; expiresAt: string; alignmentFormat: 'GROUPS_V1'; state: 'DRAFT' };
-type Entry = { expires: number; signature: string; promise: Promise<GroupDraft> };
+type Entry = { expires: number; signature: string; promise: Promise<GroupDraft>; cancelExpiry?: () => void };
+type ScheduleExpiry = (callback: () => void, delay: number) => () => void;
+const scheduleExpiry: ScheduleExpiry = (callback, delay) => {
+  const timer = setTimeout(callback, delay); timer.unref();
+  return () => clearTimeout(timer);
+};
 // One process only. A failed generation is retained until TTL: same key never retries AI.
 export class GroupDraftStore {
   private drafts = new Map<string, GroupDraft>();
   private requests = new Map<string, Entry>();
   private approvals = new Map<string, Promise<unknown>>();
-  constructor(private readonly clock = Date.now, private readonly ttl = 15 * 60_000, private readonly capacity = 50) {}
+  constructor(private readonly clock = Date.now, private readonly ttl = 15 * 60_000, private readonly capacity = 50, private readonly schedule: ScheduleExpiry = scheduleExpiry) {}
   private prune() {
     for (const [id, draft] of this.drafts) if (Date.parse(draft.expiresAt) <= this.clock()) this.drafts.delete(id);
-    for (const [key, entry] of this.requests) if (entry.expires <= this.clock()) this.requests.delete(key);
+    for (const [key, entry] of this.requests) if (entry.expires <= this.clock()) { entry.cancelExpiry?.(); this.requests.delete(key); }
   }
   async preview(key: string, signature: string, create: () => Promise<Omit<GroupDraft, 'draftId' | 'expiresAt' | 'state' | 'alignmentFormat'>>): Promise<GroupDraft> {
     this.prune(); const existing = this.requests.get(key);
@@ -26,8 +31,20 @@ export class GroupDraftStore {
       this.drafts.set(draft.draftId, structuredClone(draft)); return draft;
     });
     // Pending entries may not expire while the provider is in flight.
-    const entry = { expires: Number.POSITIVE_INFINITY, signature, promise }; this.requests.set(key, entry);
-    void promise.finally(() => { entry.expires = expires; }).catch(() => undefined);
+    const entry: Entry = { expires: Number.POSITIVE_INFINITY, signature, promise }; this.requests.set(key, entry);
+    // Start expiry only after underlying work settles, never just on disconnect
+    // or elapsed TTL while the transport still owns its buffers/closures.
+    const expireWhenSettled = () => {
+      entry.expires = expires;
+      if (this.requests.get(key) !== entry) return;
+      entry.cancelExpiry = this.schedule(() => {
+        if (this.requests.get(key) !== entry) return;
+        this.prune();
+        // Timers can fire slightly before the injected wall clock reaches TTL.
+        if (this.requests.get(key) === entry) expireWhenSettled();
+      }, Math.max(1, expires - this.clock()));
+    };
+    void promise.finally(expireWhenSettled).catch(() => undefined);
     return structuredClone(await promise);
   }
   private expired() { return new AppError(410, 'TRANSLATION_DRAFT_EXPIRED', 'Bản nháp đã hết hạn hoặc máy chủ đã khởi động lại. Không tự động dịch lại.'); }

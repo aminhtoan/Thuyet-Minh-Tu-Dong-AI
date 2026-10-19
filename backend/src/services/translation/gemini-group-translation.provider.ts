@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import { GEMINI_TRANSLATION_MODEL, GeminiTranslationError, mapGeminiTranslationError } from './gemini-translation.provider.js';
+import { boundedTranslationFetch } from './bounded-fetch.js';
 export type GroupProviderInput = { fullText: string; sourceLanguage: string; targetLanguage: string; groups: { groupId: string; sourceText: string }[] };
 export interface GroupProvider { translate(input: GroupProviderInput): Promise<{ groupId: string; translatedText: string }[]> }
 export interface GroupTransport {
@@ -28,7 +29,7 @@ export class GeminiGroupTranslationProvider implements GroupProvider {
     try {
       let transport = this.transport;
       if (!transport) {
-        const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 120_000, retryOptions: { attempts: 1 } } });
+        const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 120_000, retryOptions: { attempts: 1 }, fetch: boundedTranslationFetch() } });
         transport = {
           metadata: (model, signal) => ai.models.get({ model, config: { abortSignal: signal } }),
           async generate(model, input, signal) {

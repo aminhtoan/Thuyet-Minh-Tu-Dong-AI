@@ -11,7 +11,7 @@ import { AppError } from '../utils/app-error.js';
 import { env } from '../config/env.js';
 import { getTranslationProvider } from './translation/translation.service.js';
 import { OpenAiTranslationError } from './translation/openai-translation.provider.js';
-import { GeminiTranslationError, GEMINI_TRANSLATION_ERRORS, assertGeminiTranslationGranularity } from './translation/gemini-translation.provider.js';
+import { GeminiTranslationError, GEMINI_TRANSLATION_ERRORS } from './translation/gemini-translation.provider.js';
 import { isTranslationMappingCurrent } from './translation/translation-mapping.js';
 import type { TranslationProviderSegment } from './translation/translation-provider.interface.js';
 import { groupedDto } from './translation/group-translation.service.js';
@@ -71,6 +71,12 @@ const validateResult = (expected: TranslationProviderSegment[], actual: Translat
 
 const isDuplicateKey = (error: unknown): boolean => Boolean(error && typeof error === 'object' && 'code' in error && (error as { code?: unknown }).code === 11000);
 
+// No transcript schema currently provides a trusted 1:1 alignment capability.
+// Do not accept client claims or infer semantics from text/timing heuristics.
+function requireLegacyAlignmentCapability(): void {
+  throw new AppError(409, 'TRANSLATION_ALIGNMENT_UNVERIFIED', 'Chưa có bằng chứng ánh xạ 1:1 cho bản ghi này. Vui lòng sử dụng luồng dịch theo cụm và duyệt bản dịch.');
+}
+
 export const translate = async (projectId: string, userId: string, targetLanguage: string) => {
   const project = await Project.findOne({ _id: projectId, userId });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
@@ -84,14 +90,14 @@ export const translate = async (projectId: string, userId: string, targetLanguag
   const existing = await Translation.findOne({ transcriptId: transcript._id, targetLanguage, status: 'READY' });
   if (existing?.alignmentFormat === 'GROUPS_V1') throw new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Đã có bản dịch theo cụm; không ghi đè bằng luồng cũ.');
   if (existing && translationProvenance(existing, transcript) === 'CURRENT' && isTranslationMappingCurrent(sourceSegments, await TranslationSegment.find({ translationId: existing._id }))) return { project: { id: projectId, status: project.status }, translation: await getTranslation(projectId, targetLanguage), idempotent: true };
+  // No persisted capability currently certifies 1:1 semantic alignment for new
+  // legacy generations. Revision/ID equality proves freshness, not alignment.
+  // Keep reading existing current records, but do not create/replace legacy data.
   if (!['TRANSCRIBED', 'TRANSLATED', 'FAILED'].includes(project.status)) {
     if (project.status === 'TRANSLATING') throw new AppError(409, 'TRANSLATION_ALREADY_RUNNING', 'Dự án đang được dịch.');
     throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép dịch.');
   }
-  if ((process.env.TRANSLATION_PROVIDER?.trim().toLowerCase() || 'gemini') === 'gemini') {
-    try { assertGeminiTranslationGranularity(sourceSegments); }
-    catch { throw new AppError(409, 'TRANSLATION_MAPPING_FAILED', 'Bản ghi đang tách theo từng từ. Chưa thể xác minh ánh xạ ngữ nghĩa Việt–Anh với cấu trúc lưu hiện tại; cần liên kết bản dịch theo cụm/câu trước khi dịch.'); }
-  }
+  requireLegacyAlignmentCapability();
 
   let job;
   try {

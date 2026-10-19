@@ -20,7 +20,6 @@ const { ActivityLog } = await import('../src/models/ActivityLog.js');
 const { Language } = await import('../src/models/Language.js');
 const { signAccessToken } = await import('../src/utils/jwt.js');
 const { setTranslationProviderForTests } = await import('../src/services/translation/translation.service.js');
-const { GeminiTranslationError } = await import('../src/services/translation/gemini-translation.provider.js');
 
 test('real JWT/ownership routes + translation service, all persistence mocked', async t => {
   const owner = new Types.ObjectId(), other = new Types.ObjectId(), projectId = new Types.ObjectId(), transcriptId = new Types.ObjectId();
@@ -29,8 +28,12 @@ test('real JWT/ownership routes + translation service, all persistence mocked', 
   const transcript = { _id: transcriptId, languageCode: 'vi', fullText: 'Nguyễn Hữu Huân, 12 Long Châu' };
   (transcript as typeof transcript & { revision: number }).revision = 1;
   const sources = [{ _id: new Types.ObjectId(), sequence: 1, startTime: .12, endTime: 1.2, text: 'Nguyễn Hữu Huân' }, { _id: new Types.ObjectId(), sequence: 2, startTime: 1.2, endTime: 3.45, text: '12 Long Châu' }];
-  let saved: any = null, savedSegments: any[] = [], missing = false, generated = 0, writes = 0, jobs = 0, race = false;
-  t.mock.method(User, 'findById', async (id: string) => id === owner.toString() ? user : { ...user, _id: other });
+  let saved: any = null, savedSegments: any[] = [], missing = false, generated = 0, writes = 0, jobs = 0;
+  let deletedUser = false;
+  t.mock.method(User, 'findOne', async (filter: any) => {
+    assert.equal(filter.deletedAt, null);
+    return deletedUser ? null : filter._id === owner.toString() ? user : { ...user, _id: other };
+  });
   t.mock.method(Language, 'exists', async (filter: any) => filter.code === 'en' ? { _id: new Types.ObjectId() } : null);
   const query = (value: any) => ({ sort() { return this; }, select() { return this; }, session() { return this; }, then(resolve: any, reject: any) { return Promise.resolve(value).then(resolve, reject); } });
   t.mock.method(Project, 'findOne', (filter: any) => query(filter._id === projectId.toString() && filter.userId === owner.toString() ? project : null));
@@ -38,7 +41,7 @@ test('real JWT/ownership routes + translation service, all persistence mocked', 
   t.mock.method(Project, 'updateOne', async () => ({}));
   t.mock.method(Transcript, 'findOne', async () => missing ? null : transcript);
   t.mock.method(Transcript, 'updateOne', async (filter: any) => ({ matchedCount: filter.revision === transcript.revision ? 1 : 0 }));
-  t.mock.method(TranscriptSegment, 'find', () => query(race ? [{ ...sources[0], _id: new Types.ObjectId() }, sources[1]] : sources));
+  t.mock.method(TranscriptSegment, 'find', () => query(sources));
   t.mock.method(Translation, 'findOne', async () => saved);
   t.mock.method(Translation, 'findOneAndUpdate', async (_filter: any, update: any) => { writes++; saved = { ...(saved ?? {}), ...(update.$set ?? update), _id: saved?._id ?? new Types.ObjectId(), createdAt: saved?.createdAt ?? new Date(), updatedAt: new Date() }; return saved; });
   t.mock.method(Translation, 'create', async (rows: any[]) => { writes++; saved = { ...rows[0], _id: new Types.ObjectId(), createdAt: new Date(), updatedAt: new Date() }; return [saved]; });
@@ -63,16 +66,38 @@ test('real JWT/ownership routes + translation service, all persistence mocked', 
   try {
     await t.test('unauthenticated/other user/blocked/ADMIN rejected without provider', async () => { assert.equal((await call('POST', null)).status, 401); assert.equal((await call('POST', otherToken)).status, 404); user.status = 'BLOCKED'; assert.equal((await call()).status, 403); user.status = 'ACTIVE'; user.role = 'ADMIN'; assert.equal((await call()).status, 403); user.role = 'CUSTOMER'; assert.equal(generated, 0); });
     await t.test('missing transcript and invalid/unsupported/same target rejected', async () => { missing = true; assert.equal((await call()).status, 404); missing = false; assert.equal((await call('POST', token, { targetLanguage: 'vi' })).status, 400); assert.equal((await call('POST', token, { targetLanguage: 'not valid' })).status, 400); assert.equal((await call('POST', token, { targetLanguage: 'xx' })).body.error.code, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED'); assert.equal(generated, 0); });
-    await t.test('word-level ambiguity rejected without job/project/translation mutation or provider call', async () => {
+    await t.test('unverified word, mixed and phrase sources are blocked before job/write/provider', async () => {
       const before = JSON.stringify(sources), oldProvider = process.env.TRANSLATION_PROVIDER;
-      process.env.TRANSLATION_PROVIDER = 'gemini'; sources[0]!.text = 'Tiểu'; sources[1]!.text = 'học';
-      try { const result = await call(); assert.equal(result.status, 409); assert.equal(result.body.error.code, 'TRANSLATION_MAPPING_FAILED'); assert.equal(generated, 0); assert.equal(jobs, 0); assert.equal(writes, 0); assert.equal(project.status, 'TRANSCRIBED'); }
+      process.env.TRANSLATION_PROVIDER = 'gemini';
+      try {
+        for (const texts of [['Tiểu', 'học'], ['Tiểu học', 'mới'], ['Xin chào.', 'Đây là bảo tàng.']]) {
+          sources[0]!.text = texts[0]!; sources[1]!.text = texts[1]!;
+          const result = await call(); assert.equal(result.status, 409); assert.equal(result.body.error.code, 'TRANSLATION_ALIGNMENT_UNVERIFIED');
+          assert.equal(generated, 0); assert.equal(jobs, 0); assert.equal(writes, 0); assert.equal(project.status, 'TRANSCRIBED');
+        }
+        process.env.TRANSLATION_PROVIDER = 'openai';
+        assert.equal((await call()).body.error.code, 'TRANSLATION_ALIGNMENT_UNVERIFIED');
+        assert.equal((await call('POST', token, { targetLanguage: 'en', alignmentVerified: true })).status, 400);
+        deletedUser = true; assert.equal((await call()).status, 401); deletedUser = false;
+      }
       finally { Object.assign(sources[0]!, JSON.parse(before)[0]); Object.assign(sources[1]!, JSON.parse(before)[1]); if (oldProvider === undefined) delete process.env.TRANSLATION_PROVIDER; else process.env.TRANSLATION_PROVIDER = oldProvider; }
     });
-    await t.test('success persists original mapping and reload returns saved data', async () => { const before = JSON.stringify(sources); const result = await call(); assert.equal(result.status, 200); assert.equal(result.body.data.translation.segments[0].sourceSegmentId, sources[0]!._id.toString()); assert.equal((await call('GET')).body.data.translation.fullText, 'Nguyễn Hữu Huân 12 Long Châu'); assert.equal(JSON.stringify(sources), before); assert.equal(writes, 1); });
-    await t.test('opening/repeating existing valid target is idempotent', async () => { const before = generated; assert.equal((await call()).body.data.idempotent, true); assert.equal(generated, before); assert.equal(writes, 1); });
-    await t.test('stale version cannot be returned; provider failure preserves stored translation', async () => { const old = JSON.stringify(saved); savedSegments[0].transcriptSegmentId = new Types.ObjectId(); assert.equal((await call('GET')).status, 404); setTranslationProviderForTests({ async translate() { throw new GeminiTranslationError('TRANSLATION_QUOTA_EXCEEDED', 429); } }); const result = await call(); assert.equal(result.status, 502); assert.equal(result.body.error.code, 'TRANSLATION_QUOTA_EXCEEDED'); assert.equal(JSON.stringify(saved), old); assert.equal(writes, 1); });
-    await t.test('invalid mapping is rejected before translation write', async () => { setTranslationProviderForTests({ async translate(input) { return { ...input, segments: [] }; } }); assert.equal((await call()).body.error.code, 'TRANSLATION_INVALID_RESPONSE'); assert.equal(writes, 1); });
-    await t.test('transcript changed while provider runs cannot overwrite stored translation', async () => { setTranslationProviderForTests({ async translate(input) { race = true; return provider.translate(input); } }); assert.equal((await call()).body.error.code, 'TRANSLATION_MAPPING_FAILED'); assert.equal(writes, 1); });
+    await t.test('existing CURRENT provenance and exact mapping remain readable/idempotent without generation', async () => {
+      saved = { _id: new Types.ObjectId(), projectId, transcriptId, sourceLanguage: 'vi', targetLanguage: 'en', fullText: 'Existing translation', status: 'READY', revision: 1, sourceTranscriptRevision: 1, createdAt: new Date(), updatedAt: new Date() };
+      savedSegments = sources.map(source => ({ transcriptSegmentId: source._id, translatedText: 'Existing text' }));
+      assert.equal((await call('GET')).status, 200);
+      assert.equal((await call()).body.data.idempotent, true);
+      assert.equal(writes, 0); assert.equal(generated, 0);
+    });
+    await t.test('stale or UNKNOWN provenance cannot authorize replacement; old data preserved', async () => {
+      for (const sourceRevision of [undefined, 0]) {
+        saved.sourceTranscriptRevision = sourceRevision;
+        const before = JSON.stringify(saved);
+        assert.equal((await call('GET')).status, 409);
+        assert.equal((await call()).body.error.code, 'TRANSLATION_ALIGNMENT_UNVERIFIED');
+        assert.equal(JSON.stringify(saved), before);
+        assert.equal(writes, 0); assert.equal(generated, 0);
+      }
+    });
   } finally { setTranslationProviderForTests(); await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); }
 });

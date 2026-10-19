@@ -22,14 +22,15 @@ export function validateSource(source: SourceSnapshot): void {
     ids.add(s.id); end = s.endTime;
   });
 }
-function group(source: SourceSnapshot, segments: SourceSegment[], sequence: number): TranslationGroup {
+function group(sourceRevision: string, segments: SourceSegment[], sequence: number): TranslationGroup {
   const sourceSegmentIds = segments.map(s => s.id);
-  return { groupId: digest([revision(source), GROUPING_VERSION, sourceSegmentIds]), sequence, sourceSegmentIds,
+  return { groupId: digest([sourceRevision, GROUPING_VERSION, sourceSegmentIds]), sequence, sourceSegmentIds,
     sourceText: segments.reduce((text, s) => text + (text && !/^[,.;:!?…。！？]+$/u.test(s.text.trim()) ? ' ' : '') + s.text.trim(), ''),
     startTime: segments[0]!.startTime, endTime: segments.at(-1)!.endTime, translatedText: '' };
 }
 export function candidateGroups(source: SourceSnapshot): TranslationGroup[] {
   validateSource(source);
+  const sourceRevision = revision(source);
   const runs: SourceSegment[][] = []; let current: SourceSegment[] = [];
   const flush = () => { if (current.length) runs.push(current); current = []; };
   for (const s of source.segments) {
@@ -38,17 +39,18 @@ export function candidateGroups(source: SourceSnapshot): TranslationGroup[] {
     current.push(s);
     if (/[.!?…。！？]["'”’»)]*$/u.test(s.text.trim())) flush();
   }
-  flush(); return runs.map((run, i) => group(source, run, i + 1));
+  flush(); return runs.map((run, i) => group(sourceRevision, run, i + 1));
 }
 // Only removing candidate boundaries is allowed. Clients cannot edit source text/times.
 export function validatePlan(source: SourceSnapshot, memberships: string[][]): TranslationGroup[] {
   const candidates = candidateGroups(source);
+  const sourceRevision = revision(source);
   const flat = memberships.flat();
   if (!memberships.length || memberships.some(ids => !ids.length) || flat.length !== source.segments.length || flat.some((id, i) => id !== source.segments[i]?.id)) throw invalid();
   const ends = new Set(candidates.map(c => c.sourceSegmentIds.at(-1)));
   if (memberships.some(ids => !ends.has(ids.at(-1)))) throw invalid();
   let offset = 0;
-  return memberships.map((ids, i) => { const next = group(source, source.segments.slice(offset, offset + ids.length), i + 1); offset += ids.length; return next; });
+  return memberships.map((ids, i) => { const next = group(sourceRevision, source.segments.slice(offset, offset + ids.length), i + 1); offset += ids.length; return next; });
 }
 export function assertStoredGroups(source: SourceSnapshot, groups: TranslationGroup[]): void {
   const expected = validatePlan(source, groups.map(g => g.sourceSegmentIds));
