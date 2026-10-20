@@ -1,0 +1,26 @@
+name: narration-groups-test
+services:
+  mongodb:
+    image: mongo:8.0.17
+    container_name: narration-groups-test-mongodb
+    command: ["mongod", "--replSet", "narration-test-rs", "--port", "27029", "--bind_ip_all"]
+    ports:
+      - "127.0.0.1:27029:27029"
+    volumes:
+      - integration-data:/data/db
+      - ./init-replica.js:/opt/test/init-replica.js:ro
+    tmpfs:
+      - /data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--port", "27029", "--file", "/opt/test/init-replica.js"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    networks: [integration-only]
+volumes:
+  integration-data:
+    name: narration-groups-test-data
+networks:
+  integration-only:
+    driver: bridge
