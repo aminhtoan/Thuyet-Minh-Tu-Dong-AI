@@ -1,0 +1,39 @@
+name: narration-backend-validation
+services:
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: tests/docker-validation/Dockerfile
+    image: narration-backend-validation:local
+    container_name: narration-backend-validation
+    hostname: narration-backend-validation
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700"]
+    ports: ["127.0.0.1:18081:8081"]
+    environment:
+      NODE_ENV: test
+      VALIDATION_ONLY: "true"
+      EXPECTED_MONGO_PROCESS_ID: "${VALIDATION_MONGO_PROCESS_ID:?Run verified host precheck first}"
+      TEST_MONGODB_URI: mongodb://narration-groups-test-mongodb:27029/multilingual_ai_narration_groups_test?replicaSet=narration-test-rs&directConnection=true
+      TEST_DATABASE_NAME: multilingual_ai_narration_groups_test
+    networks: [integration-only]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    logging:
+      driver: json-file
+      options: {max-size: "2m", max-file: "2"}
+networks:
+  integration-only:
+    external: true
+    name: narration-groups-test_integration-only

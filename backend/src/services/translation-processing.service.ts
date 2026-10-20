@@ -14,7 +14,8 @@ import { OpenAiTranslationError } from './translation/openai-translation.provide
 import { GeminiTranslationError, GEMINI_TRANSLATION_ERRORS } from './translation/gemini-translation.provider.js';
 import { isTranslationMappingCurrent } from './translation/translation-mapping.js';
 import type { TranslationProviderSegment } from './translation/translation-provider.interface.js';
-import { groupedDto } from './translation/group-translation.service.js';
+import { groupedDto, boundedTranslationRecord } from './translation/group-translation.service.js';
+import { scopedGroupAdmission } from './translation/group-source-scope.js';
 import { isRevision, nextRevision, revisionFenceOperation, translationProvenance, type ProvenanceState } from './artifact-provenance.service.js';
 
 const writeLog = async (userId: string, action: string, projectId: Types.ObjectId, targetLanguage: string) => {
@@ -38,10 +39,11 @@ export const listTranslations = async (projectId: string) => {
 };
 
 export const getTranslation = async (projectId: string, targetLanguage: string, supportsGroups = false) => {
-  const translation = await Translation.findOne({ projectId, targetLanguage, status: 'READY' });
-  const currentTranscript = translation ? await Transcript.findOne({ _id: translation.transcriptId, projectId }) : null;
+  const translation = await boundedTranslationRecord({ projectId, targetLanguage, status: 'READY' });
+  const currentTranscript = translation ? await (scopedGroupAdmission() ? Transcript.findOne({ _id: translation.transcriptId, projectId }).select('_id revision') : Transcript.findOne({ _id: translation.transcriptId, projectId })) : null;
   if (translation && translationProvenance(translation, currentTranscript) !== 'CURRENT') throw new AppError(409, 'TRANSLATION_PROVENANCE_INVALID', 'Translation provenance is missing or stale.');
   if (!translation) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Không tìm thấy bản dịch.');
+  if (scopedGroupAdmission() && translation.alignmentFormat !== 'GROUPS_V1') throw new AppError(409, 'TRANSLATION_FORMAT_UNSUPPORTED', 'Profile thử nghiệm chỉ hỗ trợ GROUPS_V1.');
   if (translation.alignmentFormat === 'GROUPS_V1') {
     if (!supportsGroups) throw new AppError(409, 'TRANSLATION_FORMAT_UNSUPPORTED', 'Bản dịch theo cụm cần ứng dụng hỗ trợ GROUPS_V1.');
     return groupedDto(translation);

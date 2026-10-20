@@ -12,11 +12,13 @@ import { GeminiTranslationError } from './gemini-translation.provider.js';
 import { isRevision, revisionFenceOperation, translationProvenance } from '../artifact-provenance.service.js';
 import { boundedTextProjection, collectBoundedSource, sourceTooLarge, SOURCE_SEGMENT_LIMIT, SOURCE_BYTE_LIMIT } from './bounded-source.js';
 import type { GroupAdmission } from './group-admission.js';
+import { scopedGroupAdmission } from './group-source-scope.js';
 
 function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true') throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
 const exists = () => new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Ngôn ngữ này đã có bản dịch. Không ghi đè bản dịch hiện có.');
 export async function loadSource(projectId: string, session: ClientSession | null = null, admission?: GroupAdmission): Promise<SourceSnapshot> {
+  admission ??= scopedGroupAdmission();
   const byteLimit = admission?.policy.sourceBytes ?? SOURCE_BYTE_LIMIT;
   const [transcript] = await Transcript.aggregate([
     { $match: { projectId: new mongoose.Types.ObjectId(projectId) } }, { $limit: 1 },
@@ -41,6 +43,15 @@ export async function loadSource(projectId: string, session: ClientSession | nul
   } finally { await cursor.close(); }
 }
 type GroupedRecord = Pick<TranslationDocument, 'alignmentFormat' | 'sourceRevision' | 'sourceTranscriptRevision' | 'groupingVersion' | 'groups' | 'review' | 'fullText' | 'targetLanguage' | 'transcriptId' | 'sourceLanguage'>;
+export async function boundedTranslationRecord(filter: Record<string, unknown>, session: ClientSession | null = null, admission = scopedGroupAdmission()) {
+  if (!admission) return session ? Translation.findOne(filter).session(session) : Translation.findOne(filter);
+  const match = { ...filter };
+  for (const key of ['_id', 'projectId', 'transcriptId']) if (typeof match[key] === 'string') match[key] = new mongoose.Types.ObjectId(match[key] as string);
+  const [row] = await Translation.aggregate([{ $match: match }, { $limit: 1 }, { $project: { record: { $cond: [{ $lte: [{ $bsonSize: '$$ROOT' }, 128 * 1024] }, '$$ROOT', null] } } }]).session(session);
+  if (!row) return null;
+  if (!row.record) throw new AppError(413, 'TRANSLATION_RESPONSE_TOO_LARGE', 'Bản dịch vượt giới hạn thử nghiệm.');
+  return Translation.hydrate(row.record);
+}
 export function storedGroups(record: GroupedRecord): TranslationGroup[] {
   return (record.groups ?? []).map(g => ({ groupId: g.groupId, sequence: g.sequence, sourceSegmentIds: g.sourceSegmentIds.map(String), sourceText: g.sourceText, translatedText: g.translatedText, startTime: g.startTime, endTime: g.endTime }));
 }
@@ -145,13 +156,7 @@ export class GroupTranslationService {
     return this.admission ? this.admission.operation(ownerId, work) : work();
   }
   private async boundedRecord(filter: Record<string, unknown>, session: ClientSession | null = null) {
-    if (!this.admission) return Translation.findOne(filter).session(session);
-    const [row] = await Translation.aggregate([{ $match: filter }, { $limit: 1 }, { $project: {
-      record: { $cond: [{ $lte: [{ $bsonSize: '$$ROOT' }, 128 * 1024] }, '$$ROOT', null] },
-    } }]).session(session);
-    if (!row) return null;
-    if (!row.record) throw new AppError(413, 'TRANSLATION_RESPONSE_TOO_LARGE', 'Bản dịch vượt giới hạn thử nghiệm.');
-    return Translation.hydrate(row.record);
+    return boundedTranslationRecord(filter, session, this.admission);
   }
   async approve(projectId: string, ownerId: string, draftId: string, body: { outputDigest: string; reviewed: true }) {
     const work = () => this.approveInternal(projectId, ownerId, draftId, body);

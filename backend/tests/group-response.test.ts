@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events';
 import { GroupAdmission } from '../src/services/translation/group-admission.js';
 import { GroupDraftStore } from '../src/services/translation/group-draft-store.js';
 import { boundedGroupJson, groupResponseHandler, GROUP_RESPONSE_BYTES } from '../src/services/translation/group-response.js';
+import { scopedGroupAdmission, withGroupSourceScope } from '../src/services/translation/group-source-scope.js';
 
 process.env.NODE_ENV = 'test';
 const credit = 5 * 1024 * 1024;
@@ -88,4 +89,18 @@ test('detached async callback cannot borrow an expired response scope', async ()
   });
   assert.equal(admission.snapshot().active, 0); release(); await late;
   assert.deepEqual(admission.snapshot(), { active: 0, reservedCredits: 0 });
+});
+test('source policy is scoped, inherited by admitted readers, expires and refuses production activation', async () => {
+  const admission = ledger(); let release!: () => void, late!: Promise<void>;
+  assert.equal(scopedGroupAdmission(), undefined);
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await admission.responseScope('owner', async () => {
+    assert.equal(scopedGroupAdmission(), admission);
+    await admission.operation('owner', async () => assert.equal(scopedGroupAdmission(), admission));
+    late = gate.then(() => { assert.equal(scopedGroupAdmission(), undefined); });
+  });
+  release(); await late; assert.equal(scopedGroupAdmission(), undefined);
+  process.env.NODE_ENV = 'production';
+  try { await assert.rejects(withGroupSourceScope(admission, async () => null), /REQUIRES_TEST_ENV/); }
+  finally { process.env.NODE_ENV = 'test'; }
 });

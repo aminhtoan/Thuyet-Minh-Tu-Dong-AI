@@ -6,13 +6,18 @@ import { projectRouter } from './project.routes.js';
 import { voiceRouter } from './voice.routes.js';
 import { adminRouter } from './admin.routes.js';
 
-export const apiRouter = Router();
+export function createApiRouter(projects = projectRouter) {
+if (projects !== projectRouter && process.env.NODE_ENV !== 'test') throw new Error('TEST_ROUTER_INJECTION_REQUIRES_TEST_ENV');
+const apiRouter = Router();
 
 apiRouter.get('/', (_request, response) => {
   response.json(successResponse({ name: 'Multilingual AI Narration API', version: '0.1.0' }));
 });
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
-apiRouter.use('/projects', projectRouter);
+apiRouter.use('/projects', projects);
 apiRouter.use('/voices', voiceRouter);
 apiRouter.use('/admin', adminRouter);
+return apiRouter;
+}
+export const apiRouter = createApiRouter();

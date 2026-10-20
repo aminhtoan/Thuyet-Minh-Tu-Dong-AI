@@ -17,7 +17,7 @@ import { env } from '../config/env.js';
 import { getTtsProvider } from './tts/tts.service.js';
 import { OpenAiTtsError } from './tts/openai-tts.provider.js';
 import { resolveTtsTerminalStatus } from './tts/tts-terminal-state.js';
-import { assertApprovedCurrent, loadSource } from './translation/group-translation.service.js';
+import { assertApprovedCurrent, loadSource, boundedTranslationRecord } from './translation/group-translation.service.js';
 import { isRevision, narrationProvenance, revisionFenceOperation, translationProvenance } from './artifact-provenance.service.js';
 
 const speed = 1;
@@ -131,7 +131,7 @@ const finalizeIdleAudioProject = async (projectId: string, userId: string) => {
 export const generate = async (projectId: string, userId: string, targetLanguage: string, requestedVoiceId?: string) => {
   const project = await Project.findOne({ _id: projectId, userId });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
-  const translation = await Translation.findOne({ projectId, targetLanguage, status: 'READY' });
+  const translation = await boundedTranslationRecord({ projectId, targetLanguage, status: 'READY' });
   if (!translation) throw new AppError(404, 'TRANSLATION_NOT_FOUND', 'Không tìm thấy bản dịch.');
   const source = await loadSource(projectId);
   const translationState = translationProvenance(translation, { id: source.transcriptId, revision: source.transcriptRevision });
@@ -173,7 +173,7 @@ export const generate = async (projectId: string, userId: string, targetLanguage
           Media.findOne({ projectId }).select('mediaType').session(session),
           ProcessingJob.findOne({ _id: job._id, projectId, type: 'TTS', status: 'PROCESSING' }).session(session),
           ProcessingJob.exists({ projectId, _id: { $ne: job._id }, status: { $in: ['QUEUED', 'PROCESSING'] } }).session(session),
-          Translation.findOne({ _id: translation._id, projectId, status: 'READY' }).session(session),
+          boundedTranslationRecord({ _id: translation._id, projectId, status: 'READY' }, session),
           Transcript.findOne({ _id: translation.transcriptId, projectId }).session(session),
         ]);
         if (!currentProject || !currentMedia || !currentJob || !currentTranslation || !currentTranscript ||

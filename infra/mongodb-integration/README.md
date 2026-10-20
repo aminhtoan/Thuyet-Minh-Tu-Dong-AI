@@ -51,6 +51,16 @@ AI-TRANSLATE-05 adds an explicit test-only admission/source profile to this opt-
 
 AI-TRANSLATE-05.1 additionally exercises the real authenticated HTTP + bounded MongoDB + installed Gemini SDK path with local fetch mocks at offered concurrency 1/4/16, response/waiter leases, draft GET, approve and grouped GET. The default application remains unconfigured/flags OFF. See [response lifecycle](../../docs/GROUPS_V1_RESPONSE_LIFECYCLE.md) for measured samples and deployment blockers. The separate `backend/tests/read-only-museum-source.preflight.ts` is read-only development source inspection, NOT an integration fixture writer; never use development as the integration target.
 
+AI-TRANSLATE-05.2 uses the full application Helmet/CORS/1 MiB parser/API/error stack, performs a bounded warm-up and two rounds of concurrency 1/4/16, and samples memory every 10 ms. After setting the same explicit isolated test URI/database variables above, run from `backend/`:
+
+```powershell
+node --max-old-space-size=512 --import tsx --test tests/groups-mongodb.integration.ts
+```
+
+This heap option constrains only the disposable test runner; it is not a native RSS/container limit or a development configuration change. Alternate application/router composition is test-only. See [development runtime validation](../../docs/GROUPS_V1_DEVELOPMENT_RUNTIME.md): isolated app-stack load PASS does not mean actual development runtime/headroom PASS. No default server/Atlas fixture writes are authorized by this command.
+
+AI-TRANSLATE-05.3 adds a separate [Docker Backend validation launcher](../backend-validation/README.md) with a real memory/CPU ceiling and mock-only scoped reader/TTS policy. It reuses this external network/database, verifies host+container Mongo process identity, and does not modify/reconfigure this Mongo service. Run its fixture load separately from this suite, not concurrently. Keep this Mongo volume when stopping the validation Backend.
+
 Sau khi môi trường healthy, dùng hai biến `TEST_MONGODB_URI` và `TEST_DATABASE_NAME` explicit như trên, rồi chạy từ `backend/`:
 
 ```powershell

@@ -4,6 +4,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import test from 'node:test';
 import mongoose, { Types } from 'mongoose';
 import express from 'express';
+import { getHeapStatistics } from 'node:v8';
 import { connectIsolatedMongo, TEST_DATABASE } from './helpers/isolated-mongo.js';
 
 // No application imports before verified deployment identity and explicit config.
@@ -33,10 +34,13 @@ const { GroupAdmission } = await import('../src/services/translation/group-admis
 const { revision } = await import('../src/services/translation/group-plan.js');
 const { boundedTextProjection } = await import('../src/services/translation/bounded-source.js');
 const { updateTranscriptSegment } = await import('../src/services/transcription.service.js');
+const { generate: generateNarration } = await import('../src/services/narration.service.js');
 const { getTranslation } = await import('../src/services/translation-processing.service.js');
 const { projectRouter, createProjectRouter } = await import('../src/routes/project.routes.js');
 const { groupProfileControllers } = await import('../src/controllers/translation.controller.js');
 const { GeminiGroupTranslationProvider } = await import('../src/services/translation/gemini-group-translation.provider.js');
+const { createApp } = await import('../src/app.js');
+const { createApiRouter } = await import('../src/routes/index.js');
 const { errorHandlerMiddleware } = await import('../src/middleware/error-handler.middleware.js');
 const { signAccessToken } = await import('../src/utils/jwt.js');
 
@@ -82,6 +86,21 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
     if (language) assert.equal(language.isActive, true);
     else { const id = new Types.ObjectId(); ids.languages.push(id); await Language.create({ _id: id, code: 'en', name: 'Synthetic English', nativeName: 'English', isActive: true }); }
 
+    await t.test('application composition preserves default runtime and refuses non-test router overrides', () => {
+      const override = createProjectRouter();
+      const routes = createApiRouter(override);
+      const previous = process.env.NODE_ENV;
+      for (const mode of ['development', 'production']) {
+        process.env.NODE_ENV = mode;
+        try {
+          assert.throws(() => createApiRouter(override), /TEST_ROUTER_INJECTION_REQUIRES_TEST_ENV/);
+          assert.throws(() => createApp(routes), /TEST_ROUTER_INJECTION_REQUIRES_TEST_ENV/);
+          assert.doesNotThrow(() => createApp());
+          assert.throws(() => new GroupAdmission({ sourceBytes: 128 * 1024, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 }), /GROUP_TEST_POLICY_REQUIRES_TEST_ENV/);
+        } finally { process.env.NODE_ENV = previous; }
+      }
+    });
+
     await t.test('explicit test admission accepts larger lossless source; default gate unchanged; atomic approval', async () => {
       const f = await fixture(1027);
       await assert.rejects(loadSource(f.projectId), errorCode('TRANSLATION_DRAFT_TOO_LARGE'));
@@ -99,6 +118,17 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
       const approved = await service.approve(f.projectId, String(owner), result.draft.draftId, approval(result.draft));
       assert.equal(approved.translation.sourceSegmentCount, 1027);
       assert.equal(await Translation.countDocuments({ projectId: f.projectId, status: 'READY' }), 1);
+      await ledger.operation(String(owner), async () => {
+        const reader = await getTranslation(f.projectId, 'en', true);
+        assert.equal(reader.sourceSegmentCount, 1027);
+        // Real TTS entry validates the larger CURRENT source and stops safely
+        // at missing fixture media, before voice/job/provider/file operations.
+        await assert.rejects(generateNarration(f.projectId, String(owner), 'en'), errorCode('MEDIA_NOT_FOUND'));
+      });
+      assert.equal(await ProcessingJob.countDocuments({ projectId: f.projectId }), 0);
+      await Translation.updateOne({ projectId: f.projectId }, { $set: { alignmentFormat: 'SEGMENTS_V1' } });
+      await assert.rejects(ledger.operation(String(owner), () => getTranslation(f.projectId, 'en', true)), errorCode('TRANSLATION_FORMAT_UNSUPPORTED'));
+      await Translation.updateOne({ projectId: f.projectId }, { $set: { alignmentFormat: 'GROUPS_V1' } });
       await assert.rejects(loadSource(f.projectId), errorCode('TRANSLATION_DRAFT_TOO_LARGE'));
       now = 1000; expire!(); assert.equal(ledger.snapshot().reservedCredits, 0);
     });
@@ -230,7 +260,7 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
       await assert.rejects(getTranslation(f.projectId, 'en', true), errorCode('TRANSLATION_PROVENANCE_INVALID'));
       assert.equal(await Translation.countDocuments({ projectId: f.projectId }), 1);
     });
-    await t.test('full JWT HTTP + bounded MongoDB + installed SDK mock path at concurrency 1/4/16', { timeout: 60000 }, async ctx => {
+    await t.test('application HTTP stack warm-up and repeated MongoDB/SDK mock load at concurrency 1/4/16', { timeout: 90000 }, async ctx => {
       const oldKey = process.env.GEMINI_API_KEY, oldProvider = process.env.TRANSLATION_PROVIDER, oldModel = process.env.GEMINI_TRANSLATION_MODEL;
       process.env.GEMINI_API_KEY = 'synthetic-local-only'; process.env.TRANSLATION_PROVIDER = 'gemini'; process.env.GEMINI_TRANSLATION_MODEL = 'gemini-3.8-flash';
       let gate = Promise.resolve(), sdkCalls = new Map<string, number>(), metadata = 0;
@@ -250,25 +280,42 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
       try {
         const owners = [owner, other, new Types.ObjectId(), new Types.ObjectId()];
         for (const id of owners.slice(2)) { ids.users.push(id); await User.create({ _id: id, fullName: 'Synthetic load fixture', email: `${id}@integration.invalid`, passwordHash: 'synthetic', role: 'CUSTOMER', status: 'ACTIVE' }); }
-        for (const concurrency of [1, 4, 16]) {
+        const scenarios = [{ round: 'warmup', concurrency: 1, count: 100 }, ...[1, 2].flatMap(round => [1, 4, 16].map(concurrency => ({ round: String(round), concurrency, count: 1027 })))];
+        for (const { round, concurrency, count } of scenarios) {
           const admission = new GroupAdmission({ sourceBytes: 128 * 1024, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 });
           let now = 0; const timers = new Set<() => void>();
           const store = new GroupDraftStore(() => now, 10000, 50, callback => { timers.add(callback); return () => { timers.delete(callback); }; });
           const service = new GroupTranslationService(new GeminiGroupTranslationProvider(), store, admission);
-          const app = express(); app.use(express.json({ limit: '128kb' })); app.use('/api/projects', createProjectRouter(groupProfileControllers(service, admission))); app.use(errorHandlerMiddleware);
+          // Same Helmet/CORS/1 MiB parsers/API/error stack as src/server.ts;
+          // only the project controller composition is explicitly test-injected.
+          const app = createApp(createApiRouter(createProjectRouter(groupProfileControllers(service, admission))));
           const server = app.listen(0, '127.0.0.1'); await new Promise<void>(resolve => server.once('listening', resolve));
           const address = server.address(); assert.ok(address && typeof address !== 'string');
           const base = `http://127.0.0.1:${address.port}/api/projects/`;
-          const fs = await Promise.all(owners.map(id => fixture(1027, id)));
+          const health = await realFetch(`http://127.0.0.1:${address.port}/api/health`);
+          assert.equal(health.status, 200); assert.equal((await health.json() as any).data.database, 'connected');
+          assert.equal(health.headers.get('x-powered-by'), null);
+          assert.equal(health.headers.get('x-content-type-options'), 'nosniff');
+          const fs = await Promise.all(owners.map(id => fixture(count, id)));
+          const responseBytes: number[] = [];
           const call = async (index: number, suffix: string, body?: unknown, signal?: AbortSignal, asOwner = owners[index]!) => {
             const response = await realFetch(base + fs[index]!.projectId + '/translations' + suffix, { method: body === undefined ? 'GET' : 'POST', headers: { authorization: `Bearer ${signAccessToken(String(asOwner), 'CUSTOMER')}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal });
-            return { status: response.status, body: await response.json() as any, index };
+            const text = await response.text(); responseBytes.push(Buffer.byteLength(text));
+            return { status: response.status, body: JSON.parse(text) as any, index };
           };
           const bodies: any[] = [];
           try {
             for (let i = 0; i < fs.length; i++) { const plan = await call(i, '/plan/en'); assert.equal(plan.status, 200); bodies.push({ targetLanguage: 'en', sourceRevision: plan.body.data.plan.sourceRevision, groupingVersion: plan.body.data.plan.groupingVersion, groups: plan.body.data.plan.groups.map((g: any) => g.sourceSegmentIds), idempotencyKey: randomUUID() }); }
             let release!: () => void; gate = new Promise<void>(resolve => { release = resolve; }); sdkCalls = new Map(); metadata = 0;
             const baseline = process.memoryUsage();
+            const started = performance.now();
+            const peak = { rss: baseline.rss, heapUsed: baseline.heapUsed, external: baseline.external, arrayBuffers: baseline.arrayBuffers };
+            let samples = 0;
+            const sample = () => {
+              samples++; const memory = process.memoryUsage();
+              for (const key of ['rss', 'heapUsed', 'external', 'arrayBuffers'] as const) peak[key] = Math.max(peak[key], memory[key]);
+            };
+            const sampler = setInterval(sample, 10); sampler.unref();
             const abort = new AbortController();
             const requests = Array.from({ length: concurrency }, (_, i) => call(i % 4, '/preview', bodies[i % 4], i === 0 ? abort.signal : undefined).catch(() => ({ status: 0, body: null, index: i % 4 })));
             try {
@@ -287,14 +334,13 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
               assert.ok(responses.every(r => [0, 200, 503].includes(r.status)), JSON.stringify(responses.map(r => ({ status: r.status, error: r.body?.error?.code }))));
               const success = responses.find(r => r.status === 200); assert.ok(success);
               const d = success.body.data.draft;
-              assert.equal(d.groups.flatMap((g: any) => g.sourceSegmentIds).length, 1027);
+              assert.equal(d.groups.flatMap((g: any) => g.sourceSegmentIds).length, count);
               assert.equal((await call(success.index, `/drafts/${d.draftId}`)).status, 200);
               assert.equal((await call(success.index, `/drafts/${d.draftId}/approve`, approval(d))).status, 200);
-              const got = await call(success.index, '/en?format=groups-v1'); assert.equal(got.status, 200); assert.equal(got.body.data.translation.sourceSegmentCount, 1027);
+              const got = await call(success.index, '/en?format=groups-v1'); assert.equal(got.status, 200); assert.equal(got.body.data.translation.sourceSegmentCount, count);
               assert.equal((await call(success.index, '/en?format=groups-v1', undefined, undefined, new Types.ObjectId())).status, 401);
               assert.equal((await call(success.index, '/en?format=groups-v1', undefined, undefined, owners[(success.index + 1) % 4]!)).status, 404);
-              const completed = process.memoryUsage();
-              console.log('FULL_PATH_PROFILE', JSON.stringify({ concurrency, sdkGenerations: sdkCalls.size, success: responses.filter(r => r.status === 200).length, rejected: responses.filter(r => r.status === 503).length, cancelled: responses.filter(r => r.status === 0).length, reservedPending: held.reservedCredits, baselineHeap: baseline.heapUsed, pendingHeap: pending.heapUsed, completedHeap: completed.heapUsed, baselineRss: baseline.rss, pendingRss: pending.rss, completedRss: completed.rss }));
+              const completed = process.memoryUsage(); sample();
               assert.equal(admission.snapshot().active, 0);
               // Oversized stored artifacts are rejected on MongoDB before hydration.
               await Translation.collection.updateOne({ projectId: new Types.ObjectId(fs[success.index]!.projectId) }, { $set: { fullText: 'x'.repeat(128 * 1024) } });
@@ -302,7 +348,14 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
               assert.equal((await call(success.index, `/drafts/${d.draftId}/approve`, approval(d))).status, 413);
               now = 10000; for (const expire of [...timers]) expire();
               assert.deepEqual(admission.snapshot(), { active: 0, reservedCredits: 0 });
-            } finally { release(); await Promise.allSettled(requests); }
+              const cache = store as unknown as { drafts: Map<string, unknown>; requests: Map<string, unknown> };
+              assert.equal(cache.drafts.size, 0); assert.equal(cache.requests.size, 0);
+              assert.ok(responseBytes.every(bytes => bytes <= 256 * 1024));
+              assert.equal(responseBytes.length, 4 + responses.filter(r => r.status !== 0).length + 7);
+              await new Promise(resolve => setTimeout(resolve, 25)); sample();
+              const final = process.memoryUsage();
+              console.log('RUNTIME_PROFILE', JSON.stringify({ round, concurrency, count, node: process.version, heapLimit: getHeapStatistics().heap_size_limit, samples, elapsedMs: Math.round(performance.now() - started), sdkGenerations: sdkCalls.size, success: responses.filter(r => r.status === 200).length, rejected: responses.filter(r => r.status === 503).length, cancelled: responses.filter(r => r.status === 0).length, reservedPending: held.reservedCredits, reservedAfterTTL: admission.snapshot().reservedCredits, activeAfterTTL: admission.snapshot().active, draftsAfterTTL: cache.drafts.size, receiptsAfterTTL: cache.requests.size, responseMaxBytes: Math.max(...responseBytes), responseTotalBytes: responseBytes.reduce((a, b) => a + b, 0), baseline, peak, pending, completed, final, oomCrashTimeout: false }));
+            } finally { clearInterval(sampler); release(); await Promise.allSettled(requests); }
           } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
         }
       } finally {

@@ -1,5 +1,6 @@
 import { AppError } from '../../utils/app-error.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { withGroupSourceScope } from './group-source-scope.js';
 
 export type GroupTestPolicy = Readonly<{
   sourceBytes: number; processCredits: number; requestCredits: number;
@@ -50,7 +51,7 @@ export class GroupAdmission {
   async responseScope<T>(ownerId: string, work: () => Promise<T>): Promise<T> {
     const lease = this.acquire(ownerId);
     const scoped = { ownerId, active: true };
-    try { return await this.scope.run(scoped, work); } finally { scoped.active = false; lease.release(); }
+    try { return await this.scope.run(scoped, () => withGroupSourceScope(this, work)); } finally { scoped.active = false; lease.release(); }
   }
   operationLease(ownerId: string) {
     const scoped = this.scope.getStore();
@@ -62,6 +63,6 @@ export class GroupAdmission {
     if (current?.active && current.ownerId === ownerId) return work();
     const lease = this.operationLease(ownerId);
     const scoped = { ownerId, active: true };
-    try { return await this.scope.run(scoped, work); } finally { scoped.active = false; lease.release(); }
+    try { return await this.scope.run(scoped, () => withGroupSourceScope(this, work)); } finally { scoped.active = false; lease.release(); }
   }
 }
