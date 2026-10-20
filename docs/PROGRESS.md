@@ -1043,3 +1043,19 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - Web tests **254/254 PASS**; lint/typecheck/build/diff-check PASS. Regression kiểm tra featured/grid, poster ở card/player, transcript present/absent và các guards hiện có. MP4 hash không đổi; video vẫn không đưa vào Git.
 - Browser QA desktop/mobile **NOT RUN**, không có browser khả dụng. Chỉ xem ảnh poster local; chưa khẳng định visual, controls, playback hoặc overflow ở các viewport yêu cầu. Build còn cảnh báo chunking cũ.
 - Không sửa Backend/Database/Admin/Mobile/ADMIN07, không tạo AI audio/transcript/caption, không thêm dependency và không commit/push.
+
+## AI-TRANSLATE-05 — GROUPS_V1 admission/source policy
+
+- PARTIAL: explicit isolated-test admission verified; complete runtime/process memory admission remains BLOCKED. Global flags OFF; no production budget approved.
+- Shared test controller bounds active/per-user operations and retained draft credits, single-flight before full source loading, idempotent cleanup and active TTL. Pending work stays reserved until underlying settlement, not client disconnect.
+- Default source remains 98,304 bytes. Test-only injection permits a validated 128 KiB source profile with 5 MiB/request estimated credits, 32 MiB aggregate, 4 active / 2 per owner; these credits are NOT measured heap bounds. Synthetic 100/1,027 accepted, 2,000/5,000 and long-text overflow rejected without truncation; digest/coverage preserved.
+- Focused regression/benchmark 92/92 PASS; isolated MongoDB transaction/source suite 14/14 PASS, cleanup verified. Backend lint/typecheck/build PASS. No development/production writes or real AI calls.
+- HTTP response/waiter fan-out, GET/approve allocations, native buffers and real deployment headroom remain outside complete accounting. Keep runtime disabled; see `docs/GROUPS_V1_ADMISSION_POLICY.md` before any larger-source/runtime activation.
+
+## AI-TRANSLATE-05.1 — Response lifecycle and candidate development profile
+
+- Test-profile response/waiter/GET/approve accounting implemented: each caller holds a slot through operation settlement and HTTP finish/close; shared provider work keeps separate retained draft credit. No early release on disconnect, no duplicate provider generation, active TTL and idempotent release preserved.
+- Explicit isolated-test controller/router injection keeps real JWT/CUSTOMER/ownership/validation. Default production controllers, source cap 98,304 bytes and flags OFF are preserved. Added bounded JSON serialization and server-side stored-BSON projection for profile reads; no exact native-memory guarantee claimed.
+- Full-path HTTP + real isolated MongoDB + installed SDK fetch-mock concurrency 1/4/16 verified; fixture cleanup PASS. Real museum source read-only preflight PASS: revision 1, 1,027 segments, 74 groups, 105,958 bytes, digest/coverage intact. No AI calls or development/production writes.
+- Development profile remains BLOCKED: actual backend deployment headroom/OS memory limit and consistent composition across remaining default downstream consumers are not established. See `docs/GROUPS_V1_RESPONSE_LIFECYCLE.md` for samples, assumptions, bounded-vs-estimated resources and exact next gate. No feature activation, Customer Web/MUSEUM/ADMIN07 changes, commit or push.
+- Validation: focused regression/benchmark **99/99 PASS**, real isolated MongoDB integration **15/15 PASS** with fixture cleanup, backend lint/typecheck/build/diff-check PASS. Memory observations are samples, not exact reservation or production headroom evidence.

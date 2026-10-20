@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { AppError } from '../../utils/app-error.js';
 import type { TranslationGroup } from './group-plan.js';
+import type { GroupAdmission } from './group-admission.js';
 
 export type GroupDraft = { draftId: string; ownerId: string; projectId: string; transcriptId: string; transcriptRevision: number; sourceLanguage: string; targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: TranslationGroup[]; outputDigest: string; expiresAt: string; alignmentFormat: 'GROUPS_V1'; state: 'DRAFT' };
-type Entry = { expires: number; signature: string; promise: Promise<GroupDraft>; cancelExpiry?: () => void };
+type Entry = { expires: number; signature: string; promise: Promise<GroupDraft>; cancelExpiry?: () => void; release?: () => void };
 type ScheduleExpiry = (callback: () => void, delay: number) => () => void;
 const scheduleExpiry: ScheduleExpiry = (callback, delay) => {
   const timer = setTimeout(callback, delay); timer.unref();
@@ -17,12 +18,13 @@ export class GroupDraftStore {
   constructor(private readonly clock = Date.now, private readonly ttl = 15 * 60_000, private readonly capacity = 50, private readonly schedule: ScheduleExpiry = scheduleExpiry) {}
   private prune() {
     for (const [id, draft] of this.drafts) if (Date.parse(draft.expiresAt) <= this.clock()) this.drafts.delete(id);
-    for (const [key, entry] of this.requests) if (entry.expires <= this.clock()) { entry.cancelExpiry?.(); this.requests.delete(key); }
+    for (const [key, entry] of this.requests) if (entry.expires <= this.clock()) { entry.cancelExpiry?.(); entry.release?.(); this.requests.delete(key); }
   }
-  async preview(key: string, signature: string, create: () => Promise<Omit<GroupDraft, 'draftId' | 'expiresAt' | 'state' | 'alignmentFormat'>>): Promise<GroupDraft> {
+  async preview(key: string, signature: string, create: () => Promise<Omit<GroupDraft, 'draftId' | 'expiresAt' | 'state' | 'alignmentFormat'>>, admission?: { ownerId: string; controller: GroupAdmission }): Promise<GroupDraft> {
     this.prune(); const existing = this.requests.get(key);
     if (existing) { if (existing.signature !== signature) throw new AppError(409, 'TRANSLATION_DRAFT_CHANGED', 'Mã yêu cầu đã được dùng cho kế hoạch khác.'); return structuredClone(await existing.promise); }
     if (this.requests.size >= this.capacity) throw new AppError(503, 'TRANSLATION_DRAFT_CAPACITY', 'Bộ nhớ bản nháp đã đầy. Vui lòng thử lại sau.');
+    const lease = admission?.controller.acquire(admission.ownerId, true);
     const expires = this.clock() + this.ttl;
     const promise = Promise.resolve().then(create).then(value => {
       if (this.clock() >= expires) throw this.expired();
@@ -31,7 +33,8 @@ export class GroupDraftStore {
       this.drafts.set(draft.draftId, structuredClone(draft)); return draft;
     });
     // Pending entries may not expire while the provider is in flight.
-    const entry: Entry = { expires: Number.POSITIVE_INFINITY, signature, promise }; this.requests.set(key, entry);
+    const entry: Entry = { expires: Number.POSITIVE_INFINITY, signature, promise, release: lease?.release }; this.requests.set(key, entry);
+    void promise.then(() => lease?.settled(), () => lease?.release()).catch(() => undefined);
     // Start expiry only after underlying work settles, never just on disconnect
     // or elapsed TTL while the transport still owns its buffers/closures.
     const expireWhenSettled = () => {

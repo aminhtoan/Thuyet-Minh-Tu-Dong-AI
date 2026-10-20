@@ -17,7 +17,8 @@ import { narrationIdSchema, startNarrationSchema } from '../validators/narration
 import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
 import { updateTranscriptSegmentSchema } from '../validators/transcription.validator.js';
 
-export const projectRouter = Router();
+export function createProjectRouter(groups: Pick<typeof translationController, 'plan' | 'preview' | 'draft' | 'approve' | 'get'> = translationController) {
+const projectRouter = Router();
 projectRouter.use(authenticate, authorize('CUSTOMER'));
 projectRouter.post('/', validate(createProjectSchema), projectController.create);
 projectRouter.get('/', validate(listProjectsSchema), projectController.list);
@@ -33,11 +34,11 @@ projectRouter.get('/:id/transcript', requireProjectOwner, transcriptionControlle
 projectRouter.patch('/:id/transcript/segments/:segmentId', validate(updateTranscriptSegmentSchema), requireProjectOwner, transcriptionController.updateSegment);
 projectRouter.post('/:id/translations', validate(startTranslationSchema), requireProjectOwner, translationController.start);
 projectRouter.get('/:id/translations', requireProjectOwner, translationController.list);
-projectRouter.get('/:id/translations/plan/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, translationController.plan);
-projectRouter.post('/:id/translations/preview', validate(previewTranslationSchema), requireProjectOwner, translationController.preview);
-projectRouter.get('/:id/translations/drafts/:draftId', validate(draftTranslationSchema), requireProjectOwner, translationController.draft);
-projectRouter.post('/:id/translations/drafts/:draftId/approve', validate(approveTranslationSchema), requireProjectOwner, translationController.approve);
-projectRouter.get('/:id/translations/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, translationController.get);
+projectRouter.get('/:id/translations/plan/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, groups.plan);
+projectRouter.post('/:id/translations/preview', validate(previewTranslationSchema), requireProjectOwner, groups.preview);
+projectRouter.get('/:id/translations/drafts/:draftId', validate(draftTranslationSchema), requireProjectOwner, groups.draft);
+projectRouter.post('/:id/translations/drafts/:draftId/approve', validate(approveTranslationSchema), requireProjectOwner, groups.approve);
+projectRouter.get('/:id/translations/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, groups.get);
 projectRouter.post('/:id/narrations', validate(startNarrationSchema), requireProjectOwner, narrationController.start);
 projectRouter.get('/:id/narrations', requireProjectOwner, narrationController.list);
 projectRouter.get('/:id/narrations/:narrationId', validate(narrationIdSchema), requireProjectOwner, narrationController.get);
@@ -46,3 +47,6 @@ projectRouter.post('/:id/process', validate(processMediaSchema), requireProjectO
 projectRouter.get('/:id/results', requireProjectOwner, resultController.list);
 projectRouter.get('/:id/results/:resultId', validate(resultIdSchema), requireProjectOwner, resultController.get);
 projectRouter.get('/:id/results/:resultId/file', validate(resultIdSchema), requireProjectOwner, resultController.file);
+return projectRouter;
+}
+export const projectRouter = createProjectRouter();

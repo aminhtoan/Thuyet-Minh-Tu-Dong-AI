@@ -29,11 +29,14 @@ const { ProcessingJob } = await import('../src/models/ProcessingJob.js');
 const { ActivityLog } = await import('../src/models/ActivityLog.js');
 const { GroupTranslationService, loadSource } = await import('../src/services/translation/group-translation.service.js');
 const { GroupDraftStore } = await import('../src/services/translation/group-draft-store.js');
+const { GroupAdmission } = await import('../src/services/translation/group-admission.js');
 const { revision } = await import('../src/services/translation/group-plan.js');
 const { boundedTextProjection } = await import('../src/services/translation/bounded-source.js');
 const { updateTranscriptSegment } = await import('../src/services/transcription.service.js');
 const { getTranslation } = await import('../src/services/translation-processing.service.js');
-const { projectRouter } = await import('../src/routes/project.routes.js');
+const { projectRouter, createProjectRouter } = await import('../src/routes/project.routes.js');
+const { groupProfileControllers } = await import('../src/controllers/translation.controller.js');
+const { GeminiGroupTranslationProvider } = await import('../src/services/translation/gemini-group-translation.provider.js');
 const { errorHandlerMiddleware } = await import('../src/middleware/error-handler.middleware.js');
 const { signAccessToken } = await import('../src/utils/jwt.js');
 
@@ -53,12 +56,12 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
   const provider = { async translate(input: any) { providerCalls++; return input.groups.map((g: any, i: number) => ({ groupId: g.groupId, translatedText: `Synthetic English group ${i + 1}.` })); } };
   const newService = () => new GroupTranslationService(provider, new GroupDraftStore());
   const owner = new Types.ObjectId(), other = new Types.ObjectId(); ids.users.push(owner, other);
-  async function fixture(count = 30) {
+  async function fixture(count = 30, fixtureOwner = owner) {
     const projectId = new Types.ObjectId(), transcriptId = new Types.ObjectId(); ids.projects.push(projectId); ids.transcripts.push(transcriptId);
     const segments = Array.from({ length: count }, (_, i) => ({ _id: new Types.ObjectId(), transcriptId, sequence: i + 1,
       startTime: i / 4, endTime: (i + 1) / 4, text: `từ${i % 10}${(i + 1) % 14 === 0 ? '.' : ''}` }));
     ids.segments.push(...segments.map(s => s._id));
-    await Project.create({ _id: projectId, userId: owner, name: `Synthetic ${run}`, sourceLanguage: 'vi', status: 'TRANSCRIBED' });
+    await Project.create({ _id: projectId, userId: fixtureOwner, name: `Synthetic ${run}`, sourceLanguage: 'vi', status: 'TRANSCRIBED' });
     await Transcript.create({ _id: transcriptId, projectId, languageCode: 'vi', fullText: segments.map(s => s.text).join(' '), status: 'READY', revision: 1 });
     await TranscriptSegment.insertMany(segments);
     return { projectId: String(projectId), transcriptId, segments };
@@ -78,6 +81,27 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
     const language = await Language.findOne({ code: 'en' });
     if (language) assert.equal(language.isActive, true);
     else { const id = new Types.ObjectId(); ids.languages.push(id); await Language.create({ _id: id, code: 'en', name: 'Synthetic English', nativeName: 'English', isActive: true }); }
+
+    await t.test('explicit test admission accepts larger lossless source; default gate unchanged; atomic approval', async () => {
+      const f = await fixture(1027);
+      await assert.rejects(loadSource(f.projectId), errorCode('TRANSLATION_DRAFT_TOO_LARGE'));
+      const ledger = new GroupAdmission({ sourceBytes: 128 * 1024, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 });
+      let expire: (() => void) | undefined, now = 0;
+      const store = new GroupDraftStore(() => now, 1000, 50, callback => { expire = callback; return () => {}; });
+      const service = new GroupTranslationService(provider, store, ledger);
+      const source = await loadSource(f.projectId, null, ledger);
+      assert.equal(source.segments.length, 1027);
+      assert.ok(Buffer.byteLength(JSON.stringify(source)) > 98304);
+      const result = await draft(f, service);
+      assert.deepEqual(result.draft.groups.flatMap(g => g.sourceSegmentIds), source.segments.map(s => s.id));
+      assert.equal(result.draft.sourceRevision, revision(source));
+      assert.equal(ledger.snapshot().active, 0); assert.equal(ledger.snapshot().reservedCredits, ledger.policy.requestCredits);
+      const approved = await service.approve(f.projectId, String(owner), result.draft.draftId, approval(result.draft));
+      assert.equal(approved.translation.sourceSegmentCount, 1027);
+      assert.equal(await Translation.countDocuments({ projectId: f.projectId, status: 'READY' }), 1);
+      await assert.rejects(loadSource(f.projectId), errorCode('TRANSLATION_DRAFT_TOO_LARGE'));
+      now = 1000; expire!(); assert.equal(ledger.snapshot().reservedCredits, 0);
+    });
 
     await t.test('real projection/cursor, Unicode, ordered coverage and digest preservation', async ctx => {
       const f = await fixture(100);
@@ -201,8 +225,91 @@ test('real isolated MongoDB GROUPS_V1 source, transactions, races and authorizat
       const f = await fixture(), d = await draft(f);
       await d.service.approve(f.projectId, String(owner), d.draft.draftId, approval(d.draft));
       await updateTranscriptSegment(f.projectId, String(owner), String(f.segments[0]!._id), 'Synthetic later edit', 1);
+      await assert.rejects(d.service.preview(f.projectId, String(owner), d.body), errorCode('SOURCE_REVISION_MISMATCH'));
+      await assert.rejects(d.service.preview(f.projectId, String(other), d.body), errorCode('PROJECT_NOT_FOUND'));
       await assert.rejects(getTranslation(f.projectId, 'en', true), errorCode('TRANSLATION_PROVENANCE_INVALID'));
       assert.equal(await Translation.countDocuments({ projectId: f.projectId }), 1);
+    });
+    await t.test('full JWT HTTP + bounded MongoDB + installed SDK mock path at concurrency 1/4/16', { timeout: 60000 }, async ctx => {
+      const oldKey = process.env.GEMINI_API_KEY, oldProvider = process.env.TRANSLATION_PROVIDER, oldModel = process.env.GEMINI_TRANSLATION_MODEL;
+      process.env.GEMINI_API_KEY = 'synthetic-local-only'; process.env.TRANSLATION_PROVIDER = 'gemini'; process.env.GEMINI_TRANSLATION_MODEL = 'gemini-3.8-flash';
+      let gate = Promise.resolve(), sdkCalls = new Map<string, number>(), metadata = 0;
+      ctx.mock.method(globalThis, 'fetch', async (input: any, init?: RequestInit) => {
+        const url = new URL(String(input));
+        if (url.hostname === '127.0.0.1' && url.protocol === 'http:') return realFetch(input, init);
+        if (url.hostname !== 'generativelanguage.googleapis.com' || url.protocol !== 'https:') throw new Error('EXTERNAL_HTTP_FORBIDDEN');
+        const json = (value: unknown) => new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } });
+        if (url.pathname.endsWith('/models/gemini-3.8-flash') && (!init?.method || init.method === 'GET')) { metadata++; return json({ name: 'models/gemini-3.8-flash', supportedGenerationMethods: ['generateContent'] }); }
+        if (!url.pathname.endsWith('/models/gemini-3.8-flash:generateContent')) throw new Error('UNEXPECTED_SDK_MOCK_REQUEST');
+        const request = JSON.parse(String(init?.body));
+        const data = JSON.parse(request.contents[0].parts[0].text);
+        const key = data.groups[0].groupId; sdkCalls.set(key, (sdkCalls.get(key) ?? 0) + 1);
+        await gate;
+        return json({ candidates: [{ finishReason: 'STOP', content: { role: 'model', parts: [{ text: JSON.stringify({ outcome: 'translated', groups: data.groups.map((g: any) => ({ groupId: g.groupId, translatedText: 'Synthetic SDK English.' })) }) }] } }] });
+      });
+      try {
+        const owners = [owner, other, new Types.ObjectId(), new Types.ObjectId()];
+        for (const id of owners.slice(2)) { ids.users.push(id); await User.create({ _id: id, fullName: 'Synthetic load fixture', email: `${id}@integration.invalid`, passwordHash: 'synthetic', role: 'CUSTOMER', status: 'ACTIVE' }); }
+        for (const concurrency of [1, 4, 16]) {
+          const admission = new GroupAdmission({ sourceBytes: 128 * 1024, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 });
+          let now = 0; const timers = new Set<() => void>();
+          const store = new GroupDraftStore(() => now, 10000, 50, callback => { timers.add(callback); return () => { timers.delete(callback); }; });
+          const service = new GroupTranslationService(new GeminiGroupTranslationProvider(), store, admission);
+          const app = express(); app.use(express.json({ limit: '128kb' })); app.use('/api/projects', createProjectRouter(groupProfileControllers(service, admission))); app.use(errorHandlerMiddleware);
+          const server = app.listen(0, '127.0.0.1'); await new Promise<void>(resolve => server.once('listening', resolve));
+          const address = server.address(); assert.ok(address && typeof address !== 'string');
+          const base = `http://127.0.0.1:${address.port}/api/projects/`;
+          const fs = await Promise.all(owners.map(id => fixture(1027, id)));
+          const call = async (index: number, suffix: string, body?: unknown, signal?: AbortSignal, asOwner = owners[index]!) => {
+            const response = await realFetch(base + fs[index]!.projectId + '/translations' + suffix, { method: body === undefined ? 'GET' : 'POST', headers: { authorization: `Bearer ${signAccessToken(String(asOwner), 'CUSTOMER')}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal });
+            return { status: response.status, body: await response.json() as any, index };
+          };
+          const bodies: any[] = [];
+          try {
+            for (let i = 0; i < fs.length; i++) { const plan = await call(i, '/plan/en'); assert.equal(plan.status, 200); bodies.push({ targetLanguage: 'en', sourceRevision: plan.body.data.plan.sourceRevision, groupingVersion: plan.body.data.plan.groupingVersion, groups: plan.body.data.plan.groups.map((g: any) => g.sourceSegmentIds), idempotencyKey: randomUUID() }); }
+            let release!: () => void; gate = new Promise<void>(resolve => { release = resolve; }); sdkCalls = new Map(); metadata = 0;
+            const baseline = process.memoryUsage();
+            const abort = new AbortController();
+            const requests = Array.from({ length: concurrency }, (_, i) => call(i % 4, '/preview', bodies[i % 4], i === 0 ? abort.signal : undefined).catch(() => ({ status: 0, body: null, index: i % 4 })));
+            try {
+              const deadline = Date.now() + 5000;
+              while (!sdkCalls.size && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 5));
+              assert.ok(sdkCalls.size > 0);
+              await new Promise(resolve => setTimeout(resolve, 150));
+              const pending = process.memoryUsage(), held = admission.snapshot();
+              assert.ok(held.active <= 4 && held.active > 0); assert.ok(held.reservedCredits <= 32 * 1024 * 1024);
+              // Leave one viable response at concurrency=1; unit tests separately
+              // prove early-disconnect holds until actual work settlement.
+              if (concurrency > 1) { abort.abort(); await new Promise(resolve => setTimeout(resolve, 10)); assert.equal(admission.snapshot().active, held.active); }
+              release(); const responses = await Promise.all(requests);
+              assert.ok([...sdkCalls.values()].every(count => count === 1), 'single-flight never repeats installed SDK generation');
+              assert.equal(metadata, sdkCalls.size);
+              assert.ok(responses.every(r => [0, 200, 503].includes(r.status)), JSON.stringify(responses.map(r => ({ status: r.status, error: r.body?.error?.code }))));
+              const success = responses.find(r => r.status === 200); assert.ok(success);
+              const d = success.body.data.draft;
+              assert.equal(d.groups.flatMap((g: any) => g.sourceSegmentIds).length, 1027);
+              assert.equal((await call(success.index, `/drafts/${d.draftId}`)).status, 200);
+              assert.equal((await call(success.index, `/drafts/${d.draftId}/approve`, approval(d))).status, 200);
+              const got = await call(success.index, '/en?format=groups-v1'); assert.equal(got.status, 200); assert.equal(got.body.data.translation.sourceSegmentCount, 1027);
+              assert.equal((await call(success.index, '/en?format=groups-v1', undefined, undefined, new Types.ObjectId())).status, 401);
+              assert.equal((await call(success.index, '/en?format=groups-v1', undefined, undefined, owners[(success.index + 1) % 4]!)).status, 404);
+              const completed = process.memoryUsage();
+              console.log('FULL_PATH_PROFILE', JSON.stringify({ concurrency, sdkGenerations: sdkCalls.size, success: responses.filter(r => r.status === 200).length, rejected: responses.filter(r => r.status === 503).length, cancelled: responses.filter(r => r.status === 0).length, reservedPending: held.reservedCredits, baselineHeap: baseline.heapUsed, pendingHeap: pending.heapUsed, completedHeap: completed.heapUsed, baselineRss: baseline.rss, pendingRss: pending.rss, completedRss: completed.rss }));
+              assert.equal(admission.snapshot().active, 0);
+              // Oversized stored artifacts are rejected on MongoDB before hydration.
+              await Translation.collection.updateOne({ projectId: new Types.ObjectId(fs[success.index]!.projectId) }, { $set: { fullText: 'x'.repeat(128 * 1024) } });
+              assert.equal((await call(success.index, '/en?format=groups-v1')).status, 413);
+              assert.equal((await call(success.index, `/drafts/${d.draftId}/approve`, approval(d))).status, 413);
+              now = 10000; for (const expire of [...timers]) expire();
+              assert.deepEqual(admission.snapshot(), { active: 0, reservedCredits: 0 });
+            } finally { release(); await Promise.allSettled(requests); }
+          } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+        }
+      } finally {
+        if (oldKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldKey;
+        if (oldProvider === undefined) delete process.env.TRANSLATION_PROVIDER; else process.env.TRANSLATION_PROVIDER = oldProvider;
+        if (oldModel === undefined) delete process.env.GEMINI_TRANSLATION_MODEL; else process.env.GEMINI_TRANSLATION_MODEL = oldModel;
+      }
     });
     await t.test('real JWT/CUSTOMER/ownership routes with actual fixture users', async () => {
       const f = await fixture(); const app = express(); app.use(express.json()); app.use('/api/projects', projectRouter); app.use(errorHandlerMiddleware);

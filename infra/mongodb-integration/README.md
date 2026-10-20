@@ -44,3 +44,21 @@ Smoke chỉ dùng collection `_groups_environment_smoke`, hai ObjectId và run m
 Đây là MongoDB test **không bật authentication**, chỉ publish loopback và dùng Docker bridge network riêng. Không dùng `internal: true` vì Docker Engine hiện tại không publish host port cho network đó. Bất kỳ process local có quyền kết nối cổng này vẫn có thể đọc/ghi dữ liệu test; tuyệt đối không đặt dữ liệu cá nhân/secrets hoặc mở cổng ra LAN. Docker quyền quản trị nằm ngoài trust boundary của guard. Test runner không chứng minh an toàn trước người có quyền sửa Docker hoặc source code.
 
 Không đưa credentials thực vào file này hoặc `test.env.example`. Không tái sử dụng container `projectweb-be-mongo-1` hoặc cấu hình `infra/mongodb-demo/`.
+
+## GROUPS_V1 integration thật (AI-TRANSLATE-04.2)
+
+AI-TRANSLATE-05 adds an explicit test-only admission/source profile to this opt-in suite (128 KiB source, default remains 96 KiB). It does not activate application flags or production budgets. See [admission policy](../../docs/GROUPS_V1_ADMISSION_POLICY.md) for credit assumptions, profiling samples and remaining HTTP/heap accounting blockers.
+
+AI-TRANSLATE-05.1 additionally exercises the real authenticated HTTP + bounded MongoDB + installed Gemini SDK path with local fetch mocks at offered concurrency 1/4/16, response/waiter leases, draft GET, approve and grouped GET. The default application remains unconfigured/flags OFF. See [response lifecycle](../../docs/GROUPS_V1_RESPONSE_LIFECYCLE.md) for measured samples and deployment blockers. The separate `backend/tests/read-only-museum-source.preflight.ts` is read-only development source inspection, NOT an integration fixture writer; never use development as the integration target.
+
+Sau khi môi trường healthy, dùng hai biến `TEST_MONGODB_URI` và `TEST_DATABASE_NAME` explicit như trên, rồi chạy từ `backend/`:
+
+```powershell
+node --import tsx --test tests/groups-mongodb.integration.ts
+```
+
+Suite gọi isolation guard trước fixture writes, sau đó kết nối Mongoose chỉ tới URI test đã xác minh. Nó dùng models/services/controllers thật, provider mock và các điểm đồng bộ/fault injection quanh thao tác Database thật. `GROUP_TRANSLATION_ENABLED=true` chỉ nằm trong process test; không sửa `.env`. HTTP ra ngoài loopback bị chặn, provider keys để trống.
+
+Fixtures là dữ liệu tổng hợp, theo dõi bằng ID riêng từng lượt. Cleanup chỉ dùng danh sách ID của lượt đó (kể cả Translation và ActivityLog sinh ra), không drop database/collection/volume. Các collections và hai indexes nghiệp vụ cần thiết cho unique-key test được giữ lại trong DB test; không sửa indexes của development/production.
+
+Bao phủ byte-bound Unicode/escaping, cursor close, revision change, preview không ghi Translation, approve/GET/provenance, duplicate/concurrent approve, rollback sau insert, transient transaction retry, duplicate-key conflict, approve/edit race và JWT/RBAC/ownership/deleted-user. Với source 10.001 segments, byte gate chặt hơn sẽ từ chối trước count gate; không tăng cap để ép đường count-only.

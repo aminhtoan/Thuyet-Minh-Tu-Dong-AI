@@ -143,7 +143,8 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
   });
   await t.test('invalid plan/revision/language and ownership rejected without AI', async () => {
     await assert.rejects(service.preview(projectId, owner, { ...body, sourceRevision: '0'.repeat(64) }), code('SOURCE_REVISION_MISMATCH'));
-    await assert.rejects(service.preview(projectId, owner, { ...body, groups: [[s.segments[0]!.id]] }), code('TRANSLATION_MAPPING_FAILED'));
+    await assert.rejects(service.preview(projectId, owner, { ...body, groups: [[s.segments[0]!.id]] }), code('TRANSLATION_DRAFT_CHANGED'));
+    await assert.rejects(new GroupTranslationService(provider, new GroupDraftStore()).preview(projectId, owner, { ...body, groups: [[s.segments[0]!.id]] }), code('TRANSLATION_MAPPING_FAILED'));
     await assert.rejects(service.plan(projectId, other, 'en'), code('PROJECT_NOT_FOUND'));
     await assert.rejects(service.plan(projectId, owner, 'xx'), code('TRANSLATION_LANGUAGE_NOT_SUPPORTED')); assert.equal(generations, 1);
   });
