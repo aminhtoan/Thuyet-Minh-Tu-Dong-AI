@@ -1,6 +1,7 @@
 import { AppError } from '../../utils/app-error.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { withGroupSourceScope } from './group-source-scope.js';
+import { controlledScopeActive } from './controlled-development.js';
 
 export type GroupTestPolicy = Readonly<{
   sourceBytes: number; processCredits: number; requestCredits: number;
@@ -10,7 +11,7 @@ const exhausted = () => new AppError(503, 'TRANSLATION_CAPACITY_EXHAUSTED', 'Há»
 // Explicit isolated-test configuration only. These are estimated credits, NOT
 // a hard heap/native-memory bound or production deployment recommendation.
 export function groupTestPolicy(options: GroupTestPolicy): GroupTestPolicy {
-  if (process.env.NODE_ENV !== 'test') throw new Error('GROUP_TEST_POLICY_REQUIRES_TEST_ENV');
+  if (process.env.NODE_ENV !== 'test' && !controlledScopeActive()) throw new Error('GROUP_TEST_POLICY_REQUIRES_TEST_ENV');
   for (const key of ['sourceBytes', 'processCredits', 'requestCredits', 'maxActive', 'maxActivePerUser'] as const) {
     const value = options[key];
     if (!Number.isSafeInteger(value) || value <= 0) throw new Error('GROUP_TEST_POLICY_INVALID');

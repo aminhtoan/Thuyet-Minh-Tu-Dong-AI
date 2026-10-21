@@ -45,6 +45,34 @@ try {
   const restored = JSON.parse(JSON.stringify(source));
   if (revision(restored) !== revision(source) || source.fullText !== source.segments.map(s => s.text).join(' ') || groups.flatMap(g => g.sourceSegmentIds).join(',') !== source.segments.map(s => s.id).join(',')) throw new Error('READ_ONLY_INTEGRITY_BLOCKED');
   console.log(JSON.stringify({ preflight: 'PASS', database: db.databaseName, projectId: String(projectId), sourceLanguage: source.languageCode, transcriptRevision: source.transcriptRevision, segments: source.segments.length, groups: groups.length, sourceBytes: bytes, defaultAdmission: bytes <= 98304, candidateAdmission: bytes <= 128 * 1024, digestAndCoverage: 'PASS', writes: 0, aiRequests: 0 }));
+  if (process.argv.includes('--translation')) {
+    // Read-only metadata and local size accounting. Never call models/countTokens,
+    // generate, application startup or any mutation/index API.
+    const target = await db.collection('languages').findOne({ code: 'en' }, { projection: { _id: 0, code: 1, isActive: 1 } });
+    const translations = await db.collection('translations').find({ projectId, targetLanguage: 'en' }, { projection: { _id: 0, status: 1, alignmentFormat: 1, sourceTranscriptRevision: 1, sourceRevision: 1, transcriptId: 1 } }).limit(21).toArray();
+    const runningJobs = await db.collection('processingjobs').countDocuments({ projectId, type: 'TRANSLATION', status: { $in: ['QUEUED', 'PROCESSING'] } });
+    const finalRevision = await db.collection('transcripts').findOne({ _id: header._id, projectId }, { projection: { revision: 1 } });
+    if (!finalRevision || finalRevision.revision !== source.transcriptRevision) throw new Error('READ_ONLY_REVISION_CHANGED');
+    const provider = process.env.TRANSLATION_PROVIDER?.trim().toLowerCase() || config.TRANSLATION_PROVIDER?.trim().toLowerCase() || 'gemini';
+    const configuredModel = process.env.GEMINI_TRANSLATION_MODEL?.trim() || config.GEMINI_TRANSLATION_MODEL?.trim() || 'gemini-3.8-flash';
+    const model = /^gemini-[a-z0-9.-]+$/.test(configuredModel) ? configuredModel : 'INVALID_MODEL_CONFIGURATION';
+    const input = { fullText: source.fullText, sourceLanguage: source.languageCode, targetLanguage: 'en', groups: groups.map(g => ({ groupId: g.groupId, sourceText: g.sourceText })) };
+    // Empty values used ONLY to measure mandatory JSON framing; not translations.
+    const envelope = { outcome: 'translated', groups: groups.map(g => ({ groupId: g.groupId, translatedText: '' })) };
+    const sourceDigest = revision(source);
+    console.log(JSON.stringify({ translationPreflight: target?.isActive && translations.length === 0 && runningJobs === 0 ? 'SOURCE_READY_RUNTIME_PROVIDER_NOT_VERIFIED' : 'BLOCKED',
+      sourceDigest, targetLanguage: 'en', targetActive: target?.isActive === true, projectStatus: project.status,
+      englishRecords: translations.length, translationListTruncated: translations.length > 20,
+      sourceRevisionMatchingEnglishRecords: translations.filter(t => String(t.transcriptId) === source.transcriptId && t.sourceTranscriptRevision === source.transcriptRevision && t.sourceRevision === sourceDigest).length,
+      runningTranslationJobs: runningJobs, provider: provider === 'gemini' ? 'gemini' : 'NON_GEMINI_CONFIGURED', model,
+      apiKey: (process.env.GEMINI_API_KEY?.trim() || config.GEMINI_API_KEY?.trim()) ? 'PRESENT' : 'MISSING',
+      globalGroupFlag: process.env.GROUP_TRANSLATION_ENABLED ?? config.GROUP_TRANSLATION_ENABLED ?? 'false',
+      sourceCharacters: source.fullText.length, sourceWhitespaceUnits: source.fullText.trim().split(/\s+/u).length,
+      providerInputCharacters: JSON.stringify(input).length, providerInputUtf8Bytes: Buffer.byteLength(JSON.stringify(input)),
+      groupIdCharacters: groups.reduce((n, g) => n + g.groupId.length, 0),
+      emptyOutputEnvelopeCharacters: JSON.stringify(envelope).length, emptyOutputEnvelopeBytes: Buffer.byteLength(JSON.stringify(envelope)),
+      largestGroupCharacters: Math.max(...groups.map(g => g.sourceText.length)), writes: 0, aiRequests: 0 }));
+  }
 } catch (error) {
   console.log(JSON.stringify({ preflight: 'BLOCKED', errorType: error instanceof Error ? error.name : 'Unknown', writes: 0, aiRequests: 0 }));
   process.exitCode = 1;

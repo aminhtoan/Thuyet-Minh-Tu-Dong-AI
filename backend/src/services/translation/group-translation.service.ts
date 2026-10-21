@@ -13,12 +13,14 @@ import { isRevision, revisionFenceOperation, translationProvenance } from '../ar
 import { boundedTextProjection, collectBoundedSource, sourceTooLarge, SOURCE_SEGMENT_LIMIT, SOURCE_BYTE_LIMIT } from './bounded-source.js';
 import type { GroupAdmission } from './group-admission.js';
 import { scopedGroupAdmission } from './group-source-scope.js';
+import { assertControlledRequest, assertControlledSource, controlledScopeActive } from './controlled-development.js';
 
-function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true') throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
+function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true' && !controlledScopeActive()) throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
 const exists = () => new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Ngôn ngữ này đã có bản dịch. Không ghi đè bản dịch hiện có.');
 export async function loadSource(projectId: string, session: ClientSession | null = null, admission?: GroupAdmission): Promise<SourceSnapshot> {
   admission ??= scopedGroupAdmission();
+  if (process.env.NODE_ENV === 'development' && admission) assertControlledRequest(projectId);
   const byteLimit = admission?.policy.sourceBytes ?? SOURCE_BYTE_LIMIT;
   const [transcript] = await Transcript.aggregate([
     { $match: { projectId: new mongoose.Types.ObjectId(projectId) } }, { $limit: 1 },
@@ -39,6 +41,7 @@ export async function loadSource(projectId: string, session: ClientSession | nul
     const source = await collectBoundedSource({ transcriptId: String(transcript._id), transcriptRevision: transcript.revision, languageCode: transcript.languageCode, fullText: transcript.fullText }, rows, byteLimit);
     const current = await Transcript.findOne({ _id: transcript._id, projectId }).select('_id revision').session(session);
     if (!current || current.revision !== transcript.revision) throw mismatch();
+    if (process.env.NODE_ENV === 'development' && admission) assertControlledSource(projectId, source);
     return source;
   } finally { await cursor.close(); }
 }
@@ -75,6 +78,7 @@ export async function groupedDto(record: TranslationDocument & { _id: unknown },
 export class GroupTranslationService {
   constructor(private readonly provider: GroupProvider = new GeminiGroupTranslationProvider(), private readonly store: GroupDraftStore = groupDraftStore, private readonly admission?: GroupAdmission) {}
   private async authorizedProject(projectId: string, ownerId: string, targetLanguage: string, session: ClientSession | null = null) {
+    if (process.env.NODE_ENV === 'development' && this.admission) assertControlledRequest(projectId, ownerId, targetLanguage);
     const project = await Project.findOne({ _id: projectId, userId: ownerId }).select('_id status sourceLanguage').session(session);
     if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
     if (!['TRANSCRIBED', 'TRANSLATED', 'FAILED'].includes(project.status)) throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép dịch theo cụm.');
@@ -103,6 +107,7 @@ export class GroupTranslationService {
     return this.admission ? this.admission.operation(ownerId, work) : work();
   }
   private async previewInternal(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {
+    if (controlledScopeActive()) throw new AppError(503, 'CONTROLLED_PROVIDER_DENIED', 'Real generation requires a separately reviewed execution composition.');
     enabled();
     // Recheck identity/ownership even for cached single-flight results. No source
     // text is materialized here; the expensive load happens inside admission.
@@ -163,6 +168,7 @@ export class GroupTranslationService {
     return this.admission ? this.admission.operation(ownerId, work) : work();
   }
   private async approveInternal(projectId: string, ownerId: string, draftId: string, body: { outputDigest: string; reviewed: true }) {
+    if (controlledScopeActive()) throw new AppError(503, 'CONTROLLED_APPROVAL_DENIED', 'Readiness does not authorize database writes.');
     enabled(); const draft = this.store.get(draftId, ownerId, projectId);
     if (body.reviewed !== true) throw new AppError(409, 'TRANSLATION_REVIEW_REQUIRED', 'Vui lòng xác nhận đã kiểm tra ngữ nghĩa.');
     if (body.outputDigest !== draft.outputDigest) throw new AppError(409, 'TRANSLATION_DRAFT_CHANGED', 'Bản nháp không khớp nội dung đã duyệt.');
