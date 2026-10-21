@@ -6,6 +6,14 @@
 > BLOCKED. See `infra/backend-controlled-development/README.md`. The original
 > 05.5 design/evidence below is retained as historical context, not an activation.
 
+> AI-TRANSLATE-05.7 follow-up: actual installed-SDK dispatch is now fenced, with
+> explicit optional LOW and a separate execution composition defaulting LOCKED.
+> Linux mock SDK, HTTP auth, named-volume restart and crash-after-claim checks
+> passed; real museum source/binding was rechecked read-only. The 05.6 missing-code
+> blockers are superseded by `infra/backend-controlled-execution/README.md`.
+> No real permit, provider activation or real translation was performed. Actual
+> key/quota access and explicit execution approval remain preconditions.
+
 Checked 2026-10-21. **MODEL VERIFIED in public official documentation; API-key access/quota and actual execution remain BLOCKED/unverified.** This task proposes, but does not implement/start, a separate real-development runtime. It does not invoke any Gemini endpoint, including metadata/countTokens, enable flags, mount secrets or write MongoDB.
 
 ## Official evidence and local configuration

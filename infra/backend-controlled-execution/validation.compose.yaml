@@ -1,0 +1,36 @@
+name: narration-dispatch-durability
+services:
+  worker:
+    build:
+      context: ../../backend
+      dockerfile: tests/controlled-execution/Dockerfile
+    image: narration-controlled-execution:local
+    container_name: narration-dispatch-durability
+    hostname: narration-dispatch-durability
+    command: [node, --max-old-space-size=256, --import, tsx, tests/controlled-execution/durability-worker.ts]
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700"]
+    volumes: ["synthetic-state:/var/lib/narration-permits"]
+    network_mode: none
+    environment:
+      NODE_ENV: development
+      CONTROLLED_PROVIDER_MODE: PERMIT
+      DISPATCH_MOCK_ONLY: "true"
+    healthcheck:
+      test: [CMD, node, -e, "require('fs').accessSync('/tmp/durability-ready.json')"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    logging:
+      driver: json-file
+      options: {max-size: "2m", max-file: "2"}
+volumes:
+  synthetic-state:
+    name: narration-dispatch-synthetic-permits

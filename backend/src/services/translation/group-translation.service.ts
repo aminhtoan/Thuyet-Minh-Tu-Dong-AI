@@ -13,7 +13,7 @@ import { isRevision, revisionFenceOperation, translationProvenance } from '../ar
 import { boundedTextProjection, collectBoundedSource, sourceTooLarge, SOURCE_SEGMENT_LIMIT, SOURCE_BYTE_LIMIT } from './bounded-source.js';
 import type { GroupAdmission } from './group-admission.js';
 import { scopedGroupAdmission } from './group-source-scope.js';
-import { assertControlledRequest, assertControlledSource, controlledScopeActive } from './controlled-development.js';
+import { assertControlledRequest, assertControlledSource, controlledScopeActive, controlledReadinessActive } from './controlled-development.js';
 
 function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true' && !controlledScopeActive()) throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
@@ -107,7 +107,7 @@ export class GroupTranslationService {
     return this.admission ? this.admission.operation(ownerId, work) : work();
   }
   private async previewInternal(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {
-    if (controlledScopeActive()) throw new AppError(503, 'CONTROLLED_PROVIDER_DENIED', 'Real generation requires a separately reviewed execution composition.');
+    if (controlledReadinessActive()) throw new AppError(503, 'CONTROLLED_PROVIDER_DENIED', 'Readiness does not authorize generation.');
     enabled();
     // Recheck identity/ownership even for cached single-flight results. No source
     // text is materialized here; the expensive load happens inside admission.
@@ -168,7 +168,7 @@ export class GroupTranslationService {
     return this.admission ? this.admission.operation(ownerId, work) : work();
   }
   private async approveInternal(projectId: string, ownerId: string, draftId: string, body: { outputDigest: string; reviewed: true }) {
-    if (controlledScopeActive()) throw new AppError(503, 'CONTROLLED_APPROVAL_DENIED', 'Readiness does not authorize database writes.');
+    if (controlledReadinessActive()) throw new AppError(503, 'CONTROLLED_APPROVAL_DENIED', 'Readiness does not authorize database writes.');
     enabled(); const draft = this.store.get(draftId, ownerId, projectId);
     if (body.reviewed !== true) throw new AppError(409, 'TRANSLATION_REVIEW_REQUIRED', 'Vui lòng xác nhận đã kiểm tra ngữ nghĩa.');
     if (body.outputDigest !== draft.outputDigest) throw new AppError(409, 'TRANSLATION_DRAFT_CHANGED', 'Bản nháp không khớp nội dung đã duyệt.');

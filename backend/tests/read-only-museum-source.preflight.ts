@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { boundedTextProjection, collectBoundedSource } from '../src/services/translation/bounded-source.js';
-import { candidateGroups, revision } from '../src/services/translation/group-plan.js';
+import { candidateGroups, revision, digest } from '../src/services/translation/group-plan.js';
+import { controlledTarget } from '../src/services/translation/controlled-target.js';
 
 const config = dotenv.parse(readFileSync(fileURLToPath(new URL('../.env', import.meta.url))));
 const uri = config.MONGODB_URI;
@@ -18,7 +19,7 @@ try {
   const db = instance.connection.db!;
   if (db.databaseName !== 'multilingual_ai_narration') throw new Error('READ_ONLY_TARGET_BLOCKED');
   const projectId = new mongoose.Types.ObjectId('6ad5c93a86cf95b7523704a5');
-  const project = await db.collection('projects').findOne({ _id: projectId }, { projection: { _id: 1, sourceLanguage: 1, status: 1 } });
+  const project = await db.collection('projects').findOne({ _id: projectId }, { projection: { _id: 1, userId: 1, sourceLanguage: 1, status: 1 } });
   if (!project || project.sourceLanguage !== 'vi') throw new Error('READ_ONLY_PROJECT_BLOCKED');
   const [header] = await db.collection('transcripts').aggregate([
     { $match: { projectId } }, { $limit: 1 },
@@ -45,7 +46,7 @@ try {
   const restored = JSON.parse(JSON.stringify(source));
   if (revision(restored) !== revision(source) || source.fullText !== source.segments.map(s => s.text).join(' ') || groups.flatMap(g => g.sourceSegmentIds).join(',') !== source.segments.map(s => s.id).join(',')) throw new Error('READ_ONLY_INTEGRITY_BLOCKED');
   console.log(JSON.stringify({ preflight: 'PASS', database: db.databaseName, projectId: String(projectId), sourceLanguage: source.languageCode, transcriptRevision: source.transcriptRevision, segments: source.segments.length, groups: groups.length, sourceBytes: bytes, defaultAdmission: bytes <= 98304, candidateAdmission: bytes <= 128 * 1024, digestAndCoverage: 'PASS', writes: 0, aiRequests: 0 }));
-  if (process.argv.includes('--translation')) {
+  if (process.argv.includes('--translation') || process.argv.includes('--permit-binding')) {
     // Read-only metadata and local size accounting. Never call models/countTokens,
     // generate, application startup or any mutation/index API.
     const target = await db.collection('languages').findOne({ code: 'en' }, { projection: { _id: 0, code: 1, isActive: 1 } });
@@ -72,6 +73,15 @@ try {
       groupIdCharacters: groups.reduce((n, g) => n + g.groupId.length, 0),
       emptyOutputEnvelopeCharacters: JSON.stringify(envelope).length, emptyOutputEnvelopeBytes: Buffer.byteLength(JSON.stringify(envelope)),
       largestGroupCharacters: Math.max(...groups.map(g => g.sourceText.length)), writes: 0, aiRequests: 0 }));
+    if (process.argv.includes('--permit-binding')) {
+      const hello = await db.admin().command({ hello: 1 });
+      const owner = await db.collection('users').findOne({ _id: project.userId, deletedAt: null, role: 'CUSTOMER', status: 'ACTIVE' }, { projection: { _id: 1 } });
+      if (!owner || sourceDigest !== controlledTarget.sourceDigest || source.transcriptRevision !== controlledTarget.transcriptRevision || !target?.isActive || translations.length || runningJobs || provider !== 'gemini' || model !== controlledTarget.model || parsed.protocol !== 'mongodb+srv:' || !hello.isWritablePrimary || !hello.setName) throw new Error('READ_ONLY_PERMIT_BINDING_BLOCKED');
+      // Hashes + identity only, never source text, credentials or an active grant.
+      console.log(JSON.stringify({ permitBinding: 'UNAPPROVED', ownerId: String(owner._id), projectId: String(projectId), revision: source.transcriptRevision, sourceDigest,
+        inputDigest: digest(input), planDigest: digest(input.groups.map(g => g.groupId)), deploymentId: digest([parsed.hostname, db.databaseName, hello.setName]),
+        expectedReplicaSet: hello.setName, model, sourceLanguage: 'vi', targetLanguage: 'en', thinking: 'DEFAULT', lowExplicitlyApproved: false, writes: 0, aiRequests: 0 }));
+    }
   }
 } catch (error) {
   console.log(JSON.stringify({ preflight: 'BLOCKED', errorType: error instanceof Error ? error.name : 'Unknown', writes: 0, aiRequests: 0 }));

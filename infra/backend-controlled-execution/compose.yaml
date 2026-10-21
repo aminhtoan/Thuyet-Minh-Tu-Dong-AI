@@ -1,0 +1,45 @@
+name: narration-controlled-execution
+services:
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: tests/controlled-execution/Dockerfile
+    image: narration-controlled-execution:local
+    container_name: narration-controlled-execution
+    hostname: narration-controlled-execution
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700"]
+    volumes: ["permit-state:/var/lib/narration-permits"]
+    ports: ["127.0.0.1:18083:8083"]
+    environment:
+      NODE_ENV: development
+      CONTROLLED_EXECUTION_ENABLE: "${CONTROLLED_EXECUTION_ENABLE:-false}"
+    secrets:
+      - source: credentials
+        target: controlled-credentials.json
+      - source: permit
+        target: controlled-permit.json
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8083/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    logging:
+      driver: json-file
+      options: {max-size: "2m", max-file: "2"}
+secrets:
+  credentials:
+    file: "${CONTROLLED_CREDENTIALS_FILE:-./credentials.unconfigured.json}"
+  permit:
+    file: "${CONTROLLED_PERMIT_FILE:-./permit.unconfigured.json}"
+volumes:
+  permit-state:
+    name: narration-controlled-execution-permits

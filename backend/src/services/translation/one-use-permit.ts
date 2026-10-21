@@ -1,7 +1,7 @@
 import { open, realpath, lstat, readFile } from 'node:fs/promises';
 import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
-import { controlledTarget } from './controlled-development.js';
+import { controlledTarget } from './controlled-target.js';
 import type { GroupProviderInput, GroupTransport } from './gemini-group-translation.provider.js';
 import { digest } from './group-plan.js';
 
@@ -17,8 +17,10 @@ const permitSchema = z.object({
   metadataRequests: z.literal(1), generationRequests: z.literal(1), retries: z.literal(0),
   tokenChargeEnvelopeUsd: z.literal(0.82), pricingVerifiedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   issuedAt: z.number().int().nonnegative(), expiresAt: z.number().int().positive(),
+  deploymentId: z.string().regex(/^[a-f\d]{64}$/).optional(),
 }).strict();
 export type OneUsePermit = z.infer<typeof permitSchema>;
+const opened = new WeakSet<OneUsePermitFence>();
 
 // Local durable, single-host fence, NOT a cryptographic authorization service or
 // billing cap. Operator must protect this directory and never restore/reset it.
@@ -37,7 +39,15 @@ export class OneUsePermitFence {
       const path = join(directory, `${permit.id}.binding`), stat = await lstat(path);
       if (!stat.isFile() || stat.isSymbolicLink() || stat.size !== 64 || await readFile(path, 'utf8') !== digest(permit)) throw new Error('PROVIDER_PERMIT_BINDING_MISMATCH');
     }
+    opened.add(fence);
     return fence;
+  }
+  assertUsable(ownerId = this.permit.ownerId) {
+    if (!opened.has(this) || ownerId !== this.permit.ownerId || this.now() >= this.permit.expiresAt) throw new Error('PROVIDER_PERMIT_INVALID');
+  }
+  assertInput(model: string, input: GroupProviderInput) {
+    this.assertUsable();
+    if (model !== this.permit.model || digest(input) !== this.permit.inputDigest || digest(input.groups.map(g => g.groupId)) !== this.permit.planDigest || input.sourceLanguage !== 'vi' || input.targetLanguage !== 'en') throw new Error('PROVIDER_PERMIT_BINDING_MISMATCH');
   }
   private async marker(stage: string, content: string) {
     if (this.now() >= this.permit.expiresAt) throw new Error('PROVIDER_PERMIT_EXPIRED');
@@ -49,6 +59,7 @@ export class OneUsePermitFence {
     try { await directory.sync(); } finally { await directory.close(); }
   }
   async metadata(model: string, verifySource: () => Promise<void>, call: () => Promise<{ supportedActions?: string[] }>) {
+    this.assertUsable();
     if (model !== this.permit.model) throw new Error('PROVIDER_PERMIT_BINDING_MISMATCH');
     await verifySource();
     await this.marker('metadata-spent', 'SPENT_OR_UNCERTAIN');
@@ -58,9 +69,10 @@ export class OneUsePermitFence {
     return result;
   }
   async generation(model: string, input: GroupProviderInput, verifySource: () => Promise<void>, call: () => ReturnType<GroupTransport['generate']>) {
-    if (model !== this.permit.model || digest(input) !== this.permit.inputDigest || digest(input.groups.map(g => g.groupId)) !== this.permit.planDigest || input.sourceLanguage !== 'vi' || input.targetLanguage !== 'en') throw new Error('PROVIDER_PERMIT_BINDING_MISMATCH');
-    const verified = await lstat(join(this.directory, `${this.permit.id}.metadata-verified`));
-    if (!verified.isFile() || verified.isSymbolicLink()) throw new Error('PROVIDER_METADATA_NOT_VERIFIED');
+    this.assertInput(model, input);
+    const verifiedPath = join(this.directory, `${this.permit.id}.metadata-verified`);
+    const verified = await lstat(verifiedPath);
+    if (!verified.isFile() || verified.isSymbolicLink() || verified.size !== 8 || await readFile(verifiedPath, 'utf8') !== 'VERIFIED') throw new Error('PROVIDER_METADATA_NOT_VERIFIED');
     await verifySource();
     await this.marker('generation-spent', 'SPENT_OR_UNCERTAIN');
     return call(); // No retry, refund, deletion or reset path.
