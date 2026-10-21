@@ -1230,3 +1230,31 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - MEDIUM synthetic named-volume worker verified across restart and abrupt kill/start: boots 1->3, exact mock dispatch remains metadata=1 / generation=1. Exact synthetic fixture cleanup PASS; worker stopped; real execution/readiness containers and real permit volume not activated or modified. No MongoDB tests or writes required.
 - Exact files: backend/src/services/translation/one-use-permit.ts; backend/src/services/translation/controlled-gemini.provider.ts; backend/tests/controlled-execution.test.ts; backend/tests/controlled-execution/durability-worker.ts; infra/backend-controlled-execution/README.md; docs/PROGRESS.md. Current approved MEDIUM guidance/sample updated; no Customer Web/MUSEUM/ADMIN07 or dependency/global configuration changes, commit or push.
 - Gemini API calls **0**; development/production DB writes **0** (all DB writes **0**), real drafts/approval/TTS/video **0**. Real source/ownership/key/quota preflight not rerun; those gates remain mandatory when the user explicitly resumes controlled 05.8. No automatic real execution following this mock validation.
+# AI-TRANSLATE-05.8.4O.2 — Secure Web execution integration
+
+- Implementation + mock validation only. Existing CUSTOMER session now supports
+  direct dedicated-origin readiness and one manually confirmed controlled POST;
+  no token export, bridge/proxy or public permit issuer. Operator provisioning,
+  authentication, ownership and durable fence remain unchanged.
+- New protected execution-readiness/controlled-preview routes; strict Origin,
+  fixed confirmation + fingerprint, server-derived canonical plan/idempotency,
+  source/deployment verification and conservative one-submission process latch.
+  Both backend and frontend execution gates default OFF. Global GROUPS_V1 OFF,
+  limits unchanged. Existing read-only status contract is preserved.
+- Native confirmation/disabled/loading/UNCERTAIN UI, no automatic POST/retry/
+  refresh/approve/TTS/render. Source/default auth and unrelated pages untouched.
+- Focused Web 31/31 PASS; full Web 290/290 PASS. Backend expanded regression:
+  66 tests, 55 PASS, 0 FAIL, 11 Linux-only SKIPPED on Windows; new Web-execution
+  tests 3/3 PASS. Backend/Web lint/typecheck/build PASS. Existing Vite chunk warning
+  unchanged. Browser NOT RUN; no real controlled runtime startup, provider,
+  credential, DB or real permit use. Historical M.2 Linux 24/24 is not claimed as
+  a rerun of these new routes. Default production bundle excludes controlled UI.
+- Files: backend execution-app.ts, execution-server.ts, new web-execution.ts and
+  web-execution.test.ts; frontend controlledPreviewClient.mjs/.d.mts,
+  ControlledTranslationPreviewPage.tsx, controlled-translation-preview.css,
+  .env.example, controlled-translation-preview.test.mjs, new
+  controlled-web-execution.test.mjs; execution compose.yaml/README.md;
+  docs/API.md, docs/UI.md, docs/PROGRESS.md.
+- Real Gemini metadata/generation 0/0; development/production DB writes 0;
+  real permit provisioning/claims 0; no source data/session/secret changes,
+  global activation, dependencies, commit or push. Existing uncommitted work retained.

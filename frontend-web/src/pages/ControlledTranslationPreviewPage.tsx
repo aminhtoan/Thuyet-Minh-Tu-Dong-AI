@@ -6,14 +6,18 @@ import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { session } from '../lib/api';
 import { createControlledPreviewClient } from '../features/translation/controlledPreviewClient.mjs';
-import type { ControlledPreviewDraft, ControlledPreviewStatus } from '../features/translation/controlledPreviewClient.mjs';
+import type { ControlledPreviewDraft, ControlledPreviewStatus, ExecutionReadiness } from '../features/translation/controlledPreviewClient.mjs';
 import { formatPreciseTimestamp } from '../features/transcript/transcriptPresentation.mjs';
 import '../styles/controlled-translation-preview.css';
 
 export function ControlledTranslationPreviewPage() {
   const { projectId = '' } = useParams();
   const enabled = import.meta.env.DEV && import.meta.env.VITE_CONTROLLED_TRANSLATION_PREVIEW_ENABLED === 'true' && /^[a-f\d]{24}$/i.test(projectId);
-  const client = useMemo(() => createControlledPreviewClient({ enabled, projectId, origin: import.meta.env.VITE_CONTROLLED_TRANSLATION_ORIGIN, getToken: () => session.get()?.accessToken }), [enabled, projectId]);
+  const executionEnabled = import.meta.env.DEV && import.meta.env.VITE_CONTROLLED_TRANSLATION_EXECUTION_ENABLED === 'true';
+  const client = useMemo(() => createControlledPreviewClient({ enabled, executionEnabled, projectId, origin: import.meta.env.VITE_CONTROLLED_TRANSLATION_ORIGIN, getToken: () => session.get()?.accessToken }), [enabled, executionEnabled, projectId]);
+  const [readiness, setReadiness] = useState<ExecutionReadiness | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState<ControlledPreviewStatus | null>(null);
   const [draft, setDraft] = useState<ControlledPreviewDraft | null>(null);
   const [draftId, setDraftId] = useState('');
@@ -43,6 +47,21 @@ export function ControlledTranslationPreviewPage() {
     } catch (cause) { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'Không thể xem bản nháp.'); }
     finally { if (!controller.signal.aborted) { lock.current = false; setBusy(false); } }
   }
+  async function checkExecution() {
+    if (lock.current || submitted) return;
+    const controller = new AbortController(); operation.current = controller;
+    lock.current = true; setBusy(true); setConfirmed(false); setReadiness(null);
+    try { const result = await client.readiness(controller.signal); if (!controller.signal.aborted) setReadiness(result); }
+    finally { if (!controller.signal.aborted) { lock.current = false; setBusy(false); } }
+  }
+  async function executeOnce() {
+    if (lock.current || submitted || !executionEnabled || !confirmed || !readiness?.executionAllowed) return;
+    const controller = new AbortController(); operation.current = controller;
+    lock.current = true; setSubmitted(true); setBusy(true); setError(null);
+    try { const result = await client.execute(readiness, true, controller.signal); if (!controller.signal.aborted) setDraft(result); }
+    catch (cause) { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'UNCERTAIN: Không gửi lại yêu cầu.'); }
+    finally { if (!controller.signal.aborted) { lock.current = false; setBusy(false); } }
+  }
   if (!enabled) return <Card><h1>Không tìm thấy trang</h1><p>Chế độ xem này chưa được bật hoặc dự án không thuộc phạm vi được phép.</p></Card>;
   const canReadDraft = status?.serverReported && status.state !== 'BLOCKED';
   return <div className="controlled-translation-preview">
@@ -53,8 +72,18 @@ export function ControlledTranslationPreviewPage() {
       <div role="status" aria-live="polite" aria-atomic="true">
         {busy ? <p>Đang đọc dữ liệu…</p> : <><p><strong>{status?.state ?? 'Chưa kiểm tra'}</strong>{status && !status.serverReported ? ' — chưa được máy chủ xác nhận' : ''}</p><p>{status?.message}</p></>}
       </div>
-      <p>Generation bị khóa. Trang này không tạo bản dịch, duyệt bản nháp hoặc chạy AI.</p>
+      <p>Chỉ thực thi khi operator đã cấp permit và cả hai cổng thực thi được bật riêng. Không tự duyệt bản nháp hoặc chạy TTS/video.</p>
       <Button variant="secondary" disabled={busy} onClick={() => { if (!lock.current) { lock.current = true; setAttempt(n => n + 1); } }}>Kiểm tra lại trạng thái</Button>
+    </Card>
+    <Card>
+      <h2>Thực thi một lần theo phê duyệt</h2>
+      <Button variant="secondary" disabled={busy || submitted} onClick={() => void checkExecution()}>Kiểm tra quyền thực thi</Button>
+      <p role="status" aria-live="polite">{submitted ? (draft ? 'Đã nhận bản nháp chưa duyệt.' : 'Đã gửi yêu cầu. Không tự gửi lại, kể cả khi mất kết nối.') : readiness?.state ?? 'Chưa kiểm tra quyền thực thi.'}</p>
+      {readiness?.scope && <p>Dự án: {readiness.scope.projectId} · Revision {readiness.scope.revision} · vi → en · gemini-3.8-flash · MEDIUM</p>}
+      {readiness?.expiresAt && <p>Hết hạn: {new Date(readiness.expiresAt).toLocaleString('vi-VN')}</p>}
+      <label className="controlled-translation-preview__confirmation"><input type="checkbox" checked={confirmed} disabled={busy || submitted || !executionEnabled || !readiness?.executionAllowed} onChange={e => setConfirmed(e.target.checked)} /> Tôi xác nhận gửi một yêu cầu dịch có thể phát sinh chi phí, không tự thử lại.</label>
+      <Button disabled={busy || submitted || !executionEnabled || !confirmed || !readiness?.executionAllowed} onClick={() => void executeOnce()}>Dịch tiếng Anh một lần</Button>
+      {!executionEnabled && <p>Thực thi Web đang tắt trong cấu hình development.</p>}
     </Card>
     <Card>
       <h2>Xem bản nháp GROUPS_V1</h2>

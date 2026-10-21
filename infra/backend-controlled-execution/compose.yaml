@@ -21,6 +21,7 @@ services:
     environment:
       NODE_ENV: development
       CONTROLLED_EXECUTION_ENABLE: "${CONTROLLED_EXECUTION_ENABLE:-false}"
+      CONTROLLED_WEB_EXECUTION_ENABLE: "${CONTROLLED_WEB_EXECUTION_ENABLE:-false}"
     secrets:
       - source: credentials
         target: controlled-credentials.json

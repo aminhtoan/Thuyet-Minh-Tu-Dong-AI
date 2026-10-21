@@ -562,3 +562,40 @@ All are proposed and unimplemented. `/api/admin/**` requires authenticated ADMIN
 - `GET /api/admin/users`, customer detail/status mutation and Admin Dashboard customer counts exclude soft-deleted CUSTOMER records by default. Response DTOs remain unchanged and do not expose lifecycle fields.
 - ActivityLog actor resolution intentionally reads the retained User document even after soft-delete.
 - ADMIN07.2 adds no cleanup HTTP endpoint and performs no database mutation.
+# AI-TRANSLATE-05.8.4O.2 — Controlled Web execution (mock validated only)
+
+Dedicated controlled origin only; ordinary Customer API routes are unchanged.
+No permit issuer, JWT bridge/proxy, new login or token transfer is introduced.
+Operator provisioning and deployment-attested startup remain mandatory.
+
+- `GET /api/projects/:id/translations/execution-readiness`: JWT + CUSTOMER +
+  ownership + permit-owner/project scope, no-store, read-only. Returns
+  `LOCKED | READY | EXPIRED | CONSUMED | MISMATCHED` and `executionAllowed`.
+  Only READY includes safe project/source/model/MEDIUM/counts, expiry, fixed
+  request limits and `authorizationId` (permit fingerprint, not a credential).
+  Missing/invalid evidence is MISMATCHED, never guessed UNUSED. Stopped or fully
+  LOCKED startup lacks authenticated routes: Web reports BLOCKED, not invented
+  LOCKED. Expiry is reported only when known; consumed/ambiguous claim wins.
+- `POST /api/projects/:id/translations/controlled-preview`: body exactly
+  `{ "confirmation": "EXECUTE_ONCE", "authorizationId": "<readiness fingerprint>" }`.
+  Requires allowed browser Origin and a fresh readiness recheck. Server derives
+  plan, source revision and idempotency key from the existing approved permit;
+  no authoritative client digests or permit contents. Same validated GROUPS_V1
+  preview service/provider/fence, response `{ success:true, data:{draft} }`.
+  No automatic approval or MongoDB translation write. In-process submission latch
+  is never reset on failure/disconnect; durable fsynced claims remain the final
+  cross-restart external-dispatch authority. CONSUMED may describe a failed Web
+  submission even before SDK claim: never automatically replace/retry a permit.
+
+Backend Web gate `CONTROLLED_WEB_EXECUTION_ENABLE` defaults false; independent
+of `CONTROLLED_EXECUTION_ENABLE`, permit/operator approval and global flags.
+Existing `controlled-status` contract remains read-only with generationEnabled=false.
+New readiness is an observation, not an execution lease. Backend source verifier
+rechecks all source/input/plan/deployment bindings at each SDK stage. Existing
+CLI preview route retains its original permit guards, not controlled by the new
+Web gate. No source/provider/token/time limits are raised.
+
+Browser sends existing session Bearer token directly to the dedicated loopback
+origin, never exports it. New Web POST has zero refresh/retry/fallback; any failed,
+malformed or disconnected POST is conservatively UNCERTAIN and locks resubmission.
+Only read-only status/draft recovery is allowed pending operator investigation.

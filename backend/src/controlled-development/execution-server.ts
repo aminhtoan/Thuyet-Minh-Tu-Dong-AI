@@ -49,7 +49,7 @@ if (process.env.CONTROLLED_EXECUTION_ENABLE !== 'true') {
     const service = new GroupTranslationService(provider, undefined, admission);
     // Read-only startup validation; no metadata/generation or draft creation.
     await withPermittedSource(fence, fence.permit.ownerId, () => admission.operation(fence.permit.ownerId, async () => { await verifyExecutionSource(fence, admission); }));
-    server = executionApp(fence, service, admission, credentials.corsOrigins).listen(8083, '0.0.0.0');
+    server = executionApp(fence, service, admission, credentials.corsOrigins, { enabled: process.env.CONTROLLED_WEB_EXECUTION_ENABLE === 'true' }).listen(8083, '0.0.0.0');
   } catch {
     console.error('CONTROLLED_EXECUTION_STARTUP_BLOCKED');
     await mongoose.disconnect(); process.exit(1); // No raw errors, URI, key or submitted content.

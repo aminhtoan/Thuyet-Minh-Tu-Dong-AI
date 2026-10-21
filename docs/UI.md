@@ -1474,3 +1474,26 @@ Không thay đổi Customer Web. Contract workflow hiện chỉ xem CURRENT arti
 - Selector giảm padding và số dòng, giữ radio/label, mã ngôn ngữ và trạng thái sẵn sàng/chuẩn bị; vi AVAILABLE, en/th/ko/zh-CN UNAVAILABLE. Credit YouTube bỏ dòng nguồn lặp khi đã có link credit, giữ nguyên license và link gốc, không rút gọn hoặc thay đổi quyền sử dụng.
 - Native controls không bị phủ/cắt; giữ playsInline, metadata preload, không autoplay và lifecycle/error/retry hiện có. Focus-visible/reduced-motion kế thừa Museum theme; không dùng overflow hidden để che lỗi layout.
 - Validation: Web tests **254/254 PASS**; lint, typecheck, production build và `git diff --check` PASS. MP4 SHA256 không đổi. Browser QA 375/768/1024/1280/1440 **NOT RUN**, không có browser khả dụng; xem poster local không đồng nghĩa đã kiểm tra giao diện hoặc playback trong browser. Build giữ cảnh báo chunking có sẵn của projectRepository.
+# AI-TRANSLATE-05.8.4O.2 — Controlled execution UI
+
+Existing DEV/RequireAuth controlled preview page now has a separate, default-OFF
+manual execution section. No Dashboard/Museum/legacy translation UI changes.
+`VITE_CONTROLLED_TRANSLATION_EXECUTION_ENABLED=false` is the new default;
+preview opt-in and explicit `http://127.0.0.1:18083` origin remain required.
+Backend independently requires operator `CONTROLLED_WEB_EXECUTION_ENABLE=true`,
+a separately approved/provisioned scoped permit and existing deployment/source
+checks. Flags are configuration gates, never authorization on their own.
+
+User explicitly checks execution readiness (GET), reviews server-reported scope,
+model/MEDIUM/expiry, checks the cost/no-retry confirmation, then clicks the one-time
+English translation action. No POST on mount, polling, refresh or readiness PASS.
+No token clipboard/export, auth bridge, refresh or ordinary API fallback.
+Client/module + server submission latches prevent repeated clicks; provider fence
+remains final authority. Timeout/disconnect/invalid response shows UNCERTAIN with
+no retry action. Validated DRAFT only; existing authenticated draft GET viewer
+remains available. No Approve/TTS/render controls. Accessible native checkbox,
+disabled buttons, live status text and isolated wrapping styles preserve layout.
+
+Browser/live generation NOT RUN. Mock regression/build results in PROGRESS.md.
+Skill ui-ux-pro-max informed explicit confirmation, contextual feedback, loading
+and disabled semantics; no redesign or new dependency.

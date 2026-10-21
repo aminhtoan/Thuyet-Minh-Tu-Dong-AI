@@ -4,6 +4,16 @@ export const controlledPreviewTarget = Object.freeze({
 const uuid = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i;
 const hash = /^[a-f\d]{64}$/i;
 const objectId = /^[a-f\d]{24}$/i;
+const submittedAuthorizations = new Set(); // Survives component remount; server fence handles reload/restart.
+export function parseExecutionReadiness(value, projectId) {
+  if (!record(value) || !['LOCKED', 'READY', 'EXPIRED', 'CONSUMED', 'MISMATCHED'].includes(value.state)) return { state: 'BLOCKED', executionAllowed: false };
+  if (value.state !== 'READY') return value.executionAllowed === false ? { state: value.state, executionAllowed: false } : { state: 'BLOCKED', executionAllowed: false };
+  const status = parseControlledStatus({ ...value, generationEnabled: false }, projectId);
+  const l = value.limits;
+  if (!status.serverReported || status.state !== 'READY' || value.executionAllowed !== true || !hash.test(value.authorizationId) || !Number.isSafeInteger(value.expiresAt) || value.expiresAt <= Date.now() || !record(l) || l.metadataRequests !== 1 || l.generationRequests !== 1 || l.retries !== 0 || l.timeoutMs !== 120000 || l.maxOutputTokens !== 8192) return { state: 'BLOCKED', executionAllowed: false };
+  return { state: 'READY', executionAllowed: true, authorizationId: value.authorizationId, expiresAt: value.expiresAt, scope: status.scope,
+    source: { segmentCount: value.source.segmentCount, groupCount: value.source.groupCount, coverage: value.source.coverage } };
+}
 const blocked = (message) => ({ state: 'BLOCKED', generationEnabled: false, serverReported: false, message });
 const unavailable = 'Không thể xác minh controlled runtime. Kiểm tra cấu hình hoặc đăng nhập lại; không thực hiện dịch.';
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
@@ -34,7 +44,7 @@ export function parseControlledDraft(value, id, t, now = Date.now()) {
 
 // Intentionally independent of api(): no ordinary-origin fallback, refresh POST,
 // automatic retry, mutation methods, credentials files or permit provisioning.
-export function createControlledPreviewClient({ enabled, origin, projectId, getToken, fetcher = fetch }) {
+export function createControlledPreviewClient({ enabled, executionEnabled = false, origin, projectId, getToken, fetcher = fetch }) {
   function base() {
     if (!enabled || !objectId.test(projectId) || origin !== 'http://127.0.0.1:18083') throw new Error(unavailable);
     return `${origin}/api/projects/${projectId}/translations`;
@@ -49,6 +59,29 @@ export function createControlledPreviewClient({ enabled, origin, projectId, getT
     return body.data;
   }
   return Object.freeze({
+    async readiness(signal) {
+      try { return parseExecutionReadiness(await get('/execution-readiness', signal), projectId); }
+      catch { return { state: 'BLOCKED', executionAllowed: false }; }
+    },
+    async execute(readiness, confirmed, signal) {
+      const url = base();
+      if (!executionEnabled || confirmed !== true || readiness?.state !== 'READY' || readiness.executionAllowed !== true || readiness.scope?.projectId !== projectId || !hash.test(readiness.authorizationId) || readiness.expiresAt <= Date.now() || submittedAuthorizations.has(readiness.authorizationId)) throw new Error('Thực thi bị khóa hoặc đã được yêu cầu. Không tự thử lại.');
+      const token = getToken();
+      if (typeof token !== 'string' || !token.trim()) throw new Error('Phiên đăng nhập không khả dụng.');
+      submittedAuthorizations.add(readiness.authorizationId); // Before fetch; never removed after uncertainty.
+      try {
+        const response = await fetcher(url + '/controlled-preview', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirmation: 'EXECUTE_ONCE', authorizationId: readiness.authorizationId }), credentials: 'omit', cache: 'no-store', redirect: 'error',
+          signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(150000)]) : AbortSignal.timeout(150000) });
+        if (!response.ok) throw new Error();
+        const body = await response.json();
+        if (body?.success !== true) throw new Error();
+        const raw = body.data?.draft;
+        const draft = parseControlledDraft(raw, raw?.draftId, readiness.scope);
+        if (draft.groups.length !== readiness.source.groupCount || draft.groups.reduce((n, g) => n + g.sourceSegmentIds.length, 0) !== readiness.source.segmentCount) throw new Error();
+        return draft;
+      } catch { throw new Error('UNCERTAIN: Chưa xác định kết quả yêu cầu. Không gửi lại hoặc tạo permit thay thế; cần kiểm tra trạng thái và bản nháp chỉ đọc.'); }
+    },
     async status(signal) {
       try { return parseControlledStatus(await get('/controlled-status', signal), projectId); }
       catch { return blocked(unavailable); } // Never surface raw server/network errors.

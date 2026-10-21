@@ -1,5 +1,47 @@
 # AI-TRANSLATE-05.7 — one-use controlled Gemini dispatch
 
+## AI-TRANSLATE-05.8.4O.2 — Secure Web integration, DEFAULT OFF
+
+Supersedes the earlier GET-only Web restriction, not operator approval or permit
+security. No authentication bridge or JWT export is needed: the Customer app's
+existing session sends Bearer authentication directly to the dedicated origin.
+No real runtime/provider/permit was started/provisioned/consumed by this change.
+
+Two new protected routes in the existing PERMIT runtime:
+`GET /api/projects/:id/translations/execution-readiness` (read-only) and
+`POST /api/projects/:id/translations/controlled-preview` (one explicit user action).
+Both preserve JWT/CUSTOMER/ownership/permit scope. POST accepts only confirmation
+and the readiness fingerprint; canonical plan/digests/idempotency stay server-side.
+No secret permit JSON, deployment credentials or API key is returned to the browser.
+The existing read-only controlled-status/draft viewer contracts remain unchanged.
+
+New gates, both shipped OFF:
+- Backend `CONTROLLED_WEB_EXECUTION_ENABLE=false` in execution composition.
+- Web `VITE_CONTROLLED_TRANSLATION_EXECUTION_ENABLED=false` in .env.example.
+
+Neither gate provisions/approves a permit or enables global GROUPS_V1. A stopped
+or completely LOCKED runtime has no protected readiness service; Web safely shows
+BLOCKED. Within an authenticated execution runtime, Web gate OFF reports LOCKED;
+READY requires unused evidence, current source and MEDIUM. EXPIRED, CONSUMED and
+MISMATCHED disable execution. Readiness does not certify provider quota/access.
+
+Future separately authorized procedure: verify current authenticated owner/source/
+conflicts and deployment; operator provisions a NEW exact expiring permit outside
+the repository (never reset museum storage); start only dedicated runtime with
+approved secrets and gates; open the existing controlled-preview Web route;
+manually check readiness, review scope/expiry/cost, tick confirmation and click once.
+No token is copied to PowerShell. Never use legacy Dịch or ordinary-origin preview.
+After an uncertain response, do not click again, reload to regenerate, replace a
+permit or reset storage. Inspect status/claims/draft GET only. Keep a successful
+RAM draft runtime alive for review; stopping it loses the RAM draft, never grants
+permission to regenerate. Approval/TTS/rendering require separate authorization.
+
+Client/module submission latch complements the process latch, not durable storage.
+Across reload/restart the original fsynced provider claims are final. A failed
+Web attempt is locally spent even if provider dispatch did not happen; no automatic
+refund/rearm. Other-process RAM drafts remain UNKNOWN. Normal browser networking
+sends Authorization but no token export/logging/refresh/retry/fallback is added.
+
 Implementation/mock validation PASS; **real generation is NOT enabled or run**.
 This supersedes 05.6's missing-SDK-dispatch/execution-composition blockers.
 

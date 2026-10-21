@@ -14,8 +14,10 @@ import { withPermittedSource, assertControlledRequest } from '../services/transl
 import { AppError } from '../utils/app-error.js';
 import { readExecutionStatus } from './execution-status.js';
 import { groupResponseHandler } from '../services/translation/group-response.js';
+import { webExecutionReadiness } from './web-execution.js';
+import { digest } from '../services/translation/group-plan.js';
 
-export function executionApp(fence: OneUsePermitFence, service: GroupTranslationService, admission: GroupAdmission, origins: string[]) {
+export function executionApp(fence: OneUsePermitFence, service: GroupTranslationService, admission: GroupAdmission, origins: string[], web: { enabled: boolean; verify?: Parameters<typeof webExecutionReadiness>[3] } = { enabled: false }) {
   const app = express(); app.disable('x-powered-by'); app.use(helmet());
   app.use(cors({ origin: origins }));
   app.get('/api/health', (_req, res) => res.json({ status: 'ok', mode: 'PERMIT', ledger: admission.snapshot() }));
@@ -33,6 +35,28 @@ export function executionApp(fence: OneUsePermitFence, service: GroupTranslation
     } catch (error) { next(error); }
   };
   const base = '/api/projects/:id/translations';
+  let webSubmitted = false; // Additional process latch; durable fence remains final authority across restarts.
+  const webScope: RequestHandler = (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    if (req.user!.id !== fence.permit.ownerId || String(req.params.id) !== fence.permit.projectId) return next(new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.'));
+    next();
+  };
+  app.get(`${base}/execution-readiness`, requireProjectOwner, webScope, groupResponseHandler(admission, async () => ({ success: true,
+    data: webSubmitted ? { state: 'CONSUMED', executionAllowed: false } : await webExecutionReadiness(fence, admission, web.enabled, web.verify) })));
+  app.post(`${base}/controlled-preview`, requireProjectOwner, webScope, groupResponseHandler(admission, async req => {
+    if (!origins.includes(req.get('Origin') ?? '') || req.body?.confirmation !== 'EXECUTE_ONCE' || Object.keys(req.body).some(key => !['confirmation', 'authorizationId'].includes(key))) throw new AppError(403, 'CONTROLLED_WEB_CONFIRMATION_REQUIRED', 'Cần xác nhận thủ công từ giao diện được phép.');
+    const ready = await webExecutionReadiness(fence, admission, web.enabled, web.verify);
+    if (webSubmitted || ready.state !== 'READY' || !('authorizationId' in ready) || req.body.authorizationId !== ready.authorizationId) throw new AppError(409, 'CONTROLLED_WEB_NOT_READY', 'Chưa đủ điều kiện hoặc yêu cầu đã được sử dụng. Không tự thử lại.');
+    webSubmitted = true; // Before any async plan/provider work. Never reset after failure/disconnect.
+    const draft = await withPermittedSource(fence, req.user!.id, async () => {
+      const p = fence.permit;
+      const plan = await service.plan(p.projectId, req.user!.id, 'en');
+      if (plan.transcriptRevision !== p.revision || plan.sourceRevision !== p.sourceDigest || digest(plan.groups.map(g => g.groupId)) !== p.planDigest) throw new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Nguồn đã thay đổi.');
+      return service.preview(p.projectId, req.user!.id, { targetLanguage: 'en', sourceRevision: p.sourceDigest,
+        groupingVersion: plan.groupingVersion, groups: plan.groups.map(g => g.sourceSegmentIds), idempotencyKey: p.id });
+    });
+    return { success: true, data: { draft } };
+  }));
   app.get(`${base}/controlled-status`, (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, requireProjectOwner, groupResponseHandler(admission, async req => {
     if (req.user!.id !== fence.permit.ownerId || String(req.params.id) !== fence.permit.projectId) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
     return { success: true, data: await readExecutionStatus(fence, admission) };

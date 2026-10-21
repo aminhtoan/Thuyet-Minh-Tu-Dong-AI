@@ -56,7 +56,7 @@ test('valid authenticated draft GET retains vi/en groups without exposing extran
   assert.equal(draft.groups[0].sourceText, 'Nội dung minh họa kiểm thử.'); assert.equal(draft.groups[0].translatedText, 'Synthetic test content.');
   assert.equal(draft.state, 'DRAFT'); assert.ok(!('ownerId' in draft)); assert.equal(paths.length, 2);
   assert.match(paths[1], new RegExp(`/drafts/${draftId}$`));
-  assert.deepEqual(Object.keys(c).sort(), ['draft', 'status']);
+  assert.deepEqual(Object.keys(c).sort(), ['draft', 'execute', 'readiness', 'status']);
 });
 test('consumed status may read an existing draft, never implying CURRENT or permitting generation', async () => {
   const c = client(async () => json({ draft: makeDraft() }));
@@ -82,7 +82,7 @@ test('abort is passed to GET and does not initiate retry or mutation', async () 
   const pending = client(async (_url, init) => { calls++; return new Promise((_resolve, reject) => init.signal.addEventListener('abort', () => reject(init.signal.reason), { once: true })); }).status(controller.signal);
   controller.abort(); assert.equal((await pending).state, 'BLOCKED'); assert.equal(calls, 1);
 });
-test('entry is DEV-only, opt-in, RequireAuth protected; viewer has no generation/approval controls', async () => {
+test('entry remains DEV-only, opt-in, RequireAuth protected with no legacy generation or approval wiring', async () => {
   const router = await readFile(new URL('../src/routes/AppRouter.tsx', import.meta.url), 'utf8');
   const page = await readFile(new URL('../src/pages/ControlledTranslationPreviewPage.tsx', import.meta.url), 'utf8');
   const environment = await readFile(new URL('../.env.example', import.meta.url), 'utf8');
@@ -95,5 +95,6 @@ test('entry is DEV-only, opt-in, RequireAuth protected; viewer has no generation
   assert.doesNotMatch(page + transport, /6ad5c93a86cf95b7523704a5|81638f2cb62e5f5f/);
   assert.match(page, /aria-live="polite"/); assert.match(page, /htmlFor="controlled-draft-id"/);
   assert.doesNotMatch(page, /GroupTranslationWorkspace|groupTranslationService|translationService|\.approve\(|\.preview\(|window\.confirm|console\./);
-  assert.doesNotMatch(transport, /method: 'POST'|method: 'PUT'|method: 'PATCH'|method: 'DELETE'|apiBaseUrl|\/auth\/refresh/);
+  assert.equal((transport.match(/method: 'POST'/g) ?? []).length, 1);
+  assert.doesNotMatch(transport, /method: 'PUT'|method: 'PATCH'|method: 'DELETE'|apiBaseUrl|\/auth\/refresh/);
 });
