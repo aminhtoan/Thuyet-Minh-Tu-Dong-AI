@@ -1,5 +1,79 @@
 # API Status and Conventions
 
+## AI-TRANSLATE-05.8.4I — Any-owned-project development source preflight (2026-10-22)
+
+Supersedes the museum-only diagnostic scope in 05.8.4G, NOT the pinned real
+execution permit contract. `GET /api/projects/:id/translations/read-only-diagnostic`
+now supports any valid project ID owned by the authenticated available CUSTOMER
+in development. Existing owner middleware validates ID and ownership; production
+still returns 404, no-store. No authentication architecture or flags changed.
+
+- Caps remain 98304 snapshot bytes / 10000 segments. Source measurement preserves
+  exact same JSON snapshot framing as loadSource. Oversize rejects before source
+  materialization/planning; returns BLOCKED_SOURCE_CAP and exact bytes/count where
+  available. Segment overflow returns `segmentCountAtLeast=10001`, exact count/bytes
+  null, never returns truncated source. Independently oversized fields also return
+  null exact measurement. `sourceSegmentLimit=10000` is explicit in every response.
+- Below/equal cap, loadSource validates source status/revision/order/timestamps and
+  final revision; measured revision/bytes must match the loaded source. Digest is
+  canonical `revision(source)`; grouping uses the existing candidateGroups with
+  exact ordered ID coverage, no museum-specific count/digest assumptions. Source
+  language must be present and differ from en; missing/invalid source blocks safely.
+- `transcript=PASS`, `groups=PASS` are observation-time source checks, not permission
+  to call a provider or a stable concurrency lock. English records/jobs/local RAM
+  drafts remain independently reported. PROCESS_LOCAL_ONLY/global UNKNOWN remains;
+  no whole-deployment readiness claim is made. `groupTranslationEnabled` reports the
+  existing flag without changing it; `generationAuthorized=false` always. Source
+  checks can pass while reasonCode=GROUP_TRANSLATION_DISABLED/status=UNKNOWN.
+- New projects do not match the old museum-only durable permit. No new permit,
+  source cap, provider capability or real execution authorization is implied.
+
+
+## AI-TRANSLATE-05.8.4G — Development read-only diagnostic (2026-10-22)
+
+`GET /api/projects/6ad5c93a86cf95b7523704a5/translations/read-only-diagnostic`
+on the ordinary development Backend only. Existing JWT + available CUSTOMER +
+project owner required; wrong project/non-development returns 404. No-store,
+standard success envelope; diagnostic BLOCKED is data, not permission to retry AI.
+
+- Independent metadata-only byte measurement uses bounded projections, cursor
+  batchSize=1, <=10001 iterations, closes cursor and rechecks revision. No source
+  array is retained. Measures the same JSON snapshot framing/UTF-8 byte count as
+  the source gate when individual fields/count are measurable within bounds.
+- Cap stays 98304 bytes. Above cap: `status=BLOCKED`,
+  `reasonCode=BLOCKED_SOURCE_CAP`, actual `sourceBytes` if measurable, cap and count;
+  transcript/group attestation stays UNKNOWN. Oversized individual field/count
+  yields null exact size/count, never a fabricated measurement or truncated source.
+- Only within cap does existing loadSource validate READY/SAVED source, revision,
+  order/timestamps/IDs and recheck revision; digest/candidateGroups must match the
+  pinned museum revision/digest/1027 source segments/74 groups and ordered coverage.
+  CURRENT here means verified current source at observation time, not a DB lock.
+- Persisted English record existence and active English TRANSLATION jobs are
+  reported independently. Existing English records block conservatively regardless
+  of readiness/provenance. RAM draft observation is read-only, PROCESS_LOCAL_ONLY;
+  globalAbsence remains UNKNOWN even when local count=0. Pending work/other
+  processes are not certified absent. Overall status never claims global READY.
+- No flag bypass for translation: no plan/preview/approve or provider called, no
+  controlled scope/admission override/permit used. loadSource default 96 KiB policy
+  unchanged. DB queries are read-only; no transcript/translation text, raw draft,
+  token/credentials or raw errors returned. Failures use allowlisted safe codes.
+- Client invocation must explicitly use existing api(path, GET options, false),
+  preventing automatic auth refresh. Endpoint itself cannot control unrelated
+  browser requests. Live execution NOT RUN; requires user's own authenticated GET.
+
+
+## WEB-TRANSLATE-02 — Controlled read-only status foundation (2026-10-21)
+
+Dedicated controlled execution origin only: `GET /api/projects/:id/translations/controlled-status`.
+Requires the existing JWT, available CUSTOMER, project ownership, and exact permit owner/project. Returns the standard `{ success: true, data: ... }` envelope with `Cache-Control: no-store`; unauthorized/wrong owner remains 401/403/404 without permit details.
+
+- `state`: `READY`, `BLOCKED`, or `REQUEST_CONSUMED`. `generationEnabled` is **always false** in this foundation step. `READY` means local source/permit evidence passed, NOT verified Gemini model access, quota, price or Web dispatch authorization.
+- READY includes only scoped project/revision/digest/vi/en/model/MEDIUM and segment/group/coverage counts. No JWT, credentials, owner ID, permit ID/secret, input text or raw errors. Missing/changed durable binding, malformed claims, expiry, wrong thinking, source verification failure or incomplete coverage fail closed. Any existing metadata/generation claim prevents reuse; status never opens/provisions a permit or writes a claim.
+- Uses the existing bounded admission/source verification and rechecks claim state after verification. This is an observation, not an atomic generation lease; actual dispatch must still revalidate/claim through the existing fence.
+- LOCKED execution retains its existing health-only behavior and rejects this route (503). Missing credentials prevent PERMIT startup, not a fabricated READY response. DRAFT_READY is not implemented by this endpoint; existing authenticated draft GET is unchanged. No endpoint has been added to the ordinary application router.
+- No browser mutation integration or approve control added. Future Web integration needs a separate dedicated-origin client, explicit development gate, approved permit request binding and draft-only UX. Never treat ordinary GROUPS_V1 or legacy POST as a fallback.
+
+
 ## UI07.6.6.1 — Transcript revision & downstream provenance foundation (2026-10-19)
 
 Schema additive, không migration tự động:

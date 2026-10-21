@@ -54,7 +54,7 @@ test('confirmation cancellation returns waiting without false failure; provider 
 });
 test('Translation UI keeps placeholder, target guard, loading, saved feedback and mapped-only voice continuation', async () => {
   const page = await readFile(new URL('../src/pages/TranslationPage.tsx', import.meta.url), 'utf8');
-  assert.match(page, /Chọn ngôn ngữ cần dịch/); assert.match(page, /disabled=\{!canMutate \|\| !editor.targetLanguage \|\| editor.busy/);
+  assert.match(page, /Chọn ngôn ngữ cần dịch/); assert.match(page, /disabled=\{blockGeneration \|\| !canMutate \|\| !editor.targetLanguage \|\| editor.busy/);
   assert.match(page, /Đang dịch bằng AI\.\.\./); assert.match(page, /Chưa có bản dịch cho ngôn ngữ đã chọn/);
   assert.match(page, /Bản dịch đã được lưu trên máy chủ/); assert.match(page, /Boolean\(presentation.notice\)/);
 });

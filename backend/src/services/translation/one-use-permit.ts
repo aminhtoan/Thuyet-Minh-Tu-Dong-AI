@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { controlledTarget } from './controlled-target.js';
 import type { GroupProviderInput, GroupTransport } from './gemini-group-translation.provider.js';
 import { digest } from './group-plan.js';
+import { readPermitStatus } from './permit-status.js';
 
 const permitSchema = z.object({
   id: z.string().uuid(), approval: z.literal('EXPLICIT_USER_APPROVAL'),
@@ -12,7 +13,7 @@ const permitSchema = z.object({
   sourceLanguage: z.literal('vi'), targetLanguage: z.literal('en'),
   model: z.literal(controlledTarget.model), apiVersion: z.literal('v1beta'),
   inputDigest: z.string().regex(/^[a-f\d]{64}$/), planDigest: z.string().regex(/^[a-f\d]{64}$/),
-  thinking: z.enum(['DEFAULT', 'LOW']), lowExplicitlyApproved: z.boolean(),
+  thinking: z.enum(['DEFAULT', 'LOW', 'MEDIUM']), lowExplicitlyApproved: z.boolean(),
   maxOutputTokens: z.literal(8192), timeoutMs: z.literal(120000), responseBytes: z.literal(131072),
   metadataRequests: z.literal(1), generationRequests: z.literal(1), retries: z.literal(0),
   tokenChargeEnvelopeUsd: z.literal(0.82), pricingVerifiedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -45,6 +46,8 @@ export class OneUsePermitFence {
   assertUsable(ownerId = this.permit.ownerId) {
     if (!opened.has(this) || ownerId !== this.permit.ownerId || this.now() >= this.permit.expiresAt) throw new Error('PROVIDER_PERMIT_INVALID');
   }
+  // Does not provision, consume, reset or rearm this permit.
+  readStatus() { return readPermitStatus(this.directory, this.permit, this.now()); }
   assertInput(model: string, input: GroupProviderInput) {
     this.assertUsable();
     if (model !== this.permit.model || digest(input) !== this.permit.inputDigest || digest(input.groups.map(g => g.groupId)) !== this.permit.planDigest || input.sourceLanguage !== 'vi' || input.targetLanguage !== 'en') throw new Error('PROVIDER_PERMIT_BINDING_MISMATCH');

@@ -3,6 +3,101 @@
 Implementation/mock validation PASS; **real generation is NOT enabled or run**.
 This supersedes 05.6's missing-SDK-dispatch/execution-composition blockers.
 
+## WEB-TRANSLATE-03 — read-only Customer Web viewer
+
+Source/mock UI implemented; real controlled execution remains unactivated.
+To inspect the UI locally, set these non-secret values only in the Web development
+process (do not edit the ordinary VITE_API_BASE_URL or GROUPS_V1 flags):
+
+```powershell
+cd frontend-web
+$env:VITE_CONTROLLED_TRANSLATION_PREVIEW_ENABLED='true'
+$env:VITE_CONTROLLED_TRANSLATION_ORIGIN='http://127.0.0.1:18083'
+npm run dev
+```
+
+Sign in through the existing Customer login, then open
+`/projects/6ad5c93a86cf95b7523704a5/translation/controlled-preview` on the Web origin.
+No JWT/keys/permit go into a URL, VITE variable or draft input. The page route is
+development-only; its inner gate defaults OFF and rejects other project IDs.
+Remove the two process variables/restart Vite after inspection. No real flags
+were enabled by this implementation.
+
+The client sends ONLY authenticated GET controlled-status and, after an allowed
+server status plus explicit draft UUID input, existing GET drafts/:draftId.
+No refresh POST, automatic retry, normal API fallback, generation or approve.
+Expired JWT requires signing in again through the existing login flow. A LOCKED
+or stopped runtime returns local BLOCKED/unconfirmed, not a fabricated server
+LOCKED state. Do not provision credentials/permit or start real execution just to
+make this screen green. READY still has generationEnabled=false. No draft exists
+yet: absent/expired draft remains an error and is never regenerated.
+
+For browser QA with a separately controlled mock-only endpoint at the approved
+origin, verify READY/BLOCKED/REQUEST_CONSUMED and malformed/network/401/404/503
+responses, draft UUID GET, vi/en columns, keyboard labels and narrow stacking.
+Inspect Network to confirm only GETs from this page and no mutation/refresh. Do
+not export Authorization headers or unsanitized HAR. Do not use unrelated
+workspace controls during read-only inspection. Existing authenticated draft GET
+is ownership/permit scoped; a snapshot is not a fresh CURRENT attestation.
+
+Validation: 271/271 Web tests (17 new), 58/58 focused Backend mocks, lint/typecheck/
+Web production build/diff-check PASS. Production bundle excludes viewer code.
+Browser QA NOT RUN; no runtime/real provider/permit/database touched.
+
+## WEB-TRANSLATE-02 — read-only status foundation; Web dispatch still blocked
+
+The execution app now supports authenticated
+`GET /api/projects/6ad5c93a86cf95b7523704a5/translations/controlled-status`.
+Use only the dedicated execution origin (documented port 18083), never ordinary
+Backend fallback. Standard Bearer JWT/CUSTOMER/ownership and permit owner/project
+scope apply. See `docs/API.md` for the response. Do not print tokens/headers/HAR.
+
+Status is observational: READY / BLOCKED / REQUEST_CONSUMED, with
+`generationEnabled=false` in every response. It reads existing durable evidence,
+rechecks the pinned source in bounded admission, and never calls SDK or writes
+permit/DB state. READY does not attest account access/quota/cost or allow dispatch.
+LOCKED startup still exposes health only; unconfigured credentials must not be
+loaded just to test a browser. No runtime/secret/permit should be provisioned for
+this step. No controlled Web screen/flag/client is implemented yet; do not change
+the global Web API origin or enable ordinary GROUPS_V1 as a workaround.
+
+Mock-only validation (no Docker or DB/provider required):
+`cd backend; node --import tsx --test tests/controlled-status.test.ts`.
+13/13 status tests PASS; broader Windows mock regression has 63 PASS / 11
+Linux-only skips / 0 FAIL. No real execution commands are authorized by this section.
+
+## AI-TRANSLATE-05.8.1 — explicit MEDIUM (mock validation only)
+
+The 05.8 execution stopped before provider calls because DEFAULT was not an
+explicit MEDIUM permit/configuration. That code gap is now resolved:
+
+- Installed `@google/genai` 2.28.0 exports `ThinkingLevel.MEDIUM = "MEDIUM"`.
+  The [official model page](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash)
+  confirms gemini-3.8-flash supports low/medium/high (checked 2026-10-21 by public
+  documentation only, no authenticated metadata or generation request).
+- Permit enum now accepts DEFAULT / LOW / MEDIUM. MEDIUM is part of the same
+  immutable, fsynced grant fingerprint. Changing the thinking mode on the same
+  ID is rejected; never relabel/reset/rearm a consumed DEFAULT/LOW permit.
+- MEDIUM explicitly sends `thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM }`.
+  DEFAULT still omits thinkingConfig; LOW still requires lowExplicitlyApproved
+  and explicitly sends LOW. There is no silent substitution between these modes.
+- The SDK's serialized POST is checked before native fetch. Missing/different
+  thinking level or unexpected thinking settings reject with internal
+  CONTROLLED_THINKING_MISMATCH. A known approval/permit mismatch is rejected
+  before metadata; a serialization mismatch cannot dispatch generation and may
+  leave a stage spent (never refund/retry). Model/caps/timeout/retries unchanged.
+- Linux mock SDK/permit/readiness/HTTP checks **16/16 PASS**, no skips. Existing
+  focused unit/mock regression **107/107 PASS**; lint/typecheck/build/diff-check
+  PASS. MEDIUM named-volume restart and abrupt kill/start: boots 1 -> 3, mock
+  dispatch remains exactly 1 metadata +1 generation. Exact synthetic fixture
+  cleanup PASS; worker stopped; no real execution container or permit touched.
+- Gemini API calls=0, all DB writes=0, no real grant provisioned/consumed, no flags
+  enabled. Real source/ownership/key/quota preflight was NOT run again here.
+  Ready only for a later explicitly resumed controlled 05.8, not automatic execution.
+
+For the user's current 05.8 authorization, use **MEDIUM / false**, not DEFAULT
+or LOW. No real grant is created by this documentation or the invalid sample.
+
 ## Separation / limits
 
 | Runtime | Identity / port | Credentials / network / state |
@@ -122,8 +217,10 @@ and fresh source/identity/billing verification. Real-deployment startup is not
 claimed verified here; it will fail closed before accepting requests on mismatch.
 
 1. Accept at most **one metadata + one generation**, no retry, fixed model
-   gemini-3.8-flash and current output/truncation/cost risk. LOW requires separate
-   explicit approval; otherwise keep DEFAULT/false. No TTS/video is authorized.
+   gemini-3.8-flash and current output/truncation/cost risk. Thinking must match the
+   exact authorization: 05.8 approved MEDIUM/false. LOW requires separate explicit
+   approval; DEFAULT is omission, never an alias for explicit MEDIUM. No TTS/video
+   is authorized.
 2. Run the read-only binding command from backend (no Gemini calls):
 
    ```powershell
@@ -145,7 +242,8 @@ claimed verified here; it will fail closed before accepting requests on mismatch
      mongodb+srv; existing backend/.env is never changed or mounted.
    - `controlled-permit.json`: strict grant shown below, populated only after
      explicit approval with fresh binding values. <=1-hour validity, UUID ID.
-     DEFAULT/false is the default; LOW/true ONLY if explicitly approved. Review
+     For the current 05.8 authorization use MEDIUM/false; LOW/true ONLY if separately
+     approved. Existing DEFAULT behavior remains unchanged for other grants. Review
      current rates/account tier; $0.82 is the earlier conditional token envelope,
      not a provider-enforced invoice ceiling (see 05.5 documentation).
 
@@ -164,7 +262,7 @@ claimed verified here; it will fail closed before accepting requests on mismatch
      "inputDigest": "<fresh binding inputDigest>",
      "planDigest": "<fresh binding planDigest>",
      "deploymentId": "<fresh binding deploymentId>",
-     "thinking": "DEFAULT", "lowExplicitlyApproved": false,
+     "thinking": "MEDIUM", "lowExplicitlyApproved": false,
      "maxOutputTokens": 8192, "timeoutMs": 120000, "responseBytes": 131072,
      "metadataRequests": 1, "generationRequests": 1, "retries": 0,
      "tokenChargeEnvelopeUsd": 0.82, "pricingVerifiedOn": "<YYYY-MM-DD>",

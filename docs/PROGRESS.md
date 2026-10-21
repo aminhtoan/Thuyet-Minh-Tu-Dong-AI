@@ -1,5 +1,64 @@
 # Project Progress
 
+## AI-TRANSLATE-05.8.4I — New video preflight & source-limit UI (2026-10-22)
+
+- Development diagnostic generalized from pinned museum project to any CUSTOMER-
+  owned project using existing ID/ownership middleware. Production remains denied.
+  Old controlled execution/permit remains museum-pinned; no authorization or provider
+  changes. Global GROUPS_V1 flags and 98304-byte/10000-segment caps unchanged.
+- Below-cap source checks reuse loadSource/canonical digest/candidateGroups and
+  ordered coverage, allowing arbitrary valid revisions/counts. Over cap never plans
+  or materializes full source; safe actual bytes/count or lower bound returned.
+  English records/jobs and process-local RAM draft checks retained, global absence
+  UNKNOWN. Source readiness does not certify model access or authorize generation.
+- Added manual GET-only check in existing Translation workflow for each own project,
+  retry=false with timeout/abort, explicit Vietnamese oversize/status messages and
+  actual numeric limits. Development legacy/group generation and retry controls stay
+  disabled; production unchanged. Existing /projects/new link only navigates, no fake
+  data/new project/upload/AI executed; museum media/transcript untouched.
+- Backend focused diagnostic 9/9 and combined mock regression **48/48 PASS**. Web
+  focused tests **5/5 PASS**, including SSR Vietnamese message/limits and mutation
+  guard checks. Full Web suite **276/276 PASS**, no failures/skips. Backend/Web lint,
+  typecheck/build PASS; existing Vite chunk warning unchanged. Three old source-
+  structure assertions updated to reflect wrapper-key and stricter generation guard;
+  no Museum tests or application files touched. Browser/live diagnostic/upload NOT RUN.
+- Files in this step: backend route + read-only-diagnostic service/test; frontend
+  TranslationPage, GroupTranslationWorkspace, TranslationSourcePreflight component,
+  sourcePreflight helper/types, source-preflight tests and three related regression
+  assertions; docs/API/UI/PROGRESS. All earlier uncommitted work preserved.
+- Database writes **0**, Gemini calls **0**, permit claims **0**, runtime unlock **0**;
+  no session writes, global flags, dependencies, commit or push. Short video eligibility
+  depends on actual transcript bytes/count, not a promised duration threshold. Real
+  translation remains blocked pending separate execution authorization/integration.
+
+
+## AI-TRANSLATE-05.8.4G — Controlled read-only diagnostic (2026-10-22)
+
+- Minimal development-only ordinary Backend GET `/api/projects/:id/translations/read-only-diagnostic`; JWT/CUSTOMER/ownership plus exact museum project. Production/wrong scope 404. Source code only, runtime not restarted/unlocked and no user browser credentials accessed.
+- Bounded numeric source-size observation then existing loadSource/canonical digest/group coverage only below unchanged 98304-byte cap. Source above cap returns BLOCKED_SOURCE_CAP with measured actual bytes when available, no full source retained/planned and no CURRENT/group PASS claim. Metadata-only existence checks for persisted English records and active English jobs; local RAM draft count has PROCESS_LOCAL_ONLY/global UNKNOWN, never claims all processes inspected.
+- No provider, mutation, permit, controlled scope, hidden source-cap override, feature flag activation or authentication change. No login/refresh, TTS/FFmpeg or source/translation DB writes. Snapshot checks are observations, not concurrency locks. Existing uncommitted Museum/Admin/controlled work preserved.
+- Focused diagnostic tests **9/9 PASS**; combined diagnostic/GROUPS_V1/legacy/status regression **48/48 PASS**, no skips. Backend lint/typecheck/build and diff-check PASS. Includes exact 98304/98305 UTF-8 byte boundary. Live diagnostic NOT RUN (requires user-initiated authenticated GET with retry=false). Known historical snapshot 105958 >98304 means expected source-cap blocker, not a new measured live result. Gemini calls=0, DB writes=0, permit claims=0, commit/push NO.
+
+
+## WEB-TRANSLATE-03 — Customer Web controlled preview UI (2026-10-22)
+
+- **Controlled entry/status/draft viewer source + mock PASS; real runtime/browser NOT RUN.** Added DEV-only lazy authenticated route with inner opt-in/exact-project gate. Default flag OFF and explicit dedicated loopback origin required. No change to legacy guard, ordinary API origin, GROUPS_V1 global flags or real execution startup.
+- GET-only client consumes existing authenticated controlled-status/draft endpoints, never POST/refresh/retry/fallback. READY/BLOCKED/REQUEST_CONSUMED reflect validated response; transport/auth/unknown fail closed. generationEnabled=false is required, no generation/approve action added. No random permit ID, token in URL/logs, secret configuration or real permit consumption.
+- Read-only draft viewer accepts existing UUID, validates draft source/scope/format/expiry/group structure, shows Vietnamese snapshot and English text with timestamps. No draft yields honest unloaded/error state, not artificial content. Existing draft GET auth verified with real HTTP/JWT middleware and mocked persistence/service; no provider dispatch or DB connection used. Viewer does not certify CURRENT provenance after later edits.
+- Validation: **271/271 Web tests PASS** (17 new); **58/58 Backend focused mock tests PASS**, no skips. Web lint/typecheck/production build and backend lint PASS; diff-check PASS. Production controlled-page/status markers absent. Initial regression failures were VM test harness unable to parse new import.meta flag in router; moved opt-in into the isolated DEV page without modifying Museum tests/pages. A test regex accidentally matched LOCKED inside BLOCKED and was corrected. Build sandbox spawn EPERM resolved by approved local build execution. Existing projectRepository chunk warning unchanged.
+- Changed this step: frontend-web/.env.example; src/routes/AppRouter.tsx; src/features/translation/controlledPreviewClient.mjs and .d.mts; src/pages/ControlledTranslationPreviewPage.tsx; src/styles/controlled-translation-preview.css; tests/controlled-translation-preview.test.mjs; backend/tests/controlled-status.test.ts; docs/UI.md; docs/PROGRESS.md; infra/backend-controlled-execution/README.md. Earlier uncommitted Backend/permit work retained.
+- Manual instructions in controlled README. Do not arm real execution just to view this screen. Missing runtime/credentials/permit correctly remain blocked; no real English draft exists yet. Gemini calls **0**, development/production/all DB writes **0**; no real permit provisioned/consumed/reset, global flags enabled, AI/TTS/render, commit or push.
+
+
+## WEB-TRANSLATE-02 — Controlled translation Web integration (2026-10-21)
+
+- **Web integration BLOCKED; read-only status foundation source/mock PASS.** Following task item 10, stopped at the missing authenticated readiness contract instead of wiring a browser generation action. No Customer Web, MUSEUM, ADMIN07, provider dispatch, production limits or global flags changed.
+- Added dedicated execution status GET behind existing JWT/CUSTOMER/available-user/ownership and exact permit-owner/project checks. Read-only permit evidence checks do not create/open/rearm/consume grants; missing/corrupt state fails closed, any spent allowance returns REQUEST_CONSUMED. Bounded source verification checks the existing revision/digest/input/coverage binding and exact MEDIUM configuration. Response never includes secrets/text/raw errors and is no-store.
+- READY is local evidence only and still has generationEnabled=false; no provider readiness is inferred. LOCKED/missing-credential runtime does not expose authenticated status; DRAFT_READY/Web preview controls remain future integration work. Existing draft GET and one-use SDK dispatch are unchanged. No real permit provisioned/consumed, runtime activated, provider called or draft created.
+- New status tests **13/13 PASS**. Combined controlled status/execution/readiness/GROUPS_V1/Gemini/legacy mock suite: **74 discovered, 63 PASS, 0 FAIL, 11 Linux-only skips on Windows**. Includes source/permit mismatch, malformed/expired/missing claims, status concurrency, JWT/RBAC/deleted-user/ownership, GROUPS_V1 mock draft/approval and legacy fail-closed regressions. Linux durability was not rerun; no integration DB tests. Backend lint/typecheck/build PASS. Initial sandbox test launch hit spawn EPERM; same mock-only tests passed with approved execution permission. Browser NOT RUN.
+- Gemini requests **0**; development/production DB writes **0**, all DB writes **0**. Only disposable synthetic files/HTTP mocks used and cleaned. Prior uncommitted work preserved; no commit/push. Next: separately implement the gated dedicated-origin Web client/status UX and exact approved permit binding, then mock validate before considering any real execution.
+
+
 ## UI07.6.6.1 — Transcript Revision & Downstream Provenance Foundation (2026-10-19)
 
 - **COMPLETED — source/unit/mock validation; DB integration NOT RUN.** Đã thêm schema additive cho monotonic Transcript/Translation/Narration revision, source provenance trên Translation/Narration/Result và source snapshots trên ProcessingJob. Không có default giả: legacy thiếu field vẫn UNKNOWN.
@@ -1112,3 +1171,12 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - Execution composition listener/health verified LOCKED with placeholders, 512 MiB RAM+swap /1 CPU/Node old-space 256 MiB, OOM/restarts 0. Docker Desktop initially stopped; started normally; unrelated containers/volumes were not edited/deleted. An early worker check was interrupted during Docker startup, then repeated successfully. Crash harness adjusted for Linux PID-1 signal behavior; actual crash test uses external docker kill, not a guessed crash outcome. Task-created validation/execution containers stopped afterward.
 - Backend lint/typecheck/build, Compose configs and diff-check PASS. Exact secret schemas, future approval/preconditions, single preview/manual approval commands and files changed documented in `infra/backend-controlled-execution/README.md`. No outstanding known code blocker in tested scope; real deployment startup/key/quota remain unverified until separately approved execution, not claimed PASS.
 - Gemini calls **0**, real translation drafts **0**, development/production DB writes **0**. Only isolated synthetic fixture writes/cleanup. No real credentials provisioned or permit issued, real generation enabled, global flags, provider/model/dependency changes, Customer Web/MUSEUM/ADMIN07 changes, commit or push. Prior uncommitted work preserved.
+
+## AI-TRANSLATE-05.8.1 — Explicit MEDIUM thinking support
+
+- **PASS for implementation/mock gate; STOP before real execution.** Added MEDIUM to the strict one-use permit thinking enum, preserving DEFAULT/LOW semantics. The immutable persisted fingerprint binds MEDIUM exactly; same-ID changes to DEFAULT/LOW fail closed. No real permit provisioned, consumed, edited, reset or rearmed.
+- Controlled SDK adapter explicitly serializes ThinkingLevel.MEDIUM; DEFAULT still omits thinkingConfig and LOW retains its explicit-approval check. Added validation of the actual serialized SDK POST thinking settings before native fetch to reject configuration drift, missing mode or unexpected budget/settings. Model gemini-3.8-flash, v1beta, 8192 output tokens, 120-second timeout, response/draft caps and zero retries unchanged.
+- Installed SDK 2.28.0 enum verified locally; official public model documentation confirms medium support. No authenticated Gemini API verification. Linux network-disabled mock SDK/permit/readiness/HTTP checks **16/16 PASS**, including MEDIUM acceptance/serialization, persisted binding, rejection before dispatch on known mismatch, frozen permit, 16 concurrent attempts and duplicate/reopened fences. DEFAULT/LOW regressions PASS. Existing focused unit/mock suite **107/107 PASS**; backend lint/typecheck/build and diff-check PASS.
+- MEDIUM synthetic named-volume worker verified across restart and abrupt kill/start: boots 1->3, exact mock dispatch remains metadata=1 / generation=1. Exact synthetic fixture cleanup PASS; worker stopped; real execution/readiness containers and real permit volume not activated or modified. No MongoDB tests or writes required.
+- Exact files: backend/src/services/translation/one-use-permit.ts; backend/src/services/translation/controlled-gemini.provider.ts; backend/tests/controlled-execution.test.ts; backend/tests/controlled-execution/durability-worker.ts; infra/backend-controlled-execution/README.md; docs/PROGRESS.md. Current approved MEDIUM guidance/sample updated; no Customer Web/MUSEUM/ADMIN07 or dependency/global configuration changes, commit or push.
+- Gemini API calls **0**; development/production DB writes **0** (all DB writes **0**), real drafts/approval/TTS/video **0**. Real source/ownership/key/quota preflight not rerun; those gates remain mandatory when the user explicitly resumes controlled 05.8. No automatic real execution following this mock validation.

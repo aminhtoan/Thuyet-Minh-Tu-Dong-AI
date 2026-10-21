@@ -13,10 +13,12 @@ const directory = `${root}/synthetic-dispatch-fixture`;
 mkdirSync(directory, { recursive: true, mode: 0o700 });
 const recordPath = `${directory}/test-run.json`;
 const resumed = existsSync(recordPath);
-const record = resumed ? JSON.parse(readFileSync(recordPath, 'utf8')) : { permit: grant(), calls: 0, boots: 0 };
+const record = resumed ? JSON.parse(readFileSync(recordPath, 'utf8')) : { permit: { ...grant(), thinking: 'MEDIUM' }, calls: 0, boots: 0 };
+assert.equal(record.permit.thinking, 'MEDIUM'); // Never rewrite/rearm an existing binding.
 record.boots++;
 const fence = await OneUsePermitFence.open(directory, record.permit);
 const provider = new ControlledGeminiProvider(fence, 'synthetic-never-real-key', async () => {}, async (_url, init) => {
+  if (init?.method === 'POST') assert.equal(JSON.parse(String(init.body)).generationConfig.thinkingConfig.thinkingLevel, 'MEDIUM');
   record.calls++; writeFileSync(recordPath, JSON.stringify(record), { mode: 0o600 });
   return init?.method === 'POST' ? output() : metadata();
 });
@@ -27,6 +29,6 @@ if (!resumed) {
   await assert.rejects(fence.generation(record.permit.model, input, async () => {}, async () => { record.calls++; return {}; })); assert.equal(record.calls, 2);
 }
 writeFileSync(recordPath, JSON.stringify(record), { mode: 0o600 });
-writeFileSync('/tmp/durability-ready.json', JSON.stringify({ boots: record.boots, calls: record.calls, resumed }), { mode: 0o600 });
+writeFileSync('/tmp/durability-ready.json', JSON.stringify({ boots: record.boots, calls: record.calls, resumed, thinking: record.permit.thinking }), { mode: 0o600 });
 console.log(`DURABILITY_PASS boots=${record.boots} mockSdkFetches=${record.calls}; real provider calls=0`);
 setInterval(() => {}, 60000); // Operator restarts this exact test container; no background provider work.

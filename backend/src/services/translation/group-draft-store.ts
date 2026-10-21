@@ -51,6 +51,12 @@ export class GroupDraftStore {
     return structuredClone(await promise);
   }
   private expired() { return new AppError(410, 'TRANSLATION_DRAFT_EXPIRED', 'Bản nháp đã hết hạn hoặc máy chủ đã khởi động lại. Không tự động dịch lại.'); }
+  // Read-only observation: no prune, clone, TTL extension or cross-process claim.
+  inspectConflicts(projectId: string, targetLanguage: string) {
+    let count = 0;
+    for (const draft of this.drafts.values()) if (draft.projectId === projectId && draft.targetLanguage === targetLanguage && Date.parse(draft.expiresAt) > this.clock()) count++;
+    return { visibility: 'PROCESS_LOCAL_ONLY' as const, count, globalAbsence: 'UNKNOWN' as const };
+  }
   get(id: string, ownerId: string, projectId: string): GroupDraft {
     this.prune(); const draft = this.drafts.get(id);
     if (!draft || draft.ownerId !== ownerId || draft.projectId !== projectId) throw this.expired();

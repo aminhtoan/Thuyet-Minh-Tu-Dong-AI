@@ -80,7 +80,7 @@ test('invalid source timeline is not repaired; responsive UI retains language an
   assert.match(buildTranslationPresentation([{ ...sources[0], endTime: -1 }]).notice, /không hợp lệ/);
   const page = await readFile(new URL('../src/pages/TranslationPage.tsx', import.meta.url), 'utf8');
   const css = await readFile(new URL('../src/styles/translation.css', import.meta.url), 'utf8');
-  assert.match(page, /onClick=\{editor.translate\}/);
+  assert.match(page, /if \(!blockGeneration\) void editor.translate\(\)/);
   assert.match(page, /editor.changeTarget\(event.target.value\)/);
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/);
   assert.match(css, /@media \(max-width: 700px\)/);

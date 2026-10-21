@@ -1,5 +1,48 @@
 # UI Specification
 
+## AI-TRANSLATE-05.8.4I — New video source-limit feedback (2026-10-22)
+
+- Existing TranslationPage now hosts a development-only read-only source check,
+  keyed by actual project ID/target so results cannot leak across projects. User
+  presses “Kiểm tra nguồn”; existing API client sends only diagnostic GET with
+  retry=false, 15-second timeout + abort. No automatic login/refresh, upload, new
+  project, translation, permit or generation. Production workspace behavior stays
+  unchanged; development generation/retry actions fail closed in both legacy and
+  GROUPS_V1 workspaces, irrespective of successful diagnostic. Other workflow
+  guards, language selection and artifact viewing remain in place.
+- Oversize: “Dữ liệu lời thoại vượt giới hạn xử lý. Vui lòng sử dụng video ngắn hơn
+  hoặc giảm lượng lời thoại rồi thử lại.” Actual bytes/98304 and segments/10000 are
+  shown only when known; count overflow may show “Ít nhất 10.001”. Unknown sizes are
+  not invented. Link “Tạo dự án với video khác” navigates to existing /projects/new,
+  does not create a project or alter the museum project. Existing upload validation
+  and STT remain unchanged; this task did not run them or authorize AI calls.
+- Source not ready/revision missing, GROUPS_V1 disabled, controlled execution not
+  approved, auth/ownership and unexpected failures have separate allowlisted
+  Vietnamese messages, no raw API error text. Successful local source checks still
+  warn that RAM drafts in other processes are UNKNOWN and generation is not granted.
+- Shared Card/Button/typography kept. ui-ux-pro-max guided readable recovery text,
+  live status and a GET-only retry action without focus stealing. No redesign or
+  Museum/Admin/Mobile changes. Browser visual/real upload verification NOT RUN.
+
+
+## WEB-TRANSLATE-03 — Controlled read-only preview UI (2026-10-22)
+
+- Source/mock PASS: authenticated development route `/projects/6ad5c93a86cf95b7523704a5/translation/controlled-preview`. Lazy page is absent from production routes/bundle. Inside the page, DEV + `VITE_CONTROLLED_TRANSLATION_PREVIEW_ENABLED=true` + exact project are all required before requests. Default is OFF; disabled development page shows unavailable content without making requests. Existing TranslationPage/legacy/GROUPS_V1 mutation UI and workflow guards are unchanged.
+- Separate GET-only client accepts only explicitly configured `VITE_CONTROLLED_TRANSLATION_ORIGIN=http://127.0.0.1:18083`. No ordinary API fallback, refresh POST, retries, generation or approve methods. Uses existing session access token in Authorization header only, timeout 15 seconds combined with abort, redirects denied, cookies omitted, no-store. No keys/permit/credentials are configured in frontend. Expired JWT fails closed; sign in again outside this screen.
+- Displays server READY/BLOCKED/REQUEST_CONSUMED. Network/auth/unknown or mismatched response becomes local BLOCKED labeled not server-confirmed. Never invents LOCKED/DRAFT_READY, and generationEnabled=true is rejected. READY remains local readiness only; no generation or approve button exists.
+- Existing controlled draft GET verified behind JWT/CUSTOMER/owner/permit scope. User supplies an existing draft UUID, not a permit ID. Client validates pinned project/revision/digest/vi/en, draft format/expiry and group structure; shows Vietnamese snapshot and English draft side by side, stacked on narrow screens. REQUEST_CONSUMED may still read an existing draft. This is unapproved snapshot review, not proof current workflow remains CURRENT; expired/missing/restarted drafts are errors, never regenerated. No draft discovery or generation added.
+- Shared PageHeader/Card/Button, Navy/Purple/Be Vietnam Pro reused; CSS scoped to `.controlled-translation-preview`. Skill ui-ux-pro-max informed explicit read-only labeling, live status/error feedback, labeled input and shrinkable responsive columns. No Museum/Admin styling changed.
+- Web tests **271/271 PASS**, including **17 new mock client/safety tests**; Backend status/GROUPS_V1/Gemini/legacy mock regression **58/58 PASS**. Backend HTTP status test extended to verify existing draft GET authorization/read-only mock response. Web lint/typecheck/build, backend lint and diff-check PASS. Production bundle check finds no controlled page/status markers. Vite retains existing projectRepository chunk warning. Browser/manual responsive verification **NOT RUN**; no runtime started, no real draft/permit touched, Gemini calls/DB writes **0**.
+
+
+## WEB-TRANSLATE-02 — Controlled Web integration gate (2026-10-21)
+
+- **BLOCKED for Web generation integration; minimal read-only Backend status support implemented under task item 10.** The prior runtime exposed only public health, not authenticated readiness. Customer Web/TranslationPage/GroupTranslationWorkspace are deliberately unchanged; legacy alignment and workflow guards remain intact. No new frontend flag is enabled and there is no controlled Web entry point yet.
+- Authenticated dedicated-runtime `GET /api/projects/:id/translations/controlled-status` now checks permit evidence and the existing pinned CURRENT source verifier. Returns READY/BLOCKED/REQUEST_CONSUMED, always `generationEnabled=false`. READY is local readiness only, never provider-access/billing approval. See docs/API.md for the exact contract.
+- Future UI must represent LOCKED (health-only runtime), BLOCKED (unavailable status/auth/credentials/source), REQUEST_CONSUMED (no retry) and DRAFT_READY (validated authenticated draft), with no fallback to legacy/ordinary provider, no random permit ID and no approve action. Those Web states/actions are not claimed implemented in this foundation step.
+- No real runtime was started and no real permit/credentials accessed. Browser verification NOT RUN. Mock status tests 13/13 PASS; broader unit/mock regression 63 PASS, 0 FAIL, 11 Windows/Linux-only skips; lint/typecheck/build PASS. No Gemini or DB calls/writes.
+
+
 ## UI07.6.6.1 — Transcript revision foundation (2026-10-19)
 
 - Backend foundation đã có revision/provenance fail-closed nhưng Customer Web vẫn read-only; không thêm nút “Chỉnh sửa”, textarea hoặc PATCH call trong bước này.

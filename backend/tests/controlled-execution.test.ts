@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { OneUsePermitFence } from '../src/services/translation/one-use-permit.js';
-import { ControlledGeminiProvider } from '../src/services/translation/controlled-gemini.provider.js';
+import { ControlledGeminiProvider, assertControlledThinking } from '../src/services/translation/controlled-gemini.provider.js';
+import { ThinkingLevel } from '@google/genai';
+import { digest } from '../src/services/translation/group-plan.js';
 import { GeminiGroupTranslationProvider } from '../src/services/translation/gemini-group-translation.provider.js';
 import { controlledTarget, withPermittedSource } from '../src/services/translation/controlled-development.js';
 import { GroupDraftStore } from '../src/services/translation/group-draft-store.js';
@@ -15,6 +17,48 @@ async function fixture(work: (directory: string) => Promise<void>) {
   const directory = await mkdtemp(join(tmpdir(), 'controlled-sdk-'));
   try { await work(directory); } finally { await rm(directory, { recursive: true }); }
 }
+test('installed SDK exposes MEDIUM; serialized thinking must match the exact approved mode', () => {
+  assert.equal(ThinkingLevel.MEDIUM, 'MEDIUM');
+  const defaultBody = { generationConfig: { maxOutputTokens: 8192 } };
+  const medium = { generationConfig: { thinkingConfig: { thinkingLevel: 'MEDIUM' } } };
+  const low = { generationConfig: { thinkingConfig: { thinkingLevel: 'LOW' } } };
+  assert.doesNotThrow(() => assertControlledThinking('MEDIUM', medium));
+  assert.doesNotThrow(() => assertControlledThinking('LOW', low));
+  assert.doesNotThrow(() => assertControlledThinking('DEFAULT', defaultBody));
+  let dispatches = 0;
+  for (const body of [defaultBody, low, null, {}, { generationConfig: { thinkingConfig: null } }, { generationConfig: { thinkingConfig: { thinkingLevel: 'MEDIUM', thinkingBudget: 1 } } }]) {
+    assert.throws(() => { assertControlledThinking('MEDIUM', body); dispatches++; }, /CONTROLLED_THINKING_MISMATCH/);
+  }
+  assert.throws(() => assertControlledThinking('LOW', medium));
+  assert.throws(() => assertControlledThinking('DEFAULT', medium));
+  assert.equal(dispatches, 0);
+});
+test('MEDIUM permit binds persisted fingerprint, serializes explicitly and rejects concurrent/duplicate/rebound modes', linux, async () => fixture(async directory => {
+  const p = { ...grant(), thinking: 'MEDIUM' }, fence = await OneUsePermitFence.open(directory, p);
+  assert.equal(fence.permit.thinking, 'MEDIUM');
+  assert.equal(await readFile(join(directory, `${p.id}.binding`), 'utf8'), digest(p));
+  let gets = 0, posts = 0;
+  const fetcher: typeof fetch = async (_url, init) => {
+    if (init?.method !== 'POST') { gets++; return metadata(); }
+    posts++;
+    const body = JSON.parse(String(init.body));
+    assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, 'MEDIUM');
+    assert.equal(body.generationConfig.maxOutputTokens, 8192);
+    return output();
+  };
+  for (const thinking of ['DEFAULT', 'LOW']) {
+    await assert.rejects(OneUsePermitFence.open(directory, { ...p, thinking, lowExplicitlyApproved: thinking === 'LOW' }), /PROVIDER_PERMIT_BINDING_MISMATCH/);
+  }
+  assert.equal(gets + posts, 0, 'known approval/permit mismatch dispatches nothing');
+  assert.throws(() => { (fence.permit as any).thinking = 'LOW'; }, TypeError);
+  const provider = new ControlledGeminiProvider(fence, 'mock-only', async () => {}, fetcher);
+  const results = await Promise.allSettled(Array.from({ length: 16 }, () => withPermittedSource(fence, owner, () => provider.translate(input))));
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal(gets, 1); assert.equal(posts, 1);
+  const reopened = await OneUsePermitFence.open(directory, p);
+  await assert.rejects(withPermittedSource(reopened, owner, () => new ControlledGeminiProvider(reopened, 'mock-only', async () => {}, fetcher).translate(input)));
+  assert.equal(gets + posts, 2);
+}));
 test('actual installed SDK: 16 concurrent attempts dispatch at most 1 metadata + 1 generation; duplicate/reopened fence stays spent', linux, async () => fixture(async directory => {
   const p = grant(), fence = await OneUsePermitFence.open(directory, p);
   let gets = 0, posts = 0, checks = 0; let usage: unknown;

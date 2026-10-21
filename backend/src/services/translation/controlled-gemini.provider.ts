@@ -4,7 +4,21 @@ import { type GroupProvider, type GroupProviderInput, mapGroupResponse, response
 import { GeminiTranslationError, mapGeminiTranslationError } from './gemini-translation.provider.js';
 import { boundedTranslationFetch } from './bounded-fetch.js';
 import { assertDispatchScope } from './controlled-development.js';
-import type { OneUsePermitFence } from './one-use-permit.js';
+import type { OneUsePermit, OneUsePermitFence } from './one-use-permit.js';
+
+// Validate the SDK's serialized request as well as constructing it from the
+// immutable permit. DEFAULT intentionally remains an omitted thinkingConfig.
+export function assertControlledThinking(thinking: OneUsePermit['thinking'], body: unknown) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('CONTROLLED_THINKING_MISMATCH');
+  const config = (body as { generationConfig?: { thinkingConfig?: unknown } }).generationConfig?.thinkingConfig;
+  if (thinking === 'DEFAULT') {
+    if (config !== undefined) throw new Error('CONTROLLED_THINKING_MISMATCH');
+  } else if (!config || typeof config !== 'object' || Array.isArray(config) ||
+    (config as { thinkingLevel?: unknown }).thinkingLevel !== thinking ||
+    Object.keys(config).some(key => key !== 'thinkingLevel')) {
+    throw new Error('CONTROLLED_THINKING_MISMATCH');
+  }
+}
 
 // The SDK owns request serialization; the local fetch is the ONLY network path.
 // Global fetch is denied by execution startup. No keys are placed in process.env.
@@ -27,6 +41,10 @@ export class ControlledGeminiProvider implements GroupProvider {
       const method = (init?.method ?? (request instanceof Request ? request.method : 'GET')).toUpperCase();
       const suffix = phase === 'generation' ? ':generateContent' : '';
       if (url.origin !== 'https://generativelanguage.googleapis.com' || url.pathname !== `/v1beta/models/${p.model}${suffix}` || url.search || method !== (phase === 'metadata' ? 'GET' : 'POST') || dispatched[phase]) throw new Error('CONTROLLED_SDK_DISPATCH_DENIED');
+      if (phase === 'generation') {
+        if (typeof init?.body !== 'string') throw new Error('CONTROLLED_THINKING_MISMATCH');
+        assertControlledThinking(p.thinking, JSON.parse(init.body));
+      }
       dispatched[phase] = true; // Prevent even an unexpected SDK retry inside a claim.
       return bounded(request, { ...init, redirect: 'error', signal });
     };
@@ -43,7 +61,7 @@ export class ControlledGeminiProvider implements GroupProvider {
         const result = await ai.models.generateContent({ model: p.model, contents: JSON.stringify(input), config: {
           systemInstruction: groupTranslationInstructions, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(responseSchema),
           candidateCount: 1, maxOutputTokens: p.maxOutputTokens, abortSignal: signal,
-          ...(p.thinking === 'LOW' ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {}),
+          ...(p.thinking === 'DEFAULT' ? {} : { thinkingConfig: { thinkingLevel: p.thinking === 'MEDIUM' ? ThinkingLevel.MEDIUM : ThinkingLevel.LOW } }),
         } });
         const counts: Record<string, number> = {};
         for (const key of ['promptTokenCount', 'candidatesTokenCount', 'thoughtsTokenCount', 'totalTokenCount'] as const) {

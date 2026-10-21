@@ -12,6 +12,8 @@ import type { GroupAdmission } from '../services/translation/group-admission.js'
 import type { OneUsePermitFence } from '../services/translation/one-use-permit.js';
 import { withPermittedSource, assertControlledRequest } from '../services/translation/controlled-development.js';
 import { AppError } from '../utils/app-error.js';
+import { readExecutionStatus } from './execution-status.js';
+import { groupResponseHandler } from '../services/translation/group-response.js';
 
 export function executionApp(fence: OneUsePermitFence, service: GroupTranslationService, admission: GroupAdmission, origins: string[]) {
   const app = express(); app.disable('x-powered-by'); app.use(helmet());
@@ -31,6 +33,10 @@ export function executionApp(fence: OneUsePermitFence, service: GroupTranslation
     } catch (error) { next(error); }
   };
   const base = '/api/projects/:id/translations';
+  app.get(`${base}/controlled-status`, (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, requireProjectOwner, groupResponseHandler(admission, async req => {
+    if (req.user!.id !== fence.permit.ownerId || String(req.params.id) !== fence.permit.projectId) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
+    return { success: true, data: await readExecutionStatus(fence, admission) };
+  }));
   app.get(`${base}/plan/:targetLanguage`, validate(targetTranslationSchema), requireProjectOwner, scoped(controllers.plan));
   app.post(`${base}/preview`, validate(previewTranslationSchema), requireProjectOwner, scoped(controllers.preview));
   app.get(`${base}/drafts/:draftId`, validate(draftTranslationSchema), requireProjectOwner, scoped(controllers.draft));

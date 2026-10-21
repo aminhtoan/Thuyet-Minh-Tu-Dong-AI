@@ -20,6 +20,7 @@ import { translationLanguageLabel } from '../features/translation/translationLan
 import { translationStatusLabels } from '../localization/statusLabels.mjs';
 import '../styles/translation.css';
 import { GroupTranslationWorkspace } from '../features/translation/GroupTranslationWorkspace';
+import { TranslationSourcePreflight } from '../features/translation/TranslationSourcePreflight';
 
 export function TranslationPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -37,11 +38,14 @@ export function TranslationPage() {
   const access = resolveWorkflowRouteAccess(project.workflow, 'TRANSLATION', language);
   if (!access.allowed) return <><PageHeader title="Bản dịch" /><WorkflowRouteRecovery projectId={project.id} access={access} /></>;
   const preferredTarget = language?.trim().toLowerCase() || access.targetLanguage || '';
-  if (import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true') return <GroupTranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} />;
-  return <TranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} />;
+  return <TranslationSourcePreflight key={project.id + preferredTarget} projectId={project.id}>{blockGeneration =>
+    import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true'
+      ? <GroupTranslationWorkspace project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} blockGeneration={blockGeneration} />
+      : <TranslationWorkspace project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} blockGeneration={blockGeneration} />
+  }</TranslationSourcePreflight>;
 }
 
-function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: { project: Project; preferredTarget: LanguageCode; canMutate: boolean; notice: string | null }) {
+function TranslationWorkspace({ project, preferredTarget, canMutate, notice, blockGeneration }: { project: Project; preferredTarget: LanguageCode; canMutate: boolean; notice: string | null; blockGeneration: boolean }) {
   const editor = useTranslationEditor(project.id, preferredTarget);
   const navigate = useNavigate();
   function backToTranscript() {
@@ -73,7 +77,7 @@ function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: {
     {editor.status === 'LOADING' && <Card className="translation-loading"><Spinner label="Đang tải bản dịch" /><p role="status">Đang tải bản ghi và bản dịch...</p></Card>}
     {editor.status === 'FAILED' && <Card><ErrorState
       title={editor.failedAction === 'save' ? 'Không thể lưu bản dịch' : editor.failedAction === 'load' ? 'Không thể tải bản dịch' : 'Không thể dịch bản ghi'}
-      description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.failedAction === 'load' || canMutate ? editor.retry : undefined} /></Card>}
+      description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.failedAction === 'load' || (canMutate && !blockGeneration) ? editor.retry : undefined} /></Card>}
     {!editor.transcript && editor.status === 'NOT_STARTED' && <Card><EmptyState title="Cần có bản ghi trước khi dịch"
       description="Hãy tạo, kiểm tra và lưu bản ghi trước."
       action={<Button onClick={backToTranscript}>Quay lại bản ghi</Button>} /></Card>}
@@ -91,7 +95,7 @@ function TranslationWorkspace({ project, preferredTarget, canMutate, notice }: {
             </option>)}
           </select>
         </div>
-        {!editor.draft && <Button onClick={editor.translate} loading={editor.status === 'TRANSLATING'} disabled={!canMutate || !editor.targetLanguage || editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
+        {!editor.draft && <Button onClick={() => { if (!blockGeneration) void editor.translate(); }} loading={editor.status === 'TRANSLATING'} disabled={blockGeneration || !canMutate || !editor.targetLanguage || editor.busy || editor.status === 'FAILED'}>Dịch</Button>}
         {languageStatusMessage && <p id="translation-language-status" className="translation-note" role="status">{languageStatusMessage}</p>}
       </Card>
       {editor.status === 'TRANSLATING' && <Card className="translation-loading"><Spinner label="Đang dịch bằng AI" /><p role="status">Đang dịch bằng AI...</p></Card>}

@@ -16,10 +16,20 @@ import { startTranslationSchema, targetTranslationSchema, previewTranslationSche
 import { narrationIdSchema, startNarrationSchema } from '../validators/narration.validator.js';
 import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
 import { updateTranscriptSegmentSchema } from '../validators/transcription.validator.js';
+import { readOnlyTranslationDiagnostic } from '../services/translation/read-only-diagnostic.js';
+import { AppError } from '../utils/app-error.js';
+import { successResponse } from '../utils/api-response.js';
 
 export function createProjectRouter(groups: Pick<typeof translationController, 'plan' | 'preview' | 'draft' | 'approve' | 'get'> = translationController) {
 const projectRouter = Router();
 projectRouter.use(authenticate, authorize('CUSTOMER'));
+projectRouter.get('/:id/translations/read-only-diagnostic', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  if (process.env.NODE_ENV !== 'development') return next(new AppError(404, 'DIAGNOSTIC_NOT_AVAILABLE', 'Không tìm thấy chẩn đoán.'));
+  next();
+}, requireProjectOwner, async (req, res) => {
+  res.json(successResponse(await readOnlyTranslationDiagnostic(req.ownedProjectId!)));
+});
 projectRouter.post('/', validate(createProjectSchema), projectController.create);
 projectRouter.get('/', validate(listProjectsSchema), projectController.list);
 projectRouter.get('/:id', validate(projectIdSchema), projectController.get);

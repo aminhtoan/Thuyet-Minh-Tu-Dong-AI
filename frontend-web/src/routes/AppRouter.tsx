@@ -28,6 +28,10 @@ const VoiceDesignPreviewPage = import.meta.env.DEV
   : null
 const voiceDesignPreviewEnabled = import.meta.env.DEV
   && import.meta.env.VITE_VOICE_DESIGN_PREVIEW_ENABLED === 'true'
+const ControlledTranslationPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('../pages/ControlledTranslationPreviewPage').then(module => ({ default: module.ControlledTranslationPreviewPage })))
+  : null
+const controlledTranslationPreviewEnabled = import.meta.env.DEV
 
 export function AppRouter() {
   return <BrowserRouter><Routes>
@@ -42,5 +46,6 @@ export function AppRouter() {
     </Route>
     <Route path="/login" element={<LoginPlaceholder />} /><Route path="/register" element={<RegisterPlaceholder />} />
     <Route element={<RequireAuth />}><Route element={<AppShell />}><Route path="/dashboard" element={<DashboardPlaceholder />} /><Route path="/projects" element={<ProjectsPlaceholder />} /><Route path="/projects/new" element={<NewProjectPlaceholder />} /><Route path="/projects/:projectId" element={<ProjectDetailPage />} /><Route path="/projects/:projectId/transcript" element={<TranscriptPage />} /><Route path="/projects/:projectId/translation" element={<TranslationPage />} /><Route path="/projects/:projectId/voice" element={<VoicePage />} /><Route path="/projects/:projectId/generate" element={<GeneratePage />} /><Route path="/projects/:projectId/result" element={<ResultPage />} /><Route path="/history" element={<HistoryPlaceholder />} /><Route path="/settings" element={<SettingsPlaceholder />} />{voiceDesignPreviewEnabled && VoiceDesignPreviewPage && <Route path="/design-preview/voice" element={<VoiceDesignPreviewPage />} />}</Route></Route>
+    {controlledTranslationPreviewEnabled && ControlledTranslationPreviewPage && <Route element={<RequireAuth />}><Route element={<AppShell />}><Route path="/projects/:projectId/translation/controlled-preview" element={<ControlledTranslationPreviewPage />} /></Route></Route>}
   </Routes></BrowserRouter>
 }

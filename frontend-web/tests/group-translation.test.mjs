@@ -118,6 +118,6 @@ test('feature flag remains explicit OFF, legacy branch intact and TTS consumes g
   const page = await readFile(new URL('../src/pages/TranslationPage.tsx', import.meta.url), 'utf8');
   const example = await readFile(new URL('../.env.example', import.meta.url), 'utf8');
   assert.match(page, /VITE_GROUP_TRANSLATION_ENABLED === 'true'/); assert.match(example, /VITE_GROUP_TRANSLATION_ENABLED=false/);
-  assert.match(page, /TranslationWorkspace key=/); assert.match(source, /sourceSegmentIds/); assert.match(source, /formatPreciseTimestamp\(g.startTime\)/);
+  assert.match(page, /TranslationSourcePreflight key=\{project.id \+ preferredTarget\}/); assert.match(page, /<TranslationWorkspace project=\{project\}/); assert.match(source, /sourceSegmentIds/); assert.match(source, /formatPreciseTimestamp\(g.startTime\)/);
   const voice = await readFile(new URL('../src/features/voice/voiceUtils.ts', import.meta.url), 'utf8'); assert.match(voice, /'groups' in translation \? translation.groups : translation.segments/);
 });

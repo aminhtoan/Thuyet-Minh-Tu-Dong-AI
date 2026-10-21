@@ -20,7 +20,7 @@ import type { GroupDraft, GroupPlan, GroupTranslation, TranslationGroup } from '
 
 type Language = { code: string; name: string; nativeName: string };
 const message = (error: unknown) => error instanceof Error ? error.message : 'Không thể tải bản dịch. Vui lòng thử lại.';
-export function GroupTranslationWorkspace({ project, preferredTarget, canMutate, notice }: { project: Project; preferredTarget: string; canMutate: boolean; notice: string | null }) {
+export function GroupTranslationWorkspace({ project, preferredTarget, canMutate, notice, blockGeneration = false }: { project: Project; preferredTarget: string; canMutate: boolean; notice: string | null; blockGeneration?: boolean }) {
   const [params, setParams] = useSearchParams();
   const draftId = params.get('draft');
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -76,7 +76,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
     setPlanReviewed(false); requestKey.current = null;
   }
   async function preview() {
-    if (!canMutate || !plan || !planReviewed || lock.current || busy || draft || saved) return;
+    if (blockGeneration || !canMutate || !plan || !planReviewed || lock.current || busy || draft || saved) return;
     if (!window.confirm('Tạo bản dịch nháp bằng AI cho các cụm đã kiểm tra? Thao tác có thể phát sinh chi phí. Bản dịch chỉ được lưu sau khi bạn duyệt.')) return;
     lock.current = true; setBusy('preview'); setError(null);
     requestKey.current ??= crypto.randomUUID();
@@ -129,7 +129,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
       </Card>)}
       {legacy && <><p>Bản dịch đã lưu theo định dạng phân đoạn cũ, giữ nguyên dữ liệu.</p>{legacy.rows.map(row => <Card key={row.source.id}><div className="group-translation-columns"><section><h3>Bản gốc</h3><p>{row.source.text}</p></section><section><h3>Bản dịch</h3><p>{row.translation?.translatedText ?? 'Chưa có bản dịch khớp nguồn.'}</p></section></div></Card>)}</>}
       {plan && !draft && !saved && <Card className="group-translation-review"><label><input type="checkbox" checked={planReviewed} disabled={!canMutate || Boolean(busy)} onChange={e => setPlanReviewed(e.target.checked)} /> Tôi đã kiểm tra và chấp nhận ranh giới các cụm nguồn.</label>
-        <Button disabled={!canMutate || !planReviewed || Boolean(busy)} loading={busy === 'preview'} onClick={preview}>Xem trước bản dịch</Button>
+        <Button disabled={blockGeneration || !canMutate || !planReviewed || Boolean(busy)} loading={busy === 'preview'} onClick={preview}>Xem trước bản dịch</Button>
       </Card>}
       {draft && <Card className="group-translation-review"><h2>Duyệt bản dịch nháp</h2><p>Hết hạn: {new Date(draft.expiresAt).toLocaleString('vi-VN')}. Nháp chỉ nằm trong bộ nhớ máy chủ; khởi động lại sẽ làm mất nháp. Không tự động dịch lại.</p>
         <p>So sánh ý nghĩa từng cụm và toàn câu, tên riêng, số và địa chỉ. Kiểm tra nội dung bị thêm/bỏ và cách diễn đạt tiếng Anh. Kiểm tra cấu trúc không chứng minh bản dịch đúng tuyệt đối.</p>
