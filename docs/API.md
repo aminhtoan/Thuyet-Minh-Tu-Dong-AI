@@ -1,5 +1,49 @@
 # API Status and Conventions
 
+## AI-TRANSLATE-05.8.4L — Dynamic controlled project binding (2026-10-22)
+
+Controlled execution no longer pins an application project ID or source digest.
+Policy remains Vietnamese -> English, gemini-3.8-flash, existing thinking approval
+semantics, 8192 output tokens, 120 seconds, 1 metadata +1 generation, zero retries,
+128 KiB provider response/draft caps. Source cap is **98304 bytes /10000 segments**
+in both controlled readiness/execution; historical 128 KiB source overrides are
+superseded. Ordinary/global GROUPS_V1 flags remain OFF and no runtime was started.
+
+- `prepareExecutionBinding(projectId, authenticatedOwnerId, attestedDeploymentId)`
+  is an internal read-only helper, not a public issuance endpoint. It verifies
+  available CUSTOMER, project ownership/status/vi, en catalog availability, no
+  active project jobs, no existing English record or process-local draft; loads
+  bounded READY/SAVED source, validates order/timestamps/coverage and derives
+  canonical source/input/ordered-plan hashes. Rechecks revision before returning.
+  It returns binding metadata only, never provider text or a usable permit.
+- Deployment identity must come from server config + hello attestation (exact
+  SRV host, database and replica set); fixed controlled container hostname remains
+  enforced. A browser body/URL cannot select owner, source hashes or deployment.
+- `assertPreparedPermit` validates a separately approved expiring grant against
+  all server-derived binding fields before opening a durable fence. Startup now
+  verifies actual deployment/source first, then opens the existing fence. No
+  issuer, rearm/reset, metadata or generation action is added. Operator approval
+  remains a trusted local boundary, not a cryptographic permission service.
+- Request JWT/CUSTOMER/ownership must match permit owner and exact permit project.
+  Async scope derives project/revision/digest from that immutable permit, not a
+  global target. Before EACH SDK stage the complete binding is rebuilt and compared.
+  Preview still compares client revision/idempotencyKey to approved permit; client
+  digests are claims only, never authoritative. Existing transaction approval and
+  provenance behavior unchanged; neither preflight nor status authorizes execution.
+- Permit schema allows validated project IDs, positive revisions and SHA-256 hashes;
+  immutable fingerprint and exclusive fsynced claims are unchanged. Changing old
+  permit ID's project/owner/hash cannot rebind its durable fingerprint. Existing
+  museum permit/files/data are untouched; over-cap museum source remains blocked.
+- Controlled status and read-only Web viewer support dynamic project IDs. Consumed
+  status now additively includes non-secret scope so an existing draft can be checked
+  against the same server binding. generationEnabled stays false. Web rejects a
+  project-A status/draft on project B and does not fabricate/default a digest. It
+  still has no generation/approve methods, no fallback and no permit provisioning.
+- RAM checks are PROCESS_LOCAL_ONLY, not proof all processes are free of drafts.
+  Source/conflict checks are observations, not a database lock during external AI.
+  Late source changes must still fail final preview/approval; no partial READY data.
+
+
 ## AI-TRANSLATE-05.8.4I — Any-owned-project development source preflight (2026-10-22)
 
 Supersedes the museum-only diagnostic scope in 05.8.4G, NOT the pinned real

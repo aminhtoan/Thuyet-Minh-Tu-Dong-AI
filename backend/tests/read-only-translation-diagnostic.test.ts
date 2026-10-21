@@ -10,7 +10,7 @@ process.env.JWT_REFRESH_SECRET = randomBytes(48).toString('hex');
 process.env.JWT_ACCESS_EXPIRES_IN = '15m'; process.env.JWT_REFRESH_EXPIRES_IN = '1d';
 process.env.GROUP_TRANSLATION_ENABLED = 'false';
 const { readOnlyTranslationDiagnostic, measureDiagnosticSource } = await import('../src/services/translation/read-only-diagnostic.js');
-const { controlledTarget: target } = await import('../src/services/translation/controlled-target.js');
+const { controlledTarget: target } = await import('./controlled-execution/fixtures.js');
 const { groupDraftStore } = await import('../src/services/translation/group-draft-store.js');
 const { Transcript } = await import('../src/models/Transcript.js');
 const { TranscriptSegment } = await import('../src/models/TranscriptSegment.js');

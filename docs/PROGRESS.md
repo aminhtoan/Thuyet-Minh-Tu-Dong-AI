@@ -1,5 +1,55 @@
 # Project Progress
 
+## AI-TRANSLATE-05.8.4L — Dynamic controlled project binding (2026-10-22)
+
+- **Implementation/mock PASS; real execution not authorized/activated.** Runtime
+  policy no longer hardcodes museum project/revision/digest. Strict permit schema
+  accepts valid project ID/positive revision/SHA-256 bindings with unchanged model,
+  thinking approval, expiry/request/token/transport caps. Immutable fingerprint and
+  exclusive fsynced marker logic unchanged, no reset/refund or old permit reused.
+- Added internal read-only execution-binding helper and pure pre-issuance grant
+  comparison. Verifies available CUSTOMER/owner, vi/en support, project status,
+  jobs/English records/local drafts, bounded source and final revision, computes
+  canonical source/input/ordered-plan hashes server-side. No public issuer or
+  client-authoritative digest. Deployment remains attested config/hello + hostname.
+  Startup revalidates source before durable fence open; each SDK stage revalidates
+  again. Existing JWT/RBAC/ownership and exact-permit project scope preserved.
+- Controlled source cap now **98304 bytes /10000 segments**, no 128 KiB override;
+  execution/readiness/admission/collector guards consistent. Production defaults
+  unchanged. Oversize fails before provider/claim. Existing museum data/permits and
+  unrelated changes untouched. Historical museum read-only script now owns its
+  historical constants instead of treating them as runtime authorization.
+- Web GET-only viewer takes dynamic route project and validates server status scope
+  before draft parsing. Consumed status includes safe scope metadata. Source errors,
+  approval labels and generationEnabled=false retained; no legacy fallback or
+  generation/approve action. Production viewer absent; visual QA NOT RUN.
+- New pure/mock binding tests cover independent A/B sources, owner/customer/role,
+  language/job/artifact/draft conflicts, source/cap/revision/order, input/plan/source/
+  deployment mismatch, expiry and absent execution scope. Real localhost HTTP/JWT
+  tests verify A/B own scopes and cross-owner/project rejection, no provider methods.
+  Existing consumed-marker/status tests PASS; **11 Linux-only durable/SDK tests skip
+  on Windows**, not counted as replay/restart PASS for this revision. Combined
+  Backend regression: **71 discovered, 60 PASS, 0 FAIL, 11 SKIPPED**; new dynamic
+  binding tests **7/7 PASS**. Full Web **277/277 PASS**. Backend/Web lint, typecheck
+  and production builds PASS; git diff --check PASS. Existing Vite chunk warning
+  unchanged. Browser/live source verification NOT RUN. No isolated DB or Docker
+  tests run; Linux durability revalidation remains a separate execution gate.
+- Files this step: backend src controlled-development/{execution-binding.ts (new),
+  execution-server.ts, execution-source.ts, execution-status.ts, server.ts}; services/
+  translation/{controlled-target.ts, controlled-development.ts, one-use-permit.ts,
+  bounded-source.ts, group-admission.ts}; tests/{dynamic-execution-binding.test.ts
+  (new), controlled-development.test.ts, controlled-execution.test.ts,
+  controlled-execution/fixtures.ts, controlled-execution/http.test.ts,
+  controlled-status.test.ts, read-only-museum-source.preflight.ts,
+  read-only-translation-diagnostic.test.ts}; frontend controlledPreviewClient.mjs/
+  .d.mts, ControlledTranslationPreviewPage.tsx, controlled-translation-preview tests;
+  docs/API.md, docs/UI.md, docs/PROGRESS.md, controlled execution README.
+- Database writes **0**, Gemini calls **0**, real permit issuance/claims **0**;
+  no runtime start, credential/session changes, global flags, museum data changes,
+  volume access/reset, dependencies, commit or push. New tests use in-memory
+  synthetic approved-shaped objects only, never open durable permit storage.
+
+
 ## AI-TRANSLATE-05.8.4I — New video preflight & source-limit UI (2026-10-22)
 
 - Development diagnostic generalized from pinned museum project to any CUSTOMER-

@@ -8,7 +8,8 @@ import { ControlledGeminiProvider, assertControlledThinking } from '../src/servi
 import { ThinkingLevel } from '@google/genai';
 import { digest } from '../src/services/translation/group-plan.js';
 import { GeminiGroupTranslationProvider } from '../src/services/translation/gemini-group-translation.provider.js';
-import { controlledTarget, withPermittedSource } from '../src/services/translation/controlled-development.js';
+import { withPermittedSource } from '../src/services/translation/controlled-development.js';
+import { controlledTarget } from './controlled-execution/fixtures.js';
 import { GroupDraftStore } from '../src/services/translation/group-draft-store.js';
 import { grant, owner, input, metadata, output, sdkJson } from './controlled-execution/fixtures.js';
 const linux = { skip: process.platform !== 'linux' ? 'Run durable actual-SDK tests in Linux Docker.' : false };

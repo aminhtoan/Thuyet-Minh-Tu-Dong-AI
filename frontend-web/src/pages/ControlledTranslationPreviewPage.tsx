@@ -5,14 +5,14 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { session } from '../lib/api';
-import { createControlledPreviewClient, controlledPreviewTarget } from '../features/translation/controlledPreviewClient.mjs';
+import { createControlledPreviewClient } from '../features/translation/controlledPreviewClient.mjs';
 import type { ControlledPreviewDraft, ControlledPreviewStatus } from '../features/translation/controlledPreviewClient.mjs';
 import { formatPreciseTimestamp } from '../features/transcript/transcriptPresentation.mjs';
 import '../styles/controlled-translation-preview.css';
 
 export function ControlledTranslationPreviewPage() {
   const { projectId = '' } = useParams();
-  const enabled = import.meta.env.DEV && import.meta.env.VITE_CONTROLLED_TRANSLATION_PREVIEW_ENABLED === 'true' && projectId === controlledPreviewTarget.projectId;
+  const enabled = import.meta.env.DEV && import.meta.env.VITE_CONTROLLED_TRANSLATION_PREVIEW_ENABLED === 'true' && /^[a-f\d]{24}$/i.test(projectId);
   const client = useMemo(() => createControlledPreviewClient({ enabled, projectId, origin: import.meta.env.VITE_CONTROLLED_TRANSLATION_ORIGIN, getToken: () => session.get()?.accessToken }), [enabled, projectId]);
   const [status, setStatus] = useState<ControlledPreviewStatus | null>(null);
   const [draft, setDraft] = useState<ControlledPreviewDraft | null>(null);

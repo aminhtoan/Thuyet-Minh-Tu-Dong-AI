@@ -1,6 +1,4 @@
 export const controlledPreviewTarget = Object.freeze({
-  projectId: '6ad5c93a86cf95b7523704a5', revision: 1,
-  digest: '81638f2cb62e5f5f010853b047855cb72ace5ddbb2ca083890b51cdd2fe44906',
   model: 'gemini-3.8-flash', thinking: 'MEDIUM',
 });
 const uuid = /^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i;
@@ -10,18 +8,19 @@ const blocked = (message) => ({ state: 'BLOCKED', generationEnabled: false, serv
 const unavailable = 'Không thể xác minh controlled runtime. Kiểm tra cấu hình hoặc đăng nhập lại; không thực hiện dịch.';
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
 
-export function parseControlledStatus(value) {
+export function parseControlledStatus(value, projectId) {
   if (!record(value) || !['READY', 'BLOCKED', 'REQUEST_CONSUMED'].includes(value.state) || value.generationEnabled !== false) return blocked('Phản hồi trạng thái không được hỗ trợ.');
-  if (value.state === 'READY') {
+  if (value.state === 'READY' || value.state === 'REQUEST_CONSUMED') {
     const s = value.scope, source = value.source, t = controlledPreviewTarget;
-    if (!record(s) || s.projectId !== t.projectId || s.transcriptRevision !== t.revision || s.sourceDigest !== t.digest || s.sourceLanguage !== 'vi' || s.targetLanguage !== 'en' || s.model !== t.model || s.thinking !== t.thinking || !record(source) || !Number.isSafeInteger(source.segmentCount) || source.segmentCount <= 0 || source.segmentCount > 10000 || source.coverage !== source.segmentCount || !Number.isSafeInteger(source.groupCount) || source.groupCount < 1 || source.groupCount > 1000) return blocked('Thông tin nguồn hoặc cấu hình không khớp phạm vi được duyệt.');
+    if (!objectId.test(projectId) || !record(s) || s.projectId !== projectId || !Number.isSafeInteger(s.transcriptRevision) || s.transcriptRevision < 1 || !hash.test(s.sourceDigest) || s.sourceLanguage !== 'vi' || s.targetLanguage !== 'en' || s.model !== t.model || s.thinking !== t.thinking) return blocked('Thông tin nguồn hoặc cấu hình không khớp phạm vi được duyệt.');
+    if (value.state === 'READY' && (!record(source) || !Number.isSafeInteger(source.segmentCount) || source.segmentCount <= 0 || source.segmentCount > 10000 || source.coverage !== source.segmentCount || !Number.isSafeInteger(source.groupCount) || source.groupCount < 1 || source.groupCount > 1000)) return blocked('Coverage không hợp lệ.');
   }
-  return { state: value.state, generationEnabled: false, serverReported: true,
+  return { state: value.state, generationEnabled: false, serverReported: true, scope: value.state === 'BLOCKED' ? undefined : { projectId: value.scope.projectId, revision: value.scope.transcriptRevision, digest: value.scope.sourceDigest },
     message: value.state === 'READY' ? 'Kiểm tra cục bộ đã đạt. Generation vẫn bị khóa; chưa xác nhận Gemini access/quota.' : value.state === 'REQUEST_CONSUMED' ? 'Yêu cầu đã được sử dụng hoặc có kết quả chưa xác định. Không thử dịch lại.' : 'Máy chủ chưa xác nhận đủ điều kiện. Generation bị khóa.' };
 }
 
-export function parseControlledDraft(value, id, now = Date.now()) {
-  const t = controlledPreviewTarget;
+export function parseControlledDraft(value, id, t, now = Date.now()) {
+  if (!t || !objectId.test(t.projectId) || !hash.test(t.digest) || !Number.isSafeInteger(t.revision) || t.revision < 1) throw new Error('Thiếu binding đã xác minh.');
   if (!record(value) || value.draftId !== id || !uuid.test(id) || value.projectId !== t.projectId || value.transcriptRevision !== t.revision || value.sourceRevision !== t.digest || value.sourceLanguage !== 'vi' || value.targetLanguage !== 'en' || value.groupingVersion !== 'phrase-candidates-v1' || value.alignmentFormat !== 'GROUPS_V1' || value.state !== 'DRAFT' || !hash.test(value.outputDigest) || !Number.isFinite(Date.parse(value.expiresAt)) || Date.parse(value.expiresAt) <= now || !Array.isArray(value.groups) || !value.groups.length || value.groups.length > 1000) throw new Error('Bản nháp không hợp lệ, không khớp nguồn hoặc đã hết hạn.');
   const ids = new Set(), groupIds = new Set(); let end = 0;
   const groups = value.groups.map((g, i) => {
@@ -37,7 +36,7 @@ export function parseControlledDraft(value, id, now = Date.now()) {
 // automatic retry, mutation methods, credentials files or permit provisioning.
 export function createControlledPreviewClient({ enabled, origin, projectId, getToken, fetcher = fetch }) {
   function base() {
-    if (!enabled || projectId !== controlledPreviewTarget.projectId || origin !== 'http://127.0.0.1:18083') throw new Error(unavailable);
+    if (!enabled || !objectId.test(projectId) || origin !== 'http://127.0.0.1:18083') throw new Error(unavailable);
     return `${origin}/api/projects/${projectId}/translations`;
   }
   async function get(suffix, signal) {
@@ -51,12 +50,12 @@ export function createControlledPreviewClient({ enabled, origin, projectId, getT
   }
   return Object.freeze({
     async status(signal) {
-      try { return parseControlledStatus(await get('/controlled-status', signal)); }
+      try { return parseControlledStatus(await get('/controlled-status', signal), projectId); }
       catch { return blocked(unavailable); } // Never surface raw server/network errors.
     },
     async draft(draftId, status, signal) {
       if (!status?.serverReported || !['READY', 'REQUEST_CONSUMED'].includes(status.state) || status.generationEnabled !== false || !uuid.test(draftId)) throw new Error('Cần trạng thái được xác minh và mã bản nháp hợp lệ trước khi xem.');
-      try { return parseControlledDraft((await get(`/drafts/${encodeURIComponent(draftId)}`, signal))?.draft, draftId); }
+      try { return parseControlledDraft((await get(`/drafts/${encodeURIComponent(draftId)}`, signal))?.draft, draftId, status.scope); }
       catch { throw new Error('Không thể xem bản nháp: không khả dụng, hết hạn, không có quyền hoặc dữ liệu không hợp lệ. Không tự động dịch lại.'); }
     },
   });

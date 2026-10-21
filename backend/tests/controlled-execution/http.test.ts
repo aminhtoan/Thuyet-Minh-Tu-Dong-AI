@@ -7,7 +7,8 @@ import { tmpdir } from 'node:os';
 import { once } from 'node:events';
 import { Types } from 'mongoose';
 import { OneUsePermitFence } from '../../src/services/translation/one-use-permit.js';
-import { controlledTarget, withPermittedSource } from '../../src/services/translation/controlled-development.js';
+import { withPermittedSource } from '../../src/services/translation/controlled-development.js';
+import { controlledTarget } from './fixtures.js';
 import { GroupAdmission } from '../../src/services/translation/group-admission.js';
 import { owner, grant } from './fixtures.js';
 process.env.NODE_ENV = 'development'; process.env.CONTROLLED_PROVIDER_MODE = 'PERMIT';
@@ -19,6 +20,9 @@ const { executionApp } = await import('../../src/controlled-development/executio
 const { User } = await import('../../src/models/User.js');
 const { Project } = await import('../../src/models/Project.js');
 const { signAccessToken } = await import('../../src/utils/jwt.js');
+test('execution HTTP fixture uses the current 96 KiB source policy', () => {
+  assert.equal(controlledTarget.sourceBytes, 98304);
+});
 test('execution HTTP reuses real JWT/RBAC/ownership, scopes project/language, denies non-group routes and requires explicit approval', { skip: process.platform !== 'linux' }, async t => {
   const directory = await mkdtemp(join(tmpdir(), 'execution-http-'));
   const fence = await OneUsePermitFence.open(directory, grant());
@@ -30,7 +34,7 @@ test('execution HTTP reuses real JWT/RBAC/ownership, scopes project/language, de
     return new User({ _id: new Types.ObjectId(filter._id), fullName: 'Synthetic only', email: 'synthetic@example.invalid', role: filter._id === admin ? 'ADMIN' : 'CUSTOMER', status: 'ACTIVE' });
   });
   t.mock.method(Project, 'findOne', (filter: any) => ({ select: async () => filter._id === controlledTarget.projectId && filter.userId === owner ? { _id: new Types.ObjectId(controlledTarget.projectId) } : null }));
-  const admission = await withPermittedSource(fence, owner, async () => new GroupAdmission({ sourceBytes: 131072, requestCredits: 5242880, processCredits: 33554432, maxActive: 4, maxActivePerUser: 2 }));
+  const admission = await withPermittedSource(fence, owner, async () => new GroupAdmission({ sourceBytes: controlledTarget.sourceBytes, requestCredits: 5242880, processCredits: 33554432, maxActive: 4, maxActivePerUser: 2 }));
   // Only this test's controller results are mocked; JWT and owner middleware are real.
   // No real GroupDraft, provider response or database mutation is created here.
   const service = { plan: async () => { calls++; return { synthetic: true }; }, preview: async () => { calls++; return { synthetic: true }; }, readDraft: async () => ({ synthetic: true }), approve: async () => { calls++; return { synthetic: true }; }, approved: async () => ({ synthetic: true }) } as any;

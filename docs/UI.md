@@ -1,5 +1,22 @@
 # UI Specification
 
+## AI-TRANSLATE-05.8.4L — Dynamic controlled preview contract (2026-10-22)
+
+- Existing `/projects/:projectId/translation/controlled-preview` now accepts a valid
+  dynamic project ID in development, still RequireAuth + opt-in default OFF, fixed
+  explicit dedicated loopback origin, GET-only and no ordinary API fallback.
+- READY/REQUEST_CONSUMED status must supply authenticated server scope matching the
+  route project, positive revision and SHA-256 source digest. Draft GET is validated
+  against that exact returned binding; no hardcoded museum digest, default language
+  selection or fake source metadata. Wrong project/owner still rejected by Backend.
+- Source preflight/errors from 05.8.4I remain generic per-project; no limit increase.
+  Viewer continues to label drafts unapproved, display readiness/blocked/consumed,
+  and keep generationEnabled=false without generation or Approve controls. Legacy
+  Dịch button is not connected to controlled dispatch. No layout/visual redesign.
+- Production build excludes controlled viewer. Browser verification NOT RUN;
+  no real source/draft, permit, credentials or runtime accessed in this step.
+
+
 ## AI-TRANSLATE-05.8.4I — New video source-limit feedback (2026-10-22)
 
 - Existing TranslationPage now hosts a development-only read-only source check,

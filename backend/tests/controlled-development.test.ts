@@ -4,14 +4,16 @@ import { mkdtemp, rm, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { controlledTarget, controlledScopeActive, assertControlledRequest, assertControlledSource, withControlledSource } from '../src/services/translation/controlled-development.js';
+import { controlledScopeActive, assertControlledRequest, assertControlledSource, withControlledSource as withSource } from '../src/services/translation/controlled-development.js';
+import { controlledTarget } from './controlled-execution/fixtures.js';
+const withControlledSource = <T>(ownerId: string, work: () => Promise<T>) => withSource(ownerId, work, controlledTarget.projectId);
 import { OneUsePermitFence } from '../src/services/translation/one-use-permit.js';
 import { digest, revision } from '../src/services/translation/group-plan.js';
 import { GroupAdmission } from '../src/services/translation/group-admission.js';
 import { collectBoundedSource, SOURCE_BYTE_LIMIT } from '../src/services/translation/bounded-source.js';
 
 const owner = '0123456789abcdef01234567';
-const policy = { sourceBytes: 131072, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 };
+const policy = { sourceBytes: 98304, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 };
 const input = { sourceLanguage: 'vi', targetLanguage: 'en', fullText: 'Synthetic input.', groups: [{ groupId: 'synthetic', sourceText: 'Synthetic input.' }] };
 const grant = () => ({ id: randomUUID(), approval: 'EXPLICIT_USER_APPROVAL', ownerId: owner, projectId: controlledTarget.projectId, revision: 1, sourceDigest: controlledTarget.sourceDigest, sourceLanguage: 'vi', targetLanguage: 'en', model: controlledTarget.model, apiVersion: 'v1beta', inputDigest: digest(input), planDigest: digest(input.groups.map(g => g.groupId)), thinking: 'DEFAULT', lowExplicitlyApproved: false, maxOutputTokens: 8192, timeoutMs: 120000, responseBytes: 131072, metadataRequests: 1, generationRequests: 1, retries: 0, tokenChargeEnvelopeUsd: 0.82, pricingVerifiedOn: '2026-10-21', issuedAt: Date.now() - 1000, expiresAt: Date.now() + 60000 });
 const linux = { skip: process.platform !== 'linux' ? 'Directory fsync requires Linux deployment; run this file in controlled Docker image.' : false };
@@ -34,7 +36,7 @@ test('non-test development profile requires active explicit DENY capability; pro
   await assert.rejects(withControlledSource(owner, async () => null));
   assert.throws(() => new GroupAdmission(policy));
 });
-test('128 KiB synthetic loading is lossless only inside readiness; source binding still rejects unrelated fixture', async () => {
+test('controlled readiness keeps 96 KiB policy, dynamic scope and lossless source', async () => {
   process.env.NODE_ENV = 'development'; process.env.CONTROLLED_PROVIDER_MODE = 'DENY';
   const header = { transcriptId: '111111111111111111111111', transcriptRevision: 1, languageCode: 'vi', fullText: 'a'.repeat(50000) };
   const row = { id: '222222222222222222222222', sequence: 1, text: header.fullText, startTime: 0, endTime: 1 };
@@ -42,11 +44,14 @@ test('128 KiB synthetic loading is lossless only inside readiness; source bindin
   await assert.rejects(collectBoundedSource(header, rows(), 131072));
   await assert.rejects(collectBoundedSource(header, rows(), SOURCE_BYTE_LIMIT));
   await withControlledSource(owner, async () => {
-    const source = await collectBoundedSource(header, rows(), 131072);
-    assert.equal(source.segments[0]!.text, row.text);
-    assert.equal(source.fullText, header.fullText);
-    assert.equal(revision(source), revision({ ...header, segments: [row] }));
-    assert.throws(() => assertControlledSource(controlledTarget.projectId, source));
+    await assert.rejects(collectBoundedSource(header, rows(), 131072));
+    const smaller = { ...header, fullText: 'a'.repeat(1000) };
+    const smallerRow = { ...row, text: smaller.fullText };
+    const source = await collectBoundedSource(smaller, (async function* () { yield smallerRow; })(), SOURCE_BYTE_LIMIT);
+    assert.equal(source.segments[0]!.text, smallerRow.text);
+    assert.equal(revision(source), revision({ ...smaller, segments: [smallerRow] }));
+    assert.doesNotThrow(() => assertControlledSource(controlledTarget.projectId, source));
+    assert.throws(() => assertControlledSource('f'.repeat(24), source));
     await assert.rejects(collectBoundedSource({ ...header, fullText: 'a'.repeat(131072) }, rows(), 131072));
   });
 });

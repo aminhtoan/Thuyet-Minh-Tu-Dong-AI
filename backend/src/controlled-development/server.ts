@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 import express from 'express';
 import helmet from 'helmet';
 import { getHeapStatistics } from 'node:v8';
-import { controlledTarget, withControlledSource, assertControlledRequest } from '../services/translation/controlled-development.js';
+import { withControlledSource, assertControlledRequest } from '../services/translation/controlled-development.js';
+import { controlledPolicy } from '../services/translation/controlled-target.js';
 
 const uri = 'mongodb://narration-groups-test-mongodb:27029/multilingual_ai_narration_groups_test?replicaSet=narration-test-rs&directConnection=true';
 if (process.env.NODE_ENV !== 'development' || process.env.CONTROLLED_PROVIDER_MODE !== 'DENY' || process.env.HOSTNAME !== 'narration-controlled-readiness' || existsSync('/app/.env') || process.env.TEST_MONGODB_URI !== uri || !/^[a-f\d]{24}$/i.test(process.env.EXPECTED_MONGO_PROCESS_ID ?? '') || ['GEMINI_API_KEY', 'OPENAI_API_KEY', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'MONGODB_URI'].some(key => !!process.env[key])) throw new Error('CONTROLLED_STARTUP_DENIED');
@@ -31,7 +32,7 @@ const { GroupAdmission } = await import('../services/translation/group-admission
 const { GroupTranslationService } = await import('../services/translation/group-translation.service.js');
 const { groupResponseHandler } = await import('../services/translation/group-response.js');
 const { AppError } = await import('../utils/app-error.js');
-const admission = await withControlledSource('000000000000000000000000', async () => new GroupAdmission({ sourceBytes: 128 * 1024, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 }));
+const admission = await withControlledSource('000000000000000000000000', async () => new GroupAdmission({ sourceBytes: controlledPolicy.sourceBytes, requestCredits: 5 * 1024 * 1024, processCredits: 32 * 1024 * 1024, maxActive: 4, maxActivePerUser: 2 }));
 const service = new GroupTranslationService({ async translate() { throw new AppError(503, 'CONTROLLED_PROVIDER_DENIED', 'Readiness only.'); } }, undefined, admission);
 const app = express(); app.disable('x-powered-by'); app.use(helmet());
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', mode: 'DENY', database: 'isolated-test-only', heapLimit: getHeapStatistics().heap_size_limit, ledger: admission.snapshot() }));
@@ -43,9 +44,9 @@ app.get('/api/projects/:id/preflight', requireProjectOwner, async (req, res, nex
       await groupResponseHandler(admission, async () => {
         const plan = await service.plan(String(req.params.id), req.user!.id, 'en');
         // Metadata only; never expose transcript text through readiness.
-        return { projectId: plan.projectId, revision: plan.transcriptRevision, digest: plan.sourceRevision, segmentCount: plan.sourceSegmentCount, groupCount: plan.groups.length, targetLanguage: controlledTarget.targetLanguage };
+        return { projectId: plan.projectId, revision: plan.transcriptRevision, digest: plan.sourceRevision, segmentCount: plan.sourceSegmentCount, groupCount: plan.groups.length, targetLanguage: controlledPolicy.targetLanguage };
       })(req, res, next);
-    });
+    }, String(req.params.id));
   } catch (error) { next(error); }
 });
 app.use((_req, res) => res.status(503).json({ error: { code: 'CONTROLLED_PROVIDER_AND_MUTATIONS_DENIED' } }));

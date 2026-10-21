@@ -12,6 +12,7 @@ const exhausted = () => new AppError(503, 'TRANSLATION_CAPACITY_EXHAUSTED', 'Há»
 // a hard heap/native-memory bound or production deployment recommendation.
 export function groupTestPolicy(options: GroupTestPolicy): GroupTestPolicy {
   if (process.env.NODE_ENV !== 'test' && !controlledScopeActive()) throw new Error('GROUP_TEST_POLICY_REQUIRES_TEST_ENV');
+  if (controlledScopeActive() && options.sourceBytes > 98304) throw new Error('GROUP_SOURCE_POLICY_INVALID');
   for (const key of ['sourceBytes', 'processCredits', 'requestCredits', 'maxActive', 'maxActivePerUser'] as const) {
     const value = options[key];
     if (!Number.isSafeInteger(value) || value <= 0) throw new Error('GROUP_TEST_POLICY_INVALID');

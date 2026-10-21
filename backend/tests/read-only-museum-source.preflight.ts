@@ -6,7 +6,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { boundedTextProjection, collectBoundedSource } from '../src/services/translation/bounded-source.js';
 import { candidateGroups, revision, digest } from '../src/services/translation/group-plan.js';
-import { controlledTarget } from '../src/services/translation/controlled-target.js';
+// Historical museum-only diagnostic, not a dynamic execution authorizer.
+const controlledTarget = { projectId: '6ad5c93a86cf95b7523704a5', transcriptRevision: 1, sourceDigest: '81638f2cb62e5f5f010853b047855cb72ace5ddbb2ca083890b51cdd2fe44906', model: 'gemini-3.8-flash' };
 
 const config = dotenv.parse(readFileSync(fileURLToPath(new URL('../.env', import.meta.url))));
 const uri = config.MONGODB_URI;

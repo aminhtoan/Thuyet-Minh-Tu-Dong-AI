@@ -99,7 +99,9 @@ test('status HTTP preserves JWT, CUSTOMER role, available-user, ownership and pe
     assert.equal((await request(owner, url.replace(p.projectId, 'b'.repeat(24)))).status, 404);
     const response = await request(owner); assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-store');
-    assert.deepEqual(await response.json(), { success: true, data: { state: 'REQUEST_CONSUMED', generationEnabled: false, reasonCode: 'CONTROLLED_REQUEST_CONSUMED' } });
+    const statusBody = await response.json();
+    assert.equal(statusBody.data.state, 'REQUEST_CONSUMED'); assert.equal(statusBody.data.generationEnabled, false);
+    assert.equal(statusBody.data.scope.projectId, p.projectId);
     const draftUrl = url.replace('/controlled-status', `/drafts/${draftId}`);
     assert.equal((await request(undefined, draftUrl)).status, 401);
     assert.equal((await request(other, draftUrl)).status, 404);

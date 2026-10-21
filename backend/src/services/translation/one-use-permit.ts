@@ -1,17 +1,17 @@
 import { open, realpath, lstat, readFile } from 'node:fs/promises';
 import { isAbsolute, join } from 'node:path';
 import { z } from 'zod';
-import { controlledTarget } from './controlled-target.js';
+import { controlledPolicy } from './controlled-target.js';
 import type { GroupProviderInput, GroupTransport } from './gemini-group-translation.provider.js';
 import { digest } from './group-plan.js';
 import { readPermitStatus } from './permit-status.js';
 
-const permitSchema = z.object({
+export const permitSchema = z.object({
   id: z.string().uuid(), approval: z.literal('EXPLICIT_USER_APPROVAL'),
-  ownerId: z.string().regex(/^[a-f\d]{24}$/), projectId: z.literal(controlledTarget.projectId),
-  revision: z.literal(1), sourceDigest: z.literal(controlledTarget.sourceDigest),
+  ownerId: z.string().regex(/^[a-f\d]{24}$/), projectId: z.string().regex(/^[a-f\d]{24}$/),
+  revision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER), sourceDigest: z.string().regex(/^[a-f\d]{64}$/),
   sourceLanguage: z.literal('vi'), targetLanguage: z.literal('en'),
-  model: z.literal(controlledTarget.model), apiVersion: z.literal('v1beta'),
+  model: z.literal(controlledPolicy.model), apiVersion: z.literal('v1beta'),
   inputDigest: z.string().regex(/^[a-f\d]{64}$/), planDigest: z.string().regex(/^[a-f\d]{64}$/),
   thinking: z.enum(['DEFAULT', 'LOW', 'MEDIUM']), lowExplicitlyApproved: z.boolean(),
   maxOutputTokens: z.literal(8192), timeoutMs: z.literal(120000), responseBytes: z.literal(131072),

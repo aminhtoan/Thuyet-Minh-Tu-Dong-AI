@@ -3,6 +3,52 @@
 Implementation/mock validation PASS; **real generation is NOT enabled or run**.
 This supersedes 05.6's missing-SDK-dispatch/execution-composition blockers.
 
+## AI-TRANSLATE-05.8.4L — dynamic binding; execution still LOCKED
+
+This section supersedes project-specific execution authorization, commands and
+128 KiB source-profile claims below. Historical museum preflight/sample commands
+are NOT an issuer or authorization for another project. Do not execute them to
+prepare a dynamic grant. Nothing in this implementation authorizes issuance or
+real provider calls; old permit storage must never be reset/rebound/reused.
+
+`controlled-target.ts` now contains execution policy only (vi->en/model/96 KiB/
+10000 segments), no project/digest. Internal read-only `prepareExecutionBinding`
+re-derives owner/project/revision/source/input/plan/deployment metadata from actual
+server records; `assertPreparedPermit` must compare all fields against the later
+explicitly approved grant. Startup validates deployment + source BEFORE fence
+open; metadata and generation each re-run source validation. Global flags stay OFF.
+Request JWT must identify the exact available CUSTOMER owner from the permit.
+
+For a future separately approved issuance procedure: obtain an authenticated owner,
+attest deployment using existing private configuration + Mongo hello, call the
+read-only binding helper, manually approve fixed request budgets/model/thinking/
+expiry (<=1h), and validate the exact grant against a fresh binding before opening
+the durable fence. Use a fresh approved ID only for a separately authorized attempt;
+never reissue after an uncertain outcome. No executable new issuance command or
+public issuer has been added in this step. Existing real grant/volume is untouched.
+
+Existing source, input and plan digests must ALL come from that verifier. A Web
+query/body, old museum digest, hand-written group list or model default is not
+source authority. DeploymentId remains the digest of verified SRV host/database/
+replica set; controlled runtime hostname/config restrictions remain. Token/API key
+storage mechanisms, zero retries and durable fsynced claims are unchanged.
+
+Execution profile now uses 98304 source bytes, 5 MiB estimated request credit,
+32 MiB aggregate, 4 active /2 per user; default production source cap stays 98304.
+Provider response/draft caps remain 131072, output tokens 8192, timeout 120 seconds.
+Do not enable old 128 KiB source lab profile in controlled mode; it is rejected.
+
+Read-only Web route is `/projects/<owned-project-id>/translation/controlled-preview`.
+DEV/opt-in/origin requirements unchanged. Server READY or REQUEST_CONSUMED scope
+binds the exact project/revision/digest; no hardcoded museum fields in Web client.
+Still no generation/approve action. A status observation is not an execution lease
+or proof of Gemini account access/quota. Other-process RAM drafts remain UNKNOWN.
+
+No Docker runtime startup, volume/permit mutation, real metadata/generation or DB
+writes in this step. Linux durable replay/restart/SDK tests must be rerun in a
+separately permitted mock-only Linux environment before claiming that gate PASS
+for this revision. Windows skips are explicitly not a durability PASS.
+
 ## WEB-TRANSLATE-03 — read-only Customer Web viewer
 
 Source/mock UI implemented; real controlled execution remains unactivated.

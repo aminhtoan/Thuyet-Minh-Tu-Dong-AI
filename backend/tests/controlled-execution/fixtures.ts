@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { digest } from '../../src/services/translation/group-plan.js';
-import { controlledTarget } from '../../src/services/translation/controlled-target.js';
+import { controlledPolicy } from '../../src/services/translation/controlled-target.js';
+export const controlledTarget = { ...controlledPolicy, projectId: 'a'.repeat(24), transcriptRevision: 1, sourceDigest: 'b'.repeat(64) };
 export const owner = '0123456789abcdef01234567';
 export const input = { fullText: 'Synthetic test only.', sourceLanguage: 'vi', targetLanguage: 'en', groups: [{ groupId: 'a'.repeat(64), sourceText: 'Synthetic test only.' }] };
 export const grant = () => ({ id: randomUUID(), approval: 'EXPLICIT_USER_APPROVAL', ownerId: owner, projectId: controlledTarget.projectId, revision: 1, sourceDigest: controlledTarget.sourceDigest,
