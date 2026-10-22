@@ -1,11 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import type { TranslationProvider, TranslationProviderInput, TranslationProviderResult } from './translation-provider.interface.js';
+import { gemini400Diagnostic, type ProviderDiagnostic } from './provider-failure.js';
 
 export const GEMINI_TRANSLATION_MODEL = 'gemini-3.8-flash';
 export const GEMINI_TRANSLATION_ERRORS = ['TRANSLATION_NOT_CONFIGURED', 'TRANSLATION_INVALID_KEY', 'TRANSLATION_MODEL_UNAVAILABLE', 'TRANSLATION_QUOTA_EXCEEDED', 'TRANSLATION_TIMEOUT', 'TRANSLATION_NETWORK_ERROR', 'TRANSLATION_INVALID_RESPONSE', 'TRANSLATION_MAPPING_FAILED', 'TRANSLATION_PROVIDER_ERROR'] as const;
 export class GeminiTranslationError extends Error {
-  constructor(public readonly code: typeof GEMINI_TRANSLATION_ERRORS[number], public readonly httpStatus?: number) { super(code); }
+  constructor(public readonly code: typeof GEMINI_TRANSLATION_ERRORS[number], public readonly httpStatus?: number, public readonly diagnostic?: ProviderDiagnostic) { super(code); }
 }
 // Fail closed: an ordered, nonempty 1:1 response cannot prove many-to-many
 // semantic alignment of a word-level transcript (e.g. "Tiểu học", "tọa lạc").
@@ -46,10 +47,10 @@ export const mapGeminiTranslationError = (error: unknown): GeminiTranslationErro
   const value = error as { status?: number; code?: number; name?: string; message?: string } | null;
   const status = typeof value?.status === 'number' ? value.status : typeof value?.code === 'number' ? value.code : undefined;
   if (value?.name === 'AbortError' || value?.name === 'TimeoutError') return new GeminiTranslationError('TRANSLATION_TIMEOUT');
-  if (status === 401 || (status === 400 && value?.message?.includes('API_KEY_INVALID'))) return new GeminiTranslationError('TRANSLATION_INVALID_KEY', status);
+  if (status === 401 || (status === 400 && value?.message?.includes('API_KEY_INVALID'))) return new GeminiTranslationError('TRANSLATION_INVALID_KEY', status, gemini400Diagnostic(error, status));
   if (status === 403 || status === 404) return new GeminiTranslationError('TRANSLATION_MODEL_UNAVAILABLE', status);
   if (status === 429) return new GeminiTranslationError('TRANSLATION_QUOTA_EXCEEDED', status);
-  return new GeminiTranslationError(status ? 'TRANSLATION_PROVIDER_ERROR' : 'TRANSLATION_NETWORK_ERROR', status);
+  return new GeminiTranslationError(status ? 'TRANSLATION_PROVIDER_ERROR' : 'TRANSLATION_NETWORK_ERROR', status, gemini400Diagnostic(error, status));
 };
 export class GeminiTranslationProvider implements TranslationProvider {
   constructor(private readonly transport?: GeminiTranslationTransport) {}

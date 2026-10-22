@@ -1,0 +1,80 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
+import { once } from 'node:events';
+import { readFile } from 'node:fs/promises';
+import jwt from 'jsonwebtoken';
+import { assertReadOnlyPrivileges, readOnlyWebConfig } from '../src/controlled-development/read-only-web-policy.js';
+process.env.NODE_ENV = 'development';
+process.env.MONGODB_URI = 'mongodb://127.0.0.1:1/no-connection-mocked-only';
+process.env.JWT_ACCESS_SECRET = randomBytes(48).toString('hex'); process.env.JWT_REFRESH_SECRET = randomBytes(48).toString('hex');
+process.env.JWT_ACCESS_EXPIRES_IN = '15m'; process.env.JWT_REFRESH_EXPIRES_IN = '1d';
+process.env.GROUP_TRANSLATION_ENABLED = 'false'; process.env.GEMINI_API_KEY = ''; process.env.OPENAI_API_KEY = '';
+const { readOnlyWebApp } = await import('../src/controlled-development/read-only-web-app.js');
+const { User } = await import('../src/models/User.js');
+const { Project } = await import('../src/models/Project.js');
+const { signAccessToken } = await import('../src/utils/jwt.js');
+const database = 'multilingual_ai_narration';
+test('effective Mongo privileges must be authenticated, database-scoped and read-only', () => {
+  const proof = (actions = ['find'], db = database) => ({ authInfo: { authenticatedUsers: [{ user: 'synthetic', db: 'admin' }], authenticatedUserPrivileges: [{ resource: { db, collection: '' }, actions }] } });
+  assert.doesNotThrow(() => assertReadOnlyPrivileges(proof(), database));
+  for (const action of ['insert', 'update', 'remove', 'createCollection', 'createIndex', 'dropCollection', 'grantRole', 'bypassDocumentValidation', 'unknown']) assert.throws(() => assertReadOnlyPrivileges(proof(['find', action]), database));
+  for (const db of ['', 'other']) assert.throws(() => assertReadOnlyPrivileges(proof(['find'], db), database));
+  const wildcard = proof(); Object.assign(wildcard.authInfo.authenticatedUserPrivileges[0]!.resource, { anyResource: true });
+  assert.throws(() => assertReadOnlyPrivileges(wildcard, database));
+  for (const status of [{}, { authInfo: { authenticatedUsers: [], authenticatedUserPrivileges: [] } }, { authInfo: { authenticatedUsers: [{}], authenticatedUserPrivileges: [{ resource: { cluster: true }, actions: ['find'] }] } }, proof(['dbStats'])]) assert.throws(() => assertReadOnlyPrivileges(status, database));
+});
+test('minimal configuration rejects Gemini, refresh secret and full execution credentials', () => {
+  const minimal = { mongoUri: 'mongodb+srv://synthetic.example.mongodb.net/multilingual_ai_narration', databaseName: database,
+    expectedSrvHost: 'synthetic.example.mongodb.net', expectedReplicaSet: 'synthetic-rs', jwtAccessSecret: 'x'.repeat(48), corsOrigins: ['http://localhost:5173'] };
+  assert.doesNotThrow(() => readOnlyWebConfig.parse(minimal));
+  for (const key of ['geminiApiKey', 'jwtRefreshSecret', 'model', 'permit', 'ownerId']) assert.throws(() => readOnlyWebConfig.parse({ ...minimal, [key]: 'synthetic' }));
+  assert.throws(() => readOnlyWebConfig.parse({ ...minimal, corsOrigins: ['http://attacker.invalid'] }));
+});
+test('isolated HTTP fixtures: CORS + actual JWT/RBAC/ownership, GET-only and no execution', async t => {
+  const owner = '1'.repeat(24), other = '2'.repeat(24), admin = '3'.repeat(24), deleted = '4'.repeat(24), project = '5'.repeat(24), origin = 'http://localhost:5173';
+  let reads = 0;
+  t.mock.method(User, 'findOne', async (filter: any) => { reads++; assert.equal(filter.deletedAt, null); return filter._id === deleted ? null : new User({ _id: filter._id, fullName: 'Synthetic fixture', email: 'fixture@example.invalid', role: filter._id === admin ? 'ADMIN' : 'CUSTOMER', status: 'ACTIVE' }); });
+  t.mock.method(Project, 'findOne', (filter: any) => { reads++; return { select: async () => filter.userId === owner && filter._id === project ? { _id: project } : null }; });
+  const writes = [User, Project].flatMap(model => ['create', 'updateOne', 'deleteOne'].map(method => t.mock.method(model, method as any, () => { throw Error('DB_WRITE_FORBIDDEN'); })));
+  const server = readOnlyWebApp([origin]).listen(0, '127.0.0.1'); await once(server, 'listening');
+  const base = `http://127.0.0.1:${(server.address() as any).port}`, path = `/api/projects/${project}/translations/execution-readiness`;
+  const request = (method = 'GET', token?: string, endpoint = path, requestOrigin = origin) => fetch(base + endpoint, { method, headers: { Origin: requestOrigin, ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+  const token = signAccessToken(owner, 'CUSTOMER');
+  try {
+    const health = await request('GET', undefined, '/api/health'); assert.equal(health.status, 200);
+    assert.equal((await health.json()).data.executionAllowed, false);
+    const options = await fetch(base + path, { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'GET', 'Access-Control-Request-Headers': 'authorization' } });
+    assert.equal(options.status, 204); assert.equal(options.headers.get('access-control-allow-origin'), origin);
+    assert.equal(options.headers.get('access-control-allow-methods'), 'GET');
+    assert.match(options.headers.get('access-control-allow-headers') ?? '', /authorization/i);
+    assert.equal(options.headers.get('access-control-allow-credentials'), null);
+    assert.equal((await request()).status, 401);
+    const expired = jwt.sign({ type: 'access', role: 'CUSTOMER' }, process.env.JWT_ACCESS_SECRET!, { subject: owner, expiresIn: -1 });
+    assert.equal((await request('GET', expired)).status, 401);
+    assert.equal((await request('GET', signAccessToken(admin, 'ADMIN'))).status, 403);
+    assert.equal((await request('GET', signAccessToken(other, 'CUSTOMER'))).status, 404);
+    assert.equal((await request('GET', signAccessToken(deleted, 'CUSTOMER'))).status, 401);
+    assert.equal((await request('GET', token, path.replace(project, other))).status, 404);
+    const rejectedOrigin = await request('GET', token, path, 'http://attacker.invalid'); assert.equal(rejectedOrigin.status, 403);
+    assert.equal(rejectedOrigin.headers.get('access-control-allow-origin'), null);
+    const response = await request('GET', token); assert.equal(response.status, 200); assert.equal(response.headers.get('access-control-allow-origin'), origin); assert.equal(response.headers.get('cache-control'), 'no-store');
+    const data = (await response.json()).data; assert.equal(data.state, 'LOCKED'); assert.equal(data.executionAllowed, false); assert.equal(data.authentication, 'CUSTOMER_VERIFIED'); assert.equal(data.ownership, 'VERIFIED'); assert.equal(data.projectId, project); assert.equal(data.permitState, 'NOT_INSPECTED');
+    const before = reads;
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'HEAD']) assert.equal((await request(method, token)).status, 405);
+    for (const suffix of ['controlled-preview', 'preview', 'drafts/id/approve']) assert.equal((await request('POST', token, path.replace('execution-readiness', suffix))).status, 405);
+    assert.equal(reads, before, 'mutation methods rejected before DB reads');
+    assert.equal((await request('GET', token, path.replace('execution-readiness', 'controlled-status'))).status, 404);
+    assert.ok(writes.every(mock => mock.mock.callCount() === 0));
+    assert.equal(process.env.GROUP_TRANSLATION_ENABLED, 'false');
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+test('runtime/Compose are separate from provider/fence and PERMIT mounts', async () => {
+  const server = await readFile(new URL('../src/controlled-development/read-only-web-server.ts', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../src/controlled-development/read-only-web-app.ts', import.meta.url), 'utf8');
+  const compose = await readFile(new URL('../../infra/backend-web-readiness/compose.yaml', import.meta.url), 'utf8');
+  for (const source of [server, app]) assert.doesNotMatch(source, /(?:^import .*|await import\([^\n]*)(?:gemini|one-use-permit|execution-server|group-translation\.service)|OneUsePermitFence|\.post\(/m);
+  assert.match(server, /autoCreate: false, autoIndex: false/); assert.match(server, /connectionStatus: 1, showPrivileges: true/);
+  assert.match(compose, /READ_ONLY_WEB_READINESS/); assert.match(compose, /Explicit minimal read-only credential file required/);
+  assert.doesNotMatch(compose, /permit-state|permit\.json|controlled-credentials|volumes:|GEMINI|PERMIT/);
+});

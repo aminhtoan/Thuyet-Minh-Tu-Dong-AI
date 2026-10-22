@@ -112,5 +112,12 @@ test('real HTTP JWT/RBAC/ownership/scope/dev guards; only read queries, no provi
     const another = url.replace(target.projectId, '4'.repeat(24));
     assert.equal((await get(owner, another)).status, 200);
     assert.equal((await get(other, another)).status, 404);
+    const simple = url.replace('read-only-diagnostic', 'simple-preflight');
+    assert.equal((await get(undefined, simple)).status, 401);
+    assert.equal((await get(admin, simple)).status, 403);
+    assert.equal((await get(other, simple)).status, 404);
+    process.env.NODE_ENV = 'production'; assert.equal((await get(owner, simple)).status, 404); process.env.NODE_ENV = 'development';
+    const safe = await get(owner, simple); assert.equal(safe.status, 200); assert.equal(safe.headers.get('cache-control'), 'no-store');
+    const simpleBody = await safe.json(); assert.equal(simpleBody.data.status, 'BLOCKED'); assert.equal(simpleBody.data.generationAuthorized, false);
   } finally { process.env.NODE_ENV = 'development'; await new Promise<void>(resolve => server.close(() => resolve())); }
 });

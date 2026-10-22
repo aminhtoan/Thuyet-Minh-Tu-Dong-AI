@@ -17,10 +17,11 @@ import { translationTargetChoices, translationLanguageLabel } from './translatio
 import { groupTranslationService, type LegacyTranslationDto } from './groupTranslationService';
 import { buildTranslationPresentation, mapTranslationSegments } from './translationPresentation.mjs';
 import type { GroupDraft, GroupPlan, GroupTranslation, TranslationGroup } from './groupTypes';
+import { customerAttemptMessage, type CustomerAttempt } from './customerAttemptPresentation.mjs';
 
 type Language = { code: string; name: string; nativeName: string };
 const message = (error: unknown) => error instanceof Error ? error.message : 'Không thể tải bản dịch. Vui lòng thử lại.';
-export function GroupTranslationWorkspace({ project, preferredTarget, canMutate, notice, blockGeneration = false }: { project: Project; preferredTarget: string; canMutate: boolean; notice: string | null; blockGeneration?: boolean }) {
+export function GroupTranslationWorkspace({ project, preferredTarget, canMutate, notice, blockGeneration = false, customerMode = false }: { project: Project; preferredTarget: string; canMutate: boolean; notice: string | null; blockGeneration?: boolean; customerMode?: boolean }) {
   const [params, setParams] = useSearchParams();
   const draftId = params.get('draft');
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -39,20 +40,29 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
   const requestKey = useRef<string | null>(null);
   const lock = useRef(false);
   const mounted = useRef(true);
+  const [submitted, setSubmitted] = useState(false);
+  const [attempt, setAttempt] = useState<CustomerAttempt | null>(null);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     const controller = new AbortController(); let active = true;
     void (async () => {
       await Promise.resolve(); if (!active) return;
-      setBusy('load'); setError(null); setPlan(null); setSaved(null); setDraft(null); setGroups([]); setReviewed(false); setPlanReviewed(false); requestKey.current = null;
+      setBusy('load'); setError(null); setAttempt(null); setPlan(null); setSaved(null); setDraft(null); setGroups([]); setReviewed(false); setPlanReviewed(false); requestKey.current = null;
       const [catalog, source] = await Promise.all([voiceService.getLanguages({ signal: controller.signal }), transcriptService.getTranscript(project.id, { signal: controller.signal })]);
       if (!active) return;
-      const choices = translationTargetChoices(catalog, project.sourceLanguage);
+      const choices = translationTargetChoices(catalog, project.sourceLanguage).filter(l => !customerMode || l.code === 'en');
       setLanguages(choices); setCatalogReady(true); setTranscript(source);
       if (!target || !choices.some(c => c.code === target) || !source) return;
       const stored = await groupTranslationService.saved(project.id, target, controller.signal);
       if (!active) return;
       if (stored) { setSaved(stored); return; }
+      if (customerMode) {
+        const state = await groupTranslationService.customerState(project.id, controller.signal);
+        if (!active) return;
+        setAttempt(state.attempt);
+        if (state.draft) { setDraft(state.draft); return; }
+        if (state.attempt) return; // Includes legacy UNKNOWN: never offer a new POST.
+      }
       if (draftId) {
         const restored = await groupTranslationService.draft(project.id, draftId, controller.signal);
         if (!active) return;
@@ -63,7 +73,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
       if (active) { setPlan(next); setGroups(next.groups); }
     })().catch(e => { if (active) setError(message(e)); }).finally(() => { if (active) setBusy(null); });
     return () => { active = false; controller.abort(); };
-  }, [project.id, project.sourceLanguage, target, draftId, reload]);
+  }, [project.id, project.sourceLanguage, target, draftId, reload, customerMode]);
 
   function changeTarget(value: string) {
     if (lock.current) return;
@@ -76,14 +86,18 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
     setPlanReviewed(false); requestKey.current = null;
   }
   async function preview() {
-    if (blockGeneration || !canMutate || !plan || !planReviewed || lock.current || busy || draft || saved) return;
+    if (blockGeneration || !canMutate || !plan || !planReviewed || lock.current || busy || draft || saved || (customerMode && (submitted || attempt))) return;
     if (!window.confirm('Tạo bản dịch nháp bằng AI cho các cụm đã kiểm tra? Thao tác có thể phát sinh chi phí. Bản dịch chỉ được lưu sau khi bạn duyệt.')) return;
     lock.current = true; setBusy('preview'); setError(null);
+    if (customerMode) setSubmitted(true);
     requestKey.current ??= crypto.randomUUID();
     try {
-      const value = await groupTranslationService.preview(project.id, plan, groups, requestKey.current);
+      const value = customerMode ? await groupTranslationService.customerGenerate(project.id) : await groupTranslationService.preview(project.id, plan, groups, requestKey.current);
       if (mounted.current) { setDraft(value); setReviewed(false); const next = new URLSearchParams(params); next.set('draft', value.draftId); next.set('language', value.targetLanguage); setParams(next, { replace: true }); }
-    } catch (e) { if (mounted.current) setError(message(e)); }
+    } catch (e) { if (mounted.current) {
+      setError(customerMode ? `${message(e)} Chỉ tải lại dữ liệu; không tự gửi lại yêu cầu AI.` : message(e));
+      if (customerMode) setAttempt({ status: 'UNCERTAIN', phase: 'UNKNOWN', diagnosticCode: null, updatedAt: null, canGenerate: false });
+    } }
     finally { lock.current = false; if (mounted.current) setBusy(null); }
   }
   async function approve() {
@@ -115,23 +129,25 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
           <option value="">Chọn ngôn ngữ cần dịch</option>{languages.map(l => <option key={l.code} value={l.code}>{translationLanguageLabel(l)}</option>)}
         </select></div>
       </Card>
-      <div role="status" aria-live="polite">{busy === 'preview' ? 'Đang tạo bản dịch nháp bằng AI...' : busy === 'approve' ? 'Đang lưu bản dịch đã duyệt...' : busy === 'load' ? 'Đang tải bản ghi và bản dịch...' : saved ? 'Bản dịch đã lưu.' : draft ? 'Bản nháp — chưa lưu vào cơ sở dữ liệu, chưa dùng được cho Giọng đọc.' : 'Chưa có bản dịch đã lưu.'}</div>
+      <div role="status" aria-live="polite">{busy === 'preview' ? 'Đang tạo bản dịch nháp bằng AI...' : busy === 'approve' ? 'Đang lưu bản dịch đã duyệt...' : busy === 'load' ? 'Đang tải bản ghi và bản dịch...' : saved ? 'Bản dịch đã lưu.' : draft ? customerMode ? 'Bản nháp đã lưu trên máy chủ, chưa duyệt và chưa dùng được cho Giọng đọc.' : 'Bản nháp — chưa lưu vào cơ sở dữ liệu, chưa dùng được cho Giọng đọc.' : 'Chưa có bản dịch đã lưu.'}</div>
       {busy === 'load' && <Spinner label="Đang tải bản dịch" />}
+      {customerMode && attempt && !busy && <Card><p role="status" aria-live="polite">{customerAttemptMessage(attempt)}</p>
+        <Button variant="secondary" disabled={Boolean(busy)} onClick={() => setReload(n => n + 1)}>Kiểm tra kết quả (không gọi AI)</Button></Card>}
       {error && <Card><p role="alert">{error}</p><Button variant="secondary" disabled={Boolean(busy)} onClick={() => setReload(n => n + 1)}>Tải lại dữ liệu (không gọi AI)</Button></Card>}
       {!busy && catalogReady && !languages.length && <Card><h2>Chưa có ngôn ngữ đích</h2><p>Vui lòng liên hệ quản trị viên để cấu hình danh sách ngôn ngữ.</p></Card>}
       {!busy && catalogReady && !transcript && <Card><h2>Cần có bản ghi trước khi dịch</h2><p>Hãy quay lại Bản ghi để kiểm tra dữ liệu nguồn.</p></Card>}
-      {plan && !draft && !saved && <Card><h2>Kiểm tra ranh giới cụm nguồn</h2><p>Các cụm dưới đây chỉ là đề xuất. Gộp các cụm liên tiếp nếu ranh giới cắt câu, tên riêng hoặc địa chỉ; không ép mỗi từ Việt tương ứng một từ Anh.</p>
+      {plan && !draft && !saved && <Card><h2>Kiểm tra ranh giới cụm nguồn</h2><p>{customerMode ? 'Máy chủ tạo kế hoạch cụm từ bản ghi hiện tại và sẽ kiểm tra lại nguồn trước khi dịch. Không cần cấp permit riêng cho dự án.' : 'Các cụm dưới đây chỉ là đề xuất. Gộp các cụm liên tiếp nếu ranh giới cắt câu, tên riêng hoặc địa chỉ; không ép mỗi từ Việt tương ứng một từ Anh.'}</p>
         <Button variant="secondary" disabled={Boolean(busy)} onClick={() => { setGroups(plan.groups); setPlanReviewed(false); requestKey.current = null; }}>Khôi phục kế hoạch nguồn</Button>
       </Card>}
       {displayGroups.map((g, i) => <Card key={g.groupId} className="group-translation-card"><h3>Cụm {i + 1} · {formatPreciseTimestamp(g.startTime)} → {formatPreciseTimestamp(g.endTime)}</h3>
         <div className="group-translation-columns"><section><h4>Bản gốc</h4><p>{g.sourceText}</p></section><section><h4>Bản dịch</h4><p>{g.translatedText || 'Chờ tạo bản dịch nháp.'}</p></section></div>
-        {plan && !draft && !saved && i < groups.length - 1 && <Button variant="secondary" disabled={!canMutate || Boolean(busy)} onClick={() => merge(i)}>Gộp với cụm tiếp theo</Button>}
+        {plan && !draft && !saved && !customerMode && i < groups.length - 1 && <Button variant="secondary" disabled={!canMutate || Boolean(busy)} onClick={() => merge(i)}>Gộp với cụm tiếp theo</Button>}
       </Card>)}
       {legacy && <><p>Bản dịch đã lưu theo định dạng phân đoạn cũ, giữ nguyên dữ liệu.</p>{legacy.rows.map(row => <Card key={row.source.id}><div className="group-translation-columns"><section><h3>Bản gốc</h3><p>{row.source.text}</p></section><section><h3>Bản dịch</h3><p>{row.translation?.translatedText ?? 'Chưa có bản dịch khớp nguồn.'}</p></section></div></Card>)}</>}
       {plan && !draft && !saved && <Card className="group-translation-review"><label><input type="checkbox" checked={planReviewed} disabled={!canMutate || Boolean(busy)} onChange={e => setPlanReviewed(e.target.checked)} /> Tôi đã kiểm tra và chấp nhận ranh giới các cụm nguồn.</label>
-        <Button disabled={blockGeneration || !canMutate || !planReviewed || Boolean(busy)} loading={busy === 'preview'} onClick={preview}>Xem trước bản dịch</Button>
+        <Button disabled={blockGeneration || !canMutate || !planReviewed || Boolean(busy) || (customerMode && (submitted || Boolean(attempt)))} loading={busy === 'preview'} onClick={preview}>{customerMode ? 'Dịch tiếng Anh' : 'Xem trước bản dịch'}</Button>
       </Card>}
-      {draft && <Card className="group-translation-review"><h2>Duyệt bản dịch nháp</h2><p>Hết hạn: {new Date(draft.expiresAt).toLocaleString('vi-VN')}. Nháp chỉ nằm trong bộ nhớ máy chủ; khởi động lại sẽ làm mất nháp. Không tự động dịch lại.</p>
+      {draft && <Card className="group-translation-review"><h2>Duyệt bản dịch nháp</h2><p>Hết hạn: {new Date(draft.expiresAt).toLocaleString('vi-VN')}. {customerMode ? 'Bản nháp được giữ theo yêu cầu dịch, chưa được duyệt và chưa dùng được cho Giọng đọc. Không tự động dịch lại.' : 'Nháp chỉ nằm trong bộ nhớ máy chủ; khởi động lại sẽ làm mất nháp. Không tự động dịch lại.'}</p>
         <p>So sánh ý nghĩa từng cụm và toàn câu, tên riêng, số và địa chỉ. Kiểm tra nội dung bị thêm/bỏ và cách diễn đạt tiếng Anh. Kiểm tra cấu trúc không chứng minh bản dịch đúng tuyệt đối.</p>
         <label><input type="checkbox" checked={reviewed} disabled={!canMutate || Boolean(busy)} onChange={e => setReviewed(e.target.checked)} /> Tôi đã kiểm tra ngữ nghĩa và chấp nhận bản dịch này.</label>
         <div className="group-translation-actions"><Button disabled={!canMutate || !reviewed || Boolean(busy)} loading={busy === 'approve'} onClick={approve}>Duyệt và lưu bản dịch</Button>

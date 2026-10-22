@@ -1,0 +1,8 @@
+{
+  "mongoUri": "<dedicated read-only MongoDB URI; never execution credentials>",
+  "databaseName": "multilingual_ai_narration",
+  "expectedSrvHost": "<verified SRV host>",
+  "expectedReplicaSet": "<verified replica set>",
+  "jwtAccessSecret": "<existing access verification secret supplied securely outside repository>",
+  "corsOrigins": ["http://localhost:5173"]
+}

@@ -51,6 +51,15 @@ export class GroupDraftStore {
     return structuredClone(await promise);
   }
   private expired() { return new AppError(410, 'TRANSLATION_DRAFT_EXPIRED', 'Bản nháp đã hết hạn hoặc máy chủ đã khởi động lại. Không tự động dịch lại.'); }
+  restore(draft: GroupDraft) {
+    this.prune();
+    if (!Number.isFinite(Date.parse(draft.expiresAt)) || Date.parse(draft.expiresAt) <= this.clock()) throw this.expired();
+    if (Buffer.byteLength(JSON.stringify(draft)) > 128 * 1024 || (!this.drafts.has(draft.draftId) && this.drafts.size >= this.capacity)) throw new AppError(503, 'TRANSLATION_DRAFT_CAPACITY', 'Bộ nhớ bản nháp đã đầy.');
+    if (this.drafts.has(draft.draftId)) return this.get(draft.draftId, draft.ownerId, draft.projectId);
+    this.drafts.set(draft.draftId, structuredClone(draft));
+    this.schedule(() => this.drafts.delete(draft.draftId), Math.max(1, Date.parse(draft.expiresAt) - this.clock()));
+    return structuredClone(draft);
+  }
   // Read-only observation: no prune, clone, TTL extension or cross-process claim.
   inspectConflicts(projectId: string, targetLanguage: string) {
     let count = 0;

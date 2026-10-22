@@ -1258,3 +1258,456 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - Real Gemini metadata/generation 0/0; development/production DB writes 0;
   real permit provisioning/claims 0; no source data/session/secret changes,
   global activation, dependencies, commit or push. Existing uncommitted work retained.
+
+## AI-TRANSLATE-05.8.4P.1 — Safe read-only Web readiness
+
+- Implemented standalone READ_ONLY_WEB_READINESS server/app/policy + separate
+  Dockerfile/Compose/minimal unusable example/README. No PERMIT inheritance/mounts,
+  provider/fence/translation imports or mutation routes. Health + authenticated
+  CUSTOMER-owned project GET and CORS OPTIONS only; executionAllowed always false.
+- Strict read-only Mongo effective privilege proof, database/SRV/replica identity,
+  autoCreate/autoIndex=false before model imports. No real refresh/Gemini secrets;
+  unrelated auth implementation reused, unused ephemeral local refresh config only.
+- Isolated synthetic in-memory fixtures/localhost HTTP and privilege guards tested.
+  Combined mock regression 20/20 PASS, no skips; no Mongo integration/write fixture
+  creation claimed. Backend lint/typecheck/build, Compose config (unusable non-secret
+  example only) and git diff --check PASS. No Customer UI/source data or credentials modified.
+- Live authenticated readiness/CORS BLOCKED: READ_ONLY_WEB_CREDENTIALS_FILE unset
+  and conventional private minimal file absent. No runtime started and no execution
+  credentials reused. Need separately supplied read-only DB principal + access JWT
+  verification secret; do not create DB accounts/roles under no-write scope.
+- Files: backend/src/controlled-development/read-only-web-{app,policy,server}.ts,
+  backend/tests/read-only-web-readiness.test.ts; infra/backend-web-readiness/
+  {Dockerfile,compose.yaml,read-only-web.example.json,README.md}; docs/API/UI/PROGRESS.
+- Gemini requests 0, DB writes 0, real permit issuance/claims/storage access 0;
+  global activation 0; no commit/push. Existing unrelated changes preserved.
+
+## AI-TRANSLATE-05.8.4Q — Normal Customer automatic authorization/idempotency
+
+- Implementation/mock PASS; real activation PARTIAL/BLOCKED pending new ledger
+  Mongo replica-set integration. Normal JWT/CUSTOMER/ownership API now supports
+  server-derived vi->en GROUPS_V1 draft without per-project permits. Both Customer
+  rollout flags ship OFF; existing global GROUPS_V1 remains OFF. P.1 and operator
+  controlled execution code/config/secrets/storage are not modified by Q.
+- Durable translationattempts _id claims, immutable source/input/plan/config binding,
+  majority+journal before provider, persisted bounded draft recovery with original
+  UUID/expiry. Crashes/timeouts/ambiguous claims stay spent, no retry/reclaim/TTL
+  deletion. Source limits unchanged and checked again before SDK stages. Old
+  ordinary preview blocked during rollout to avoid another generation path.
+- Provisional bounded rollout: 3 attempts/user/day, 20 globally/day, 2 active/process
+  and 1/user/process. Counter failure overreserves rather than refunds, external
+  calls cannot exceed acknowledged quota. Not a production load/memory guarantee.
+- Existing Group workspace and review/approval reused; same-origin normal POST,
+  no JWT export/readiness dependency, retry=false, no automatic generation/approve/
+  TTS/render. Legacy alignment safety preserved when rollout OFF. Configured normal
+  Gemini model unchanged, DEFAULT thinking unchanged; controlled MEDIUM unaffected.
+- Focused Backend 45/45 mocked tests PASS (12 new ledger/service/auth tests), no
+  skips. Full Web 293/293 PASS. Backend/Web lint/typecheck/build and diff-check
+  PASS; existing Vite chunk warning unchanged. Native Mongo
+  claim/quota operations tested with mocks, NOT claimed integration PASS. No real
+  source preflight, browser, provider, runtime restart or isolated DB run in Q.
+- Files: backend models/TranslationAttempt.ts, services/translation/{customer-attempt,
+  customer-scope,group-translation.service,group-draft-store,gemini-group-translation.
+  provider}.ts, controller/route/validator translation changes, backend .env.example,
+  tests/customer-{attempt,translation}.test.ts; frontend TranslationPage,
+  GroupTranslationWorkspace, groupTranslationService, .env.example and
+  tests/customer-translation.test.mjs; docs API/UI/PROGRESS. Existing unrelated work
+  preserved; no extra readiness-account provisioning or dependency changes.
+- Gemini calls 0, development/production/all real DB writes 0, real permit
+  provisioning/claims 0, commit/push NO. Before first billable action: run new
+  isolated-ledger/approval-race tests, configure/verify deployment caps/provider
+  access and thinking choice, enable only Customer rollout flags explicitly,
+  authenticated project source recheck, click normal Dịch tiếng Anh once, review
+  DRAFT only. No per-project permit/readiness service required.
+
+## AI-TRANSLATE-05.8.4R — Consolidated integration PASS; real execution BLOCKED
+
+- Dedicated Mongo 8.0.17 narration-test-rs /127.0.0.1:27029 test deployment verified
+  by existing isolation guard before fixtures. Consolidated new Customer test 9/9
+  PASS, no skips: durable majority claim, 16 duplicates, quota user3/global20,
+  separate Node-process draft recovery retaining UUID/expiry with no new dispatch,
+  provider failure, lost insert/save acknowledgement, approval rollback/revision
+  race, atomic duplicate approval and MEDIUM serialization through installed SDK.
+  Exact synthetic fixture/quota cleanup PASS; no dev/production fixture writes.
+- Added explicit CUSTOMER_TRANSLATION_THINKING=DEFAULT|MEDIUM support for ordinary
+  Customer provider, serialized config verification and thinking in immutable
+  attempt binding. Default unchanged, no live config changed. Existing controlled
+  MEDIUM/fence and P.1 untouched. Focused mock regression 45/45 PASS; final Backend
+  lint/typecheck/build and git diff --check PASS. Test replica stopped after exact
+  fixture cleanup (its initial state was stopped); volume retained.
+- Live read-only DB source: target 6ad8fef53f42eeadef99b7ad still READY/revision1,
+  265 segments/26821 bytes/22 groups/ordered coverage265, all three expected hashes
+  MATCH, owner record ACTIVE CUSTOMER, English records0/active jobs0, deployment
+  identity MATCH. Authenticated current session NOT VERIFIED; other-process RAM
+  drafts UNKNOWN. Private key PRESENT/model configured match, provider access not
+  contacted. Ordinary Backend health200, Customer/global flags OFF, current live
+  thinking not MEDIUM; flags/settings not modified because mandatory session gate
+  did not pass.
+- Computer Use initialization/list_apps worked, but window inspection was stopped
+  by tool because current Chrome URL could not be determined sufficiently to enforce
+  policy. No subsequent app input, JWT extraction/manufacture or alternate auth
+  bypass. Thus no enabling rollout, real Customer dispatch or claimed Web draft.
+- R files: backend/tests/customer-mongodb.integration.ts, helpers/customer-recovery.
+  worker.ts, gemini-group-translation.provider.ts, group-translation.service.ts,
+  backend/.env.example (nonsecret DEFAULT only), docs/API.md and docs/PROGRESS.md.
+- Real Gemini metadata/generation0/0, real draft NOT CREATED, real approval/TTS/
+  rendering0, development/production writes0, real permit claims0, commit/push NO.
+  Isolated test DB writes occurred only for disposable fixtures and were cleaned.
+  Need accessible authenticated Web session, fresh source/conflicts, explicitly
+  select MEDIUM with existing limits, enable Customer flags and click once; never
+  use a copied token or bypass the existing JWT/ownership middleware.
+
+## AI-TRANSLATE-05.8.4S — execution lifecycle fix (2026-10-22)
+
+- Confirmed code defect: durable claim preceded quota/provider, but no catch
+  persisted failure phase or code. Expected AppError responses were not logged by
+  the general error handler. Thus source/quota/config/provider/output/save errors
+  all left CLAIMED, and subsequent reads returned the same generic 409. The
+  original historical failure and provider receipt cannot be reconstructed from
+  that row alone; no retrospective claim that Gemini was or was not called.
+- Added versioned durable pre-dispatch CAS phases, sanitized failure terminal
+  states/logs, and fail-closed SDK fetch boundary. Legacy claim is never upgraded,
+  reset or rearmed. Current project 6ad8fef53f42eeadef99b7ad remains untouched;
+  no safe automatic recovery is demonstrated for its missing draft/UNKNOWN call.
+- Transient source reads recover once, lost save acknowledgements recover by GET
+  or one idempotent save of identical validated draft bytes. No provider/claim/
+  quota retry, quota refund, cap increase or configuration/feature-flag change.
+- Existing authenticated Customer draft GET now exposes sanitized execution state.
+  Web blocks generation for every existing attempt across refresh, explains
+  uncertain results in Vietnamese and offers GET-only result checks. No manual
+  permit required for normal new-project flow; approval remains explicit.
+- Safe mock regression and isolated Mongo integration exercised actual source,
+  durable phases, draft reload/restart, quota, duplicate/concurrent requests,
+  timeout/response failures, lost acknowledgements, approval rollback/races and
+  ownership. Only synthetic isolated fixtures were written and exactly cleaned.
+  Default `npm test` Backend suite was not used because it includes development
+  DB-writing tests; focused mock regression is used instead.
+- S file scope: TranslationAttempt.ts; customer-attempt.ts; new customer-execution.ts;
+  gemini-group-translation.provider.ts; group-translation.service.ts;
+  translation.controller.ts; customer-attempt/customer-execution/customer-translation
+  tests and customer-mongodb.integration.ts; GroupTranslationWorkspace.tsx;
+  groupTranslationService.ts; new customerAttemptPresentation.mjs/.d.mts;
+  Web customer-translation.test.mjs and group-translation.test.mjs;
+  docs/API.md, UI.md, PROGRESS.md.
+- Real Gemini requests0; development/production writes0; real claim/permit resets0;
+  no source/project data changed, no approval/TTS/rendering, no commit/push.
+  New-project path is source/mock/integration verified, not live Gemini verified.
+- Final validation: Backend focused mock regression76/76; Web298/298; isolated
+  Customer + GROUPS_V1 Mongo integration26/26, skipped0, fixture cleanup PASS.
+  Backend and Web lint/typecheck/build PASS. Existing Vite dynamic/static import
+  chunk warning remains non-blocking. Browser NOT RUN; real provider NOT RUN.
+  Status: source/integration fix PASS; historical attempt recovery BLOCKED by
+  missing dispatch evidence/draft. No claim of successful real English translation.
+
+### Gemini translation failure follow-up (2026-10-22)
+
+- Live read-only Mongo verified new project 6ad95e93928d1af477ce1928 attempt
+  625927be...: UNCERTAIN, executionVersion1, GENERATION_DISPATCHING,
+  TRANSLATION_PROVIDER_ERROR, created00:54:19.840Z / failed00:54:29.920Z,
+  English records0 / durable draft0. Metadata stage had completed before generation
+  dispatch. Old project6ad8fef53f42eeadef99b7ad remains unversioned CLAIMED unchanged.
+- Confirmed error propagation defect: SDK numeric HTTP status survived provider
+  mapping but was discarded by GROUPS_V1 service AppError construction. Corrected
+  with sanitized TranslationProviderFailure and numeric providerHttpStatus in
+  durable failure update/logging. Diagnostic acknowledgement now reflects matched
+  CAS rather than assuming a write matched. No raw SDK errors or provider text saved.
+- STT and translation both use process.env.GEMINI_API_KEY.trim() and installed
+  @google/genai2.28.0. STT uses gemini-3.5-transcribe Files+interactions.create;
+  translation uses gemini-3.8-flash models.get then generateContent/v1beta with JSON
+  schema, output8192, timeout120s and no provider retries. Key unchanged/PRESENT.
+  STT success alone does not establish translation model access, quota or valid
+  generation response. Official model reference confirms gemini-3.8-flash exists:
+  https://ai.google.dev/gemini-api/docs/generate-content/whats-new-gemini-3.8
+- Actual generation failure's historical HTTP status/body is unavailable: cannot
+  assert invalid JSON schema, HTTP400, provider5xx, quota/billing or a common
+  provider outage as root cause. No speculative model/key/configuration changes.
+  Current backend/.env Customer flag OFF/thinkingDEFAULT; live localhost8080 health
+  unreachable at inspection. These are current observations, not proof of the
+  environment used by the prior generation. No service was started or flag enabled.
+- No old attempts reset/retried, no real Gemini calls, DB writes0. Changes confined
+  to provider-failure.ts, group-translation.service.ts, customer-attempt.ts,
+  TranslationAttempt.ts, focused customer-translation tests and API/PROGRESS docs.
+- Single focused regression run75/75 PASS, skipped0, including actual installed
+  SDK mocked HTTP400/402/500/503 through service and attempt persistence arguments;
+  one metadata+generation per new synthetic source, replay blocked and private
+  response details absent from public errors/logs. Backend lint/typecheck/build
+  and git diff --check PASS. Real translation remains unverified/blocked, not fixed
+  by changing an API key or replaying an uncertain attempt.
+
+### Translation + quota one-pass follow-up (2026-10-22)
+
+- Live reads only: owner quota3/3, global3/20 for UTC2026-10-22. Besides the named
+  old CLAIMED and project6ad95e93928d1af477ce1928 UNCERTAIN, the same owner has
+  project6ad95da1efb6fc8dbf637a71 UNCERTAIN/GENERATION_DISPATCHING (00:50Z).
+  These account for the three conservative reservations. None stores historical
+  providerHttpStatus; cannot infer HTTP400/503 or a configuration fix from absence.
+- Latest project6ad9c7c733d690c49e84b719 is FAILED_PRE_DISPATCH/PREPARING with
+  TRANSLATION_DAILY_LIMIT at08:23:20.578Z (15:23:20 Vietnam), NOT another Gemini
+  failure. It has no draft/English record and no provider dispatch. No new HTTP
+  evidence exists because quota correctly stopped that request first.
+- Confirmed quota defects corrected for future attempts: reservation moved from
+  unconditional claim-time to provider boundary, and sequential owner/global
+  increments replaced with one atomic transaction including per-attempt receipt.
+  Config/source failures consume0; global denial cannot burn owner quota; duplicates
+  cannot count twice. Unknown quota commits/no receipt acknowledgement never send
+  provider. Daily caps3/20 and UTC day unchanged. No live counters/claims refunded,
+  reset, modified or migrated; no API key/model/provider change without evidence.
+- Validation: focused Backend regression80/80 PASS; lint/typecheck/build PASS.
+  Isolated Mongo integration BLOCKED this run: Docker Engine named pipe absent.
+  Integration tests updated for real reservation receipts, pre-dispatch0 and
+  global-cap rollback, but NOT claimed executed against a replica set this run.
+  No development/production fallback; DB writes0, Gemini calls0, commit/push NO.
+  Live Gemini root cause remains UNKNOWN. Do not make more attempts/projects to
+  bypass quota or replay any historical claim. New quota transaction behavior
+  remains pending isolated integration verification before claiming runtime ready.
+
+### Quota replica-set integration completed (2026-10-22)
+
+- Docker Engine29.9.2 available. Dedicated mongo8.0.17/narration-test-rs at
+  127.0.0.1:27029 verified by existing strict guard before fixture writes;
+  multilingual_ai_narration_groups_test only, no development fallback.
+- Existing combined Customer+GROUPS_V1 integration26/26 PASS. Added two direct
+  quota regressions and reran affected Customer suite12/12 PASS; GROUPS_V1 remains
+  16/16 PASS. Injected receipt-write failure rolled back BOTH owner/global counters
+  before mock dispatch. Five distinct concurrent attempts for one owner admitted
+  exactly3, wrote3 receipts, counted3 globally, and reread/restart added0. Sixteen
+  duplicate ledger instances admitted1; receipt/day persisted. Global-cap denial
+  rolled back owner insertion. Source/revision/approval transaction regressions PASS.
+- Exact synthetic fixture and quota-key cleanup PASS; no database/volume drops.
+  No production code defect found in this validation. Changes this follow-up:
+  tests/customer-mongodb.integration.ts and docs/PROGRESS.md only.
+- Offline actual .env inspection: gemini / gemini-3.8-flash, thinkingDEFAULT,
+  keyPRESENT, SDK2.28.0; Customer flagOFF, global GROUPS_V1 flagOFF. SDK mock verifies
+  explicit MEDIUM, maxOutputTokens8192, metadata1/generation1 and no retries.
+  Timeout120s unchanged. These validate configuration/serialization, NOT live
+  provider model access/quota/availability or success of a real translation.
+- Historical live attempts/counters unchanged. Real Gemini calls0; development/
+  production writes0; no real permit/claim/retry/reset, no feature activation,
+  no TTS/render or commit/push. Historical provider failure still UNKNOWN because
+  its HTTP status was never saved; this validation does not manufacture that evidence.
+- Next real call requires available legitimate daily quota, loaded corrected
+  Backend/Web, explicit Customer activation/approval, a verified current source
+  with no existing attempt/conflicts, then ONE manual English translation click.
+  Do not replay CLAIMED/UNCERTAIN or the existing failed attempts or create projects
+  to bypass quota. Stop at validated draft; no automatic approval/provider retry.
+
+### Configurable Customer quotas — replace Q trial constants
+
+- Removed fixed3/user/day and20/global/day from normal runtime. Backend variables
+  CUSTOMER_TRANSLATION_DAILY_USER_LIMIT / CUSTOMER_TRANSLATION_DAILY_GLOBAL_LIMIT
+  default20/200, validate positive integer ranges1..1000 /1..10000. No unlimited
+  sentinel; bad settings fail before a fresh claim/charge/dispatch. Same policy
+  should be deployed across workers. Per-request policy snapshot avoids mid-request
+  configuration drift; old attempt binding and persisted counters stay unchanged.
+- Finite attempt reservations constrain activity but are not a USD billing cap.
+  Per-call source/output/timeout/response caps, process concurrency and no retries
+  unchanged. No real flags/model/key/credentials or backend/.env were modified.
+  .env.example documents settings. Raising limits cannot replay old attempts;
+  no historical counter/claim reset, refund, source mutation or real Gemini call.
+- Small3/20 limits now exist only as explicit test-process overrides. Added parser/
+  invalid-config/no-replay regression and isolated integration showing four
+  independent owned projects work with normal defaults and are charged only once.
+- Consolidated validation: Backend focused83/83 PASS; isolated Customer+GROUPS_V1
+  Mongo integration29/29 PASS (skipped0); exact fixture cleanup PASS; Backend lint,
+  typecheck, build and git diff --check PASS. New default test completed4 distinct
+  project drafts using mocks, with4 reservations and0 duplicate charges on reload.
+  No application production defect observed during integration. No Web source
+  changes. Real Gemini0, development/production writes0, no reset or commit/push.
+
+## Translation HTTP 400 request-contract check — 2026-10-22
+
+- Historical failure cause remains UNKNOWN beyond confirmed HTTP400. Actual
+  installed SDK2.28.0 serialization matches documented v1beta generateContent,
+  JSON schema output, model identifier and DEFAULT/explicit MEDIUM configuration.
+  No evidence justifies changing model, key, thinking or payload parameters.
+  STT shares the API key but uses a different model and interactions endpoint;
+  STT success does not prove generateContent succeeds.
+- Added bounded, allowlisted HTTP400 status/reason/parameter-root extraction,
+  propagated through existing provider/service failure mapping into the existing
+  durable attempt failure record and safe log. No raw body, descriptions, prompts,
+  headers, credentials or arbitrary field paths retained. Absent details remain
+  UNSPECIFIED. Existing claims/quota/source/API contract unchanged.
+- Regression covers real SDK mock serialization, local output validation,
+  sanitization/bounds/schema persistence validation and mock SDK→service→attempt
+  propagation with no retry. No real provider or database calls used.
+- Existing uncertain attempts remain untouched and cannot be safely replayed.
+  Future eligible attempts retain safety guards, but historical400 resolution
+  cannot be claimed without specific provider evidence. No automatic real test.
+- Validation:83 existing regression tests PASS;6 new tests PASS after fixing the
+  MEDIUM test fixture to enable its test-only Customer scope (initial run88/89).
+  Backend lint, typecheck, build and git diff --check PASS. Initial sandbox test
+  launch was blocked by Windows spawn EPERM; mock-only suite ran outside sandbox.
+  Real Gemini calls0, database writes0, attempt resets0, commit/pushNO.
+
+## Gemini fallback preparation and400/503 guidance — 2026-10-22
+
+- Primary remains gemini-3.8-flash; configurable candidate fallback defaults to
+  gemini-3.6-flash. PRIMARY default, FALLBACK explicit server-only pre-attempt
+  selection. No automatic switch/retry. Selected model captured in durable binding
+  and async scope so configuration drift cannot dispatch a different model.
+  Old attempt keys/claims/quota and controlled permit workflow unchanged.
+- Added distinct safe initial error and authenticated status/Web guidance for
+  HTTP400/503, without exposing internal diagnostic bodies or raw errors. Reload
+  remains GET-only. No UI generation unlock or frontend fallback selection.
+- Official docs checked:400 may be malformed request/API version or unmet
+  regional/billing prerequisites;503 availability. Actual billing/access cannot
+  be inferred from documentation or the earlier503. Historical400 root cause
+  remains UNKNOWN; no speculative payload/model/API-key change implemented.
+- Validation: initial focused Backend91/96 (four subtests plus parent failed due
+  to missing inspect mock); corrected only the new test fixture, affected file6/6
+  PASS on rerun. All96 focused cases now verified across runs. Web299/299 PASS.
+  Backend/Web lint, typecheck, build PASS; Vite existing mixed static/dynamic import
+  advisory remains. Browser NOT RUN. No Mongo integration run needed for config/
+  safe-read mapping; all persistence mocked, no DB connection or writes.
+- Real `.env`/credentials/rollout flags unchanged. Gemini calls0, database writes0,
+  old attempt resets/retries0, commit/pushNO. Real execution requires separate
+  approval and a fresh eligible source/attempt, not replay of any uncertain record.
+
+## S26.3 — GEMINI_SIMPLE_V1
+
+- Implemented optional server-selected normal Customer method, GROUPS_V1 default
+  retained. Reuses existing SDK/transport, pre-dispatch fences, transactional quota,
+  source verifier/group planner and durable draft pipeline. No new API/provider
+  fallback or Web mutation route. SIMPLE omits schema/MIME/thinking configuration,
+  requests JSON in its instruction and validates strictly with original local
+  schema, exact IDs/order/count/nonempty translations and STOP finish reason.
+- Bound method/model before claim/dispatch; changing method cannot rearm any old
+  attempt. Existing GROUPS_V1 binding unchanged. Controlled/legacy paths unaffected.
+  Source IDs/timestamps/revision/digests remain derived from immutable source.
+- Small-source one-generation scope:32 groups,2000 UTF-8 bytes/group,12000 JSON
+  input bytes; general96KiB/10000 source limits also retained. Larger input rejected
+  before claim, never silently truncated or partially translated. No long-video
+  multi-call batching or fake timestamps. Conservative bytes≠exact token budget.
+- Focused Backend113/113 PASS,0 skipped; tests include one/multiple groups,
+  malformed JSON/markdown, missing/duplicate/wrong/reordered IDs, empty/truncated
+  response,400/429/503, timeout/response overflow, DEFAULT-only thinking, method
+  drift, durable replay across method switch, quota/auth/source and GROUPS_V1
+  regression. Initial lint found prefer-const in new test, corrected. Backend
+  lint/typecheck/build PASS. No Web files changed; existing UI handles validated
+  drafts/errors and duplicate-submit guard. Browser/live verification NOT RUN.
+- No real Gemini calls, MongoDB connections/writes, rollout activation, key change,
+  attempt reset, commit/push. Real successful S26 plain-text diagnostic does NOT
+  prove this new JSON-instruction strategy works live. Requires separate request
+  approval, fresh eligible owned CURRENT source, quota/model/access verification
+  and runtime restart after explicit method configuration. Stop at draft review.
+
+## S26.6 — SIMPLE Customer integration validation
+
+- PASS on isolated MongoDB8.0.17 replica set narration-test-rs, loopback27029,
+  database multilingual_ai_narration_groups_test. Existing isolation guard verified
+  explicit URI/database, distinct development endpoint, Docker image/project/
+  volume/network, PRIMARY and host/container process identity before fixture writes.
+- Added real SDK fetch-mock + JWT HTTP + real isolated Mongo coverage to existing
+  customer-mongodb.integration.ts. Three synthetic source groups preserve exact
+  source IDs/order/timestamps/revision/digest. Draft survives status GET and duplicate
+  POST without another provider call. reviewed=false cannot approve; explicit
+  reviewed=true atomically creates one READY translation and TRANSLATED project.
+  Source digest unchanged. No automatic approval in application flow.
+- Missing groups/malformed JSON produce FAILED_RESPONSE with no draft; timeout/
+  HTTP503 produce UNCERTAIN with no draft. Duplicate POST returns409 without SDK
+  redispatch, each attempt has exactly one test quota reservation. Test-specific
+  caps raised only within this synthetic subtest and restored; actual .env untouched.
+  Existing suite verifies JWT/ownership, quota transaction rollback, concurrency,
+  restart recovery, approval/edit race and legacy GROUPS_V1 behavior.
+- Validation: isolated Customer integration14/14 PASS, Backend mock113/113 PASS,
+  Web mock299/299 PASS;0 skipped. Backend/Web lint/typecheck/build PASS. Existing
+  Vite static/dynamic import advisory remains. Browser rendering NOT RUN; Web
+  validation is mock/source regression, not live browser proof. diff-check PASS.
+- Exact fixture cleanup PASS; only run-owned IDs/counters removed, no database or
+  volume drop. Test Mongo stopped afterwards (initial state stopped), volume kept.
+  Development/production connections/writes0; real Gemini0. Test-only Gemini key,
+  metadata/generation responses and English content synthetic. No real key/model/
+  .env change, old attempt reset, Customer activation, commit or push.
+- Remaining: real multi-group generation quality/token usage and live Customer
+  browser flow are unverified. One-group S26.5 success plus isolated integration
+  do not establish production reliability. Real test requires separate approval,
+  fresh owned CURRENT source within SIMPLE limits, no conflicting attempts,
+  quota/API access and explicit SIMPLE+DEFAULT configuration. Normal Customer
+  provider includes one metadata GET plus one generation POST; a POST-only approval
+  still cannot authorize that full path. No real execution initiated here.
+
+## S26.12 — Customer SIMPLE preflight
+
+- Implemented development-only GET simple-preflight, JWT/CUSTOMER/ownership and
+  no-store; reused bounded source/planner and shared exact provider-input builder
+  with SIMPLE runtime validation. No alternate source serialization or cap change.
+  Reports CURRENT/revision/digest/counts/byte sizes/coverage without private text.
+- Durable attempt, saved English and active project jobs read-only checks plus
+  RAM-draft PROCESS_LOCAL_ONLY/other-process UNKNOWN. Source digest checked twice
+  to detect drift. Does not authorize or reserve a future request.
+- Quota read/deployment attestation contract absent: explicitly NOT VERIFIED and
+  overall BLOCKED/generationAuthorized=false. Safe actual serving-process method/
+  Customer flag/DEFAULT-thinking are returned, not disk-only configuration guesses.
+- Added user-click-only Customer Web panel in both Translation branches. Existing
+  session/API GET, no token export/refresh/retry, timeout/unmount/double-click guards.
+  No generation, mutation or auto-enablement, and no dependency or route redesign.
+- Mock validation: Backend initial100/101, Web302/303; fixed new empty-fullText
+  boundary fixture and obsolete JSX-wrapper assertion only. Affected Backend4/4
+  and Web6/6 PASS on rerun; all101 Backend and303 Web cases verified across runs.
+  Includes JWT/ADMIN/non-owner/production rejection, source boundaries, UNCERTAIN,
+  unknown quota/deployment, fail-closed forged responses and accessible SSR.
+  Backend/Web lint/typecheck/build and git diff --check PASS. Browser/live GET
+  NOT RUN. Existing Vite mixed static/dynamic import advisory unchanged.
+- Files: customer-simple-preflight service/test; project.routes; shared SIMPLE
+  payload builder + group service call sites; CustomerSimplePreflight component,
+  simplePreflightView module/declaration/test, TranslationPage and adjusted Web
+  regression assertion; existing diagnostic route regression; API/UI/PROGRESS docs.
+- Gemini0, MongoDB connections/writes0 (all models/network mocked); old attempts/
+  quota/transcripts unchanged, no .env/restart/rollout/commit/push. User can perform
+  authenticated GET on bom dan manually after source is loaded by their runtime;
+  no live status for that project has been fabricated. Stop before real execution.
+
+## S26.13 — final evidence contracts (not real translation activation)
+
+- Extended existing authenticated development simple-preflight GET, preserving
+  JWT/CUSTOMER/ownership/no-store. Added read-only existing quota ledger observation
+  using current configuration/UTC keys; no new quota or attempt system. Missing
+  counters0 used, malformed data/errors fail NOT VERIFIED. No claim/reservation.
+- Added actual serving Mongoose connection hello observation with opaque database/
+  replica membership fingerprint and ephemeral instance ID. VERIFIED observation
+  is distinct from intended-target operator approval (still NOT VERIFIED). No URI,
+  names/hosts or credentials returned. No separate database connection created.
+- Project/owner/en durable-attempt existence across revisions is read cross-process;
+  arbitrary RAM-only drafts in other processes cannot be inspected. Overall
+  cross-process safety remains UNKNOWN/BLOCKED, no fake global CLEAR, no shared
+  registry or broad infrastructure added. Preflight never enables generation.
+- Backend31/31 relevant mock tests PASS,0 skipped; lint/typecheck/build/diff-check
+  PASS. Covers quota config/missing/full/corrupt rows, no writes, scoped durable
+  conflicts, live-connection mock fingerprint/no secrets and independent errors.
+  No Frontend source change; S26.12 panel stays conservative; new evidence visible
+  through existing authenticated Network response. No live Customer GET/session
+  available to validate bom dan quota or deployment, so live values NOT VERIFIED.
+- Files: new preflight-runtime-evidence.ts + test; customer-simple-preflight.ts +
+  test; API/PROGRESS documentation. No runtime .env/restart/model/key/flags changes.
+  Real Gemini0; MongoDB connections/writes0 (tests mock DB reads); no old attempts
+  modified/reset; commit/pushNO. Remaining: user-initiated authenticated GET,
+  intended-deployment approval and other-process RAM uncertainty; no automatic
+  Customer enablement or real translation initiated.
+
+## S26.18 — fix preflight aggregation
+
+- Confirmed root cause: constant BLOCKED/generationAuthorized=false plus unconditional
+  deployment/RAM reason codes; Web also rejected every status except BLOCKED and
+  hardcoded unknown evidence. Replaced aggregation with concrete BLOCKED vs missing
+  mandatory-evidence UNKNOWN vs computed scoped READY. GET generationAuthorized
+  remains false deliberately (not a dispatch permit); readyForManualExecution true
+  only for READY. No JWT/ownership/quota/durable execution guard changed.
+- Serving-connection observation now compares actual database name to explicitly
+  user-approved development target multilingual_ai_narration plus development mode
+  and Atlas member-host checks, not fingerprint alone. Wrong target is MISMATCH.
+  No URI/credentials returned, .env modified, source data changed or Mongo connected
+  during validation. Named-target policy is not approval for production.
+- Other-process RAM remains UNKNOWN, now an explicit scoped-readiness warning,
+  never CLEAR. READY covers normal Customer durable path, not global/operator RAM
+  absence. Known attempts/drafts/jobs/English records, exhausted quota, source drift
+  or bounds/runtime failures remain blocking. Mandatory missing evidence UNKNOWN.
+- Web displays validated READY/BLOCKED/UNKNOWN, actual safe quota and target evidence;
+  no flag activation or generation/approval action. Mock regressions: Backend40/40,
+  Web304/304 PASS,0 skipped. Backend/Web lint/typecheck/build and diff-check PASS.
+  Existing Vite mixed-import advisory remains. Browser and live bom dan preflight
+  NOT RUN. No claim of current runtime READY while SIMPLE remains disabled.
+- Changed: customer-simple-preflight.ts, preflight-runtime-evidence.ts, both Backend
+  tests; simplePreflightView.mjs/declaration, CustomerSimplePreflight.tsx, Web test;
+  API/UI/PROGRESS docs. Skill ui-ux-pro-max informed non-misleading live status copy.
+  Gemini0, database writes/connections0; no attempts/reservations, .env change,
+  restart, commit/push. Can prepare separate configuration approval; not executed.

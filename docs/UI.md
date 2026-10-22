@@ -1497,3 +1497,100 @@ disabled buttons, live status text and isolated wrapping styles preserve layout.
 Browser/live generation NOT RUN. Mock regression/build results in PROGRESS.md.
 Skill ui-ux-pro-max informed explicit confirmation, contextual feedback, loading
 and disabled semantics; no redesign or new dependency.
+
+## AI-TRANSLATE-05.8.4P.1 — Read-only authenticated readiness composition
+
+No Customer UI edits. Existing manual “Kiểm tra quyền thực thi” consumes the new
+standalone readiness GET with the Customer session, execution UI stays OFF. Returned
+LOCKED means authenticated read-only mode, not an approved permit or CURRENT-source
+attestation. Initial controlled-status GET is intentionally unavailable/404; manual
+execution-readiness is the only project GET supported. No POST/login/refresh path.
+Live browser verification BLOCKED pending minimum private read-only Mongo/JWT config;
+mock HTTP CORS/auth results do not count as live session PASS.
+
+## AI-TRANSLATE-05.8.4Q — Normal Customer workflow (rollout OFF)
+
+`VITE_CUSTOMER_TRANSLATION_ENABLED=false` by default. When separately enabled with
+the Backend rollout, TranslationPage uses existing GROUPS_V1 workspace directly,
+after existing WorkflowRouteGuard decisions. P.1/read-only-diagnostic/controlled
+readiness are not mandatory gates. No per-project setup or operator permit UI.
+Existing en language catalog choice, source-group review and explicit cost
+confirmation precede “Dịch tiếng Anh”. Server generates final canonical plan;
+Customer rollout hides client-side group merging. No POST on mount/GET/reload.
+
+Normal same-origin API sends the existing session, with refresh/retry=false for
+generation. Double-submit and failed-request latch disable another generation;
+read-only reload recovers the matching persisted unexpired draft, never regenerates.
+Errors use existing alert region and explain data-only reload. Successful draft
+is not yet approved or usable by Voice; existing explicit semantic review and
+transactional approval remain separate. No automatic navigation/jobs/TTS/render.
+Other normal/legacy pages and controlled/P.1 operator entry points are preserved.
+
+Skill ui-ux-pro-max informed loading/error recovery and semantic feedback only;
+no redesign/theme changes. Browser NOT RUN. New ledger persistence remains subject
+to isolated Mongo integration before rollout; do not click a real billable action
+based solely on mocked tests. Normal provider thinking is its existing DEFAULT,
+not automatically changed to MEDIUM from the separate controlled experiment.
+
+### S — Customer translation execution feedback
+
+Customer workspace uses the existing authenticated customer-draft GET to display
+server-derived attempt state alongside any validated durable draft. Existing
+attempts (including legacy CLAIMED/UNCERTAIN) prevent offering a new generation
+after browser refresh; network/POST errors keep the one-submit latch. Recovery
+button checks results using GET with refresh/retry=false, never AI regeneration.
+Vietnamese feedback distinguishes preparing/not sent, processing, persisted
+unapproved draft, definite pre-dispatch failure, failed response, expired draft
+and uncertain dispatch. UNCERTAIN explicitly says not to click Translate again
+and to seek support for the first request. Unknown server states fail closed.
+Draft copy now correctly distinguishes persisted Customer drafts from RAM-only
+ordinary GROUPS_V1 drafts. Explicit semantic approval remains separate; no
+automatic approval, TTS, rendering, permit, new readiness service or redesign.
+ui-ux-pro-max informed semantic status/error feedback and safe recovery guidance.
+Browser/live playback/generation verification: NOT RUN in S.
+
+S26.6: Web mock regression299/299 PASS for existing Customer draft/status/error,
+GET-only recovery, one-submit latch and separate review/approve controls. No Web
+source/layout changes required for SIMPLE (draft alignment format stays GROUPS_V1).
+Isolated Backend JWT HTTP integration additionally verifies three-group draft GET
+and explicit approval contract. Real browser rendering and real multi-group Gemini
+display remain NOT RUN; no Customer flag automatically enabled.
+
+### S26.12 — SIMPLE preflight on Customer Translation
+
+Development Translation page now includes “Kiểm tra điều kiện SIMPLE” in both
+normal Customer and existing legacy/preflight branches, after workflow access
+checks. Open `/projects/:projectId/translation?language=en`, then click
+“Kiểm tra SIMPLE (không gọi AI)”. No check runs on mount/polling. Uses existing
+authenticated API client GET with refresh/retry=false, timeout15s, double-click
+lock and abort-on-unmount. Production hides the panel; Backend rejects production.
+
+Shows CURRENT, revision, shortened digest, counts, source/input UTF-8 bytes and
+largest group, SIMPLE limits, coverage, attempt/conflicts, process-local RAM
+visibility and safe runtime method/flags. Quota and deployment identity show
+NOT VERIFIED; overall BLOCKED cannot be turned into READY by source PASS. Existing
+generation controls/flags/ownership/workflow remain independent and unchanged.
+No action enables translation, approves a draft, creates a project or invokes AI.
+Semantic status/live region plus labelled definition list; existing visual tokens
+reused. ui-ux-pro-max informed explicit error/recovery and read-only status copy.
+Browser verification NOT RUN; mock/SSR coverage only.
+
+S26.18 supersedes fixed BLOCKED/NOT VERIFIED presentation: SIMPLE panel now shows
+server READY/BLOCKED/UNKNOWN after validating readiness evidence, actual safe quota
+remaining and target match. READY includes the other-process RAM UNKNOWN warning
+and never enables/clicks translation or claims global RAM clearance. Status remains
+semantic live text (ui-ux-pro-max feedback guidance); no layout redesign or new
+execution action. Missing/contradictory READY evidence is rendered BLOCKED. Browser
+verification NOT RUN; Web304/304 mock tests PASS.
+
+### Customer provider400/503 feedback — 2026-10-22
+
+Existing authenticated attempt status now supplies only a safe numeric provider
+HTTP status when400/503 evidence exists. Vietnamese status messages distinguish
+request rejection (request/API permissions/billing need checking; cause unknown)
+from temporary503 availability. Both retain the no-retry/no-model-switch warning
+and existing GET-only recovery action. Unknown/legacy rows do not invent HTTP
+evidence. No model selector, mutation/retry button, layout or theme change added.
+ui-ux-pro-max error-clarity/semantic-feedback guidance informed the copy; existing
+status/live regions are preserved. Browser verification NOT RUN; mock Web tests299
+PASS, lint/typecheck/production build PASS.

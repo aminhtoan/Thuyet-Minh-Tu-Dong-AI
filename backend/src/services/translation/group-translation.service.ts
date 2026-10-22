@@ -14,8 +14,16 @@ import { boundedTextProjection, collectBoundedSource, sourceTooLarge, SOURCE_SEG
 import type { GroupAdmission } from './group-admission.js';
 import { scopedGroupAdmission } from './group-source-scope.js';
 import { assertControlledRequest, assertControlledSource, controlledScopeActive, controlledReadinessActive } from './controlled-development.js';
+import { customerScopeActive, withCustomerTranslation, withCustomerModel, withCustomerMethod } from './customer-scope.js';
+import { customerTranslationMethod } from '../../config/customer-translation-method.js';
+import { assertSimpleInput, translationProviderInput } from './gemini-simple-contract.js';
+import { customerTranslationModel } from '../../config/translation-model.js';
+import { customerAttempts } from './customer-attempt.js';
+import { recoverCustomerRead } from './customer-execution.js';
+import { TranslationProviderFailure, providerFailureMessage } from './provider-failure.js';
+import { ProcessingJob } from '../../models/ProcessingJob.js';
 
-function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true' && !controlledScopeActive()) throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
+function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true' && !controlledScopeActive() && !customerScopeActive()) throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
 const exists = () => new AppError(409, 'TRANSLATION_ALREADY_EXISTS', 'Ngôn ngữ này đã có bản dịch. Không ghi đè bản dịch hiện có.');
 export async function loadSource(projectId: string, session: ClientSession | null = null, admission?: GroupAdmission): Promise<SourceSnapshot> {
@@ -87,10 +95,13 @@ export class GroupTranslationService {
     return project;
   }
   private async context(projectId: string, ownerId: string, targetLanguage: string, session: ClientSession | null = null) {
-    const project = await this.authorizedProject(projectId, ownerId, targetLanguage, session);
-    const source = await loadSource(projectId, session, this.admission);
-    if (source.languageCode !== project.sourceLanguage || source.languageCode === targetLanguage) throw mismatch();
-    return source;
+    const read = async () => {
+      const project = await this.authorizedProject(projectId, ownerId, targetLanguage, session);
+      const source = await loadSource(projectId, session, this.admission);
+      if (source.languageCode !== project.sourceLanguage || source.languageCode === targetLanguage) throw mismatch();
+      return source;
+    };
+    return customerScopeActive() && !session ? recoverCustomerRead(read) : read();
   }
   async plan(projectId: string, ownerId: string, targetLanguage: string) {
     enabled(); const lease = this.admission?.operationLease(ownerId);
@@ -103,8 +114,66 @@ export class GroupTranslationService {
     } finally { lease?.release(); }
   }
   async preview(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {
+    if (customerScopeActive() && !controlledScopeActive()) {
+      const source = await this.context(projectId, ownerId, body.targetLanguage);
+      if (source.languageCode !== 'vi' || body.targetLanguage !== 'en' || revision(source) !== body.sourceRevision || body.groupingVersion !== GROUPING_VERSION) throw mismatch();
+      const groups = validatePlan(source, body.groups);
+      if (groups.length > 1000 || await Translation.exists({ projectId, targetLanguage: 'en' }) || await ProcessingJob.exists({ projectId, status: { $in: ['QUEUED', 'PROCESSING'] } })) throw new AppError(409, 'TRANSLATION_CONFLICT', 'Dự án có dữ liệu hoặc tác vụ xung đột.');
+      const input = translationProviderInput(source, 'en', groups);
+      const model = customerTranslationModel().model;
+      const method = customerTranslationMethod();
+      if (method === 'GEMINI_SIMPLE_V1') {
+        assertSimpleInput(input);
+        if ((process.env.CUSTOMER_TRANSLATION_THINKING ?? 'DEFAULT') !== 'DEFAULT') throw new AppError(503, 'TRANSLATION_NOT_CONFIGURED', 'Dịch đơn giản yêu cầu thinking DEFAULT.');
+      }
+      const bindingParts = [source.transcriptRevision, revision(source), digest(input), digest(input.groups.map(g => g.groupId)), model, process.env.CUSTOMER_TRANSLATION_THINKING ?? 'DEFAULT', 8192, 120000, 0];
+      // Preserve historical GROUPS_V1 binding bytes. Same attempt key blocks method switching.
+      const binding = digest(method === 'GROUPS_V1' ? bindingParts : [...bindingParts, 'gemini', method]);
+      const draft = await customerAttempts.execute({ ownerId, projectId, targetLanguage: 'en', sourceRevision: revision(source) }, binding,
+        () => withCustomerModel(model, () => withCustomerMethod(method, () => this.previewInternal(projectId, ownerId, { ...body, idempotencyKey: 'server-derived' }))));
+      const after = await this.context(projectId, ownerId, 'en');
+      if (revision(after) !== revision(source)) throw mismatch();
+      assertStoredGroups(source, draft.groups);
+      if (draft.outputDigest !== outputDigest(revision(source), 'en', draft.groups) || draft.transcriptRevision !== source.transcriptRevision || draft.transcriptId !== source.transcriptId || draft.sourceLanguage !== source.languageCode || draft.groupingVersion !== GROUPING_VERSION) throw mismatch();
+      return this.store.restore(draft);
+    }
     const work = () => this.previewInternal(projectId, ownerId, body);
     return this.admission ? this.admission.operation(ownerId, work) : work();
+  }
+  async customerGenerate(projectId: string, ownerId: string) {
+    if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
+    if (customerActive.size >= 2 || customerActive.has(ownerId)) throw new AppError(429, 'TRANSLATION_CAPACITY_EXHAUSTED', 'Đang có yêu cầu dịch. Chỉ tải lại dữ liệu, không tự thử lại.');
+    customerActive.add(ownerId);
+    try { return await withCustomerTranslation(async () => {
+      const plan = await this.plan(projectId, ownerId, 'en');
+      return this.preview(projectId, ownerId, { targetLanguage: 'en', sourceRevision: plan.sourceRevision, groupingVersion: plan.groupingVersion,
+        groups: plan.groups.map(g => g.sourceSegmentIds), idempotencyKey: 'server-derived' });
+    }); } finally { customerActive.delete(ownerId); }
+  }
+  async customerDraft(projectId: string, ownerId: string) {
+    if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
+    return withCustomerTranslation(async () => {
+      // Viewing/recovering a draft/approval receipt must not regress workflow or
+      // require mutation permission after the project has advanced.
+      if (!await Project.findOne({ _id: projectId, userId: ownerId }).select('_id')) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
+      const source = await loadSource(projectId);
+      if (source.languageCode !== 'vi') throw mismatch();
+      const draft = await customerAttempts.read({ ownerId, projectId, targetLanguage: 'en', sourceRevision: revision(source) });
+      if (!draft) return null;
+      assertStoredGroups(source, draft.groups);
+      if (draft.transcriptRevision !== source.transcriptRevision || draft.transcriptId !== source.transcriptId || draft.sourceLanguage !== source.languageCode || draft.groupingVersion !== GROUPING_VERSION || draft.outputDigest !== outputDigest(revision(source), 'en', draft.groups)) throw mismatch();
+      return this.store.restore(draft);
+    });
+  }
+  async customerState(projectId: string, ownerId: string) {
+    if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
+    return withCustomerTranslation(async () => {
+      if (!await Project.findOne({ _id: projectId, userId: ownerId }).select('_id')) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
+      const source = await loadSource(projectId);
+      if (source.languageCode !== 'vi') throw mismatch();
+      const attempt = await customerAttempts.inspect({ ownerId, projectId, targetLanguage: 'en', sourceRevision: revision(source) });
+      return { draft: attempt?.status === 'DRAFT_SAVED' ? await this.customerDraft(projectId, ownerId) : null, attempt };
+    });
   }
   private async previewInternal(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {
     if (controlledReadinessActive()) throw new AppError(503, 'CONTROLLED_PROVIDER_DENIED', 'Readiness does not authorize generation.');
@@ -122,9 +191,12 @@ export class GroupTranslationService {
       if (groups.length > 1000 || Buffer.byteLength(JSON.stringify(source)) > (this.admission?.policy.sourceBytes ?? SOURCE_BYTE_LIMIT)) throw new AppError(413, 'TRANSLATION_DRAFT_TOO_LARGE', 'Bản ghi vượt giới hạn dịch theo cụm.');
       if (await Translation.exists({ transcriptId: source.transcriptId, targetLanguage: body.targetLanguage })) throw exists();
       // One active/result request per owner/project/target/revision. New keys cannot bypass retry safety during TTL.
-      const input = { fullText: source.fullText, sourceLanguage: source.languageCode, targetLanguage: body.targetLanguage, groups: groups.map(g => ({ groupId: g.groupId, sourceText: g.sourceText })) };
+      const input = translationProviderInput(source, body.targetLanguage, groups);
       try {
-        const output = await this.provider.translate(input);
+        const output = await this.provider.translate(input, customerScopeActive() ? async () => {
+          const current = await this.context(projectId, ownerId, body.targetLanguage);
+          if (revision(current) !== body.sourceRevision || current.transcriptRevision !== transcriptRevision || await ProcessingJob.exists({ projectId, status: { $in: ['QUEUED', 'PROCESSING'] } })) throw mismatch();
+        } : undefined);
         const validated = mapGroupResponse(JSON.stringify({ outcome: 'translated', groups: output }), input);
         const translated = groups.map((g, i) => ({ ...g, translatedText: validated[i]!.translatedText }));
         return { ownerId, projectId, transcriptId: source.transcriptId, transcriptRevision, sourceLanguage: source.languageCode, targetLanguage: body.targetLanguage,
@@ -133,7 +205,9 @@ export class GroupTranslationService {
         if (error instanceof AppError) throw error;
         const code = error instanceof GeminiTranslationError ? error.code : 'TRANSLATION_PROVIDER_ERROR';
         const messages: Record<string, string> = { TRANSLATION_NOT_CONFIGURED: 'Dịch vụ dịch chưa được cấu hình.', TRANSLATION_INVALID_KEY: 'Khóa dịch vụ dịch không hợp lệ.', TRANSLATION_MODEL_UNAVAILABLE: 'Model dịch không khả dụng.', TRANSLATION_QUOTA_EXCEEDED: 'Dịch vụ dịch đã hết hạn mức.', TRANSLATION_TIMEOUT: 'Dịch vụ dịch phản hồi quá lâu.', TRANSLATION_NETWORK_ERROR: 'Không kết nối được dịch vụ dịch.', TRANSLATION_MAPPING_FAILED: 'Không thể ánh xạ các cụm dịch.', TRANSLATION_INVALID_RESPONSE: 'Dịch vụ dịch trả về dữ liệu không hợp lệ.' };
-        throw new AppError(code === 'TRANSLATION_NOT_CONFIGURED' ? 503 : 502, code, (messages[code] ?? 'Không thể xem trước bản dịch.') + ' Không tự động gọi lại AI.');
+        const httpStatus = error instanceof GeminiTranslationError ? error.httpStatus : undefined;
+        const diagnostic = error instanceof GeminiTranslationError ? error.diagnostic : undefined;
+        throw new TranslationProviderFailure(code === 'TRANSLATION_NOT_CONFIGURED' ? 503 : 502, code, providerFailureMessage(httpStatus, diagnostic) ?? (messages[code] ?? 'Không thể xem trước bản dịch.') + ' Không tự động gọi lại AI.', httpStatus, diagnostic);
       }
     }, this.admission ? { ownerId, controller: this.admission } : undefined);
     const current = await Transcript.findOne({ _id: draft.transcriptId, projectId }).select('_id revision');
@@ -220,3 +294,4 @@ export class GroupTranslationService {
   }
 }
 export const groupTranslationService = new GroupTranslationService();
+const customerActive = new Set<string>(); // Per-process, held until underlying work settles, not client disconnect.

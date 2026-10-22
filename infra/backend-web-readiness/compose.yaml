@@ -1,0 +1,38 @@
+name: narration-read-only-web-readiness
+services:
+  readiness:
+    build:
+      context: ../../backend
+      dockerfile: ../infra/backend-web-readiness/Dockerfile
+    image: narration-read-only-web-readiness:local
+    container_name: narration-read-only-web-readiness
+    hostname: narration-read-only-web-readiness
+    command: [node, --max-old-space-size=256, --import, tsx, src/controlled-development/read-only-web-server.ts]
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m,uid=1000,gid=1000,mode=0700"]
+    ports: ["127.0.0.1:18083:8084"]
+    environment:
+      NODE_ENV: development
+      CONTROLLED_RUNTIME_MODE: READ_ONLY_WEB_READINESS
+    secrets:
+      - source: readiness
+        target: read-only-web.json
+    healthcheck:
+      test: [CMD, node, -e, "require('http').get('http://127.0.0.1:8084/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+    logging:
+      driver: json-file
+      options: {max-size: "2m", max-file: "2"}
+secrets:
+  readiness:
+    file: "${READ_ONLY_WEB_CREDENTIALS_FILE:?Explicit minimal read-only credential file required}"

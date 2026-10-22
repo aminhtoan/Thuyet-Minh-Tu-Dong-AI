@@ -599,3 +599,385 @@ Browser sends existing session Bearer token directly to the dedicated loopback
 origin, never exports it. New Web POST has zero refresh/retry/fallback; any failed,
 malformed or disconnected POST is conservatively UNCERTAIN and locks resubmission.
 Only read-only status/draft recovery is allowed pending operator investigation.
+
+## AI-TRANSLATE-05.8.4P.1 — Independent read-only Web readiness
+
+Standalone `READ_ONLY_WEB_READINESS` executable/composition, not PERMIT. Only health
+and `GET /api/projects/:id/translations/execution-readiness` plus CORS OPTIONS exist.
+GET reuses JWT/CUSTOMER/ownership and returns LOCKED/executionAllowed=false,
+authentication=CUSTOMER_VERIFIED, ownership=VERIFIED, projectId and safe explicit
+NOT_PERFORMED/NOT_INSPECTED/UNKNOWN source/permit/draft limitations. It never returns
+READY or provision/claim status. It does not create a translation plan or inspect
+real permit storage. All non-GET methods return 405, unknown GET 404. Exact local
+origin allowlist; requests from disallowed Origin return 403 without CORS approval.
+
+Dedicated minimum private configuration excludes Gemini and real refresh secrets;
+effective MongoDB principal privileges must be proven read-only/database-scoped by
+connectionStatus or startup fails. autoCreate/autoIndex=false, no mutation routes,
+provider/fence imports or PERMIT mounts. See infra/backend-web-readiness/README.md.
+Mock fixtures PASS is not live Customer or deployment privilege verification.
+
+## AI-TRANSLATE-05.8.4Q — Normal CUSTOMER English translation
+
+Normal API origin and existing JWT/CUSTOMER/project ownership middleware only.
+No readiness service, per-project operator permit, controlled-origin proxy or token
+export is required. P.1 and controlled operator APIs remain separate and unchanged.
+Deployment rollout `CUSTOMER_TRANSLATION_ENABLED=false` ships OFF; no real provider
+calls are enabled by this implementation. `GROUP_TRANSLATION_ENABLED` stays OFF.
+
+When rollout is explicitly enabled, normal `POST /api/projects/:id/translations`
+with `{targetLanguage:"en",format:"GROUPS_V1"}` (format optional when rollout ON)
+derives the canonical plan/source/input/config binding server-side and returns
+`{success:true,data:{draft}}`, not an APPROVED/READY Translation. No client digest,
+permit or idempotency key is authoritative. Other languages fail explicitly in this
+rollout; legacy alignment guard is unchanged when rollout OFF. Old ordinary preview
+POST is rejected while this rollout is ON, preventing an alternate unprotected path.
+Plan/draft/approve remain authenticated normal APIs with the same source/provenance
+and manual approval rules. `GET .../translations/customer-draft/en` restores only
+an existing matching unexpired validated draft, never calls AI. Missing is null;
+CLAIMED/ambiguous is 409, expired is 410, not permission to regenerate.
+
+New `translationattempts` collection uses SHA256 _id of owner/project/target/source
+as the built-in unique dispatch claim. Source <=98304 bytes/10000 segments, exact
+coverage <=1000 groups, active jobs/English records checked before claim. Input/
+plan/source revision/model/config hash is immutable per claim. Majority+journal
+acknowledged insert precedes all provider work. Duplicate _id observes saved DRAFT
+or fails closed; uncertain writes/timeouts/crashes never retry. No TTL/deletion or
+claim reset/reclaim implementation. Uncertain outcome must be investigated, not
+fixed by editing/deleting the ledger. Durable draft JSON <=128 KiB is stored before
+return, revalidated against current source on retrieval and restores original
+draft UUID/expiry after restart. Human approval still uses existing transaction.
+
+Normal quotas are Backend-configurable, default20 reservations/user/UTC day and200
+globally/UTC day (see environment contract below), replacing the Q trial3/20.
+Both counters and the per-attempt receipt commit atomically before dispatch;
+no automatic refund on uncertainty. 2 active requests/process, 1/user/process held
+until work settles even after disconnect. These are anti-runaway bounds, NOT a
+guaranteed production memory/billing envelope. Claims do not expire when the day rolls.
+Storage grows and requires a separately designed retention policy preserving replay
+protection. No unbounded automatic retries or provider-call budget is introduced.
+
+Normal Gemini provider/model selection remains existing configuration (default
+gemini-3.8-flash); thinkingConfig remains omitted/DEFAULT, NOT controlled MEDIUM.
+No model/mode substitution. maxOutputTokens=8192, timeout=120s, bounded response
+128 KiB, at most 1 metadata +1 generation per claimed attempt, redirects denied,
+SDK retries disabled with fetch-level duplicate guard. Source/owner/job checks
+repeat before each SDK stage and revision checked after output. Concurrent edits
+can invalidate billed work; stale draft never becomes CURRENT/READY. No external
+transaction can undo provider billing. No automatic approval/TTS/rendering.
+
+Activation gate: isolated replica-set tests for this NEW ledger/quota implementation
+(including process restart/ambiguous claim/save acknowledgements and concurrent
+requests) plus full source/approval races must PASS before enabling real calls.
+Prior controlled permit integration does not verify this collection. No migration,
+index/collection setup, development DB write or real translation was run here.
+
+### R — consolidated integration and explicit MEDIUM
+
+`CUSTOMER_TRANSLATION_THINKING` now supports explicit DEFAULT (unchanged default)
+or MEDIUM only in the normal Customer scope; unknown values reject. MEDIUM uses
+installed SDK ThinkingLevel.MEDIUM and is verified in serialized POST configuration.
+Thinking is included in durable attempt binding, so changing it cannot replay an
+existing source attempt under a different config. Model/provider and 8192 token,
+120s, 128 KiB response limits, zero retry and dispatch count guards are unchanged.
+Controlled operator provider/settings are untouched. No actual .env or rollout
+flags were changed in R, and no actual Gemini API request was made.
+
+Opt-in `tests/customer-mongodb.integration.ts` uses the existing strict Docker +
+Mongo isolation guard, only explicit test URI/database, no development fallback.
+Real majority claims/quota updates, concurrent instances, separate Node-process
+recovery, actual GROUPS_V1 approval transaction rollback/race and SDK MEDIUM mocks
+PASS (9/9). Exact fixture IDs/quota keys cleaned; no database or volume dropped.
+Live authenticated browser execution remains blocked by browser automation stopping
+because it could not establish current Chrome URL safely. DB owner-record inspection
+does not replace authenticated CUSTOMER ownership; rollout remains OFF until that
+precondition can be completed through the existing Web session without JWT export.
+
+### S — durable Customer execution and read-only recovery
+
+Normal authenticated `POST /api/projects/:id/translations` keeps CUSTOMER ownership,
+canonical source/config binding, quota, limits and no provider retry. New attempts
+have `executionVersion=1` and durable phases PREPARING, METADATA_DISPATCHING,
+METADATA_RECEIVED, GENERATION_DISPATCHING, GENERATION_RECEIVED, SAVING. Dispatch
+phase CAS requires majority+journal acknowledgement before SDK fetch. A dispatch
+marker means MAY HAVE SENT, not proof of provider receipt. Failure state is
+FAILED_PRE_DISPATCH (no external dispatch in this execution), FAILED_RESPONSE
+(generation returned but draft processing/persistence failed), or UNCERTAIN.
+Only allowlisted codes, phase and hashed attempt ID are logged; no raw errors,
+headers, credentials, transcript, translation or provider response are logged.
+If diagnostic storage fails, the original durable claim/fence is retained and
+the sanitized terminal record reports diagnosticSaved=false.
+
+`GET /api/projects/:id/translations/customer-draft/en` now returns
+`{ draft, attempt }`. Attempt metadata contains status, phase, diagnosticCode,
+updatedAt and canGenerate=false. Status: NOT_SENT, PROCESSING, DRAFT_SAVED,
+EXPIRED, FAILED_PRE_DISPATCH, FAILED_RESPONSE, UNCERTAIN. Old unversioned CLAIMED
+rows and processing older than 180 seconds are observed as UNCERTAIN without
+updating them. Ownership is checked before source/attempt reads. Draft content
+still passes the existing source/group/provenance checks before returning.
+GET does not claim, extend expiry, fix data, call providers or authorize retries.
+
+Recovery is deliberately narrow: transient Mongo source READ errors are retried
+once; ambiguous draft save acknowledgement is checked by read, then at most one
+CAS save of the same validated bytes (never another generation). Quota/claim
+writes, SDK metadata/generation, errors with possible provider dispatch and old
+claims are never replayed/reset/refunded. Failures before provider are diagnosed,
+but terminal attempts are not automatically rearmed after restart/config changes.
+No migration/backfill or manual project permit was introduced.
+
+### Preserve provider HTTP failure evidence
+
+GROUPS_V1 service errors now retain a sanitized numeric providerHttpStatus through
+TranslationProviderFailure (AppError subclass) into the attempt failure CAS.
+Previously GeminiTranslationError.httpStatus was discarded at the service boundary;
+HTTP400/402/500/503 all became TRANSLATION_PROVIDER_ERROR without durable detail.
+Only integer HTTP400..599 is persisted, never SDK message/body/headers. Terminal
+logs derive a fixed reason from this number. Customer HTTP contract remains the
+existing sanitized code/message; no retry/reset or provider setting change.
+HTTP response evidence is not proof that generation completed or that billing
+did/did not occur; uncertain attempts remain spent. Existing rows are not backfilled.
+
+### Quota reservation correction — no historical refund
+
+Quota is a conservative provider-attempt reservation, NOT a count of successful
+drafts or proof of billing. New execution reserves only at the first metadata
+dispatch boundary, after provider config and source verification and after the
+durable fence. A claim/config/source failure alone no longer consumes quota.
+Both configured Customer/global daily increments plus the attempt's quotaReserved /
+quotaDay receipt commit in one Mongo transaction (snapshot, majority+journal).
+Global-cap rejection rolls back any owner increment. A matching receipt is
+idempotent; duplicate claim/dispatch cannot count again. No provider work occurs
+inside the transaction or its database-only retry callback. An ambiguous quota
+commit blocks dispatch, never triggers a quota refund or provider retry.
+Quota periods are UTC. Existing counters and uncertain claims are unchanged.
+No bulk reconciliation/backfill/reset is performed. A reserved attempt can still
+fail before actual network dispatch (e.g. crash/ambiguous commit); receipt and
+phase distinguish reservation from successful generation. No automatic refund.
+
+### Configurable normal Customer quota (supersedes the Q trial 3/20 caps)
+
+Backend environment controls daily reservations:
+
+| Environment | Default | Accepted range |
+| --- | --- | --- |
+| CUSTOMER_TRANSLATION_DAILY_USER_LIMIT | 20 | 1..1000 |
+| CUSTOMER_TRANSLATION_DAILY_GLOBAL_LIMIT | 200 | 1..10000 |
+
+These are finite count-based cost/safety budgets, not a guaranteed USD billing cap.
+Explicit zero, negative, fractional, infinite, empty or malformed settings fail
+closed with503 CUSTOMER_TRANSLATION_QUOTA_INVALID before a new claim/provider call.
+Omitted variables use defaults. Configure the same values across all Backend
+workers, then reload/restart them; do not rely on .env edits affecting an already
+running process. Per-request quota policy is snapshotted before claim. Request
+body/query cannot override it. Existing UTC daily counters remain in use, so
+earlier reservations still count; no reset/migration/refund is needed or performed.
+An increased policy permits additional eligible NEW attempts but NEVER rearms a
+failed/CLAIMED/UNCERTAIN attempt, changes source binding or triggers AI by itself.
+JWT/ownership, atomic quota receipts, replay protection, source96KiB, output8192,
+response128KiB, timeout120s, concurrency guards and zero provider retry remain.
+
+### Translation HTTP 400 evidence (2026-10-22)
+
+New provider failures may retain an internal `providerDiagnostic` alongside
+`providerHttpStatus` in TranslationAttempt and the existing safe failure log.
+For HTTP 400 only, the SDK JSON error message is parsed transiently within16KiB;
+only allowlisted status/reason enums and recognized request parameter roots from
+Google RPC ErrorInfo/BadRequest details are retained. Maximum4 reasons/8 roots;
+arbitrary messages, descriptions, metadata, nested field names and response bodies
+are never retained. Missing/unstructured details yield `UNSPECIFIED`, not a
+guessed cause. This is not exposed as a Customer API payload. Existing public
+error codes, quota, dispatch fences and UNCERTAIN/no-replay behavior are unchanged.
+No old attempt is backfilled, reset or retried.
+
+The installed2.28.0 SDK mock serialization checks v1beta generateContent,
+application/json + responseJsonSchema (not simultaneous responseSchema), output8192,
+and DEFAULT omission / explicit MEDIUM thinking. These forms are documented by
+[Gemini structured output](https://ai.google.dev/gemini-api/docs/generate-content/structured-output)
+and the [generateContent reference](https://ai.google.dev/api/generate-content).
+No particular parameter causing the historical400 has been established. Unsupported
+JSON Schema annotations are documented as ignored; removing them or switching
+models without evidence would not constitute a confirmed fix.
+
+### Explicit Customer fallback preparation (2026-10-22)
+
+Normal Customer configuration (server environment only, never request body):
+
+```dotenv
+GEMINI_TRANSLATION_MODEL=gemini-3.8-flash
+GEMINI_TRANSLATION_FALLBACK_MODEL=gemini-3.6-flash
+CUSTOMER_TRANSLATION_MODEL_SELECTION=PRIMARY
+```
+
+PRIMARY is the default. FALLBACK is an explicit operator choice before a NEW
+eligible attempt; an empty fallback disables that choice. Invalid selection/model
+fails before a new claim. No exception/status/timeout ever selects another model.
+The selected model is snapshotted in async request context and included in the
+durable binding for both metadata and generation. Changing configuration cannot
+rearm, reset or replay an existing attempt; quota and durable source key unchanged.
+This policy does not alter controlled execution/permit or legacy model selection.
+Timeout120s, output8192, transport128KiB and zero retries remain unchanged.
+The real `.env`, API key and rollout flags were not changed by this preparation.
+
+Authenticated Customer state GET now optionally returns safe `providerHttpStatus`
+(400/503 or null) alongside attempt status; old records without evidence return
+null. No raw diagnostics/permit/credential fields are exposed. Initial POST errors
+and Web state reloads distinguish rejected400 from temporarily unavailable503;
+neither enables retry or model switch. Public application codes/statuses remain
+unchanged (provider failures still use the existing502 envelope).
+
+Google documents malformed requests/API-version issues as400 INVALID_ARGUMENT,
+and regional/free-tier prerequisites requiring billing as400 FAILED_PRECONDITION;
+503 UNAVAILABLE indicates service availability, not evidence of invalid billing.
+See [official API error guidance](https://ai.google.dev/gemini-api/docs/generate-content/api-errors).
+The [3.6 Flash model page](https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash)
+confirms the identifier and structured-output support; documentation does not
+establish access/billing for this API key. Account prerequisites remain unverified:
+check the key's AI Studio/Cloud project, API access/restrictions, billing/credits,
+regional eligibility and model quota/access without changing the working key.
+Historical400 cause remains unknown. No provider/API/account calls made here.
+
+Before another real request: separately authorize it, confirm the chosen model,
+thinking and cost limits, verify service/account prerequisites and fresh source/
+ownership/conflicts/quota. Use only an eligible NEW attempt or a separately
+approved synthetic diagnostic; never retry an existing uncertain attempt.
+
+### S26.3 — GEMINI_SIMPLE_V1 (mock-validated, not live-verified)
+
+Normal Customer translation may select a server-only method before a new attempt:
+
+```dotenv
+CUSTOMER_TRANSLATION_METHOD=GEMINI_SIMPLE_V1
+CUSTOMER_TRANSLATION_THINKING=DEFAULT
+```
+
+Default remains GROUPS_V1. No client/body method override or silent fallback.
+Existing model configuration/explicit PRIMARY vs FALLBACK selection is reused;
+default gemini-3.8-flash with SDK2.28.0/v1beta. SIMPLE refuses non-DEFAULT thinking.
+Same fenced transport, metadata check, one generation, timeout120s, output8192,
+response128KiB, zero retries, JWT/CUSTOMER/ownership and transactional quota.
+No responseJsonSchema, responseSchema, responseMimeType or thinkingConfig is sent.
+
+SIMPLE reuses the canonical source snapshot and phrase-candidate grouping (source
+IDs/order/timestamps untouched). A JSON-only instruction asks for exact groupIds
+and translatedText; native structured output is NOT requested. Local strict Zod
+schema and exact count/order/unique-ID checks are unchanged. No markdown stripping,
+JSON repair, guessed alignment, partial save or automatic re-generation allowed.
+Draft storage/alignment format remains GROUPS_V1 so existing review, explicit
+approval and provenance consumers work unchanged; method is execution strategy,
+not a new persisted alignment format or a one-to-one word translation capability.
+
+Conservative single-call admission: at most32 groups, each sourceText≤2000 UTF-8
+bytes, entire GroupProviderInput JSON≤12000 UTF-8 bytes (including fullText/context).
+General source limits96KiB/10000 segments still apply. Over limit returns413
+TRANSLATION_SIMPLE_INPUT_LIMIT before a new claim/quota/provider call; content is
+not truncated. Long individual segments are rejected, not split with invented
+timestamps. No multi-request batching is introduced; groups are sent together in
+one bounded request. These byte caps are NOT exact token estimates or guarantees
+against output truncation; any non-STOP/invalid/missing output fails closed.
+
+Model+method are snapshotted before dispatch and included in immutable binding.
+Historical GROUPS_V1 binding bytes remain unchanged; SIMPLE appends provider and
+method to its binding. Attempt key is deliberately unchanged across methods, so
+switching configuration cannot retry/reset an existing failed/uncertain attempt.
+No real settings/API key changed and no new readiness service/manual permit needed.
+Use the existing Customer draft endpoint/viewer and explicit manual approval.
+
+### S26.12 — authenticated SIMPLE preflight (read-only)
+
+`GET /api/projects/:id/translations/simple-preflight` is development-only and uses
+the existing JWT, CUSTOMER RBAC and requireProjectOwner middleware. The service
+also checks ownership. Responses are no-store, with no transcript/translation
+text, raw draft, URI, credential or permit fields. No source mutation, attempt
+creation/claim, quota reservation, provider dispatch or token refresh is performed.
+
+Uses bounded loadSource, candidateGroups and the shared translationProviderInput
+projection also used by the Customer generation service, then assertSimpleInput.
+Reports vi CURRENT/revision/canonical digest, segment/group counts, exact UTF-8
+bytes for canonical source JSON and provider input JSON (different measurements),
+largest group bytes and ordered coverage. Source digest is rechecked after reads.
+Limits are imported from runtime validation, not new/increased limits.
+
+Checks the durable source-scoped attempt (any existing attempt blocks, including
+UNCERTAIN/DRAFT/expired), saved English translations, all QUEUED/PROCESSING project
+jobs, and process-local RAM draft count. Other-process RAM drafts remain UNKNOWN.
+Read-only inspection neither cleans TTL nor changes attempt/quota data. Evidence
+is a point-in-time observation, not atomic execution permission.
+
+Safe runtime method, Customer enabled flag and DEFAULT-thinking boolean come from
+the Backend process serving the GET. No deployment attestation or quota-read API
+contract is available here: quota and deploymentIdentity explicitly NOT VERIFIED.
+Therefore status is always BLOCKED and generationAuthorized=false, even for valid
+source/no conflicts. This endpoint cannot enable generation or bypass any guard.
+Errors produce safe reason codes; no provider errors/bodies or source text logged.
+
+### S26.13 — read-only quota and serving deployment evidence
+
+The SAME development-only JWT/CUSTOMER/ownership-protected simple-preflight GET
+now additionally returns `quotaEvidence`, `runtime.deploymentEvidence` and
+`crossProcess`. No new public/admin endpoint, permit or database writer is added.
+
+`quotaEvidence` reads the existing TranslationAttempt QUOTA counter documents for
+the authenticated owner and current UTC day plus the global UTC day, majority
+read concern and numeric projection/limit2. It reuses customerTranslationQuota
+configuration, reports finite user/global remaining/limits and available boolean.
+Missing counter means0 used; malformed kind/count, bad policy, UTC day rollover
+or read errors fail closed to NOT VERIFIED. No upsert, quota session/reservation,
+claim, refund, cleanup, index creation or old-attempt modification occurs. Remaining
+capacity is only a point-in-time observation, never a promise against concurrency.
+
+Deployment evidence uses hello on the default Mongoose connection used by
+TranslationAttempt, requires connected replica-set PRIMARY, and hashes actual
+database name+replica set+sorted members into an opaque fingerprint. A random
+in-memory instanceId distinguishes serving processes. It exposes no MongoDB URI,
+host, raw set/database name, key or credential. VERIFIED means actual serving
+connection observed, NOT operator approval of the intended target. That separate
+`intendedTargetApproval` stays NOT VERIFIED. A matching fingerprint across reads
+is evidence of identity consistency, not a cryptographic attestation/trust anchor.
+
+Cross-process check reads only existence of owner/project/en durable attempts
+across ALL source revisions. It may report CLEAR for that durable ledger scope,
+but RAM-only ordinary/controlled GROUPS_V1 drafts in another process remain UNKNOWN.
+No shared RAM registry exists. Consequently overall status remains BLOCKED and
+generationAuthorized=false, even if quota/deployment reads succeed. Do not treat
+changing source or method as a way to clear any existing attempt.
+
+The S26.12 Web presentation remains conservatively NOT VERIFIED for quota and
+deployment; inspect the authenticated GET response in Network for these added
+structured evidence fields. No Customer flag or UI generation authority changes.
+Live bom dan quota/deployment values were not read during implementation; mocks
+only. No read of application DB via operator privileges substitutes CUSTOMER API.
+
+### S26.18 — computed READY / BLOCKED / UNKNOWN
+
+Supersedes S26.12/13's unconditional BLOCKED and unconditionally unapproved target.
+readDeploymentIdentity now checks the actual serving database name equals the
+user-approved development database `multilingual_ai_narration`, NODE_ENV is
+development and every replica member is an Atlas mongodb.net hostname. Only then
+does intendedTargetApproval become APPROVED_BY_USER/approvedDatabaseMatch=true.
+Wrong database, non-Atlas membership or non-development remains MISMATCH. This is
+approval of the named development target, not cryptographic cluster attestation,
+provider access verification or production approval; fingerprint alone is not used.
+
+READY means NORMAL_CUSTOMER_DURABLE_PATH point-in-time readiness: owned vi CURRENT
+source, stable revision/digest, exact ordered coverage, all SIMPLE bounds pass,
+no current-source attempt, no owner/project English durable attempt across
+revisions, no saved English translation or active project job or local draft,
+verified quota available, observed approved target, method SIMPLE + Customer ON +
+DEFAULT thinking, Gemini provider and no controlled mode. Concrete conflict,
+quota exhaustion, source/limit failure, target mismatch or disabled runtime yields
+BLOCKED. Missing quota/deployment/durable/local-draft evidence yields UNKNOWN
+unless a concrete BLOCKED condition also exists. No UNKNOWN is rewritten CLEAR.
+
+Other-process RAM draft absence remains UNKNOWN and appears in warnings, separate
+from mandatory durable Customer evidence. READY does not claim global RAM absence:
+ordinary/operator RAM-only drafts may exist. Customer execution still uses the
+same durable key, source/conflict checks and transactional approval/unique target
+protection; no such guard changed. READY scope explicitly excludes global RAM
+clearance. A known conflict never becomes a warning. Execution must recheck guards;
+the GET reserves no capacity. generationAuthorized remains false even for READY,
+while readyForManualExecution is true: no permission is issued by a GET and no
+automatic provider dispatch/flag activation occurs.
+
+Frontend accepts all three states, validates evidence before displaying READY,
+shows verified quota/target and keeps RAM UNKNOWN warning. Existing translation
+buttons, feature flags, confirmation and idempotency are unchanged.

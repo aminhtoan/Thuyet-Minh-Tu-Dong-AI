@@ -17,12 +17,20 @@ import { narrationIdSchema, startNarrationSchema } from '../validators/narration
 import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
 import { updateTranscriptSegmentSchema } from '../validators/transcription.validator.js';
 import { readOnlyTranslationDiagnostic } from '../services/translation/read-only-diagnostic.js';
+import { customerSimplePreflight } from '../services/translation/customer-simple-preflight.js';
 import { AppError } from '../utils/app-error.js';
 import { successResponse } from '../utils/api-response.js';
 
 export function createProjectRouter(groups: Pick<typeof translationController, 'plan' | 'preview' | 'draft' | 'approve' | 'get'> = translationController) {
 const projectRouter = Router();
 projectRouter.use(authenticate, authorize('CUSTOMER'));
+projectRouter.get('/:id/translations/simple-preflight', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  if (process.env.NODE_ENV !== 'development') return next(new AppError(404, 'DIAGNOSTIC_NOT_AVAILABLE', 'Không tìm thấy kiểm tra.'));
+  next();
+}, requireProjectOwner, async (req, res) => {
+  res.json(successResponse(await customerSimplePreflight(req.ownedProjectId!, req.user!.id)));
+});
 projectRouter.get('/:id/translations/read-only-diagnostic', (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   if (process.env.NODE_ENV !== 'development') return next(new AppError(404, 'DIAGNOSTIC_NOT_AVAILABLE', 'Không tìm thấy chẩn đoán.'));
@@ -44,6 +52,7 @@ projectRouter.get('/:id/transcript', requireProjectOwner, transcriptionControlle
 projectRouter.patch('/:id/transcript/segments/:segmentId', validate(updateTranscriptSegmentSchema), requireProjectOwner, transcriptionController.updateSegment);
 projectRouter.post('/:id/translations', validate(startTranslationSchema), requireProjectOwner, translationController.start);
 projectRouter.get('/:id/translations', requireProjectOwner, translationController.list);
+projectRouter.get('/:id/translations/customer-draft/en', requireProjectOwner, translationController.customerDraft);
 projectRouter.get('/:id/translations/plan/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, groups.plan);
 projectRouter.post('/:id/translations/preview', validate(previewTranslationSchema), requireProjectOwner, groups.preview);
 projectRouter.get('/:id/translations/drafts/:draftId', validate(draftTranslationSchema), requireProjectOwner, groups.draft);

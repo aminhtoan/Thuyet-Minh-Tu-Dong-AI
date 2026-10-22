@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
+import { customerAttemptMessage } from '../src/features/translation/customerAttemptPresentation.mjs';
 const source = await readFile(new URL('../src/features/translation/GroupTranslationWorkspace.tsx', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 const groups = [{ groupId: 'a', sequence: 1, sourceSegmentIds: ['s1'], sourceText: 'Trường Tiểu học', translatedText: '', startTime: .8, endTime: 2 }, { groupId: 'b', sequence: 2, sourceSegmentIds: ['s2'], sourceText: 'ở tỉnh Vĩnh Long.', translatedText: '', startTime: 2, endTime: 3 }];
@@ -10,7 +11,7 @@ const plan = { projectId: 'project', sourceLanguage: 'vi', targetLanguage: 'en',
 const draft = { ...plan, state: 'DRAFT', alignmentFormat: 'GROUPS_V1', draftId: 'draft-id', outputDigest: 'digest', expiresAt: '2099-01-01T00:00:00Z', groups: groups.map(g => ({ ...g, translatedText: 'English text for ' + g.groupId })) };
 const saved = { ...draft, state: 'APPROVED', id: 'saved', fullText: 'English text', review: { method: 'MANUAL_V1' } };
 const flush = async () => { for (let i = 0; i < 25; i++) await Promise.resolve(); };
-function harness({ target = 'en', initialDraft = false, stored = null, restored = draft, confirm = true, catalog = [{ code: 'en', name: 'Tiếng Anh' }], preview = async () => draft, approve = async () => saved } = {}) {
+function harness({ target = 'en', initialDraft = false, stored = null, restored = draft, confirm = true, catalog = [{ code: 'en', name: 'Tiếng Anh' }], preview = async () => draft, approve = async () => saved, customerMode = false, customerState = async () => ({ draft: null, attempt: null }) } = {}) {
   const slots = [], refs = [], effects = []; let cursor = 0, refCursor = 0, effectCursor = 0, params = new URLSearchParams(initialDraft ? 'draft=draft-id' : ''), requests = 0, approvals = 0, restores = 0, fetches = 0, confirmCalls = 0;
   const jsx = (type, props) => ({ type, props });
   const react = {
@@ -21,6 +22,8 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
   const service = {
     async saved() { fetches++; return stored; }, async plan() { return structuredClone(plan); },
     async draft() { restores++; return structuredClone(restored); },
+    async customerState() { fetches++; return customerState(); },
+    async customerGenerate(...args) { requests++; return preview(...args); },
     async preview(...args) { requests++; return preview(...args); }, async approve(...args) { approvals++; return approve(...args); },
   };
   const exports = {};
@@ -29,6 +32,7 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'fragment' };
     if (name === 'react-router-dom') return { Link: 'a', useSearchParams: () => [params, value => { params = value; }] };
     if (name.includes('groupTranslationService')) return { groupTranslationService: service };
+    if (name.includes('customerAttemptPresentation')) return { customerAttemptMessage };
     if (name.includes('voiceService')) return { voiceService: { async getLanguages() { return catalog; } } };
     if (name.includes('projectRepository')) return { projectRepository: { async refresh() {} } };
     if (name.includes('transcriptService')) return { transcriptService: { async getTranscript() { return { segments: [], languageCode: 'vi' }; } } };
@@ -39,7 +43,7 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
   } });
   let tree;
   return {
-    render() { cursor = 0; refCursor = 0; effectCursor = 0; tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage: 'vi' }, preferredTarget: target, canMutate: true, notice: null }); for (const effect of effects) if (effect.action) { const fn = effect.action; effect.action = null; effect.cleanup = fn(); } return tree; },
+    render() { cursor = 0; refCursor = 0; effectCursor = 0; tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage: 'vi' }, preferredTarget: target, canMutate: true, notice: null, customerMode }); for (const effect of effects) if (effect.action) { const fn = effect.action; effect.action = null; effect.cleanup = fn(); } return tree; },
     async settle() { this.render(); await flush(); this.render(); },
     find(predicate) { function walk(value) { if (!value || typeof value !== 'object') return null; if (predicate(value)) return value; for (const child of [value.props?.children].flat(Infinity)) { const match = walk(child); if (match) return match; } return null; } return walk(tree); },
     text() { function walk(value) { if (typeof value === 'string') return value; if (!value || typeof value !== 'object') return ''; return [value.props?.children].flat(Infinity).map(walk).join(' '); } return walk(tree); },
@@ -48,6 +52,33 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
   };
 }
 const button = (h, label) => h.find(v => v.type === 'Button' && v.props.children === label);
+test('Customer refresh observes durable states, blocks generation and only checks GET results', async () => {
+  for (const status of ['NOT_SENT', 'PROCESSING', 'UNCERTAIN', 'FAILED_PRE_DISPATCH', 'FAILED_RESPONSE', 'EXPIRED']) {
+    const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status } }) });
+    await h.settle(); assert.match(h.text(), new RegExp(customerAttemptMessage({ status }).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.equal(button(h, 'Dịch tiếng Anh'), null); assert.equal(h.counts().requests, 0);
+    button(h, 'Kiểm tra kết quả (không gọi AI)').props.onClick(); await h.settle();
+    assert.equal(h.counts().requests, 0); assert.equal(h.counts().approvals, 0); h.unmount();
+  }
+});
+test('Customer explicit click submits once, shows durable draft and never auto-approves', async () => {
+  let finish; const h = harness({ customerMode: true, preview: () => new Promise(resolve => { finish = resolve; }) });
+  await h.settle(); assert.equal(h.counts().requests, 0);
+  h.find(v => v.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+  const send = button(h, 'Dịch tiếng Anh').props.onClick; const a = send(), b = send();
+  assert.equal(h.counts().requests, 1); finish(draft); await Promise.all([a, b]); await h.settle();
+  assert.match(h.text(), /Bản nháp đã lưu trên máy chủ/); assert.equal(h.counts().approvals, 0); h.unmount();
+});
+test('Customer timeout is uncertain; read-only refresh can recover saved draft without resubmitting', async () => {
+  let result = { draft: null, attempt: null };
+  const h = harness({ customerMode: true, customerState: async () => result, preview: async () => { throw Error('Timeout'); } });
+  await h.settle(); h.find(v => v.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+  await button(h, 'Dịch tiếng Anh').props.onClick(); h.render(); assert.match(h.text(), /Không nhấn Dịch lại/);
+  assert.ok(button(h, 'Dịch tiếng Anh').props.disabled);
+  result = { draft, attempt: { status: 'DRAFT_SAVED' } };
+  button(h, 'Kiểm tra kết quả (không gọi AI)').props.onClick(); await h.settle();
+  assert.match(h.text(), /Bản nháp đã lưu trên máy chủ/); assert.equal(h.counts().requests, 1); assert.equal(h.counts().approvals, 0); h.unmount();
+});
 test('group UI mounting/loading/empty catalog never auto-generates; source language excluded', async () => {
   const h = harness({ target: '', catalog: [{ code: 'vi' }, { code: 'en' }] });
   h.render(); assert.match(h.text(), /Đang tải/); await h.settle();
