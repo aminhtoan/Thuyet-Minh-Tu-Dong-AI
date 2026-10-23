@@ -7,8 +7,7 @@ export function MuseumHomeImage({ slot, className = '', children }: {
   const [failedSources, setFailedSources] = useState<string[]>([])
   const image = getMuseumHomeImageCandidates(slot).find(candidate => !failedSources.includes(candidate.src))
   const landscape = museumHomeImages[slot].width / museumHomeImages[slot].height > 1.5
-  const missing = slot === 'hero' ? 'Hình ảnh bảo tàng đang được chuẩn bị'
-    : slot === 'featuredVideo' ? 'Video đang được chuẩn bị' : 'Chưa có hình ảnh'
+  const missing = slot === 'featuredVideo' ? 'Video đang được chuẩn bị' : 'Chưa có hình ảnh'
 
   // Hide development-only copy, never an individual source/licence credit.
   const caption = image ? (image.caption === museumDemoImageCaption ? undefined : image.caption) : missing

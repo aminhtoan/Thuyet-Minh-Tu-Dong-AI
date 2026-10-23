@@ -22,7 +22,7 @@ export function MuseumExhibitionPage() {
       <MuseumSectionHeading level="h1" eyebrow="Chuyên đề" title={entry.title} description={entry.summary} />
     </MuseumContainer></div>
     <MuseumContainer size="readable">
-      {isMuseumPublicImage(entry.image) ? <figure className="museum-exhibition__figure"><img src={entry.image.src} alt={entry.image.alt} width="1200" height="800" /><figcaption>{entry.image.caption}<span>{entry.image.credit}</span></figcaption></figure> : <MuseumCard className="museum-exhibition__image-placeholder" padding="lg"><p>Hình ảnh chuyên đề đang được chuẩn bị</p></MuseumCard>}
+      {isMuseumPublicImage(entry.image) ? <figure className="museum-exhibition__figure"><img src={entry.image.src} alt={entry.image.alt} width="1200" height="800" /><figcaption>{entry.image.caption}<span>{entry.image.credit}</span></figcaption></figure> : <MuseumCard className="museum-exhibition__image-placeholder" padding="lg"><p>Chưa có hình ảnh</p></MuseumCard>}
       <div className="museum-exhibition__body">{entry.sections.map((section, index) => <section key={index}><h2>{section.heading}</h2>{section.paragraphs.map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>)}</section>)}</div>
       <aside className="museum-exhibition__source" aria-label="Nguồn nội dung"><p>Nguồn: {entry.source.label}</p><p>{entry.source.reference}</p></aside>
       <div className="museum-exhibition__actions"><Link to="/kham-pha" className="museum-explore__text-link">Quay lại Khám phá</Link><Link to="/thuyet-minh" className="museum-workspace-link">Xem thuyết minh</Link></div>

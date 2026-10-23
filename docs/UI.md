@@ -1,5 +1,53 @@
 # UI Specification
 
+## S27.3.3.1 — Clean Public Museum visitor copy (2026-10-23)
+
+- Removed publication/development announcements from Explore introduction/catalog,
+  homepage exhibition heading and Footer: no “Chuyên đề đang được chuẩn bị”,
+  “sau khi được duyệt”, future-publication promises or “Website ... phát triển”.
+  Removed Đang chuẩn bị badges only from exhibition cards on Explore/Home; cards
+  remain static, without links/buttons, publication changes or fake detail pages.
+- Retained visitor-facing titles, descriptions, images, navigation and content.
+  Homepage video introduction now describes the video without a future release
+  promise. About/video/image empty states use neutral absence messages instead of
+  development/approval copy; 404/error/source/license feedback preserved.
+- Removed development terminology from local image alt text while keeping text
+  alternatives and all file paths. Source/license documentation remains untouched;
+  no historical claims, new images or rights metadata invented.
+- Important availability remains visible: four planned homepage languages and video
+  language selector/player states, loading/error/caption failures, absent public
+  transcripts and Not Found. No authentication, availability or publishing guard
+  changed. ui-ux-pro-max informed separating visitor copy from essential feedback.
+- Layout/tokens/font/responsive/Header/navigation unchanged; removed text nodes do
+  not leave empty badge/notice containers. Footer branding/links retained.
+- Web338/338 PASS,0 failed/skipped; lint/typecheck/build/diff-check PASS. Browser
+  inventory empty: Visual QA NOT VERIFIED. Existing mixed-import build advisory
+  remains; approved sandbox escalation used for production build.
+
+## S27.3.3 — Explore Museum page (2026-10-23)
+
+- `/kham-pha` keeps its public routes, breadcrumb, approved introductory copy,
+  blue tokens/Be Vietnam Pro and shared Header/Footer. Listing-only CSS refines the
+  muted intro surface, balanced title scale, breadcrumb spacing, paragraph measure,
+  section rhythm and catalog bottom spacing; detail-page styling unchanged.
+- When no published exhibitions exist, replace the single empty placeholder with
+  three non-interactive preparation cards: Lịch sử và ký ức, Câu chuyện con người,
+  Giá trị của hòa bình. Existing homepage descriptions and image slots reused;
+  no new assets, demo captions, fake detail links or publication records.
+- MuseumHomeImage reuses the centralized asset inventory, alt/dimensions/lazy loading,
+  no-caption policy and missing/error fallback. Cards have16:10 cover images,16px
+  padding, equal grid heights, natural text wrapping and neutral Đang chuẩn bị badges.
+  Grid stays3 columns desktop,2 at≤1023px,1 at≤767px. Existing Thuyết minh CTA retained.
+- Previews are not catalog entries. Published entries continue through the unchanged
+  source/publication filter and original approved-detail path. Unknown, draft,
+  duplicate or incomplete entries still cannot expose detail content. No private API.
+- ui-ux-pro-max informed stable media areas, shrinkable columns and semantic
+  non-interactive preparation feedback; no clipping or animation introduced.
+- Web337/337 PASS,0 failed/skipped; lint/typecheck/build/diff-check PASS. Existing
+  projectRepository mixed-import warning unchanged. Visual QA NOT VERIFIED: browser
+  inventory empty; actual375/768/1024/1280/1440, zoom, crop/focus and Footer spacing
+  require manual review. Mock layout checks do not establish visual PASS.
+
 ## S27.3.2.5 — Multilingual section refinement (2026-10-23)
 
 - Only homepage “Lắng nghe theo cách của bạn” changed. Replaced technical source

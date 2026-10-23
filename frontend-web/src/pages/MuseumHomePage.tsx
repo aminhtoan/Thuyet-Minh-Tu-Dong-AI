@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MuseumBadge, MuseumCard, MuseumContainer, MuseumSectionHeading } from '../components/museum'
+import { MuseumCard, MuseumContainer, MuseumSectionHeading } from '../components/museum'
 import { Icon } from '../components/common/Icon'
 import { session } from '../lib/api'
 import { MuseumHomeImage } from '../components/museum/MuseumHomeImage'
@@ -49,11 +49,11 @@ export function MuseumHomePage() {
 
     <section className="museum-home__section museum-home__section--surface" aria-label="Không gian trưng bày">
       <MuseumContainer>
-        <MuseumSectionHeading eyebrow="Những góc nhìn" title="Không gian trưng bày" description="Các chủ đề biên tập dự kiến. Nội dung trưng bày sẽ được giới thiệu sau khi được duyệt." />
+        <MuseumSectionHeading eyebrow="Những góc nhìn" title="Không gian trưng bày" />
         <div className="museum-home__topics">
           {editorialTopics.map((topic, index) => <MuseumCard key={topic.title} className="museum-home__topic" padding="lg">
             <MuseumHomeImage slot={topic.imageSlot} />
-            <div className="museum-home__topic-top"><span className="museum-home__topic-index" aria-hidden="true">0{index + 1}</span><MuseumBadge>Đang chuẩn bị</MuseumBadge></div>
+            <div className="museum-home__topic-top"><span className="museum-home__topic-index" aria-hidden="true">0{index + 1}</span></div>
             <h3>{topic.title}</h3><p>{topic.description}</p>
           </MuseumCard>)}
         </div>
@@ -80,7 +80,7 @@ export function MuseumHomePage() {
           <div className="museum-home__video-empty">
             <MuseumHomeImage slot="featuredVideo" />
           </div>
-          <div className="museum-home__video-copy"><p className="museum-home__eyebrow">Thuyết minh nổi bật</p><h2 id="museum-video-title">Một hành trình qua những câu chuyện</h2><p>Video thuyết minh về Bảo tàng Chứng tích Chiến tranh sẽ được giới thiệu tại đây khi sẵn sàng.</p><Link className="museum-home__link museum-home__link--primary" to="/thuyet-minh">Đến trang Thuyết minh<Icon name="arrow" width="18" aria-hidden="true" /></Link></div>
+          <div className="museum-home__video-copy"><p className="museum-home__eyebrow">Thuyết minh nổi bật</p><h2 id="museum-video-title">Một hành trình qua những câu chuyện</h2><p>Video thuyết minh về Bảo tàng Chứng tích Chiến tranh.</p><Link className="museum-home__link museum-home__link--primary" to="/thuyet-minh">Đến trang Thuyết minh<Icon name="arrow" width="18" aria-hidden="true" /></Link></div>
         </div>
       </MuseumContainer>
     </section>

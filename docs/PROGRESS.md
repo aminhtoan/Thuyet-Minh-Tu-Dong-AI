@@ -1,5 +1,53 @@
 # Project Progress
 
+## S27.3.3.1 — Clean Public Museum UI Text (2026-10-23)
+
+- Removed development/future-approval copy and exhibition preparation badges from
+  Explore/Home and the global Footer development notice. Preserved useful intro,
+  all topic titles/descriptions/assets and non-interactive unpublished cards.
+  Neutral About/video/image absence feedback replaces development promises; local
+  alt text no longer contains demo-stage commentary. Existing image/source/license
+  documents unchanged, no fake publication/content or functionality introduced.
+- Essential language/media availability, loading/error/security/Not Found, public
+  transcript absence and credit/license feedback preserved. No API/route/business
+  or shared design-system changes. No Customer/Mobile/Admin/Backend/data changes,
+  Gemini or MongoDB writes, uncertain-attempt operations, commit/push.
+- This step modifies MuseumExplorePage.tsx, MuseumHomePage.tsx, MuseumVideosPage.tsx,
+  MuseumExhibitionPage.tsx, MuseumPlaceholderPage.tsx, MuseumFooter.tsx,
+  MuseumHomeImage.tsx, homeImages.ts alt text, museum-routing.test.mjs,
+  museum-home-images.test.mjs and UI/PROGRESS docs. Prior dirty work preserved.
+- Validation: Web338/338 PASS,0 skipped/failed; lint/typecheck/production build and
+  diff-check PASS. Added public-route regressions for absence of development copy,
+  intact images/titles and inert cards, retained language states and error paths.
+  Build used approved sandbox escalation; existing mixed-import warning remains.
+- Visual QA NOT VERIFIED: no browser surface available; actual viewport/zoom,
+  whitespace and focus checks require manual review. Only S27.3.3.1 performed.
+
+## S27.3.3 — Public Museum Explore (2026-10-23)
+
+- Refined `/kham-pha` title/breadcrumb/intro/section spacing and replaced its single
+  unpublished-content placeholder with three image preparation cards. Reused exact
+  homepage exhibitionHistory/People/Peace slots and their existing images/copy.
+  No new images or demo captions. Static Đang chuẩn bị badges, no dead links/buttons;
+  original public Thuyết minh CTA preserved. Responsive3/2/1 grid,16:10 images,
+  equal-height natural-flow cards and comfortable catalog/Footer separation.
+- Published catalog/detail behavior, source validation, all routes/API/business
+  rules, shared Header/Footer/tokens, homepage and Customer UI unchanged. The new
+  preparation descriptors are presentation-only, not fake published exhibitions or
+  database data. Existing source/license docs and image files left intact.
+- Changed this step: MuseumExplorePage.tsx, museum-explore.css,
+  museum-routing.test.mjs, docs/UI.md and docs/PROGRESS.md. Preserved three prior
+  dirty files/edits from homepage caption removal; no reset/checkout/commit/push.
+- Validation: Web337/337 PASS,0 skipped/failed; lint/typecheck/production build and
+  diff-check PASS. New tests cover exact shared images, alt/loading/dimensions,
+  three preparation states, no fake detail route or interactive preview, missing
+  image fallback and responsive rules; existing published-content regressions pass.
+  Build used approved sandbox escalation; existing mixed-import advisory remains.
+- Visual QA NOT VERIFIED: browser inventory empty. Manually check375/768/1024/1280/
+  1440px, zoom100/200%, crop/overflow/focus and bottom spacing. No Backend/Mobile/
+  Admin/API/config/data changes, Gemini calls or MongoDB writes, attempt retry/reset
+  or work beyond S27.3.3.
+
 ## S27.3.2.5 — Refine Multilingual Section (2026-10-23)
 
 - Updated only the homepage multilingual description/cards: existing language icon,

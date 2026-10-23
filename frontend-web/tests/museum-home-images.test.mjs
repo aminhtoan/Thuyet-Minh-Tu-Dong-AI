@@ -38,7 +38,7 @@ test('image errors fall through candidates once, then remove img entirely', () =
   tree = render('hero')
   assert.equal(frameChild(tree).type, 'div')
   assert.equal(frameChild(tree).props['aria-hidden'], 'true')
-  assert.equal(tree.props.children[2].props.children, 'Hình ảnh bảo tàng đang được chuẩn bị')
+  assert.equal(tree.props.children[2].props.children, 'Chưa có hình ảnh')
 })
 
 test('empty assets use accessible caption and no speculative network image', () => {
@@ -78,4 +78,10 @@ test('hero overlay content survives missing and failed background images', () =>
   assert.equal(tree.props.children[1], 'HERO_CONTENT')
   assert.equal(frameChild(tree).type, 'div')
   assert.match(tree.props.className, /museum-home__hero-backdrop/)
+})
+
+test('poster without display caption leaves no empty caption element', () => {
+  const tree = harness([{ ...image('/museum/posters/test.jpg'), caption: '' }])('hero')
+  assert.equal(tree.props.children[2], '')
+  assert.equal(frameChild(tree).props.alt, 'Ảnh kiểm thử')
 })
