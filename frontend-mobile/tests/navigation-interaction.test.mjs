@@ -8,8 +8,11 @@ import { validateLoginValues as validateWebLogin, validateRegisterValues as vali
 import { confirmationMessages as webConfirmations } from '../../frontend-web/src/localization/confirmationMessages.mjs';
 import { navigationLabels as webNavigation } from '../../frontend-web/src/localization/navigationLabels.mjs';
 
-test('Mobile navigation labels match Web and include the five agreed destinations', () => {
-  assert.deepEqual(mobileNavigation, webNavigation);
+test('shared navigation labels match except the documented history/library capability gap', () => {
+  for (const key of ['dashboard', 'projects', 'create', 'account']) assert.equal(mobileNavigation[key], webNavigation[key]);
+  // Mobile still lists project history, not verified completed library products.
+  assert.equal(webNavigation.history, 'Thư viện thuyết minh');
+  assert.equal(mobileNavigation.history, 'Lịch sử');
   assert.deepEqual(Object.values(mobileNavigation), ['Bảng điều khiển', 'Dự án của tôi', 'Tạo thuyết minh', 'Lịch sử', 'Tài khoản']);
 });
 

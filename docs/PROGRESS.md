@@ -1,5 +1,86 @@
 # Project Progress
 
+## S29.1 — Customer Web/Mobile Design Synchronization (2026-10-24)
+
+- Added canonical design/customer tokens + real screen manifest, deterministic
+  script/adapters, drift checks and frontend AGENTS synchronization rules.
+  New rulebook: docs/WEB_MOBILE_DESIGN_SYNC.md. Existing dirty files preserved.
+- Web: Customer-only CSS import, generated brand for Sidebar/Topbar; tests updated
+  to check config rather than hardcoded names. Public Museum unchanged.
+- Mobile: existing token exports generated from shared config with platform
+  overrides, local licensed Be Vietnam Pro fonts, loader and Button/Input family,
+  shared Header/Auth brand. No screens/routes/API/workflow redesigned.
+- Fixed pre-existing navigation parity test assumption: Mobile Lịch sử remains
+  project history, Web Thư viện is product library. Explicit PARTIAL, not fake parity.
+- Web400/400 and Mobile60/60 PASS; both lint/typecheck PASS. Web build PASS (existing
+  mixed-import advisory). Offline Android export1417 modules/31 assets PASS after
+  sandbox spawn EPERM resolved through approved local export outside sandbox.
+  No app startup, dotenv, telemetry, provider request or database access.
+- Visual QA NOT VERIFIED; no connected browser/native app. iOS/native runtime and
+  font scaling/screen reader still pending. Further Text/token migration is scoped
+  per component; current work establishes the mechanism, not complete visual parity.
+- No Gemini/MongoDB/attempt/config credential actions, Backend/Admin/Public Museum
+  edits, dependency install, commit or push. No next step started.
+
+## Translation Page — UI Refinement (2026-10-24)
+
+- Friendlier pending/UNCERTAIN summary, unchanged read-only status reload renamed
+  Kiểm tra trạng thái. Provider HTTP/code/phase in collapsed diagnostic details;
+  no-draft state explicit, real draft/review/saved rendering unchanged.
+- Compact group/language cards consistent with Transcript. Changes limited to
+  GroupTranslationWorkspace.tsx, translation.css, customer-translation.test.mjs,
+  group-translation.test.mjs and these docs. Previous working-tree edits preserved.
+- Focused31/31; Web396/396 and lint/typecheck/build/diff-check PASS. Existing Vite
+  mixed-import advisory remains non-blocking. Visual QA NOT VERIFIED: no browser.
+- No API/backend/auth/workflow/idempotency changes, Gemini requests, MongoDB writes,
+  attempt retry/reset/bypass/model change, configuration changes or commit/push.
+
+## Transcript Video — Oversized Portrait Player Fix (2026-10-24)
+
+- Corrected the previous height:auto/aspect-ratio:auto override which let portrait
+  video grow too tall. Only Transcript opts into a16:9, max360px dark frame; video
+  width/height100%, object-fit contain; both cards keep natural independent height.
+- Changed SourceMediaPlayer.tsx (optional presentation wrapper, default off),
+  TranscriptPage.tsx, transcript.css, transcript-compact-ui.test.mjs and these docs.
+  No media source/control/seek/API/data/workflow changes; prior edits preserved.
+- Focused18/18; Web396/396, lint/typecheck/build/diff-check PASS. Existing Vite mixed
+  import advisory unchanged. Real9:16/16:9 and mobile Visual QA NOT VERIFIED:
+  connected browser unavailable. No Gemini/MongoDB/attempt actions or commit/push.
+
+## Transcript Page — UI Polish (2026-10-24)
+
+- Consolidated header/project/language/status, reduced redundant headings and
+  card/segment spacing. Kept two columns, six workflow steps and metadata/player.
+- Native video ratio preserved through transcript-scoped CSS; compact Phát label
+  keeps precise accessible timestamp and seek behavior. Continue is primary purple,
+  right-aligned; original saved/valid draft guard and navigation unchanged.
+- Changed pages/TranscriptPage.tsx, features/transcript/TranscriptSegmentEditor.tsx,
+  styles/transcript.css, tests/transcript-compact-ui.test.mjs and these two docs.
+  Preserved pending Project Detail changes from previous task.
+- Focused30/30; Web395/395 PASS. Lint/typecheck/build/diff-check PASS. Existing Vite
+  projectRepository mixed static/dynamic import advisory remains non-blocking.
+- Visual QA NOT VERIFIED (no connected browser); responsive375–1440px, native
+  media loading/playback and keyboard interaction still require manual review.
+- No Backend/API/data/workflow/auth changes, Gemini calls, MongoDB writes,
+  attempt reset/retry/bypass, configuration changes or commit/push.
+
+## S28 — Project Detail UI/UX Redesign (2026-10-23)
+
+- Compact six-step summary with unchanged workflow resolution/navigation;
+  balanced media/information columns and mobile stack. Existing authenticated
+  source player reused for verified audio/video, including loading/error handling.
+- Compact metadata and46px form controls; existing unsaved/save feedback retained.
+  Save/Continue stay together, destructive Delete isolated with original confirm.
+- Changed pages/ProjectDetailPage.tsx, styles/project-detail.css,
+  tests/project-form-polish.test.mjs, tests/create-upload-detail-ui.test.mjs,
+  docs/UI.md and docs/PROGRESS.md. Preserved unrelated uncommitted changes.
+- Focused16/16 and full Web393/393 PASS; lint/typecheck/build/diff-check PASS.
+  Build retains the existing non-blocking projectRepository mixed-import advisory.
+- Visual QA NOT VERIFIED (no connected browser); responsive sizes375–1440px,
+  zoom200%, authorized real-media playback/error states require manual inspection.
+- No Backend/API/auth/ownership/workflow changes, real upload, Gemini request,
+  MongoDB write, attempt reset/retry, commit or push. No next task started.
+
 ## S28 — Final Narration Library UI Polish (2026-10-23)
 
 - Compact150px desktop Search, toolbar responsive to optional language selector;

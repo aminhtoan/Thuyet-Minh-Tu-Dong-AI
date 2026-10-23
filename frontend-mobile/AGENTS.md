@@ -1,5 +1,12 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## Customer design synchronization
+
+Before Customer UI changes read `../docs/WEB_MOBILE_DESIGN_SYNC.md` and identify the
+matching Web screen/component. Shared tokens: `../design/customer/tokens.json`.
+Do not edit generated `src/theme/tokens.ts` by hand. Run design:check and relevant
+Web/Mobile tests; document capability differences instead of inventing parity.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:

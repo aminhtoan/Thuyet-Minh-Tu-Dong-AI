@@ -34,6 +34,7 @@ function harness(component, { drawer = false, confirmed = true, logout = async (
     useEffect(fn, deps) { const index = cursor++, previous = slots[index]; if (!previous || deps.some((value, i) => !Object.is(value, previous.deps[i]))) effects.push(() => { previous?.cleanup?.(); slots[index] = { deps, cleanup: fn() } }) },
   }
   const dependencies = {
+    '../../design/customer.generated': { customerBrand: JSON.parse(readFileSync(new URL('../../design/customer/tokens.json', import.meta.url), 'utf8')).brand },
     react, 'react-router-dom': { Link: 'a', Outlet: 'outlet', useLocation: () => ({ pathname }), useNavigate: () => (...args) => navigation.push(args) },
     './Sidebar': { Sidebar: 'sidebar-test' }, './Topbar': { Topbar: 'topbar-test' },
     './MuseumBrandIcon': { MuseumBrandIcon: 'brand-icon-test' },

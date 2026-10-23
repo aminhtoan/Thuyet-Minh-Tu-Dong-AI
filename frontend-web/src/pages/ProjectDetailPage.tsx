@@ -17,7 +17,11 @@ import { projectRepository } from '../features/projects/projectRepository';
 import { projectMetadataState } from '../features/projects/projectDataState';
 import { uploadMediaToProject } from '../features/projects/uploadService';
 import { useProject } from '../features/projects/useProjects';
+import { SourceMediaPlayer } from '../features/transcript/SourceMediaPlayer';
 import '../styles/project-detail.css';
+
+// Detail preview does not synchronize transcript selection or playback state.
+function ignorePlaybackEvent() {}
 
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -35,6 +39,7 @@ export function ProjectDetailPage() {
   const uploadLock = useRef(false);
   const uploadController = useRef<AbortController | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
+  const playerRef = useRef<HTMLMediaElement | null>(null);
   const [savedFields, setSavedFields] = useState<{ name: string; description: string; sourceLanguage: string } | null>(null);
   const dirty = Boolean(project && savedFields && (name.trim() !== savedFields.name.trim() || description.trim() !== savedFields.description.trim() || sourceLanguage !== savedFields.sourceLanguage));
   const navigate = useNavigate();
@@ -128,7 +133,9 @@ export function ProjectDetailPage() {
       </section></Card>
       <div className="project-detail-content-grid">
       <Card padding="lg" className="project-detail-card"><section aria-labelledby="media-heading"><div className="project-detail-section-heading"><span className="project-detail-section-icon" aria-hidden="true"><Icon name={project.mediaType === 'VIDEO' ? 'video' : 'document'} width="20" /></span><div><h2 id="media-heading">Phương tiện nguồn</h2><p>Thông tin tệp được xác minh từ dữ liệu dự án.</p></div></div><dl className="project-media-grid" data-state={mediaState}><div><dt>Tên tệp</dt><dd>{uploadStatus === 'success' && uploadFile ? uploadFile.name : storedMediaName}</dd></div><div><dt>Loại</dt><dd>{uploadStatus === 'success' && uploadValidation.valid ? uploadValidation.mediaType === 'VIDEO' ? 'Video' : 'Âm thanh' : storedMediaType}</dd></div><div><dt>Dung lượng</dt><dd>{uploadStatus === 'success' && uploadFile ? formatFileSize(uploadFile.size) : storedMediaSize}</dd></div></dl>
-        {mediaState === 'ERROR' && <p className="project-media-notice project-media-notice--error" role="alert">Không thể tải metadata phương tiện. Dữ liệu bên trên không được xem là xác nhận tệp đang trống.</p>}
+        {mediaState === 'READY' && (project.mediaType === 'VIDEO' || project.mediaType === 'AUDIO') && <div className="project-detail-player"><SourceMediaPlayer key={`${project.id}:${project.mediaType}:${project.mediaSize}`} projectId={project.id} mediaType={project.mediaType} mediaSize={project.mediaSize} metadataState={mediaState} playerRef={playerRef} onTimeChange={ignorePlaybackEvent} onReadyChange={ignorePlaybackEvent} /></div>}
+        {mediaState === 'READY' && project.mediaType !== 'VIDEO' && project.mediaType !== 'AUDIO' && <p className="project-media-notice" role="status">Chưa có bản xem trước cho loại tệp này. Bạn vẫn có thể xem thông tin tệp bên trên.</p>}
+        {mediaState === 'ERROR' && <p className="project-media-notice project-media-notice--error" role="alert">Không thể tải thông tin phương tiện. Chưa thể xác nhận tệp có khả dụng hay không.</p>}
         {(mediaState === 'UNKNOWN' || mediaState === 'LOADING') && <p className="project-media-notice" role="status">Metadata phương tiện chưa được xác minh đầy đủ.</p>}
         {canResumeUpload && <div className="project-resume-upload" aria-labelledby="resume-upload-heading"><div><h3 id="resume-upload-heading">Tiếp tục tải phương tiện</h3><p>Dự án nháp này đã được lưu. Tệp sẽ được tải lên đúng dự án hiện tại.</p></div>
           <input ref={uploadInputRef} className="visually-hidden" id="resume-media-file" type="file" accept=".mp4,.mov,.webm,.mp3,.wav,.m4a,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/mp4" onChange={selectUploadFile} disabled={uploadStatus === 'uploading' || uploadStatus === 'success'} aria-label="Chọn phương tiện cho dự án hiện tại" aria-invalid={Boolean(uploadFile && !uploadValidation.valid)} aria-describedby={uploadFile && !uploadValidation.valid ? 'resume-upload-hint resume-upload-error' : 'resume-upload-hint'} />
@@ -150,8 +157,8 @@ export function ProjectDetailPage() {
         <div className="project-detail-field"><label htmlFor="project-detail-language">Ngôn ngữ nguồn</label><select id="project-detail-language" value={sourceLanguage} onChange={(event) => setSourceLanguage(event.target.value)} disabled={saving || uploadBusy}>{languages.map((language) => <option key={language.code} value={language.code}>{language.nativeName}</option>)}</select></div>
         <p className="project-detail-edit-status" role="status" aria-atomic="true">{saving ? 'Đang lưu thông tin dự án...' : dirty ? 'Có thay đổi chưa lưu. Hãy lưu thông tin trước khi rời trang.' : 'Thông tin dự án đã được lưu.'}</p>
         {message && (message.kind === 'error' || !dirty) && <p className={`project-detail-message project-detail-message--${message.kind}`} role={message.kind === 'error' ? 'alert' : 'status'}>{message.text}</p>}
-        <div className="project-detail-actions"><Button type="submit" loading={saving} disabled={saving || uploadBusy || Boolean(validationError)}>Lưu thay đổi</Button>{action.available && action.step !== 'upload' && <Link className="button button--secondary button--md" to={action.path} onClick={event => { if (!confirmLeave()) event.preventDefault() }}>{action.label}</Link>}<Button type="button" variant="danger" disabled={saving || uploadBusy} onClick={() => void remove()}>Xóa dự án</Button></div>
-      </form></Card>
+        <div className="project-detail-actions"><Button type="submit" loading={saving} disabled={saving || uploadBusy || Boolean(validationError)}>Lưu thay đổi</Button>{action.available && action.step !== 'upload' && <Link className="button button--secondary button--md" to={action.path} onClick={event => { if (!confirmLeave()) event.preventDefault() }}>{action.label}</Link>}</div>
+      </form><section className="project-detail-danger" aria-labelledby="project-delete-heading"><div><h3 id="project-delete-heading">Xóa dự án</h3><p>Dự án và các tệp liên quan sẽ bị xóa. Thao tác này không thể hoàn tác.</p></div><Button type="button" variant="danger" disabled={saving || uploadBusy} onClick={() => void remove()}>Xóa dự án</Button></section></Card>
       </div>
     </div></>;
 }

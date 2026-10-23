@@ -25,6 +25,6 @@ const styles = StyleSheet.create({
   ghost: { backgroundColor: 'transparent' }, ghostPressed: { backgroundColor: colors.primaryLight },
   danger: { backgroundColor: colors.error }, dangerPressed: { backgroundColor: '#991B1B' },
   disabled: { opacity: 0.5 }, spinner: {},
-  label: { fontSize: typography.size.md, fontWeight: typography.weight.semibold },
+  label: { fontFamily: typography.family.semibold, fontSize: typography.size.md, fontWeight: typography.weight.semibold },
   primaryLabel: { color: colors.white }, secondaryLabel: { color: colors.textPrimary }, ghostLabel: { color: colors.primary }, dangerLabel: { color: colors.white },
 });

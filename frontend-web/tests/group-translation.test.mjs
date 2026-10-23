@@ -82,7 +82,7 @@ test('final review: one header/project/workflow and one compact attempt status a
     assert.equal(compact.length, 1);
     assert.equal(all(compact[0], v => v.type === 'h2').length, 1);
     assert.equal(all(compact[0], v => v.type === 'Button').length, 1);
-    assert.equal(all(tree, v => v.type === 'Button' && v.props.children === 'Kiểm tra kết quả (không gọi AI)').length, 1);
+    assert.equal(all(tree, v => v.type === 'Button' && v.props.children === 'Kiểm tra trạng thái').length, 1);
     assert.doesNotMatch(h.text(), /Xem trạng thái yêu cầu bên dưới/);
     assert.equal(h.counts().requests, 0); h.unmount();
   }
@@ -101,7 +101,7 @@ test('Customer refresh observes durable states, blocks generation and only check
     const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status } }) });
     await h.settle(); assert.match(h.text(), new RegExp(customerAttemptMessage({ status }).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.equal(button(h, 'Dịch tiếng Anh'), null); assert.equal(h.counts().requests, 0);
-    button(h, 'Kiểm tra kết quả (không gọi AI)').props.onClick(); await h.settle();
+    button(h, 'Kiểm tra trạng thái').props.onClick(); await h.settle();
     assert.equal(h.counts().requests, 0); assert.equal(h.counts().approvals, 0); h.unmount();
   }
 });
@@ -120,7 +120,7 @@ test('Customer timeout is uncertain; read-only refresh can recover saved draft w
   await button(h, 'Dịch tiếng Anh').props.onClick(); h.render(); assert.match(h.text(), /Không nhấn Dịch lại/);
   assert.ok(button(h, 'Dịch tiếng Anh').props.disabled);
   result = { draft, attempt: { status: 'DRAFT_SAVED' } };
-  button(h, 'Kiểm tra kết quả (không gọi AI)').props.onClick(); await h.settle();
+  button(h, 'Kiểm tra trạng thái').props.onClick(); await h.settle();
   assert.match(h.text(), /Bản nháp đã lưu trên máy chủ/); assert.equal(h.counts().requests, 1); assert.equal(h.counts().approvals, 0); h.unmount();
 });
 test('group UI mounting/loading/empty catalog never auto-generates; source language excluded', async () => {
@@ -201,16 +201,25 @@ test('durable draft, approved translation and legacy saved state have distinct l
   assert.match(old.text(), /định dạng phân đoạn cũ/); assert.doesNotMatch(old.text(), /Bản dịch đã được duyệt/); old.unmount();
 });
 
-test('provider warnings remain outside disclosure and precede source controls; GET only recovery', async () => {
+test('safety warning stays visible while provider details are collapsed; GET only recovery', async () => {
   for (const providerHttpStatus of [400, 503]) {
-    const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status: 'UNCERTAIN', providerHttpStatus } }) });
+    const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status: 'UNCERTAIN', providerHttpStatus, phase: 'GENERATION_DISPATCHING', diagnosticCode: 'TRANSLATION_PROVIDER_ERROR' } }) });
     await h.settle();
     const warning = h.find(v => v.type === 'p' && v.props.role === 'alert');
-    assert.match(warning.props.children, new RegExp('HTTP ' + providerHttpStatus));
+    assert.doesNotMatch(warning.props.children, /HTTP|TRANSLATION_PROVIDER_ERROR/);
     assert.match(warning.props.children, /Không nhấn Dịch lại/);
-    assert.ok(h.text().indexOf('Trạng thái yêu cầu dịch') < h.text().indexOf('Ngôn ngữ nguồn'));
-    assert.equal(h.find(v => v.type === 'details'), null);
-    button(h, 'Kiểm tra kết quả (không gọi AI)').props.onClick(); await h.settle();
+    assert.match(warning.props.children, /tránh xử lý trùng lặp/);
+    assert.ok(h.text().indexOf('Bản dịch chưa sẵn sàng') < h.text().indexOf('Ngôn ngữ nguồn'));
+    const details = h.find(v => v.type === 'details');
+    assert.equal(details.props.open, undefined);
+    assert.equal(details.props.className, 'translation-diagnostics');
+    assert.match(h.text(), /TRANSLATION_PROVIDER_ERROR/);
+    assert.match(h.text(), /GENERATION_DISPATCHING/);
+    assert.match(h.text(), new RegExp('HTTP ' + providerHttpStatus));
+    assert.match(h.text(), /Chưa có bản nháp để xem/);
+    assert.equal(button(h, 'Duyệt và lưu bản dịch'), null);
+    assert.equal(button(h, 'Dịch tiếng Anh'), null);
+    button(h, 'Kiểm tra trạng thái').props.onClick(); await h.settle();
     assert.equal(h.counts().requests, 0); assert.equal(h.counts().approvals, 0); h.unmount();
   }
 });

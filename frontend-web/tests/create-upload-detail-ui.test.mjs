@@ -88,8 +88,10 @@ test('DRAFT resume remains existing-project-only and exposes replace, remove, ca
 test('Project Detail CSS is isolated from Auth and Voice and remains responsive', () => {
   assert.doesNotMatch(detailSource, /className="auth-form"|className="voice-actions"/);
   assert.doesNotMatch(detailCss, /\.auth-form|\.voice-actions/);
-  assert.match(detailCss, /\.project-detail-content-grid[\s\S]*grid-template-columns: minmax\(0, 1\.05fr\) minmax\(0, \.95fr\)/);
-  assert.match(detailCss, /@media \(max-width: 1100px\)[\s\S]*\.project-detail-content-grid \{ grid-template-columns: 1fr; \}/);
+  assert.match(detailCss, /\.project-detail-content-grid[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(detailCss, /@media \(max-width: 900px\)[\s\S]*\.project-detail-content-grid \{ grid-template-columns: 1fr; \}/);
+  assert.match(detailCss, /\.project-detail-summary \.workflow-step__control \{ min-height: 76px/);
+  assert.match(detailCss, /\.project-detail-player video[\s\S]*aspect-ratio: 16 \/ 9; object-fit: contain/);
   assert.match(detailCss, /@media \(max-width: 640px\)/);
   assert.match(uploadCss, /\.upload-layout[^{]*\{[^}]*max-width: 1024px/);
   assert.match(uploadCss, /\.upload-primary-actions/);

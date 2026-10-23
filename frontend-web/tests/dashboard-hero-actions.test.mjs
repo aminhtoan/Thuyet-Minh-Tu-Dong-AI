@@ -51,5 +51,5 @@ test('museum banner and compact cards keep natural height, mobile copy and safe 
   assert.match(css, /\.dashboard \.hero-cta:focus-visible \{ outline: 3px solid #fff/);
   const sidebar = await readFile(new URL('../src/components/layout/Sidebar.tsx', import.meta.url), 'utf8');
   const topbar = await readFile(new URL('../src/components/layout/Topbar.tsx', import.meta.url), 'utf8');
-  for (const component of [sidebar, topbar]) { assert.match(component, /Thuyết minh bảo tàng/); assert.match(component, /<MuseumBrandIcon/); }
+  for (const component of [sidebar, topbar]) { assert.match(component, /customerBrand.name/); assert.match(component, /<MuseumBrandIcon/); }
 });

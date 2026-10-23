@@ -1,5 +1,101 @@
 # UI Specification
 
+## S29.1 — Customer Web/Mobile Design Synchronization (2026-10-24)
+
+- Canonical config `design/customer/tokens.json` generates Customer-scoped Web CSS,
+  brand/rules TS and Mobile tokens.ts through `scripts/customer-design-sync.mjs`.
+  Deterministic read-only drift checks in both test suites, both pretypecheck hooks
+  and Web prebuild. Platform shadows/radius/line-height remain explicit overrides.
+- Existing shared palette/scales preserved. No Public Museum token/theme edits;
+  Customer CSS scope cannot target :root or Museum. No external runtime imports
+  into Metro, no added dependency, no navigation/API changes.
+- Shared brand consumed in Web Sidebar/Topbar and Mobile Header/AuthLayout, native
+  museum icon. Local Be Vietnam Pro font files/OFL reused with hash test; Expo57
+  useFonts loader, common Button/Input font integration. Screen-specific native
+  Text and literal Web auth branding still need incremental migration; not full
+  visual parity. No unrelated page redesign performed.
+- Real screen manifest `design/customer/screens.json` verifies12 source pairs;
+  history/library, transcript and translation have explicit capability gaps.
+  `docs/WEB_MOBILE_DESIGN_SYNC.md` defines component/state rules, correspondence,
+  change checklist and platform QA. Frontend AGENTS point future Codex work to it.
+- Skills design-system/ui-ux-pro-max informed semantic layers and platform-specific
+  implementations; CSS is not reused as React Native styles.
+- Web400/400, Mobile60/60 PASS; both lint/typecheck PASS; Vite build and offline
+  Android Metro/Hermes export PASS. Read-only sync/diff-check PASS. Visual QA NOT
+  VERIFIED: no browser/device connected. iOS export/device QA not executed.
+
+## Translation Page — UI Refinement (2026-10-24)
+
+- Retained shell/project title/six workflow steps and language selection behavior.
+  Pending attempt card now reads Bản dịch chưa sẵn sàng. UNCERTAIN explains duplicate
+  processing risk without technical HTTP/code noise; safety warning remains visible.
+- Kiểm tra trạng thái uses the same reload handler and existing authenticated GET
+  path, never generation. Collapsed native details holds provider HTTP/code/phase
+  and detailed feedback, keyboard focus visible. Customer request errors also keep
+  technical messages in details rather than the primary alert.
+- Actual draft/saved rendering and review guards unchanged; no draft/no groups
+  gets a truthful empty state, no fabricated translations or enabled next action.
+- Group workspace gap16px, cards20px/16px mobile, language select46px and balanced
+  source/target columns with existing responsive single-column fallback. Skill
+  ui-ux-pro-max guided visible safety alerts plus secondary diagnostic disclosure.
+- Focused31/31; full Web396/396, lint/typecheck/build/diff-check PASS. Visual QA
+  NOT VERIFIED: browser inventory empty; responsive and keyboard manual QA pending.
+
+## Transcript Video — Bounded Player Fix (2026-10-24)
+
+- Supersedes the native-height rule below: portrait9:16 must not determine the
+  player height. Transcript alone opts into a16:9 frame, width100%, max-height360px,
+  dark background; inner video fills the frame with object-fit contain. No crop
+  or stretch. Width-driven height scales down on mobile; cards align-self start.
+- Optional framedVideo presentation prop defaults false for all other consumers;
+  audio, media loading/errors, controls, timestamp handlers and metadata unchanged.
+  Error messages remain outside the bounded frame. ui-ux-pro-max informed responsive
+  containment without modifying playback behavior.
+- Focused18/18; Web396/396, lint/typecheck/build/diff-check PASS. Visual QA NOT
+  VERIFIED: no browser connected; inspect actual9:16/16:9 videos and mobile manually.
+
+## Transcript Page — UI Polish (2026-10-24)
+
+- Consolidated workspace header: one Bản ghi page heading, project name/source
+  language description, existing computed status and Back link. Removed redundant
+  intro block and unconditional server-saved wording; segment heading shortened.
+- Kept six-step WorkflowSteps, status calculation and two-column media/segments
+  layout unchanged; <=900px stacks naturally. Cards20px padding,16px on mobile;
+  segment padding12→10px, list gap16→10px, inner gap8→6px, no nested scrolling.
+- Existing authenticated video/audio player and metadata retained without autoplay.
+  Transcript-scoped video height/aspect-ratio auto preserves native source ratio
+  rather than forcing16:9; other player consumers are unaffected.
+- Play label shortened to Phát; exact sequence/start timestamp remains in its
+  accessible name and original seek callback. Desktop control36px minimum,
+  mobile/coarse-pointer44px. Existing focus/disabled/error/edit feedback preserved.
+- Continue uses primary purple, right-aligned below segments with readiness text;
+  existing canContinue guard and translation destination unchanged.
+- ui-ux-pro-max guided compact controls without reducing touch target usability.
+  Focused30/30 and full Web395/395 PASS; lint/typecheck/build/diff-check PASS.
+  Visual QA NOT VERIFIED: browser inventory empty. Manually verify375/768/1024/
+  1280/1440px, long project/file/segment text, native video ratios and keyboard focus.
+
+## S28 — Project Detail UI/UX Redesign (2026-10-23)
+
+- `/projects/:projectId` retains the six-step workflow component and guards.
+  Detail-only stepper padding12px (previous20/22px), header gap14px (22px),
+  step minimum height76px (88px); marker, state and navigation logic unchanged.
+- Media left / project information right: equal flexible columns, stacked at
+  <=900px; cards padded16px on narrow screens. Filename spans metadata width;
+  type/size share a row, stack on mobile, long text wraps naturally.
+- Reuses SourceMediaPlayer with authenticated existing media GET, native controls,
+  no autoplay, existing loading/error/reload behavior. Only verified AUDIO/VIDEO
+  metadata mounts the player. Video16:9/object-fit contain; no invented URL,
+  thumbnail or media. Unsupported metadata keeps truthful preview limitation.
+- Form controls minimum46px; retained validation, saving/saved/unsaved feedback,
+  leave confirmation and Save/Continue handlers. Delete is a separate section
+  outside the form with the original destructive confirmation and disabled guards.
+- Skill ui-ux-pro-max guided scoped spacing, labels, submit feedback and native
+  media controls. No shared shell, API, workflow or data changes.
+- Web393/393 PASS; lint/typecheck/build/diff-check PASS. Visual QA NOT VERIFIED:
+  no connected browser. Manually verify375/768/1024/1280/1440px, long filenames,
+  keyboard focus, real audio/video loading/errors and200% zoom before acceptance.
+
 ## S28 — Final Library UI Polish (2026-10-23)
 
 - Library search submit150px desktop, width100% on narrow mobile. Toolbar uses

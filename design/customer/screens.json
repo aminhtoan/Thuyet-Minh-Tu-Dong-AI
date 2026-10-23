@@ -1,0 +1,14 @@
+[
+  { "name": "Đăng nhập", "web": "frontend-web/src/pages/LoginPlaceholder.tsx", "mobile": "frontend-mobile/src/app/login.tsx", "parity": "platform-layout" },
+  { "name": "Đăng ký", "web": "frontend-web/src/pages/RegisterPlaceholder.tsx", "mobile": "frontend-mobile/src/app/register.tsx", "parity": "platform-layout" },
+  { "name": "Dashboard", "web": "frontend-web/src/pages/DashboardPlaceholder.tsx", "mobile": "frontend-mobile/src/app/(tabs)/dashboard.tsx", "parity": "platform-layout" },
+  { "name": "Dự án", "web": "frontend-web/src/pages/ProjectsPlaceholder.tsx", "mobile": "frontend-mobile/src/app/(tabs)/projects.tsx", "parity": "table-vs-list" },
+  { "name": "Tạo dự án", "web": "frontend-web/src/pages/NewProjectPlaceholder.tsx", "mobile": "frontend-mobile/src/app/projects/new.tsx", "parity": "platform-layout" },
+  { "name": "Chi tiết dự án", "web": "frontend-web/src/pages/ProjectDetailPage.tsx", "mobile": "frontend-mobile/src/app/projects/[projectId]/index.tsx", "parity": "platform-layout" },
+  { "name": "Bản ghi", "web": "frontend-web/src/pages/TranscriptPage.tsx", "mobile": "frontend-mobile/src/app/projects/[projectId]/transcript.tsx", "parity": "capability-review-required" },
+  { "name": "Bản dịch", "web": "frontend-web/src/pages/TranslationPage.tsx", "mobile": "frontend-mobile/src/app/projects/[projectId]/translation.tsx", "parity": "capability-review-required" },
+  { "name": "Giọng đọc", "web": "frontend-web/src/pages/VoicePage.tsx", "mobile": "frontend-mobile/src/app/projects/[projectId]/voice.tsx", "parity": "platform-layout" },
+  { "name": "Tạo thuyết minh", "web": "frontend-web/src/pages/GeneratePage.tsx", "mobile": "frontend-mobile/src/app/projects/[projectId]/generate.tsx", "parity": "platform-layout" },
+  { "name": "Kết quả", "web": "frontend-web/src/pages/ResultPage.tsx", "mobile": "frontend-mobile/src/app/projects/[projectId]/result.tsx", "parity": "platform-layout" },
+  { "name": "Thư viện / Lịch sử", "web": "frontend-web/src/pages/HistoryPlaceholder.tsx", "mobile": "frontend-mobile/src/app/(tabs)/history.tsx", "parity": "PARTIAL-history-is-not-library" }
+]

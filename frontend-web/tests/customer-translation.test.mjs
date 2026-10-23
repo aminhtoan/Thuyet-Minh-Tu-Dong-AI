@@ -37,7 +37,7 @@ test('reload status is authenticated GET only with no refresh; persisted attempt
   assert.match(getter, /customer-draft\/en/); assert.match(getter, /}, false\)/); assert.doesNotMatch(getter, /POST|preview|approve/);
   const ui = await read('src/features/translation/GroupTranslationWorkspace.tsx');
   assert.match(ui, /if \(state.attempt\) return/); assert.match(ui, /submitted \|\| attempt/);
-  assert.match(ui, /Kiểm tra kết quả \(không gọi AI\)/);
+  assert.match(ui, /Kiểm tra trạng thái/);
   assert.doesNotMatch(ui, /setInterval|setTimeout.*customerGenerate/);
 });
 test('Customer branch does not require diagnostic service or per-project setup and preserves workflow guard', async () => {

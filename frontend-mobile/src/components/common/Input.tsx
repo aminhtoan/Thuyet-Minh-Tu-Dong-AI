@@ -20,9 +20,9 @@ export function Input({ label, helperText, error, required, rightElement, editab
 }
 
 const styles = StyleSheet.create({
-  field: { gap: spacing.sm }, label: { color: colors.textPrimary, fontSize: typography.size.sm, fontWeight: typography.weight.semibold }, required: { color: colors.error },
+  field: { gap: spacing.sm }, label: { fontFamily: typography.family.semibold, color: colors.textPrimary, fontSize: typography.size.sm, fontWeight: typography.weight.semibold }, required: { color: colors.error },
   control: { minHeight: 48, flexDirection: 'row', alignItems: 'center', overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md },
   controlFocused: { borderColor: colors.primary, borderWidth: 2 }, controlError: { borderColor: colors.error, borderWidth: 2 }, controlDisabled: { backgroundColor: colors.surfaceSecondary, opacity: 0.72 },
-  input: { minWidth: 0, flex: 1, minHeight: 46, paddingHorizontal: 14, color: colors.textPrimary, fontSize: typography.size.md },
+  input: { fontFamily: typography.family.regular, minWidth: 0, flex: 1, minHeight: 46, paddingHorizontal: 14, color: colors.textPrimary, fontSize: typography.size.md },
   message: { color: colors.textMuted, fontSize: typography.size.sm }, error: { color: colors.error },
 });

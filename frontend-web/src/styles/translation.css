@@ -46,7 +46,7 @@
 
 /* Customer Translation: secondary diagnostics never contain execution warnings. */
 .translation-page { min-width: 0; }
-.group-translation-workspace { gap: var(--space-lg); }
+.group-translation-workspace { gap: var(--space-md); }
 .group-translation-workspace .button { max-width: 100%; white-space: normal; line-height: 1.45; }
 .group-translation-workspace h2 { margin: 0; font-size: var(--font-size-lg); line-height: 1.5; overflow-wrap: anywhere; }
 .group-translation-workspace h3 { margin: 0 0 var(--space-sm); font-size: var(--font-size-md); line-height: 1.5; }
@@ -85,10 +85,23 @@
 .translation-preflight__data dt { color: var(--color-text-secondary); }
 .translation-preflight__data dd { margin: 0; font-variant-numeric: tabular-nums; }
 .translation-preflight__data dt, .translation-preflight__data dd { min-width: 0; overflow-wrap: anywhere; }
+.group-translation-workspace .translation-language-card { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 20px; }
+.group-translation-workspace .translation-language-field select { min-height: 46px; }
+.group-translation-workspace :is(.group-translation-card, .translation-empty) { padding: 20px; }
+.translation-empty { display: grid; gap: 8px; background: var(--color-surface-secondary); }
+.translation-empty p { margin: 0; color: var(--color-text-secondary); line-height: 1.6; }
+.translation-diagnostics { width: 100%; min-width: 0; border-top: 1px solid var(--color-border); padding-top: 8px; font-size: var(--font-size-sm); }
+.translation-diagnostics summary { width: fit-content; max-width: 100%; min-height: 36px; padding-block: 8px; cursor: pointer; color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.translation-diagnostics summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+.translation-diagnostics dl { display: grid; gap: 8px; margin: 12px 0 0; }
+.translation-diagnostics dl > div { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.translation-diagnostics dt { color: var(--color-text-secondary); }
+.translation-diagnostics dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 900px) {
   .group-translation-workspace .translation-language-card { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 767px) {
+  .group-translation-workspace :is(.group-translation-card, .translation-empty, .translation-language-card) { padding: 16px; }
   .group-translation-columns { gap: var(--space-md); }
   .translation-feedback { padding: var(--space-md); }
   .group-translation-actions, .group-translation-review > .button { width: 100%; }

@@ -23,5 +23,5 @@ test('Mobile shared controls retain touch targets and visual states', async () =
   assert.match(button, /minHeight: 44/);
   assert.match(button, /primaryPressed/);
   assert.match(input, /controlFocused/);
-  assert.match(tokens, /md: 10, lg: 12, xl: 20/);
+  assert.match(tokens, /"md": 10/); assert.match(tokens, /"lg": 12/); assert.match(tokens, /"xl": 20/);
 });

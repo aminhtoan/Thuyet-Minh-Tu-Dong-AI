@@ -24,8 +24,8 @@ function text(tree) {
   return typeof tree === 'string' ? tree : tree?.props ? text(tree.props.children) : ''
 }
 // Disposable in-memory component fixtures, no real upload, project or auth APIs.
-function harness(page, { failSave = false, upload = async () => {} } = {}) {
-  const project = { id: 'test-only-id', name: 'Dự án kiểm thử', description: 'Mô tả', sourceLanguage: 'vi', status: 'DRAFT', workflow: { step: 'UPLOAD', state: 'READY', canResume: true } }
+function harness(page, { failSave = false, upload = async () => {}, mediaState = 'EMPTY', projectFields = {} } = {}) {
+  const project = { id: 'test-only-id', name: 'Dự án kiểm thử', description: 'Mô tả', sourceLanguage: 'vi', status: 'DRAFT', workflow: { step: 'UPLOAD', state: 'READY', canResume: true }, ...projectFields }
   const slots = [], events = new Map(), writes = [], prompts = []
   let cursor = 0, effects = [], allowLeave = false, uploadCalls = 0
   const react = {
@@ -43,7 +43,8 @@ function harness(page, { failSave = false, upload = async () => {} } = {}) {
     '../features/projects/mediaUpload': media, '../features/projects/languages': { languages: [{ code: 'vi', nativeName: 'Tiếng Việt' }] },
     '../features/projects/projectUtils': { sourceLanguageOptions: [{ value: 'vi', label: 'Tiếng Việt' }] },
     '../features/projects/projectAction': { projectAction: () => ({ available: false, reason: 'Test only' }) },
-    '../features/projects/projectDataState': { projectMetadataState: () => ({ media: 'EMPTY' }) },
+    '../features/projects/projectDataState': { projectMetadataState: () => ({ media: mediaState }) },
+    '../features/transcript/SourceMediaPlayer': { SourceMediaPlayer: 'source-player-test' },
     '../features/projects/useProjects': { useProject: () => ({ project, isLoading: false, error: null }) },
     '../features/projects/projectRepository': { projectRepository: { updateProject: async (...args) => { writes.push(args); if (failSave) throw new Error('Lưu thất bại kiểm thử') }, refresh: async () => {}, deleteProject: async () => { throw new Error('DELETE_NOT_ALLOWED_IN_TEST') } } },
     '../features/projects/uploadService': { uploadMediaToProject: async (...args) => { uploadCalls++; return upload(...args) }, uploadProjectMedia: async (...args) => { uploadCalls++; return upload(...args) } },
@@ -132,4 +133,40 @@ test('current validation limits, delete confirmation and responsive guards remai
     const css = read(path); assert.match(css, /overflow-wrap: anywhere/); assert.match(css, /@media \(max-width:/)
     assert.match(css, /input\[type="file"\]:focus-visible/)
   }
+})
+
+test('detail reuses the authenticated player only for verified audio/video metadata', () => {
+  for (const mediaType of ['VIDEO', 'AUDIO']) {
+    const h = harness('ProjectDetailPage', { mediaState: 'READY', projectFields: { mediaType, mediaSize: 1024, mediaName: 'Tệp nguồn thật' } })
+    h.render(); const tree = h.render()
+    const player = find(tree, n => n.type === 'source-player-test')
+    assert.equal(player.props.projectId, 'test-only-id')
+    assert.equal(player.props.mediaType, mediaType)
+    assert.equal(player.props.metadataState, 'READY')
+    assert.equal(player.props.mediaSize, 1024)
+    assert.equal(player.props.src, undefined)
+    assert.match(text(tree), /Tệp nguồn thật/)
+    assert.equal(h.writes.length, 0); assert.equal(h.uploadCalls, 0)
+    h.unmount()
+  }
+  for (const mediaState of ['EMPTY', 'UNKNOWN', 'LOADING', 'ERROR']) {
+    const h = harness('ProjectDetailPage', { mediaState, projectFields: { mediaType: 'VIDEO' } })
+    h.render(); const tree = h.render()
+    assert.equal(find(tree, n => n.type === 'source-player-test'), undefined)
+    if (mediaState === 'ERROR') assert.match(text(tree), /Không thể tải thông tin phương tiện/)
+    h.unmount()
+  }
+})
+
+test('delete is separate from save/continue and retains confirmation before any request', () => {
+  const h = harness('ProjectDetailPage'); h.render(); const tree = h.render()
+  const form = find(tree, n => n.type === 'form')
+  assert.doesNotMatch(text(form), /Xóa dự án/)
+  const danger = find(tree, n => n.props?.['aria-labelledby'] === 'project-delete-heading')
+  assert.match(text(danger), /không thể hoàn tác/)
+  find(danger, n => n.type === 'button-test').props.onClick()
+  assert.equal(h.prompts.length, 1); assert.match(h.prompts[0], /Xóa dự án/)
+  assert.equal(h.writes.length, 0)
+  assert.equal(find(tree, n => n.type === 'workflow-test').props.pageStep, 'UPLOAD')
+  h.unmount()
 })

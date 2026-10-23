@@ -6,9 +6,9 @@ import type { DataState } from '../projects/types';
 import { createSourceMediaLoader, scheduleSourceMediaAutoLoad, sourceMediaError, sourceMediaInitialState } from './sourcePlayback.mjs';
 
 type PlayerState = { status: DataState; error: string | null; retryable: boolean };
-type Props = { projectId: string; mediaType?: string; mediaSize?: number; metadataState: DataState; playerRef: RefObject<HTMLMediaElement | null>; onTimeChange: (time: number) => void; onReadyChange: (ready: boolean) => void };
+type Props = { projectId: string; mediaType?: string; mediaSize?: number; metadataState: DataState; playerRef: RefObject<HTMLMediaElement | null>; onTimeChange: (time: number) => void; onReadyChange: (ready: boolean) => void; framedVideo?: boolean };
 
-export function SourceMediaPlayer({ projectId, mediaType, mediaSize, metadataState, playerRef, onTimeChange, onReadyChange }: Props) {
+export function SourceMediaPlayer({ projectId, mediaType, mediaSize, metadataState, playerRef, onTimeChange, onReadyChange, framedVideo = false }: Props) {
   const initialState = sourceMediaInitialState(metadataState, mediaType, mediaSize);
   const shouldAutoLoad = initialState.status === 'LOADING';
   const [state, setState] = useState<PlayerState>({ ...initialState, retryable: false });
@@ -46,13 +46,14 @@ export function SourceMediaPlayer({ projectId, mediaType, mediaSize, metadataSta
     onEnded: () => onTimeChange(Number.NaN),
     onError: () => { setPlaybackError('Không thể phát tệp này. Định dạng hoặc codec có thể không được trình duyệt hỗ trợ.'); onReadyChange(false); onTimeChange(Number.NaN); },
   };
+  const video = url && <video ref={(node) => { playerRef.current = node; }} className="source-player__video" src={url} controls playsInline preload="metadata" aria-label="Phát video nguồn" {...events} />;
   return <div className="source-player">
     {mediaType !== 'VIDEO' && <div className="source-player__audio-heading"><span className="source-player__audio-icon"><Icon name="wave" width="24" height="24" /></span><span>Âm thanh nguồn</span></div>}
     {state.status === 'LOADING' && <div className="source-player__state" role="status" aria-busy="true"><span className="source-player__loading" aria-hidden="true" />Đang tải phương tiện...</div>}
     {state.status === 'EMPTY' && <p className="source-player__state" role="status">Dự án chưa có tệp phương tiện nguồn.</p>}
     {state.status === 'UNKNOWN' && <p className="source-player__state" role="status">Chưa xác định được phương tiện nguồn. Không coi trạng thái này là không có tệp.</p>}
     {state.status === 'ERROR' && <div className="source-player__state source-player__state--error" role="alert"><p>{state.error}</p>{state.retryable && <Button variant="secondary" type="button" onClick={() => void load()}>Thử tải lại</Button>}</div>}
-    {url && (mediaType === 'VIDEO' ? <video ref={(node) => { playerRef.current = node; }} className="source-player__video" src={url} controls playsInline preload="metadata" aria-label="Phát video nguồn" {...events} /> : <audio ref={(node) => { playerRef.current = node; }} src={url} controls preload="metadata" aria-label="Phát âm thanh nguồn" {...events} />)}
+    {url && (mediaType === 'VIDEO' ? framedVideo ? <div className="source-player__video-frame">{video}</div> : video : <audio ref={(node) => { playerRef.current = node; }} src={url} controls preload="metadata" aria-label="Phát âm thanh nguồn" {...events} />)}
     {url && playbackError && <div className="source-player__state source-player__state--error" role="alert"><p>{playbackError}</p><Button variant="secondary" type="button" onClick={() => { setPlaybackError(null); onReadyChange(false); playerRef.current?.load(); }}>Thử phát lại</Button></div>}
   </div>;
 }

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+import { colors, customerBrand, radius, shadows, spacing, typography } from '@/theme/tokens';
 
 type AuthLayoutProps = { title: string; description: string; children: ReactNode; footer: ReactNode };
 
@@ -11,7 +11,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboardView}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <View style={styles.brand}><View style={styles.mark}><MaterialCommunityIcons name="creation" size={28} color={colors.white} /></View><Text style={styles.brandName}>Người kể chuyện AI</Text></View>
+          <View style={styles.brand}><View style={styles.mark}><MaterialCommunityIcons name="bank-outline" size={28} color={colors.white} /></View><Text style={styles.brandName}>{customerBrand.name}</Text></View>
           <View style={styles.card}>
             <View style={styles.heading}><Text style={styles.title}>{title}</Text><Text style={styles.description}>{description}</Text></View>
             {children}
