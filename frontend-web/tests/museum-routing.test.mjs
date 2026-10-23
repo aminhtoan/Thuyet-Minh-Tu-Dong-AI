@@ -42,7 +42,7 @@ function renderRoute(path, authenticated = false, editorialCatalog, publicVideoC
           return { ...loaded, getPublishedExhibitions: () => loaded.getPublishedExhibitions(editorialCatalog) }
         }
         if (name.endsWith('/museum/publicVideos') && publicVideoCatalog !== undefined) {
-          return { ...loaded, getPublishedPublicVideos: () => loaded.getPublishedPublicVideos(publicVideoCatalog, videoAssets) }
+          return { ...loaded, museumPublicVideos: publicVideoCatalog, getPublishedPublicVideos: () => loaded.getPublishedPublicVideos(publicVideoCatalog, videoAssets) }
         }
         return loaded
       },
@@ -153,10 +153,48 @@ test('homepage presents all four planned languages without pretending media is a
   assert.equal((list.match(/<li>/g) || []).length, 4)
   for (const name of ['English', 'Thai', 'Korean', 'Simplified Chinese']) assert.ok(list.includes(name))
   for (const label of ['Tiếng Anh', 'Tiếng Thái', 'Tiếng Hàn', 'Tiếng Trung giản thể']) assert.match(list, new RegExp(`<h3>${label}</h3>`))
-  for (const code of ['en', 'th', 'ko', 'zh-CN']) assert.ok(list.includes(`>${code}</span>`))
+  assert.equal((list.match(/class="museum-home__language-icon" aria-hidden="true"/g) || []).length, 4)
+  assert.equal((list.match(/<p lang="en">/g) || []).length, 4)
+  assert.equal((list.match(/class="museum-home__language-state"/g) || []).length, 4)
   assert.equal((list.match(/Đang chuẩn bị/g) || []).length, 4)
-  assert.match(html, /Ngôn ngữ gốc: Tiếng Việt \(vi\)/)
-  assert.doesNotMatch(list, /<button|<a\b|<audio/)
+  assert.match(html, /Khám phá những câu chuyện lịch sử qua nhiều ngôn ngữ, kết nối ký ức với người nghe trên khắp thế giới\./)
+  assert.doesNotMatch(html, /Ngôn ngữ gốc: Tiếng Việt \(vi\)/)
+  assert.doesNotMatch(list, /<button|<a\b|<audio|<select|<img|tabindex=|role="button"|onClick|[\u{1F1E6}-\u{1F1FF}]/u)
+})
+
+test('multilingual cards use compact neutral badges and four/two/one-column responsive layout', () => {
+  const css = read('styles/museum-home.css')
+  assert.match(css, /museum-home__languages[^}]*repeat\(4, minmax\(0, 1fr\)\)/)
+  assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?museum-home__languages[^}]*repeat\(2, minmax\(0, 1fr\)\)/)
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*?museum-home__languages[^}]*grid-template-columns: minmax\(0, 1fr\)/)
+  assert.match(css, /museum-home__languages li[^}]*grid-template-columns: 32px minmax\(0, 1fr\)[^}]*padding: 14px/)
+  assert.match(css, /museum-home__language-state[^}]*background: var\(--museum-color-surface-muted\)[^}]*color: var\(--museum-color-muted-text\)/)
+  const badge = css.match(/museum-home__language-state[^}]*}/)[0]
+  assert.doesNotMatch(badge, /cursor: pointer|(?:^|[;{])\s*width: 100%|border-top:|transition:|transform:/)
+  assert.doesNotMatch(css, /museum-home__language-code/)
+})
+
+test('language cards render four distinct centered text icons without changing their labels or status', () => {
+  const html = renderRoute('/')
+  const list = html.match(/<ul class="museum-home__languages"[^>]*>([\s\S]*?)<\/ul>/)[1]
+  const cards = list.match(/<li>[\s\S]*?<\/li>/g)
+  const expected = [['EN', 'Tiếng Anh'], ['TH', 'Tiếng Thái'], ['가', 'Tiếng Hàn'], ['中', 'Tiếng Trung giản thể']]
+  assert.equal(cards.length, expected.length)
+  const icons = cards.map((card, index) => {
+    const icon = card.match(/<span class="museum-home__language-icon" aria-hidden="true">([^<]+)<\/span>/)[1]
+    assert.equal(icon, expected[index][0])
+    assert.ok(card.includes(`<h3>${expected[index][1]}</h3>`))
+    assert.match(card, /<span class="museum-home__language-state">Đang chuẩn bị<\/span>/)
+    assert.doesNotMatch(card, /<svg|<button|<a\b|tabindex=|role="button"/)
+    return icon
+  })
+  assert.equal(new Set(icons).size, 4)
+  const style = read('styles/museum-home.css').match(/\.museum-theme \.museum-home__language-icon \{[^}]+}/)[0]
+  assert.match(style, /display: grid; place-items: center/)
+  assert.match(style, /width: 32px; height: 32px/)
+  assert.match(style, /border-radius: var\(--museum-radius-sm\)/)
+  assert.match(style, /background: var\(--museum-color-accent-soft\); color: var\(--museum-color-primary\)/)
+  assert.match(style, /font-family: inherit; font-size: \.875rem; font-weight: 700; line-height: 1/)
 })
 
 test('featured video remains an honest empty state with no protected requests or media URLs', () => {
@@ -178,6 +216,142 @@ test('homepage CSS scopes layout and provides shrinkable columns, mobile stackin
   assert.match(css, /museum-home__hero :focus-visible/)
   assert.doesNotMatch(css, /overflow-x: hidden|:root|\banimation:/)
   assert.match(read('styles/museum-theme.css'), /prefers-reduced-motion: reduce/)
+})
+
+test('full-width hero contains readable overlay content without a development caption or empty row', () => {
+  const html = renderRoute('/', false, undefined, undefined, new Set(['/images/museum/hero.jpg']))
+  const hero = html.match(/<section class="museum-home__hero"[\s\S]*?<\/section>/)[0]
+  assert.doesNotMatch(hero, /museum-home__hero-grid/)
+  assert.ok(hero.indexOf('museum-home__hero-backdrop') < hero.indexOf('museum-container'))
+  assert.doesNotMatch(hero, /<figcaption|aria-describedby=|Ảnh minh họa bố cục —/)
+  for (const path of ['/kham-pha', '/thuyet-minh']) assert.ok(hero.includes(`href="${path}"`))
+  const css = read('styles/museum-home.css')
+  assert.match(css, /hero-backdrop[^}]*min-block-size: 500px/)
+  assert.match(css, /hero-backdrop[^}]*grid-template-rows: 1fr;/)
+  assert.match(css, /hero-backdrop > \.museum-home-image__frame[^}]*position: absolute; inset: 0/)
+  assert.match(css, /linear-gradient\(90deg, rgb\(17 28 50 \/ 96%\)/)
+  assert.match(css, /hero-backdrop > figcaption[^}]*position: relative/)
+  assert.doesNotMatch(css, /100vw|max-height:|line-clamp/)
+})
+
+test('compact shell is homepage-only and preserves public navigation and footer content', () => {
+  const home = renderRoute('/')
+  assert.match(home, /museum-public-layout--home/)
+  for (const path of ['/kham-pha', '/thuyet-minh', '/ve-bao-tang', '/not-a-page']) {
+    assert.doesNotMatch(renderRoute(path), /museum-public-layout--home/)
+  }
+  const css = read('styles/museum-layout.css')
+  assert.match(css, /museum-public-layout--home \.museum-header__row[^}]*min-height: 72px; padding-block: 8px/)
+  assert.match(css, /museum-public-layout--home \.museum-footer[^}]*padding-block: clamp\(28px, 3vw, 40px\)/)
+  assert.match(css, /museum-public-layout--home \.museum-footer__notice[^}]*margin-top: 20px; padding-top: 16px/)
+  assert.match(home, /Website thuyết minh đang được phát triển/)
+  for (const path of ['/kham-pha', '/thuyet-minh', '/ve-bao-tang']) assert.ok(home.includes(`href="${path}"`))
+})
+
+test('compact homepage retains readable sizes, bounded media and content-driven responsive height', () => {
+  const css = read('styles/museum-home.css')
+  assert.match(css, /--museum-home-section-space: clamp\(32px, 4vw, 48px\)/)
+  assert.match(css, /font-size: clamp\(2.75rem, 3.6vw, 3.25rem\)/)
+  assert.match(css, /hero-backdrop[^}]*min-block-size: 500px/)
+  assert.match(css, /hero-backdrop[^}]*min-block-size: 480px/)
+  assert.match(css, /hero-backdrop[^}]*min-block-size: 0/)
+  assert.match(css, /museum-home__intro-image[^}]*max-width: 480px/)
+  assert.match(css, /museum-home__video-empty[^}]*max-width: 520px/)
+  assert.match(css, /museum-home__topic \.museum-home-image__frame[^}]*aspect-ratio: 16 \/ 10/)
+  assert.match(css, /museum-home__topic[^}]*padding: 16px/)
+  assert.match(css, /museum-home__languages li[^}]*padding: 14px/)
+  assert.match(css, /min-height: 44px/)
+  assert.doesNotMatch(css, /(?:^|[;{])\s*(?:zoom|transform)\s*:|max-height:|line-clamp|text-overflow: ellipsis|overflow-x: hidden/)
+})
+
+test('homepage hero reuses only an existing public approved poster without media playback', () => {
+  const path = '/museum/posters/bao-tang-chung-tich-chien-tranh.jpg'
+  const html = renderRoute('/', false, undefined, undefined, new Set([path]))
+  assert.match(html, /museum-home__hero-backdrop/)
+  assert.match(html, /<img[^>]*width="640"[^>]*height="360"/)
+  assert.ok(html.includes(`src="${path}"`))
+  assert.match(html, /alt="Không gian ngoài trời trong video giới thiệu/)
+  assert.match(html, /Khung hình từ video giới thiệu bảo tàng/)
+  assert.doesNotMatch(html, /<video|<iframe|<audio|autoplay/)
+  const css = read('styles/museum-home.css')
+  assert.match(css, /museum-home-image--wide[^}]*aspect-ratio: 16 \/ 9/)
+  assert.match(css, /museum-home-image__frame img[^}]*object-fit: cover/)
+})
+
+test('homepage hero rejects private, draft, unapproved and missing poster assets', () => {
+  const posterUrl = '/museum/posters/test-only.jpg'
+  const fixture = { slug: 'bao-tang-chung-tich-chien-tranh', visibility: 'PUBLIC', publishedStatus: 'PUBLISHED', rights: { confirmed: true }, posterUrl }
+  for (const patch of [{ visibility: 'PRIVATE' }, { publishedStatus: 'DRAFT' }, { rights: { confirmed: false } }, { posterUrl: '/projects/private.jpg' }]) {
+    const html = renderRoute('/', false, undefined, [{ ...fixture, ...patch }], new Set([posterUrl]))
+    assert.doesNotMatch(html, /<img/)
+    assert.match(html, /Hình ảnh bảo tàng đang được chuẩn bị/)
+  }
+  assert.doesNotMatch(renderRoute('/', false, undefined, [fixture], new Set()), /<img/)
+  assert.match(read('components/museum/MuseumHomeImage.tsx'), /onError=\{\(\) => setFailedSources/)
+})
+
+test('six homepage slots preserve assets and alt without development notices or empty captions', () => {
+  const files = ['hero', 'museum-intro', 'exhibition-history', 'exhibition-people', 'exhibition-peace', 'featured-video']
+  const inventory = new Set(files.map(file => `/images/museum/${file}.jpg`))
+  const html = renderRoute('/', false, undefined, undefined, inventory)
+  assert.equal((html.match(/<img\b/g) || []).length, 6)
+  assert.equal((html.match(/data-image-slot=/g) || []).length, 6)
+  assert.doesNotMatch(html, /<figcaption|museum-topics-image-notice|museum-home__image-notice/)
+  const visibleText = html.replace(/<[^>]*>/g, '')
+  assert.doesNotMatch(visibleText, /Ảnh minh họa|Ảnh demo|không phải tư liệu lịch sử đã xác minh/)
+  assert.equal((html.match(/loading="eager"/g) || []).length, 1)
+  assert.equal((html.match(/loading="lazy"/g) || []).length, 5)
+  for (const file of files) assert.ok(html.includes(`src="/images/museum/${file}.jpg"`))
+  for (const image of html.match(/<img\b[^>]*>/g)) {
+    assert.match(image, /alt="[^"]+"/)
+    assert.match(image, /width="\d+" height="\d+"/)
+    assert.match(image, /decoding="async"/)
+  }
+  const topics = html.match(/<div class="museum-home__topics">([\s\S]*?)<\/section>/)[1]
+  assert.equal((topics.match(/Đang chuẩn bị/g) || []).length, 3)
+  assert.doesNotMatch(topics.split('<a class="museum-home__text-link')[0], /<a\b|<button/)
+})
+
+test('featured thumbnail prioritizes the matching approved poster while hero prefers its own image', () => {
+  const poster = '/museum/posters/bao-tang-chung-tich-chien-tranh.jpg'
+  const html = renderRoute('/', false, undefined, undefined, new Set([poster, '/images/museum/hero.jpg', '/images/museum/featured-video.jpg']))
+  const hero = html.match(/data-image-slot="hero"[\s\S]*?<\/figure>/)[0]
+  const video = html.match(/data-image-slot="featuredVideo"[\s\S]*?<\/figure>/)[0]
+  assert.match(hero, /src="\/images\/museum\/hero.jpg"/)
+  assert.ok(video.includes(`src="${poster}"`))
+  assert.doesNotMatch(video, /src="\/images\/museum\/featured-video.jpg"/)
+  assert.match(video, /Khung hình từ video giới thiệu bảo tàng/)
+})
+
+test('unrelated catalog posters cannot illustrate the featured museum video', () => {
+  const posterUrl = '/museum/posters/unrelated.jpg'
+  const html = renderRoute('/', false, undefined, [{ slug: 'unrelated', visibility: 'PUBLIC', publishedStatus: 'PUBLISHED', rights: { confirmed: true }, posterUrl }], new Set([posterUrl]))
+  assert.doesNotMatch(html, /<img/)
+  assert.match(html, /Video đang được chuẩn bị/)
+})
+
+test('missing slot assets never emit broken img tags or affect public publication contracts', () => {
+  const html = renderRoute('/', false, undefined, undefined, new Set(['/images/museum/unconfigured.jpg']))
+  assert.doesNotMatch(html, /<img/)
+  assert.equal((html.match(/data-image-slot=/g) || []).length, 6)
+  const source = read('features/museum/homeImages.ts') + read('components/museum/MuseumHomeImage.tsx')
+  assert.doesNotMatch(source, /\bfetch\s*\(|accessToken|createObjectURL|dangerouslySetInnerHTML|https?:\/\//)
+})
+
+test('homepage polish preserves scoped blue surfaces, long-text reflow and public menu safety', () => {
+  const home = read('styles/museum-home.css'), layout = read('styles/museum-layout.css')
+  assert.match(home, /museum-home__hero[^}]*background: var\(--brand-dark\)/)
+  assert.match(home, /museum-home__section--surface[^}]*var\(--museum-color-surface-muted\)/)
+  assert.match(home, /museum-home__closing-row[^}]*display: flex; flex-wrap: wrap/)
+  assert.match(home, /museum-home__link[\s\S]*?overflow-wrap: anywhere/)
+  assert.match(home, /--museum-home-section-space:/)
+  const sharedLayout = layout.split('/* Homepage refinement only;')[0]
+  assert.ok(sharedLayout.lastIndexOf('@media (max-width: 479px)') > sharedLayout.lastIndexOf('@media (max-width: 767px)'))
+  assert.match(layout, /museum-footer__row > \*,[\s\S]*?min-width: 0; overflow-wrap: anywhere/)
+  assert.doesNotMatch(home + layout, /text-overflow: ellipsis|line-clamp|overflow-x: hidden/)
+  const header = read('components/museum/MuseumHeader.tsx')
+  assert.match(header, /dialog\.showModal\(\)/)
+  assert.match(header, /trigger\?\.focus\(\)/)
 })
 
 // Controlled fixtures exist only in tests; the application catalog stays empty.

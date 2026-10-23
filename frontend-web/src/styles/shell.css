@@ -50,7 +50,7 @@
   align-items: center;
   gap: 12px;
   padding: 4px;
-  color: #f8fafc;
+  color: var(--color-background);
   border-radius: 10px;
   text-decoration: none;
   font-size: 15px;
@@ -60,7 +60,7 @@
 
 .sidebar__brand:focus-visible,
 .sidebar__close:focus-visible {
-  outline: 3px solid rgb(139 124 255 / 70%);
+  outline: 3px solid var(--color-focus-on-dark);
   outline-offset: 2px;
 }
 
@@ -72,7 +72,7 @@
 .sidebar__brand small {
   display: block;
   margin-top: 3px;
-  color: #aebbd0;
+  color: var(--sidebar-text);
   font-size: 11px;
   font-weight: 400;
   line-height: 1.4;
@@ -87,7 +87,7 @@
   color: #fff;
   background: var(--color-primary);
   border-radius: 11px;
-  box-shadow: 0 6px 18px rgb(88 80 236 / 28%);
+  box-shadow: 0 6px 18px rgb(var(--brand-primary-rgb) / 28%);
 }
 
 .sidebar__close {
@@ -97,7 +97,7 @@
   flex: 0 0 44px;
   place-items: center;
   padding: 0;
-  color: #dbe4f2;
+  color: var(--sidebar-text);
   background: transparent;
   border: 0;
   border-radius: 10px;
@@ -125,7 +125,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  color: #b8c4d6;
+  color: var(--sidebar-text);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
@@ -146,14 +146,14 @@
 
 .sidebar__link:focus-visible {
   color: #fff;
-  outline: 3px solid rgb(139 124 255 / 70%);
+  outline: 3px solid var(--color-focus-on-dark);
   outline-offset: 2px;
 }
 
 .sidebar__link--active {
   color: #fff;
-  background: rgb(88 80 236 / 27%);
-  box-shadow: inset 0 0 0 1px rgb(139 124 255 / 18%);
+  background: var(--sidebar-active);
+  box-shadow: inset 0 0 0 1px rgb(var(--brand-accent-rgb) / 35%);
   font-weight: 600;
 }
 
@@ -163,7 +163,7 @@
   left: -16px;
   width: 3px;
   height: 28px;
-  background: #8b7cff;
+  background: var(--color-focus-on-dark);
   border-radius: 0 4px 4px 0;
 }
 
@@ -307,7 +307,7 @@
 }
 
 .topbar__menu:focus-visible {
-  outline: 3px solid rgb(88 80 236 / 28%);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -327,13 +327,13 @@
 }
 
 .topbar__search:hover {
-  background: #eef2f7;
+  background: var(--color-surface-secondary);
 }
 
 .topbar__search:focus-within {
   background: var(--color-surface);
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgb(88 80 236 / 12%);
+  box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 12%);
 }
 
 .topbar__search input {
@@ -395,12 +395,12 @@
 
 .topbar-profile__trigger:hover {
   background: var(--color-primary-light);
-  border-color: #d8d4ff;
+  border-color: var(--color-border);
 }
 
 .topbar-profile__trigger:focus-visible {
   border-color: var(--color-primary);
-  outline: 3px solid rgb(88 80 236 / 18%);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -514,12 +514,12 @@
 
 .topbar-profile__item:hover,
 .topbar-profile__item:focus-visible {
-  background: #f1eeff;
+  background: var(--color-primary-light);
   outline: none;
 }
 
 .topbar-profile__item:focus-visible {
-  box-shadow: inset 0 0 0 2px rgb(88 80 236 / 28%);
+  box-shadow: inset 0 0 0 2px rgb(var(--brand-primary-rgb) / 28%);
 }
 
 .topbar-profile__item--danger {

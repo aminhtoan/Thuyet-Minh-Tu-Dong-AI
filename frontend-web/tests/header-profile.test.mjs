@@ -51,7 +51,7 @@ test('profile interactions preserve focus styling and constrain long identities'
   assert.match(topbar, /<strong title=\{identity\.name\}>/);
   assert.match(styles, /\.topbar-profile__trigger \{[^}]*max-width: 220px/);
   assert.match(styles, /text-overflow: ellipsis/);
-  assert.match(styles, /background: #f1eeff/);
+  assert.match(styles, /background: var\(--color-primary-light\)/);
   assert.match(styles, /background: #fef2f2/);
   assert.match(styles, /transition: background-color 150ms ease/);
   assert.match(styles, /\.topbar-profile__item:focus-visible/);

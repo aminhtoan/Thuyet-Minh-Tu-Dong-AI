@@ -14,7 +14,7 @@ export function PublicMuseumLayout() {
       mainRef.current?.focus()
     }
   }, [location.pathname])
-  return <div className="museum-theme museum-public-layout">
+  return <div className={`museum-theme museum-public-layout${location.pathname === '/' ? ' museum-public-layout--home' : ''}`}>
     <a className="museum-skip-link" href="#museum-main">Chuyển đến nội dung chính</a>
     <MuseumHeader key={location.key} />
     <main id="museum-main" className="museum-main" tabIndex={-1} ref={mainRef}><Outlet /></main>

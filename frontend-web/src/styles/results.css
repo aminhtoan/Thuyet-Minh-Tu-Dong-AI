@@ -5,6 +5,6 @@
 .result-metadata { display: grid; gap: 14px; }
 .result-metadata div { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
 .result-metadata dd { margin: 0; overflow-wrap: anywhere; }
-.result-preview { background: #142033; color: #fff; border-radius: 12px; min-height: 260px; padding: 24px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.result-preview { background: var(--brand-dark); color: #fff; border-radius: 12px; min-height: 260px; padding: 24px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
 .result-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 24px; }
 @media (max-width: 800px) { .result-layout { grid-template-columns: 1fr; } }

@@ -11,7 +11,7 @@
 .account-profile__avatar { display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; flex-shrink: 0; border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 2rem; font-weight: 600; }
 .account-profile h2 { margin: 0; color: var(--color-text-primary); font-size: clamp(1.5rem, 2vw, 1.75rem); line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
 .account-profile__email { margin: 6px 0 0; color: var(--color-text-secondary); font-size: 1rem; line-height: 1.6; overflow-wrap: anywhere; }
-.account-profile__role { display: inline-flex; max-width: 100%; margin-top: 8px; padding: 6px 12px; border: 1px solid #A5A0FA; border-radius: 999px; color: #4338CA; background: #EDE9FE; font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
+.account-profile__role { display: inline-flex; max-width: 100%; margin-top: 8px; padding: 6px 12px; border: 1px solid var(--color-border-strong); border-radius: 999px; color: var(--color-primary); background: var(--color-primary-light); font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
 .account-profile .account-profile__edit-button { align-self: flex-start; flex-shrink: 0; min-height: 44px; border: 1px solid var(--color-primary); border-radius: 10px; color: var(--color-primary); background: var(--color-surface); }
 .account-profile .account-profile__edit-button:hover:not(:disabled) { background: var(--color-primary-light); }
 .account-profile .account-profile__edit-button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }

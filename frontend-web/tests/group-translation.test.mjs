@@ -11,9 +11,10 @@ const plan = { projectId: 'project', sourceLanguage: 'vi', targetLanguage: 'en',
 const draft = { ...plan, state: 'DRAFT', alignmentFormat: 'GROUPS_V1', draftId: 'draft-id', outputDigest: 'digest', expiresAt: '2099-01-01T00:00:00Z', groups: groups.map(g => ({ ...g, translatedText: 'English text for ' + g.groupId })) };
 const saved = { ...draft, state: 'APPROVED', id: 'saved', fullText: 'English text', review: { method: 'MANUAL_V1' } };
 const flush = async () => { for (let i = 0; i < 25; i++) await Promise.resolve(); };
-function harness({ target = 'en', initialDraft = false, stored = null, restored = draft, confirm = true, catalog = [{ code: 'en', name: 'Tiếng Anh' }], preview = async () => draft, approve = async () => saved, customerMode = false, customerState = async () => ({ draft: null, attempt: null }) } = {}) {
+function harness({ target = 'en', initialDraft = false, stored = null, restored = draft, confirm = true, catalog = [{ code: 'en', name: 'Tiếng Anh' }], preview = async () => draft, approve = async () => saved, customerMode = false, customerState = async () => ({ draft: null, attempt: null }), canMutate = true, transcript = { segments: [], languageCode: 'vi' } } = {}) {
   const slots = [], refs = [], effects = []; let cursor = 0, refCursor = 0, effectCursor = 0, params = new URLSearchParams(initialDraft ? 'draft=draft-id' : ''), requests = 0, approvals = 0, restores = 0, fetches = 0, confirmCalls = 0;
   const jsx = (type, props) => ({ type, props });
+  const confirmations = [], focused = [];
   const react = {
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === 'function' ? value(slots[i]) : value; }]; },
     useRef(initial) { return refs[refCursor++] ??= { current: initial }; },
@@ -27,7 +28,7 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
     async preview(...args) { requests++; return preview(...args); }, async approve(...args) { approvals++; return approve(...args); },
   };
   const exports = {};
-  runInNewContext(compiled, { exports, Error, Date, URLSearchParams, AbortController, crypto: { randomUUID: () => 'request-key' }, window: { confirm() { confirmCalls++; return confirm; } }, require: name => {
+  runInNewContext(compiled, { exports, Error, Date, URLSearchParams, AbortController, crypto: { randomUUID: () => 'request-key' }, window: { confirm(text) { confirmCalls++; confirmations.push(text); return confirm; } }, require: name => {
     if (name === 'react') return react;
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'fragment' };
     if (name === 'react-router-dom') return { Link: 'a', useSearchParams: () => [params, value => { params = value; }] };
@@ -35,7 +36,7 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
     if (name.includes('customerAttemptPresentation')) return { customerAttemptMessage };
     if (name.includes('voiceService')) return { voiceService: { async getLanguages() { return catalog; } } };
     if (name.includes('projectRepository')) return { projectRepository: { async refresh() {} } };
-    if (name.includes('transcriptService')) return { transcriptService: { async getTranscript() { return { segments: [], languageCode: 'vi' }; } } };
+    if (name.includes('transcriptService')) return { transcriptService: { async getTranscript() { return transcript; } } };
     if (name.includes('transcriptPresentation')) return { formatPreciseTimestamp: s => '00:00.' + s };
     if (name.includes('translationLanguages')) return { translationTargetChoices: (list, source) => list.filter(l => l.code !== source), translationLanguageLabel: l => l.name };
     if (name.includes('translationPresentation')) return { buildTranslationPresentation: () => ({ rows: [] }), mapTranslationSegments: () => [] };
@@ -43,15 +44,58 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
   } });
   let tree;
   return {
-    render() { cursor = 0; refCursor = 0; effectCursor = 0; tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage: 'vi' }, preferredTarget: target, canMutate: true, notice: null, customerMode }); for (const effect of effects) if (effect.action) { const fn = effect.action; effect.action = null; effect.cleanup = fn(); } return tree; },
+    render() {
+      cursor = 0; refCursor = 0; effectCursor = 0;
+      tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage: 'vi' }, preferredTarget: target, canMutate, notice: null, customerMode });
+      // Minimal DOM-ref simulation for post-action focus, not a browser layout test.
+      function attach(node) {
+        if (!node || typeof node !== 'object') return;
+        if (node.props?.ref) node.props.ref.current = { focus() { focused.push(node.props.role ?? node.props.children); } };
+        for (const child of [node.props?.children].flat(Infinity)) attach(child);
+      }
+      attach(tree);
+      for (const effect of effects) if (effect.action) { const fn = effect.action; effect.action = null; effect.cleanup = fn(); }
+      return tree;
+    },
     async settle() { this.render(); await flush(); this.render(); },
     find(predicate) { function walk(value) { if (!value || typeof value !== 'object') return null; if (predicate(value)) return value; for (const child of [value.props?.children].flat(Infinity)) { const match = walk(child); if (match) return match; } return null; } return walk(tree); },
     text() { function walk(value) { if (typeof value === 'string') return value; if (!value || typeof value !== 'object') return ''; return [value.props?.children].flat(Infinity).map(walk).join(' '); } return walk(tree); },
     counts: () => ({ requests, approvals, restores, fetches, confirmCalls }),
+    confirmations, focused,
     unmount() { effects.forEach(e => e.cleanup?.()); },
   };
 }
 const button = (h, label) => h.find(v => v.type === 'Button' && v.props.children === label);
+
+test('final review: one header/project/workflow and one compact attempt status at every settled state', async () => {
+  function all(tree, predicate) {
+    if (!tree || typeof tree !== 'object') return [];
+    return [...(predicate(tree) ? [tree] : []), ...[tree.props?.children].flat(Infinity).flatMap(child => all(child, predicate))];
+  }
+  for (const status of ['NOT_SENT', 'PROCESSING', 'UNCERTAIN', 'FAILED_RESPONSE', 'EXPIRED']) {
+    const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status, providerHttpStatus: status === 'UNCERTAIN' ? 503 : null } }) });
+    await h.settle(); const tree = h.render();
+    assert.equal(all(tree, v => v.type === 'PageHeader').length, 1);
+    assert.equal(all(tree, v => v.type === 'WorkflowSteps').length, 1);
+    assert.equal(all(tree, v => v.type === 'h2' && v.props.children === 'Dự án thật').length, 1);
+    const compact = all(tree, v => String(v.props?.className).includes('translation-feedback--compact'));
+    assert.equal(compact.length, 1);
+    assert.equal(all(compact[0], v => v.type === 'h2').length, 1);
+    assert.equal(all(compact[0], v => v.type === 'Button').length, 1);
+    assert.equal(all(tree, v => v.type === 'Button' && v.props.children === 'Kiểm tra kết quả (không gọi AI)').length, 1);
+    assert.doesNotMatch(h.text(), /Xem trạng thái yêu cầu bên dưới/);
+    assert.equal(h.counts().requests, 0); h.unmount();
+  }
+});
+
+test('final review: compact feedback and scroll anchors do not clip text or pin over content', async () => {
+  const css = await readFile(new URL('../src/styles/translation.css', import.meta.url), 'utf8');
+  assert.match(css, /\.translation-feedback--compact\s*\{[^}]*padding: var\(--space-md\) var\(--space-lg\)/);
+  assert.match(css, /scroll-margin-top: 6rem/);
+  assert.match(css, /\.group-translation-workspace p\s*\{[^}]*overflow-wrap: anywhere/);
+  const compact = css.match(/\.translation-feedback--compact[^{}]*\{[^}]*\}/g).join(' ');
+  assert.doesNotMatch(compact, /max-height|overflow:\s*hidden|line-clamp|position:\s*(fixed|sticky)/);
+});
 test('Customer refresh observes durable states, blocks generation and only checks GET results', async () => {
   for (const status of ['NOT_SENT', 'PROCESSING', 'UNCERTAIN', 'FAILED_PRE_DISPATCH', 'FAILED_RESPONSE', 'EXPIRED']) {
     const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status } }) });
@@ -125,10 +169,81 @@ test('approval source mismatch retains draft and blocks saved feedback', async (
 test('format-aware saved group loads without generation or regrouping', async () => {
   const h = harness({ stored: saved }); await h.settle(); assert.match(h.text(), /English text for a/); assert.match(h.text(), /Bản dịch đã lưu/); assert.equal(h.counts().requests, 0); assert.equal(button(h, 'Gộp với cụm tiếp theo'), null); h.unmount();
 });
-test('reload restores RAM draft by ID without generation; rejected draft never persists', async () => {
+test('closing RAM draft viewer does not approve, delete or generate', async () => {
   const h = harness({ initialDraft: true }); await h.settle(); assert.equal(h.counts().restores, 1); assert.equal(h.counts().requests, 0);
-  assert.match(h.text(), /Bản nháp — chưa lưu/); button(h, 'Từ chối bản nháp').props.onClick(); await h.settle();
+  assert.match(h.text(), /Bản nháp — chưa lưu/); button(h, 'Đóng bản xem nháp').props.onClick(); await h.settle();
   assert.equal(h.counts().approvals, 0); assert.equal(h.counts().requests, 0); assert.match(h.text(), /Kiểm tra ranh giới cụm nguồn/); h.unmount();
+});
+
+test('confirmation distinguishes durable Customer draft from RAM-only group draft', async () => {
+  for (const customerMode of [true, false]) {
+    const h = harness({ customerMode, confirm: false }); await h.settle();
+    h.find(v => v.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+    await button(h, customerMode ? 'Dịch tiếng Anh' : 'Xem trước bản dịch').props.onClick();
+    assert.match(h.confirmations[0], customerMode ? /Bản nháp hợp lệ được lưu trên máy chủ/ : /Bản nháp chỉ nằm trong bộ nhớ máy chủ/);
+    assert.doesNotMatch(h.confirmations[0], /Bản dịch chỉ được lưu sau khi bạn duyệt/);
+    assert.equal(h.counts().requests, 0); h.unmount();
+  }
+});
+
+test('durable draft, approved translation and legacy saved state have distinct labels', async () => {
+  const h = harness({ customerMode: true, customerState: async () => ({ draft, attempt: { status: 'DRAFT_SAVED' } }) });
+  await h.settle(); assert.match(h.text(), /Bản nháp — chưa duyệt/);
+  assert.match(h.text(), /Bản nháp đã lưu trên máy chủ/);
+  assert.match(h.text(), /Đóng bản xem không xóa hoặc từ chối/);
+  assert.equal(button(h, 'Từ chối bản nháp'), null);
+  assert.equal(h.find(v => v.type === 'a' && String(v.props.to).includes('/voice')), null);
+  assert.equal(button(h, 'Duyệt và lưu bản dịch').props.disabled, true);
+  h.unmount();
+  const approved = harness({ stored: saved }); await approved.settle();
+  assert.match(approved.text(), /Bản dịch đã được duyệt/); approved.unmount();
+  const old = harness({ stored: { id: 'old', alignmentFormat: 'SEGMENTS_V1', segments: [] } }); await old.settle();
+  assert.match(old.text(), /định dạng phân đoạn cũ/); assert.doesNotMatch(old.text(), /Bản dịch đã được duyệt/); old.unmount();
+});
+
+test('provider warnings remain outside disclosure and precede source controls; GET only recovery', async () => {
+  for (const providerHttpStatus of [400, 503]) {
+    const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status: 'UNCERTAIN', providerHttpStatus } }) });
+    await h.settle();
+    const warning = h.find(v => v.type === 'p' && v.props.role === 'alert');
+    assert.match(warning.props.children, new RegExp('HTTP ' + providerHttpStatus));
+    assert.match(warning.props.children, /Không nhấn Dịch lại/);
+    assert.ok(h.text().indexOf('Trạng thái yêu cầu dịch') < h.text().indexOf('Ngôn ngữ nguồn'));
+    assert.equal(h.find(v => v.type === 'details'), null);
+    button(h, 'Kiểm tra kết quả (không gọi AI)').props.onClick(); await h.settle();
+    assert.equal(h.counts().requests, 0); assert.equal(h.counts().approvals, 0); h.unmount();
+  }
+});
+
+test('disabled generation has a persistent explanation; read-only cannot dispatch', async () => {
+  const h = harness({ customerMode: true }); await h.settle();
+  const send = button(h, 'Dịch tiếng Anh'); assert.equal(send.props.disabled, true);
+  assert.equal(send.props['aria-describedby'], 'translation-generation-hint');
+  assert.match(h.text(), /Đánh dấu xác nhận/); h.unmount();
+  const readOnly = harness({ customerMode: true, canMutate: false }); await readOnly.settle();
+  assert.match(readOnly.text(), /chế độ chỉ đọc/);
+  await button(readOnly, 'Dịch tiếng Anh').props.onClick();
+  assert.equal(readOnly.counts().requests, 0); readOnly.unmount();
+});
+
+test('manual generation completion focuses feedback; error focuses alert without retry', async () => {
+  let finish;
+  const h = harness({ customerMode: true, preview: () => new Promise(resolve => { finish = resolve; }) }); await h.settle(); assert.deepEqual(h.focused, []);
+  h.find(v => v.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+  const pending = button(h, 'Dịch tiếng Anh').props.onClick(); h.render(); finish(draft); await pending; h.render();
+  assert.equal(h.focused.at(-1), 'Bản nháp — chưa duyệt'); assert.equal(h.counts().approvals, 0); h.unmount();
+  let reject;
+  const fail = harness({ customerMode: true, preview: () => new Promise((_, fail) => { reject = fail; }) }); await fail.settle();
+  fail.find(v => v.type === 'input').props.onChange({ target: { checked: true } }); fail.render();
+  const failed = button(fail, 'Dịch tiếng Anh').props.onClick(); fail.render(); reject(Error('Provider không khả dụng')); await failed; fail.render();
+  assert.equal(fail.focused.at(-1), 'alert'); assert.equal(fail.counts().requests, 1); fail.unmount();
+});
+
+test('empty transcript and target selection have actionable messages without generation', async () => {
+  const h = harness({ transcript: null }); await h.settle();
+  assert.match(h.text(), /Cần có bản ghi trước khi dịch/); assert.equal(h.counts().requests, 0); h.unmount();
+  const target = harness({ target: '' }); await target.settle();
+  assert.match(target.text(), /Chọn ngôn ngữ đích để xem/); assert.equal(target.counts().requests, 0); target.unmount();
 });
 test('expired restored draft cannot submit approval or silently regenerate', async () => {
   const h = harness({ initialDraft: true, restored: { ...draft, expiresAt: '2000-01-01T00:00:00Z' } }); await h.settle();

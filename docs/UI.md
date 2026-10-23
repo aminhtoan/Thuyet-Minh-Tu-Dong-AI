@@ -1,5 +1,110 @@
 # UI Specification
 
+## S27.3.2.5 — Multilingual section refinement (2026-10-23)
+
+- Only homepage “Lắng nghe theo cách của bạn” changed. Replaced technical source
+  copy with the user-specified introduction about historical stories across languages.
+  Four existing English/Thai/Korean/Simplified Chinese entries retained; no new data.
+- Reused the existing neutral language SVG (decorative aria-hidden), not flags.
+  Compact two-column card content:32px icon,16px prominent Vietnamese heading and
+  13px English subtitle (lang=en);14px padding,8/12px gaps, natural equal grid height.
+- Đang chuẩn bị is a12px neutral text span badge with muted surface/text and border,
+  not a button/link, tab stop or playback action. No primary-action color treatment,
+  full-width divider or unnecessary empty space. Desktop4 columns, tablet2 at≤1023,
+  mobile1 at≤767. Long names wrap; no fixed content height or added animation.
+- ui-ux-pro-max guided contextual decorative-icon semantics and static status clarity.
+  Existing blue tokens/Be Vietnam Pro and all other homepage sections remain intact;
+  no demo-image captions reintroduced. Browser inventory empty: Visual QA NOT VERIFIED.
+- Validation: Web333/333 PASS,0 skipped/failed; lint/typecheck/build/diff-check PASS.
+  Existing projectRepository mixed-import advisory remains; approved sandbox
+  escalation used for production build. Tests assert exact copy/languages,
+  decorative icons, non-interactive status and compact4/2/1 responsive rules.
+
+## S27.3.2.4 — Homepage caption cleanup (2026-10-23)
+
+- User confirms rights for existing images. Removed development/demo captions from
+  Hero, intro, exhibition images and fallback demo thumbnail; removed the shared
+  exhibition notice and its aria-describedby wiring/styles. No empty figcaption,
+  notice border/padding or reserved empty Hero caption row. No replacement copy.
+- Individual source/license captions remain, including the existing video poster
+  source caption. Alt text, eager/lazy loading, image-error fallback and all assets
+  preserved. ui-ux-pro-max informed retaining text alternatives and stable media.
+- S27.3.2.3 proportions, blue palette/font, public links, three editorial/four
+  language preparation states and all Customer behavior unchanged. Source metadata
+  remains in MUSEUM_IMAGES.md with a dated current-policy note; no invented rights.
+- Browser inventory empty: Visual QA NOT VERIFIED at375/768/1024/1280/1440, including
+  real whitespace/reflow. Mock/SSR checks are not visual verification.
+- Web332/332 PASS; lint/typecheck/production build/diff-check PASS. SHA-256 checks
+  confirm all files in public/images/museum unchanged. Existing projectRepository
+  static/dynamic import build warning remains; build used approved escalation.
+
+## S27.3.2.3 — Compact homepage refinement (2026-10-23)
+
+- Preserved S27.3.2.2 full-width image/gradient/captions, palette, Be Vietnam Pro,
+  public links and preparation states. Only homepage CSS plus a pathname-scoped
+  shell class changed; other Public routes and Customer UI retain existing styles.
+- Desktop Header minimum76→72px, vertical padding12→8px; compact brand/actions,
+ 44px interactive targets retained. Mobile Header minimum68px; existing menu
+  breakpoint/keyboard behavior unchanged. No fixed maximum height.
+- Hero minimum600→500px desktop,550→480px tablet; text grows naturally if needed.
+  Heading maximum56→52px (desktop44–52px), mobile32–40px; content padding48–88→32–40px.
+  CTA padding13×20→10×16px, compact13px caption in a separate lower row.
+- Section spacing40–72→32–48px; section headings28–40→24–32px. Intro image bounded
+  to480px, paragraph measure56→52ch. Video thumbnail bounded520px with .9:1 columns.
+  Demo images and poster unchanged, cover positions preserved pending browser QA.
+- Exhibition padding20–28→16px, image4:3→16:10, language padding24→16px.
+  Notice padding12×16→8×12px; CTA panel24–48→20–32px; Footer padding40–64→28–40px,
+  column gap32→24px (mobile16), notice margin/padding32/24→20/16px.
+- ui-ux-pro-max informed readable body/reflow and44px targets; no global scaling,
+  truncation, animations or functional changes. Six referenced100% screenshots were
+  not attached to this request; changes use supplied requirements/source evidence.
+  Browser inventory empty: Visual QA NOT VERIFIED at375/768/1024/1280/1440 and
+ 100/200% zoom; crop, keyboard, overflow and actual compact proportions need review.
+- Validation: Web332/332 PASS, lint/typecheck/production build/diff-check PASS;
+  existing projectRepository mixed-import warning unchanged. No real browser QA.
+
+## S27.3.2.2 — Final homepage / full-width Hero (2026-10-23)
+
+- Homepage Hero now uses the existing local hero image as a full-bleed cover layer
+  outside MuseumContainer. Navy left-to-right gradient, left-aligned copy/CTAs,
+  minimum600px desktop/550px tablet, content-driven mobile height. Caption occupies
+  its own grid row, not an absolute overlay on CTAs. No viewport-width overflow hack,
+  fixed maximum height, animation, route or business changes.
+- Introduction is an equally sized image/copy two-column layout, vertically centered;
+  mobile stacks. Editorial cards retain three preparation badges, equal desktop
+  heights and3/2/1-column responsive rules. Demo disclaimer appears once per section,
+  associated with each demo image via aria-describedby; individual source captions
+  remain visible when not the shared demo caption.
+- Language cards, real video poster/copy columns and closing CTA panel use consistent
+  spacing. Existing navy Footer, Be Vietnam Pro, palette, protected Customer behavior
+  and secondary authenticated editor link preserved. ui-ux-pro-max informed contrast,
+  wrapping, image fallbacks and reserved media space.
+- Existing demo assets retained byte-for-byte. Hero measured1960x1102; no new photo
+  or historical-source claim. Full-width crop/sharpness still needs human review,
+  especially at high-DPI/large displays. Featured video retains approved640x360 poster
+  ahead of the demo thumbnail. No private data/API accessed.
+- Browser inventory empty: Visual QA NOT VERIFIED, including375/768/1024/1280/1440,
+  zoom100/200%, real keyboard focus/crop/overflow and reduced-motion behavior.
+- Full Web330/330 PASS; lint/typecheck/build/diff-check PASS. Existing build warning
+  about projectRepository static/dynamic imports remains, not introduced here.
+
+## S27.3.2.1 — Museum homepage image slots (2026-10-23)
+
+- Six homepage-only slots in `features/museum/homeImages.ts`: hero, museumIntro,
+  exhibitionHistory, exhibitionPeople, exhibitionPeace, featuredVideo. Copy paths,
+  sizes, replacement and editorial caveats are in [MUSEUM_IMAGES.md](MUSEUM_IMAGES.md).
+- `MuseumHomeImage` reserves 16:9/4:3 space, uses object-fit cover, descriptive alt,
+  eager Hero/lazy below-fold images and error fall-through to styled fallback.
+  Vite asset inventory avoids requests for known missing files. Demo captions stay
+  explicit; three editorial cards remain non-interactive and Đang chuẩn bị.
+- Hero may reuse the existing approved real video poster; featuredVideo prioritizes
+  that exact video's poster. No real image/video overwritten; six custom files are
+  absent initially. No image downloading/generation, new publication or data/API change.
+- ui-ux-pro-max guided reserved dimensions, image scaling and below-fold loading.
+  Blue tokens, public CTAs and Customer workflows unchanged. Web327/327 PASS;
+  lint/typecheck/build/diff-check PASS. Visual QA NOT VERIFIED: no browser surface;
+  viewport375/768/1024/1280/1440 and zoom200% still require manual checking.
+
 ## AI-TRANSLATE-05.8.4L — Dynamic controlled preview contract (2026-10-22)
 
 - Existing `/projects/:projectId/translation/controlled-preview` now accepts a valid
@@ -1582,6 +1687,153 @@ and never enables/clicks translation or claims global RAM clearance. Status rema
 semantic live text (ui-ux-pro-max feedback guidance); no layout redesign or new
 execution action. Missing/contradictory READY evidence is rendered BLOCKED. Browser
 verification NOT RUN; Web304/304 mock tests PASS.
+
+## S27.3.2 — Public Museum Homepage polish (2026-10-23)
+
+- Homepage-only Hero uses the existing local 640x360 poster extracted from the
+  authorized public introduction video. Reuses public catalog visibility/publication/
+  rights confirmation and asset-path checks; no catalog/media/rights edits. Caption
+  identifies it as a video frame, not a newly sourced museum photograph. Original
+  aspect ratio/object-fit contain, explicit dimensions/alt and image-error typography
+  fallback retained. Private/draft/unapproved/missing assets do not produce an image.
+- Navy Hero, slightly smaller responsive title, improved lead/CTA rhythm and a
+  shrinkable two-column desktop composition; tablet/mobile stack without truncation.
+  Introduction gets an editorial rule; section spacing, light-blue section surfaces,
+  topic card rhythm and closing CTA proportions refined using existing blue tokens.
+  Three editorial topics and four unavailable target languages remain preparation
+  content; no fake exhibition, language availability or playback control introduced.
+- Public Header/Footer reviewed; only their shared public stylesheet changed:
+  flexible header/navigation/actions, 76px desktop min-height, readable notice text,
+  long-label wrapping, footer one-column reflow on narrow phones and visible focus.
+  Existing modal/Escape/focus-return/auth links remain unchanged. Customer styles,
+  global tokens, routes, APIs and business behavior untouched in this step.
+- ui-ux-pro-max informed readable text measure, non-cropped real-media reuse,
+  responsive reflow and semantic hierarchy. No generated or externally sourced image.
+- Full Web tests **320/320 PASS**, lint/typecheck/build/diff-check PASS. New mock/SSR
+  tests cover approved poster/fallback admission, unavailable/private source rejection,
+  image failure handler presence and public-only reflow constraints. Existing Vite
+  ineffective dynamic import warning remains non-blocking.
+- Visual QA **NOT VERIFIED**: browser inventory empty; target widths
+  375/768/1024/1280/1440 and zoom200% not inspected. Local poster visually inspected
+  as an asset only, not a screenshot of the rendered site. The 640x360 video frame
+  remains lower resolution than a dedicated approved Hero photograph.
+- Files: MuseumHomePage.tsx, museum-home.css, museum-layout.css,
+  museum-routing.test.mjs, docs/UI.md, docs/PROGRESS.md. No Customer/Mobile/Admin/
+  Backend changes, Gemini calls, MongoDB writes, retries/resets, commit/push.
+
+## S27.3.1.1 — Restore blue Web theme (2026-10-23, current palette)
+
+This supersedes the wine/cream/bronze palette below. The shared token architecture
+is retained, but neutral `--brand-primary/background/accent` names now resolve to
+the original Customer colors: Primary #5850EC, Accent #794CFF, Dark/Sidebar #111C32,
+Background #F8FAFC, Section #F1F5F9 and Card #FFFFFF. Original Customer hover #4538CF,
+pressed #3730A3, primary-soft #F0EEFF, accent-soft #EEE9FF, text #0F172A/#475569/
+#64748B, border #E2E8F0 and blue Dashboard hero gradient are restored exactly by
+resolved value. Public aliases use the same colors for navigation, CTA, breadcrumb,
+cards and border; footer uses shared navy. Editorial layouts/assets are unchanged.
+
+- Removed wine/cream/bronze primitive names and identity colors from Web CSS,
+  including warm dark-card text/scrims. Customer hero illustration, sidebar active,
+  account/form/upload/auth/icon/chart accents are blue/purple again. Shared focus
+  visibility, typography, reflow and S27.2.1 Translation improvements retained.
+- Red error #C62828 and pale red error surfaces remain semantic; warning #B45309
+  with #FFFBEB still denotes warning/UNCERTAIN, not a cream brand surface. Green
+  success #15803D and blue processing/info #0369A1 remain unchanged. Original photos,
+  posters, logos and content were not recolored or replaced.
+- `design-system` guided alias-only color migration; no Git reset/checkout/restore,
+  full-file restoration, API/business changes or data access. Focused tests validate
+  original resolved values, shared Museum aliases, contrast pairs, semantic statuses
+  and absence of wine/cream/bronze CSS. Full Web317/317 PASS; lint/typecheck/build and
+  diff-check PASS. Existing ineffective dynamic-import warning is non-blocking.
+- Visual QA NOT VERIFIED: browser inventory empty; responsive widths/zoom need
+  browser verification. No Backend/Mobile/Admin/config changes, Gemini or MongoDB
+  writes, attempt replay/reset, commit/push. Historical palette notes below are not
+  the current design specification.
+
+## S27.3.1 — Unified Public / Customer Web design system (2026-10-23, superseded palette)
+
+Shared primitive → semantic → component tokens now live in `frontend-web/src/styles/tokens.css`.
+Museum aliases the same primitives in its scoped theme; no route, content, asset or
+business layout changes. Local Be Vietnam Pro is retained. Customer spacing/radius
+scales remain unchanged; Museum component spacing/type sizes/radius/shadows now
+reuse these aliases, while editorial display sizes, line-height and containers stay scoped.
+
+| Role | Previous Customer / Public | Shared Web value |
+| --- | --- | --- |
+| Primary | #5850EC / #7A292E | #7B252B |
+| Background | #F8FAFC / #F3EBDD | #FAF7F0 |
+| Section | #F1F5F9 / #EDE2D0 | #F1E8D8 |
+| Dark | #111C32 sidebar / #242321 | #242321 |
+| Accent | #794CFF / #B08A52 | #B58A4B |
+| Card | #FFFFFF / #FFFDF8 | #FFFFFF |
+
+- Replaced Customer purple hardcodes in sidebar active/focus, profile menu/account
+  role, upload, auth, workflow decoration and Dashboard hero/charts. Remaining
+  pages inherit shared semantic tokens. Identity gradients on buttons use wine
+  and dark-wine, not white text over bright bronze. Functional bronze ink #806137
+  is distinct from decorative bronze; chart bars use wine/bronze-ink.
+- Semantic success #15803D, warning #B45309, error #C62828, info #0369A1 and their
+  light surfaces are unchanged. Processing workflow markers use info blue rather
+  than inheriting the new wine identity. Status chart/legend colors remain semantic;
+  Translation UNCERTAIN remains warning with its existing text and replay guards.
+- Border #D8CCB8, stronger control-hover border #8A7B67, muted text #625D55 and
+  light-on-dark text/focus support the palette. Tests calculate >=4.5:1 for selected
+  normal text/action pairs, >=3:1 for selected focus/data/control pairs, and check
+  alias cycles and old-purple absence. These are source checks, not full WCAG certification.
+- `design-system` guided shared primitive/semantic/component roles; `ui-ux-pro-max`
+  guided contrast/interaction review. No new system-wide visual redesign or feature.
+- Full Web tests **317/317 PASS**, including 4 new theme tests. Lint/typecheck/build
+  and diff-check PASS. Tests use no-child-process isolation because sandbox spawning
+  is restricted; build used approved escalation. Existing ineffective dynamic import
+  warning for projectRepository remains non-blocking.
+- Visual QA **NOT VERIFIED**: browser inventory has no apps/browsers. Verify Public,
+  auth and Customer pages at 375/768/1024/1280/1440px, 200% zoom, hover/focus/disabled
+  and chart differentiation before page-specific completion. No live API exercise.
+- S27.2.1 Translation source/CSS/tests preserved. No Backend/Mobile/Admin/config,
+  logo/media/data changes; Gemini0, MongoDB writes0, no retry/reset/commit/push.
+
+## S27.2.1.1 — Final Translation review (2026-10-23)
+
+The Customer attempt message now shares one compact status card with the summary
+heading instead of a second consecutive panel. Safe provider/UNCERTAIN copy and
+GET-only result check are retained, with no truncated text or fixed-height clamp.
+Scroll clearance supports focus visibility below the shell header. ui-ux-pro-max
+guided reduction of redundant hierarchy without collapsing safety information.
+Mock tests confirm one page header/project heading/workflow per workspace and one
+result-check control for each attempt state. Web313/313, lint/typecheck/build PASS.
+Visual QA NOT VERIFIED: no attached screenshot and no connected browser; scrolling,
+responsive widths and zoom must still be checked manually. No API/business changes.
+
+## S27.2.1 — Customer Translation UI polish (2026-10-23)
+
+- Customer group workspace distinguishes a durable server-saved draft, an approved
+  GROUPS_V1 translation, legacy saved data, processing and uncertain attempts. AI
+  confirmation explains draft storage separately from approval; ordinary group-mode
+  RAM drafts keep their existing non-durable description.
+- “Đóng bản xem nháp” replaces “Từ chối bản nháp”, with explicit text that closing
+  does not delete/reject a server draft and it may reappear on reload. Existing local
+  close/query behavior is unchanged; no new mutation API.
+- Development-only SIMPLE check follows the main workflow in a native, initially
+  closed details/summary disclosure. Opening it never performs a request. Manual GET
+  semantics and READY/BLOCKED/UNKNOWN validation remain unchanged. Attempt warnings
+  and provider 400/503 errors stay outside the disclosure, above source controls.
+- Reuses Customer color/type/spacing tokens. Group cards have separate headings and
+  timestamps, source/translation surfaces and language attributes. Actions wrap on
+  narrow screens; technical definition lists stack. Disabled generation/approval
+  actions have persistent aria-describedby guidance. Live status/alert regions and
+  post-manual-action focus expose completion/errors without focusing on initial load.
+  ui-ux-pro-max informed progressive disclosure, truthful feedback and focus handling.
+- Validation: full Web mock/regression tests **311/311 PASS**, including **32/32**
+  focused group/Customer/SIMPLE tests; lint/typecheck/production build PASS and
+  git diff --check PASS. Node process-isolation tests and initial Vite build hit
+  sandbox spawn EPERM: tests ran with --experimental-test-isolation=none; production
+  build passed with approved sandbox escalation. Vite reports an ineffective dynamic
+  import warning for projectRepository; no build failure.
+- Visual QA **NOT VERIFIED**: browser inventory had no apps/browsers. Actual
+  375/768/1024/1280/1440px, 200% zoom, keyboard/screen-reader and focus behavior still
+  require browser verification. Mock focus/disclosure checks are not visual QA.
+- No Backend/API/config, Museum, Mobile or Admin changes; no Gemini calls, MongoDB
+  writes, attempt resets, automatic approval, TTS/render, commit or push.
 
 ### Customer provider400/503 feedback — 2026-10-22
 

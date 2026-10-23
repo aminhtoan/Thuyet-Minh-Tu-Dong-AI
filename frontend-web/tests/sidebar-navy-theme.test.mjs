@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('Customer Web sidebar uses the approved navy identity without changing navigation', async () => {
+test('Customer Web sidebar restores blue/navy identity without changing navigation', async () => {
   const [tokens, css, sidebar] = await Promise.all([
     readFile(new URL('../src/styles/tokens.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/styles/shell.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/layout/Sidebar.tsx', import.meta.url), 'utf8'),
   ]);
-  assert.match(tokens, /--color-sidebar:\s*#111c32/);
+  assert.match(tokens, /--color-sidebar:\s*var\(--brand-dark\)/);
   assert.match(css, /\.sidebar__link--active[^}]*color:\s*#fff/);
   assert.match(css, /\.sidebar__link:focus-visible/);
   assert.match(css, /\.sidebar__bottom[^}]*border-top/);

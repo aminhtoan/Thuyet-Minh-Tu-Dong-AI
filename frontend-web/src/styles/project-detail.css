@@ -167,7 +167,7 @@
 .project-detail-field textarea { min-height: 7rem; resize: vertical; line-height: var(--line-height-normal); }
 .project-detail-field input:hover:not(:disabled),
 .project-detail-field select:hover:not(:disabled),
-.project-detail-field textarea:hover:not(:disabled) { border-color: #cbd5e1; }
+.project-detail-field textarea:hover:not(:disabled) { border-color: var(--color-border-strong); }
 .project-detail-field input:focus-visible,
 .project-detail-field select:focus-visible,
 .project-detail-field textarea:focus-visible { border-color: var(--color-primary); }

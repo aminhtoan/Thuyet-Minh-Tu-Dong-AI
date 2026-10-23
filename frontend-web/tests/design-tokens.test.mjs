@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('Web and Mobile expose the canonical visual identity tokens', async () => {
+test('Web restores blue identity while Mobile retains its existing identity', async () => {
   const [web, mobile] = await Promise.all([
     readFile(new URL('../src/styles/tokens.css', import.meta.url), 'utf8'),
     readFile(new URL('../../frontend-mobile/src/theme/tokens.ts', import.meta.url), 'utf8'),
   ]);
-  for (const value of ['#5850EC', '#794CFF', '#F8FAFC', '#0F172A', '#FFFFFF']) {
+  for (const value of ['#5850EC', '#794CFF', '#111C32', '#F8FAFC', '#F1F5F9', '#FFFFFF']) {
     assert.match(web.toUpperCase(), new RegExp(value));
+  }
+  for (const value of ['#5850EC', '#794CFF', '#F8FAFC', '#0F172A', '#FFFFFF']) {
     assert.match(mobile.toUpperCase(), new RegExp(value));
   }
 });

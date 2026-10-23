@@ -23,13 +23,16 @@ export function CustomerSimplePreflight({ projectId }: { projectId: string }) {
     }
   }
   if (!import.meta.env.DEV) return null;
-  return <Card>
+  return <details className="translation-preflight">
+    <summary>Thông tin kỹ thuật · Kiểm tra điều kiện SIMPLE</summary>
+    <Card className="translation-preflight__content">
     <h2>Kiểm tra điều kiện SIMPLE</h2>
     <p>Chỉ đọc dữ liệu. Không gọi AI, không tự bật dịch.</p>
     <Button variant="secondary" loading={busy} disabled={busy} onClick={() => void check()}>Kiểm tra SIMPLE (không gọi AI)</Button>
     <div role="status" aria-live="polite" aria-atomic="true">
       <p>{busy ? 'Đang kiểm tra…' : view ? `${view.status} — ${view.message}` : 'Chưa kiểm tra điều kiện SIMPLE.'}</p>
     </div>
-    {view && <dl>{view.rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
-  </Card>;
+    {view && <dl className="translation-preflight__data">{view.rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
+    </Card>
+  </details>;
 }

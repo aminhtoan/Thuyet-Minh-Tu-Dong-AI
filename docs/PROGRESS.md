@@ -1,5 +1,219 @@
 # Project Progress
 
+## S27.3.2.5 — Refine Multilingual Section (2026-10-23)
+
+- Updated only the homepage multilingual description/cards: existing language icon,
+  Vietnamese heading/English subtitle hierarchy, neutral static preparation badge,
+  compact14px padding and4/2/1 grid. No flags, links, selectable state, audio/provider
+  feature or fake content; all four languages/preparation statuses retained.
+- Files: MuseumHomePage.tsx, museum-home.css, museum-routing.test.mjs, UI/PROGRESS
+  docs. Other sections, shared icon implementation and unrelated dirty work intact.
+- Browser inventory empty: Visual QA NOT VERIFIED; actual375/768/1024/1280/1440
+  wrapping/zoom/focus still require manual QA. No Customer/Backend/Mobile/Admin,
+  API/config/data/attempt changes, Gemini/MongoDB writes, commit/push or next step.
+- Web333/333 PASS,0 skipped/failed; lint/typecheck/production build/diff-check PASS.
+  Mock/SSR regressions cover exact description, four languages, decorative SVGs,
+  no interactive controls/flags/media, neutral badges and4/2/1 layout rules.
+  Existing Vite projectRepository mixed-import warning remains non-blocking;
+  build used approved sandbox escalation. No new dependencies.
+
+## S27.3.2.4 — Final Museum Homepage Cleanup (2026-10-23)
+
+- Removed development-only captions and section image notice from homepage.
+  MuseumHomeImage filters the known development caption only, keeps source/credit
+  captions and alt text, and never renders empty caption elements. Removed stale
+  shared-notice props/ARIA/CSS and extra explicit Hero grid row; existing sizes,
+  images, functional states and navigation preserved. User image-use approval
+  recorded without inventing license/author/history metadata.
+- Changes: MuseumHomePage.tsx, MuseumHomeImage.tsx, museum-home.css,
+  museum-routing.test.mjs, museum-home-images.test.mjs; UI/PROGRESS/MUSEUM_IMAGES docs.
+  No Customer/Mobile/Admin/Backend/config/API changes, data/attempt operations,
+  Gemini or MongoDB writes, commit/push or next-page work.
+- Browser inventory empty: Visual QA NOT VERIFIED. Viewport375/768/1024/1280/1440
+  spacing/crop/focus and actual absence of odd whitespace require manual review.
+- Validation: Web332/332 PASS,0 skipped/failed; lint/typecheck/build/diff-check PASS.
+  Tests verify all six images still render with alt/loading/dimensions but no demo
+  captions/notice/empty caption nodes, fallback and individual credits preserved.
+  SHA-256 image inventory unchanged. Existing Vite mixed-import advisory remains;
+  approved sandbox escalation used for build. Gemini0, MongoDB writes0.
+
+## S27.3.2.3 — Museum Homepage Visual Refinement (2026-10-23)
+
+- Compact homepage-only Header/Footer via PublicMuseumLayout pathname modifier;
+  balanced500px-minimum Hero,44–52px desktop heading,32–48px section spacing,
+ 480px intro/520px video media bounds,16px cards, compact image notice and closing
+  CTA. Existing content, demo assets, poster, routes, preparation states, theme and
+  Customer functionality preserved. Measurements before/after in docs/UI.md.
+- No six browser screenshots were supplied in this turn. Browser inventory empty;
+  Visual QA NOT VERIFIED: requested widths375/768/1024/1280/1440, zoom100/200%, crop,
+  keyboard/focus and overflow must be checked manually. No claimed visual PASS.
+- Changes: PublicMuseumLayout.tsx, museum-home.css, museum-layout.css,
+  museum-routing.test.mjs and UI/PROGRESS docs. Existing uncommitted work preserved.
+  No Backend/Mobile/Admin/config/API changes, Gemini calls, MongoDB writes,
+  uncertain-attempt operations, commit/push or next-page work.
+- Validation: Web332/332 PASS,0 failed/skipped; lint/typecheck/build/diff-check
+  PASS. Two assertion issues fixed: text-transform incorrectly matched a transform
+  scaling ban; shared breakpoint-order test now scopes shared styles separately
+  from homepage-only overrides. Production build used approved sandbox escalation;
+  pre-existing projectRepository mixed-import advisory remains non-blocking.
+
+## S27.3.2.2 — Final Museum Homepage / Full-width Hero (2026-10-23)
+
+- Implemented full-width cover Hero with navy gradient and safe separate caption,
+  balanced intro,3/2/1-column equal-height editorial cards, single shared demo
+  notice with accessible associations, language-card spacing, equal video columns
+  and unified closing CTA panel. All publication/CTA/authentication behavior intact.
+- Existing six demo images and real video poster preserved; inspected Hero locally
+  (1960x1102), no image edits/downloads/generation. Existing shared navy Footer was
+  reviewed and retained to avoid unrelated page changes. No Customer/Mobile/Admin/
+  Backend/config/API changes. No Gemini, MongoDB writes, attempt retry/reset or
+  commit/push; no S27.3.3 work.
+- Mock/SSR tests cover full-width Hero/content/caption/CSS bounds, fallback through
+  image errors, shared-vs-individual captions, cards and existing public/protected
+  routes. Browser unavailable: Visual QA NOT VERIFIED at all requested sizes/zoom;
+  visual crop/sharpness, keyboard and overflow require manual verification.
+- Validation: full Web330/330 PASS,0 skipped/failed; lint/typecheck/production build
+  PASS. Build used approved sandbox escalation; existing projectRepository mixed
+  dynamic/static import advisory remains non-blocking. git diff --check PASS.
+- Files for this step: MuseumHomePage.tsx, MuseumHomeImage.tsx, museum-home.css,
+  museum-routing.test.mjs, museum-home-images.test.mjs, UI.md, PROGRESS.md and
+  MUSEUM_IMAGES.md. Earlier uncommitted work preserved.
+
+## S27.3.2.1 — Museum Homepage Image Slots (2026-10-23)
+
+- **Implementation/tests PASS; visual QA NOT VERIFIED.** Added six centralized
+  local image slots and public/images/museum/.gitkeep, no demo/generated images.
+  Hero/introduction, three preparation cards and featured-video area share an
+  accessible image/fallback component. Real approved poster retained and preferred
+  for its featured video; no media replaced or moved. Custom/demo images are
+  visibly labeled unverified presentation assets, not historical evidence.
+- Web **327/327 PASS**,0 failed/skipped; lint/typecheck/production build and
+  diff-check PASS. One new assertion initially included the section's legitimate
+  Explore CTA; corrected scope to cards. Build required sandbox escalation after
+  spawn EPERM; existing projectRepository mixed-import advisory remains.
+- Browser inventory empty: responsive viewport375/768/1024/1280/1440,200% zoom and
+  actual image-failure visual behavior NOT VERIFIED. Mock tests cover six slots,
+  loading/alt/dimensions, missing assets, poster priority/publication guards and
+  error fall-through. User copy/replacement guidance: docs/MUSEUM_IMAGES.md.
+- Changes limited to homepage page/CSS, MuseumHomeImage.tsx, homeImages.ts,
+  publicMediaAssets.ts inventory, .gitkeep, two Web tests and related docs.
+  No Customer/Mobile/Admin/Backend, route/API/business changes; existing dirty
+  work preserved. Gemini0, MongoDB writes0, no reset/retry, commit/push or next-page work.
+
+## S27.3.2 — Public Museum Homepage (2026-10-23)
+
+- **SOURCE/TEST PASS; visual QA NOT VERIFIED.** Refined public homepage Hero/title/
+  lead/CTA/media proportions, introduction editorial rule, section/card spacing,
+  blue section backgrounds and closing CTA. Shared Public Header/Footer CSS now
+  wraps long labels and reflows on narrow screens, with existing navigation/dialog
+  logic intact. Exact approved blue palette and Customer work preserved.
+- Existing authorized video poster reused for Hero only when catalog publication,
+  rights and public asset checks pass. Real 640x360 frame inspected locally; no crop,
+  generated image, hotlink, new asset or changed source catalog. Explicit dimensions,
+  alt/caption and image-error/missing-asset fallback. A higher-resolution approved
+  museum photo is still desirable; fallback is not claimed as a real photograph.
+- Three editorial groups/four target languages and homepage video placeholder stay
+  as existing preparation states. No new exhibition/history/media capability/data.
+- Full Web **320/320 PASS**, lint/typecheck/build/diff-check PASS; existing Vite
+  projectRepository dynamic-import warning unchanged. Browser inventory empty:
+  viewport375/768/1024/1280/1440, zoom200%, actual page scrolling and focus NOT VERIFIED.
+- This step changes only frontend-web/src/pages/MuseumHomePage.tsx,
+  src/styles/{museum-home,museum-layout}.css, tests/museum-routing.test.mjs,
+  docs/UI.md and this file. No Customer/Mobile/Admin/Backend/config changes;
+  Gemini **0**, MongoDB writes **0**, attempt retries/resets **0**, commit/push NO.
+- Stop at S27.3.2. Before S27.3.3: browser visual regression for homepage/public shell;
+  obtain approved high-resolution Hero image if available. No next step started.
+
+## S27.3.1.1 — Restore blue Public / Customer Web theme (2026-10-23)
+
+- **SOURCE/TEST PASS; visual QA NOT VERIFIED.** Selective color-only patches restore
+  original Customer resolved color tokens and blue hero gradient, preserving shared
+  aliases, typography/layout/accessibility and earlier S27.2.1/1.1 work. Public Museum
+  now shares blue/purple/navigation/CTA/cards/breadcrumb and navy footer, not wine.
+- Current palette: #5850EC primary, #794CFF accent, #111C32 dark/sidebar, #F8FAFC
+  background, #F1F5F9 section, #FFFFFF cards. Warm brand colors/names removed from CSS;
+  only semantic error/warning red/yellow and real unmodified imagery can retain warm
+  colors. Success and processing/info remain green and blue respectively.
+- Changed this step: frontend-web/src/styles/{tokens,museum-theme,museum-layout,
+  museum-home,auth,components,dashboard,shell,projects,upload,workflow}.css;
+  tests/{unified-web-theme,design-tokens,museum-design-system,dashboard-foundation,
+  shell-refinement,sidebar-navy-theme}.test.mjs; docs/UI.md and this file.
+- Full Web **317/317 PASS**, lint/typecheck/build/diff-check PASS. Browser inventory
+  empty, no actual viewport/zoom verification. Existing Vite dynamic import warning
+  unchanged. No API/provider/business/route/asset/config changes; no database access,
+  Gemini calls, attempt reset/retry, commit or push. No destructive Git operations.
+
+## S27.3.1 — Unified Web design system (2026-10-23)
+
+- **SOURCE/TEST PASS; visual QA NOT VERIFIED.** Shared palette: primary #7B252B,
+  background #FAF7F0, section #F1E8D8, dark #242321, accent #B58A4B, card #FFFFFF.
+  Public Museum and Customer/auth now share primitive/semantic tokens while Museum
+  editorial typography/container variants remain scoped. Be Vietnam Pro retained;
+  common component spacing/radius/shadows aliased without business layout changes.
+- Customer purple hardcodes removed from sidebar/profile/account, auth, upload,
+  hero/chart decoration, focus and workflow. White-label CTA avoids a low-contrast
+  bronze gradient; functional bronze ink and strong borders have separate tokens.
+  Success/warning/error/info values and chart statuses retained. Processing marker
+  stays semantically blue rather than inheriting brand red; UNCERTAIN warning intact.
+- New tests cover shared palette resolution/no cycles, measured contrast pairs,
+  unchanged status tokens and absence of old purple. Historical palette assertions
+  updated only for the newly approved Web identity; Mobile assertions unchanged.
+  Full Web **317/317 PASS**, lint/typecheck/build/diff-check PASS. Existing Vite
+  ineffective dynamic import warning remains. Browser apps/browsers empty: actual
+  responsive 375/768/1024/1280/1440px and zoom/interaction visual checks NOT VERIFIED.
+- Files for this step: frontend-web/src/styles/{tokens,museum-theme,museum-home,
+  account,auth,components,dashboard,project-detail,projects,results,shell,upload,
+  workflow}.css; frontend-web/tests/{dashboard-foundation,design-tokens,header-profile,
+  museum-design-system,shared-foundation-accessibility,shell-refinement,
+  sidebar-navy-theme,unified-web-theme}.test.mjs; docs/UI.md and this file.
+- Earlier S27.2.1/1.1 changes preserved; no changes to Translation logic, routes,
+  Backend/Mobile/Admin, config, real images/logo/content, data or dependencies.
+  Gemini calls **0**, MongoDB writes **0**; no bom dan reset/retry or commit/push.
+- Stop at S27.3.1. Remaining work: real-browser visual regression for Public/Customer/
+  auth and per-page spacing/contrast confirmation; no subsequent step activated.
+
+## S27.2.1.1 — Final Translation UI source review (2026-10-23)
+
+- Consolidated duplicate summary/attempt panels into one compact status card;
+  unchanged provider/UNCERTAIN safety text and GET-only result check remain visible.
+  Reduced vertical padding without fixed height, truncation or sticky overlays;
+  added scroll clearance for focusable feedback, group/review cards and disclosure.
+- Mock render checks confirm one PageHeader, project heading, WorkflowSteps and
+  attempt-result action across pending/uncertain/failed/expired states. Router page
+  selects one workspace branch; no extra workspace header was added.
+- Full Web regression **313/313 PASS**, lint/typecheck/production build PASS;
+  existing ineffective projectRepository dynamic-import warning remains.
+- Visual QA **NOT VERIFIED**: no screenshot supplied for this request, browser
+  inventory apps/browsers empty. Top/middle/bottom scrolling, target viewports and
+  zoom still need real browser comparison, not inferred from source/mock checks.
+- No Backend/API/config/database changes, Gemini requests, attempt retry/reset,
+  commit or push. Prior S27.2.1 work preserved.
+
+## S27.2.1 — Customer Translation UI polish (2026-10-23)
+
+- **SOURCE/MOCK PASS; visual QA NOT VERIFIED.** Corrected AI confirmation to explain
+  durable Customer draft storage before approval; approved group translations and
+  legacy saved records have separate labels. Processing/UNCERTAIN/provider warnings
+  remain prominent; GET-only result recovery and all submission/approval guards stay.
+- Renamed local close action to “Đóng bản xem nháp” with truthful non-deletion/reload
+  guidance. No reject/delete API or change to draft persistence was introduced.
+- SIMPLE diagnostics now follow main content in an initially collapsed native
+  disclosure, still development-only/manual GET and never authorize generation.
+  Token-based responsive cards/actions, heading hierarchy, language attributes,
+  disabled-action guidance, live feedback and manual-result focus added.
+- Full Web tests **311/311 PASS**, focused group/Customer/SIMPLE **32/32 PASS**;
+  lint/typecheck/build/diff-check PASS. Sandbox EPERM required no-child-process test
+  isolation and approved build escalation. Existing projectRepository dynamic import
+  warning remains. Browser inventory empty: target widths/200% zoom/real keyboard
+  and screen-reader testing NOT VERIFIED. No live Customer/API test performed.
+- Changed: frontend-web src pages/TranslationPage.tsx, features/translation/
+  {GroupTranslationWorkspace.tsx,CustomerSimplePreflight.tsx}, styles/translation.css;
+  tests/{group-translation.test.mjs,simple-preflight.test.mjs}; docs/UI.md and this file.
+- Gemini calls **0**, MongoDB writes **0**, config/Backend changes **0**; existing
+  bom dan UNCERTAIN attempt untouched. No Museum/Admin/Mobile changes, commit/push.
+- Before S27.2.2: manually verify translation reflow/focus and states using safe mock
+  fixtures; then proceed to Transcript UI polish without changing AI/workflow guards.
+
 ## AI-TRANSLATE-05.8.4L — Dynamic controlled project binding (2026-10-22)
 
 - **Implementation/mock PASS; real execution not authorized/activated.** Runtime

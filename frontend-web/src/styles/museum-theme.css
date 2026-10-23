@@ -1,45 +1,45 @@
 .museum-theme {
-  --museum-color-background: #f3ebdd;
-  --museum-color-surface: #fffdf8;
-  --museum-color-surface-muted: #ede2d0;
-  --museum-color-primary: #7a292e;
-  --museum-color-primary-hover: #612026;
-  --museum-color-primary-pressed: #4d181c;
-  --museum-color-on-primary: #ffffff;
-  --museum-color-text: #242321;
-  --museum-color-muted-text: #625d55;
-  --museum-color-accent: #b08a52;
-  --museum-color-accent-soft: #f0e2ca;
-  --museum-color-border: #d8ccb8;
-  --museum-color-focus: #7a292e;
+  --museum-color-background: var(--brand-background);
+  --museum-color-surface: var(--brand-white);
+  --museum-color-surface-muted: var(--brand-section);
+  --museum-color-primary: var(--brand-primary);
+  --museum-color-primary-hover: var(--brand-primary-hover);
+  --museum-color-primary-pressed: var(--brand-primary-pressed);
+  --museum-color-on-primary: var(--brand-white);
+  --museum-color-text: var(--brand-text);
+  --museum-color-muted-text: var(--brand-secondary-text);
+  --museum-color-accent: var(--brand-accent);
+  --museum-color-accent-soft: var(--brand-accent-soft);
+  --museum-color-border: var(--brand-border);
+  --museum-color-focus: var(--brand-primary);
 
-  --museum-font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, ui-sans-serif, system-ui, sans-serif;
-  --museum-font-size-xs: 0.75rem;
-  --museum-font-size-sm: 0.875rem;
-  --museum-font-size-md: 1rem;
-  --museum-font-size-lg: 1.125rem;
-  --museum-font-size-xl: 1.5rem;
+  --museum-font-family: var(--brand-font-family);
+  --museum-font-size-xs: var(--font-size-xs);
+  --museum-font-size-sm: var(--font-size-sm);
+  --museum-font-size-md: var(--font-size-md);
+  --museum-font-size-lg: var(--font-size-lg);
+  --museum-font-size-xl: var(--font-size-xl);
   --museum-font-size-2xl: clamp(1.75rem, 3vw, 2.5rem);
   --museum-font-size-display: clamp(2.25rem, 5vw, 4.5rem);
   --museum-line-height-tight: 1.2;
   --museum-line-height-normal: 1.6;
 
-  --museum-space-1: 0.25rem;
-  --museum-space-2: 0.5rem;
+  --museum-space-1: var(--space-xs);
+  --museum-space-2: var(--space-sm);
   --museum-space-3: 0.75rem;
-  --museum-space-4: 1rem;
-  --museum-space-6: 1.5rem;
-  --museum-space-8: 2rem;
-  --museum-space-12: 3rem;
+  --museum-space-4: var(--space-md);
+  --museum-space-6: var(--space-lg);
+  --museum-space-8: var(--space-xl);
+  --museum-space-12: var(--space-2xl);
   --museum-space-16: 4rem;
 
-  --museum-radius-sm: 0.375rem;
-  --museum-radius-md: 0.625rem;
-  --museum-radius-lg: 1rem;
-  --museum-radius-full: 9999px;
-  --museum-shadow-sm: 0 1px 2px rgb(36 35 33 / 8%);
-  --museum-shadow-md: 0 12px 32px rgb(73 47 34 / 12%);
-  --museum-shadow-lg: 0 24px 64px rgb(73 47 34 / 16%);
+  --museum-radius-sm: var(--radius-sm);
+  --museum-radius-md: var(--radius-md);
+  --museum-radius-lg: var(--radius-lg);
+  --museum-radius-full: var(--radius-full);
+  --museum-shadow-sm: var(--shadow-sm);
+  --museum-shadow-md: var(--shadow-md);
+  --museum-shadow-lg: var(--shadow-lg);
 
   --museum-container-readable: 47.5rem;
   --museum-container-content: 75rem;
@@ -54,13 +54,13 @@
   --museum-motion-fast: 160ms;
   --museum-motion-standard: 240ms;
   --museum-motion-easing: ease;
-  --museum-focus-ring: 0 0 0 3px rgb(122 41 46 / 24%);
+  --museum-focus-ring: var(--focus-ring);
 
   /* Re-theme existing primitives only inside the future Museum layout. */
   --color-primary: var(--museum-color-primary);
   --color-primary-hover: var(--museum-color-primary-hover);
   --color-primary-pressed: var(--museum-color-primary-pressed);
-  --color-primary-light: var(--museum-color-accent-soft);
+  --color-primary-light: var(--brand-primary-soft);
   --color-accent: var(--museum-color-accent);
   --color-accent-light: var(--museum-color-accent-soft);
   --color-background: var(--museum-color-background);
@@ -68,7 +68,7 @@
   --color-surface-secondary: var(--museum-color-surface-muted);
   --color-text-primary: var(--museum-color-text);
   --color-text-secondary: var(--museum-color-muted-text);
-  --color-text-muted: var(--museum-color-muted-text);
+  --color-text-muted: var(--brand-muted);
   --color-border: var(--museum-color-border);
   --font-family: var(--museum-font-family);
 
@@ -201,12 +201,12 @@
 
 .museum-theme .museum-card--dark {
   --color-text-primary: var(--museum-color-surface);
-  --color-text-secondary: #e7ddcf;
+  --color-text-secondary: var(--brand-on-dark);
   --color-text-muted: var(--museum-color-border);
-  --color-border: rgb(255 253 248 / 28%);
+  --color-border: rgb(255 255 255 / 28%);
   color: var(--museum-color-surface);
   background: var(--museum-color-text);
-  border-color: rgb(255 253 248 / 18%);
+  border-color: rgb(255 255 255 / 18%);
 }
 
 .museum-theme .museum-card.card--interactive {

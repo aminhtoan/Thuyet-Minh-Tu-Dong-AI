@@ -4,7 +4,7 @@ import test from 'node:test'
 
 const readSource = (path) => readFile(new URL(path, import.meta.url), 'utf8')
 
-test('Museum theme owns the approved palette without replacing Customer tokens', async () => {
+test('Museum aliases the shared approved palette without leaking scoped overrides', async () => {
   const [museum, customer, globalCss] = await Promise.all([
     readSource('../src/styles/museum-theme.css'),
     readSource('../src/styles/tokens.css'),
@@ -13,17 +13,15 @@ test('Museum theme owns the approved palette without replacing Customer tokens',
 
   assert.match(museum, /^\.museum-theme\s*\{/m)
   assert.doesNotMatch(museum, /:root\s*\{/)
-  for (const color of ['#f3ebdd', '#fffdf8', '#7a292e', '#612026', '#242321', '#b08a52', '#d8ccb8', '#625d55']) {
-    assert.ok(museum.toLowerCase().includes(color))
-  }
-  for (const color of ['#5850ec', '#111c32', '#f8fafc']) assert.ok(customer.toLowerCase().includes(color))
+  for (const token of ['background', 'white', 'section', 'primary', 'text', 'accent', 'border', 'secondary-text']) assert.ok(museum.includes(`var(--brand-${token})`))
+  for (const color of ['#5850ec', '#794cff', '#111c32', '#f8fafc', '#f1f5f9']) assert.ok(customer.toLowerCase().includes(color))
   assert.match(globalCss, /@import '\.\/museum-theme\.css'/)
 })
 
 test('Museum tokens cover typography, rhythm, containers, focus and responsive boundaries', async () => {
   const css = await readSource('../src/styles/museum-theme.css')
 
-  assert.match(css, /--museum-font-family: 'Be Vietnam Pro'/)
+  assert.match(css, /--museum-font-family: var\(--brand-font-family\)/)
   assert.match(css, /--museum-space-16:/)
   assert.match(css, /--museum-radius-lg:/)
   assert.match(css, /--museum-shadow-lg:/)

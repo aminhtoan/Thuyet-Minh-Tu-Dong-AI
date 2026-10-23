@@ -1,20 +1,57 @@
 :root {
-  --color-accent: #794cff;
-  --color-accent-light: #eee9ff;
-  --color-sidebar: #111c32;
+  /* Shared primitives: Museum editorial + Customer workspace. */
+  --brand-primary: #5850ec;
+  --brand-primary-hover: #4538cf;
+  --brand-primary-pressed: #3730a3;
+  --brand-primary-rgb: 88 80 236;
+  --brand-background: #f8fafc;
+  --brand-section: #f1f5f9;
+  --brand-dark: #111c32;
+  --brand-accent: #794cff;
+  --brand-accent-rgb: 121 76 255;
+  --brand-primary-soft: #f0eeff;
+  --brand-accent-soft: #eee9ff;
+  --brand-white: #ffffff;
+  --brand-text: #0f172a;
+  --brand-secondary-text: #475569;
+  --brand-muted: #64748b;
+  --brand-border: #e2e8f0;
+  --brand-border-strong: #64748b;
+  --brand-accent-ink: #4338ca;
+  --brand-on-dark: #b8c4d6;
+  --brand-focus-on-dark: #8b7cff;
+
+  /* Semantic roles; exact original Customer color values shared with Public. */
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-hover);
+  --color-primary-pressed: var(--brand-primary-pressed);
+  --color-primary-light: var(--brand-primary-soft);
+  --color-on-primary: var(--brand-white);
+  --color-accent: var(--brand-accent);
+  --color-accent-ink: var(--brand-accent-ink);
+  --color-accent-light: var(--brand-accent-soft);
+  --color-background: var(--brand-background);
+  --color-surface: var(--brand-white);
+  --color-surface-secondary: var(--brand-section);
+  --color-text-primary: var(--brand-text);
+  --color-text-secondary: var(--brand-secondary-text);
+  --color-text-muted: var(--brand-muted);
+  --color-border: var(--brand-border);
+  --color-border-strong: var(--brand-border-strong);
+  --color-focus: var(--brand-primary);
+  --color-focus-on-dark: var(--brand-focus-on-dark);
+
+  /* Component roles; no changes to layout dimensions. */
+  --color-sidebar: var(--brand-dark);
+  --sidebar-text: var(--brand-on-dark);
+  --sidebar-active: rgb(var(--brand-primary-rgb) / 27%);
   --hero-gradient: linear-gradient(115deg, #e6f3ff 0%, #dddfff 48%, #b4a8ff 100%);
   --hero-ink: #273156;
-  --color-primary: #5850ec;
-  --color-primary-hover: #4538cf;
-  --color-primary-pressed: #3730a3;
-  --color-primary-light: #f0eeff;
-  --color-background: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-secondary: #f1f5f9;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
+  --chart-primary: var(--brand-primary);
+  --chart-secondary: var(--brand-accent);
+  --focus-ring: 0 0 0 3px rgb(var(--brand-primary-rgb) / 20%);
+
+  /* Status colors stay independent from brand identity. */
   --color-success: #15803d;
   --color-success-light: #f0fdf4;
   --color-warning: #b45309;
@@ -37,8 +74,9 @@
   --radius-xl: 1.25rem;
   --radius-full: 9999px;
 
-  --font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, ui-sans-serif, system-ui,
+  --brand-font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, ui-sans-serif, system-ui,
     sans-serif;
+  --font-family: var(--brand-font-family);
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;

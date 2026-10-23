@@ -49,8 +49,8 @@ test('sidebar and header follow UI03 dimensions without changing brand tokens', 
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*?\.topbar--search \.topbar__center/);
   assert.match(css, /overflow-x: clip/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(tokens, /--color-sidebar:\s*#111c32/);
-  assert.match(tokens, /--color-primary:\s*#5850ec/);
+  assert.match(tokens, /--color-sidebar:\s*var\(--brand-dark\)/);
+  assert.match(tokens, /--color-primary:\s*var\(--brand-primary\)/);
 });
 
 test('topbar keeps route-aware headings, search destination, profile and logout', async () => {

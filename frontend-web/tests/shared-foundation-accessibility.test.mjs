@@ -11,7 +11,8 @@ test('Customer Web uses the existing local Be Vietnam Pro family and complete ty
     readSource('../src/styles/dashboard.css'),
   ]);
 
-  assert.match(tokens, /--font-family: 'Be Vietnam Pro'/);
+  assert.match(tokens, /--brand-font-family: 'Be Vietnam Pro'/);
+  assert.match(tokens, /--font-family: var\(--brand-font-family\)/);
   assert.match(tokens, /--font-size-xs: 0\.75rem/);
   assert.match(globalCss, /@import '\.\/dashboard-fonts.css'/);
   assert.doesNotMatch(dashboardCss, /@import '\.\/dashboard-fonts.css'/);

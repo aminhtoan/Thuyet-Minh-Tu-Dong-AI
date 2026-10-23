@@ -1,15 +1,15 @@
 .auth-layout { display: grid; min-height: 100vh; grid-template-columns: minmax(24rem, 1.05fr) minmax(32rem, 0.95fr); background: var(--color-surface); }
-.auth-layout__brand { position: relative; display: flex; overflow: hidden; padding: clamp(2rem, 5vw, 5rem); color: #fff; background: #111c32; }
-.auth-layout__brand::before { position: absolute; width: 28rem; height: 28rem; right: -12rem; bottom: -13rem; content: ''; background: rgb(88 80 236 / 24%); border: 1px solid rgb(255 255 255 / 8%); border-radius: var(--radius-full); }
+.auth-layout__brand { position: relative; display: flex; overflow: hidden; padding: clamp(2rem, 5vw, 5rem); color: #fff; background: var(--color-sidebar); }
+.auth-layout__brand::before { position: absolute; width: 28rem; height: 28rem; right: -12rem; bottom: -13rem; content: ''; background: rgb(var(--brand-primary-rgb) / 24%); border: 1px solid rgb(255 255 255 / 8%); border-radius: var(--radius-full); }
 .auth-layout__brand-content { position: relative; z-index: 1; display: flex; width: 100%; max-width: 42rem; flex-direction: column; }
 .auth-layout__logo { display: flex; align-items: center; gap: 0.75rem; font-weight: var(--font-weight-bold); }
 .auth-layout__logo > span { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; background: var(--color-primary); border-radius: var(--radius-lg); }
 .auth-layout__pitch { margin: auto 0; }
-.auth-layout__eyebrow { color: #9fbdfd; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); letter-spacing: 0.08em; text-transform: uppercase; }
+.auth-layout__eyebrow { color: var(--color-focus-on-dark); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); letter-spacing: 0.08em; text-transform: uppercase; }
 .auth-layout__pitch h1 { max-width: 34rem; margin-bottom: var(--space-lg); font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.05; letter-spacing: -0.05em; }
-.auth-layout__pitch > p:last-child { max-width: 31rem; color: #afbdd2; font-size: var(--font-size-lg); }
+.auth-layout__pitch > p:last-child { max-width: 31rem; color: var(--sidebar-text); font-size: var(--font-size-lg); }
 .auth-layout__visual { display: flex; height: 5rem; align-items: center; gap: 0.5rem; }
-.auth-layout__visual span { width: 0.35rem; height: 1.75rem; background: #76a0fb; border-radius: var(--radius-full); }
+.auth-layout__visual span { width: 0.35rem; height: 1.75rem; background: var(--color-accent); border-radius: var(--radius-full); }
 .auth-layout__visual span:nth-child(2) { height: 3rem; }.auth-layout__visual span:nth-child(3) { height: 4.25rem; background: #fff; }.auth-layout__visual span:nth-child(4) { height: 2.5rem; }.auth-layout__visual span:nth-child(5) { height: 1rem; }
 .auth-layout__form-panel { display: grid; place-items: center; padding: clamp(2rem, 6vw, 5rem); background: var(--color-background); }
 .auth-layout__form-card { width: min(100%, 29rem); }
@@ -24,10 +24,10 @@
 .auth-form > label > textarea { min-height: 7rem; resize: vertical; line-height: var(--line-height-normal); }
 .auth-form > label > input:hover,
 .auth-form > label > select:hover,
-.auth-form > label > textarea:hover { border-color: #cbd5e1; }
+.auth-form > label > textarea:hover { border-color: var(--color-border-strong); }
 .auth-form > label > input:focus-visible,
 .auth-form > label > select:focus-visible,
-.auth-form > label > textarea:focus-visible { border-color: var(--color-primary); outline: 3px solid rgb(88 80 236 / 14%); }
+.auth-form > label > textarea:focus-visible { border-color: var(--color-primary); outline: 3px solid var(--color-focus); }
 .auth-form__submit { width: 100%; margin-top: var(--space-xs); }
 .auth-layout__footer { margin-top: var(--space-xl); text-align: center; }
 .auth-layout__footer a { color: var(--color-primary); font-weight: var(--font-weight-semibold); text-decoration: none; }
@@ -55,7 +55,7 @@
 .login-page .auth-form { gap: var(--space-md); }
 .login-page .auth-layout__footer { margin-top: var(--space-lg); }
 .login-page .auth-layout__footer a:focus-visible,
-.login-page .password-toggle:focus-visible { outline: 3px solid rgb(88 80 236 / 20%); outline-offset: 2px; }
+.login-page .password-toggle:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 
 /* Register mirrors the approved Login rhythm while remaining independently scoped. */
 .register-page .auth-layout { min-height: 100svh; }
@@ -74,7 +74,7 @@
 .register-page .auth-form { gap: 0.875rem; }
 .register-page .auth-layout__footer { margin-top: var(--space-md); }
 .register-page .auth-layout__footer a:focus-visible,
-.register-page .password-toggle:focus-visible { outline: 3px solid rgb(88 80 236 / 20%); outline-offset: 2px; }
+.register-page .password-toggle:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 
 @media (max-width: 1023px) {
   .auth-layout { grid-template-columns: minmax(18rem, 0.8fr) minmax(27rem, 1.2fr); }

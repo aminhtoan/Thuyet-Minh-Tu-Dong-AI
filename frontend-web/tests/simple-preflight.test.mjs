@@ -50,7 +50,18 @@ test('SSR renders accessible details and BLOCKED without network or sensitive bo
   } });
   const html = renderToStaticMarkup(React.createElement(exports.CustomerSimplePreflight, { projectId: '1'.repeat(24) }));
   assert.match(html, /role="status"/); assert.match(html, /BLOCKED/); assert.match(html, /NOT VERIFIED/); assert.match(html, /12\.000/);
+  assert.match(html, /<details class="translation-preflight"><summary>/);
+  assert.doesNotMatch(html, /<details[^>]*\bopen[=>\s]/);
+  assert.match(html, /Thông tin kỹ thuật/);
   assert.doesNotMatch(html, /a{64}|Authorization|PRIVATE/);
+});
+
+test('SIMPLE disclosure follows the main workflow in both Customer and legacy branches', () => {
+  const page = readFileSync(new URL('../src/pages/TranslationPage.tsx', import.meta.url), 'utf8');
+  assert.match(page, /customerMode \/>\{simplePreflight\}/);
+  assert.match(page, /<\/TranslationSourcePreflight>\{simplePreflight\}/);
+  const component = readFileSync(new URL('../src/features/translation/CustomerSimplePreflight.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(component, /onToggle|open=|setInterval|\.focus\(/);
 });
 
 test('READY is accepted only with full evidence; UNKNOWN is not rewritten CLEAR; GET never generates', () => {
