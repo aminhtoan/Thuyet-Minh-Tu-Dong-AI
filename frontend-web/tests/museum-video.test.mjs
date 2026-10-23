@@ -234,3 +234,17 @@ test('switching the selected language updates player and transcript together wit
   assert.ok(text(tree).includes('English test content'))
   assert.ok(!text(tree).includes('Nội dung vi'))
 })
+
+test('detail without transcript hides redundant notice but preserves genuine chapters', () => {
+  const h = harness('pages/MuseumVideoDetailPage.tsx', 'VideoExperience', '\nexport { VideoExperience }')
+  const withoutTranscript = { ...video, languageVariants: [{ ...video.languageVariants[0], transcript: undefined }] }
+  const tree = h.render({ video: withoutTranscript })
+  assert.ok(find(tree, node => node.type === 'test-player'))
+  assert.ok(!text(tree).includes('Chưa có bản ghi công khai'))
+  assert.equal(find(tree, node => node.props?.className === 'museum-video__chapters'), undefined)
+  const chaptersTree = h.render({ video: { ...withoutTranscript, languageVariants: [{ ...withoutTranscript.languageVariants[0], chapters: [{ startTime: 15, title: 'Chương kiểm thử' }] }] } })
+  assert.ok(text(chaptersTree).includes('Các phần trong video'))
+  assert.match(text(chaptersTree), /00\s*:\s*15/)
+  assert.ok(text(chaptersTree).includes('Chương kiểm thử'))
+  assert.ok(find(chaptersTree, node => node.type === 'section' && node.props.className === 'museum-video__chapters'))
+})

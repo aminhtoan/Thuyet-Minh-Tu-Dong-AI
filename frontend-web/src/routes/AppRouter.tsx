@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { PublicMuseumLayout } from '../components/layout/PublicMuseumLayout'
 import { MuseumPlaceholderPage } from '../pages/MuseumPlaceholderPage'
 import { MuseumHomePage } from '../pages/MuseumHomePage'
+import { MuseumAboutPage } from '../pages/MuseumAboutPage'
 import { MuseumExplorePage } from '../pages/MuseumExplorePage'
 import { MuseumExhibitionPage } from '../pages/MuseumExhibitionPage'
 import { MuseumVideosPage } from '../pages/MuseumVideosPage'
@@ -41,7 +42,7 @@ export function AppRouter() {
       <Route path="/kham-pha/:slug" element={<MuseumExhibitionPage />} />
       <Route path="/thuyet-minh" element={<MuseumVideosPage />} />
       <Route path="/thuyet-minh/:slug" element={<MuseumVideoDetailPage />} />
-      <Route path="/ve-bao-tang" element={<MuseumPlaceholderPage title="Về bảo tàng" />} />
+      <Route path="/ve-bao-tang" element={<MuseumAboutPage />} />
       <Route path="*" element={<MuseumPlaceholderPage title="Không tìm thấy trang" notFound />} />
     </Route>
     <Route path="/login" element={<LoginPlaceholder />} /><Route path="/register" element={<RegisterPlaceholder />} />

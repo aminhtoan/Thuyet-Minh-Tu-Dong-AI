@@ -1,5 +1,159 @@
 # UI Specification
 
+## S27.6 — Final Public Museum UI Consistency (2026-10-23)
+
+- Inspection found homepage-only compact Header/Footer overrides, larger About
+  CTA text/padding, and raised hover styling on non-clickable homepage topic cards.
+  Compact shell now applies to every public route:72px desktop/68px mobile header,
+  shared logo/nav/language-control sizing,28–40px footer padding and consistent
+  column gaps. The homepage marker remains but no longer controls shell sizes.
+- About CTA aligned to existing14px/1.5,10×16px padding,44px minimum target;
+  About body line-height1.65 matches other introductions. Public CTA transitions
+  and pressed primary state use existing tokens; icons cannot shrink. Shared
+  visible focus and reduced-motion overrides retained, not replaced by hover only.
+- Breadcrumb items now have bounded width/wrapping and non-shrinking separators.
+  Mobile dialog explicitly scrolls vertically and contains overscroll for short
+  viewports/zoom; unchanged open/close/Escape/focus behavior. No fixed text heights,
+  horizontal clipping, forced zoom or layout transforms introduced.
+- Removed elevated topic-card hover affordance because these cards are read-only.
+  Clickable video cards retain hover/focus feedback. No routes, copy, files/media,
+  credits/licence text or publication/language availability changed. Existing
+  real loading/error/empty states retained; no development notices found on the
+  five main public pages in rendered regression tests.
+- ui-ux-pro-max informed focus consistency, readable reflow and truthful affordance.
+  Web352/352 PASS,0 failed/skipped; lint/typecheck/build/diff-check PASS. Existing
+  projectRepository dynamic-import warning remains non-blocking. Browser inventory
+  empty: Visual QA NOT VERIFIED at375/768/1024/1280/1440 and zoom100/200%; manual
+  menu/keyboard/focus, footer wrapping and video playback checks remain required.
+
+## S27.3.6.3 — Final Video Source Polish (2026-10-23)
+
+- Public detail source link now reads “Nguồn video gốc”, with a screen-reader
+  new-tab hint, unchanged safe source URL and noopener/noreferrer. Link uses
+ 14px semibold primary text, underline,24px minimum height and existing focus ring.
+- Only the exact redundant credit pattern “Nguồn video: {source label} — xem
+  video gốc” is shortened to the existing source label beside the link. Distinct
+  author credits are not normalized; all licence text remains fully visible.
+  No evidence identifies licence clauses as optional, so none were hidden/moved.
+  Non-link fallback still includes full credit/source label/reference/licence.
+- Existing14px/1.65 muted text,12px player gap and natural wrapping retained;
+  no nowrap, clipping, disclosure or extra panel. ui-ux-pro-max informed readable
+  reflow and clear keyboard focus. Player/layout/languages/navigation unchanged.
+- Web350/350 PASS,0 failed/skipped; lint/typecheck/build/diff-check PASS. Existing
+  non-blocking projectRepository dynamic-import warning retained. Browser inventory
+  empty: Visual QA NOT VERIFIED; actual responsive/focus/zoom need manual checking.
+
+## S27.3.6.2 — Compact Video Credit Line (2026-10-23)
+
+- Removed the large “Nguồn và quyền sử dụng” panel/heading from public video
+  detail. Source link and complete original rights/licence text now form one
+  compact paragraph directly after the player, before any genuine transcript.
+  An inline separator is decorative; all credit/licence text remains visible,
+  never truncated, hidden in a tooltip or removed from the catalog.
+- No-link attribution fallback retains credit, source label and reference.
+  External-link allowlist and noopener/noreferrer unchanged. Source-only text is
+ 14px/1.65 using existing muted/primary tokens; paragraph naturally wraps with
+  overflow-wrap:anywhere,12px player gap. Removed obsolete panel CSS, no empty box.
+- Loading, media/caption error, native player, language availability statuses,
+  breadcrumb/title and both navigation actions unchanged. No technical/internal
+  notices added. ui-ux-pro-max informed readable wrapping rather than forced nowrap.
+- Web349/349 PASS,0 failures/skips; lint/typecheck/build/diff-check PASS. Existing
+  projectRepository chunk warning remains non-blocking. Visual QA NOT VERIFIED;
+  real browser rendering/playback not exercised in this step. No API/data changes.
+
+## S27.3.6.1 — Public Museum Resource Normalization (2026-10-23)
+
+- Validation: Web348/348 PASS,0 failed/skipped; lint/typecheck/build/diff-check
+  PASS. Built output contains8/8 canonical media with original SHA-256; no old
+  image URLs remain in application source. Existing chunk warning non-blocking.
+- Canonical homepage/explore/about image URLs changed from `/images/museum/` to
+  `/museum/images/`; six original JPEGs copied byte-for-byte, no re-encoding.
+  Config, strict image allowlist, Vite inventory and related fixtures updated.
+- Video/poster/caption roots remain `/museum/videos/`, `/museum/posters/`,
+  `/museum/captions/`. Source links, publication/rights guards, media and UI
+  behavior unchanged. Editorial image guard accepts canonical image paths and
+  retains legacy museum-media compatibility; no actual legacy media present.
+- Eight original media hashes unique; six intentional compatibility pairs now
+  exist across old/new image locations. External URL use cannot be established,
+  so old assets preserved, no deletions. MUSEUM_IMAGES.md records sizes, hashes,
+  mapping, sources/rights and compatibility limits. Historical local path mentions
+  in these docs updated; original source/licence information preserved.
+
+## S27.3.6 — Public Museum Video Detail (2026-10-23)
+
+- Added detail-only presentation scope for `/thuyet-minh/:slug`; actual catalog,
+  MP4/poster URLs, source link, publication/variant guards and player logic remain
+  unchanged. Shared Header/Footer, Be Vietnam Pro and blue/purple tokens retained.
+- Detail container max1120px, centered player max1040px with existing16:9 contain
+  sizing. Title28–40px, description16px/1.65, compact breadcrumb/section spacing.
+  When a genuine transcript exists it follows the player, without narrowing video.
+- Language choices retain native fieldset/legend/radios and availability guards:
+  5 desktop /3 tablet /2 mobile columns, equal-height cards, wrapping labels,
+  ready text and selected token background. Unavailable choices remain disabled
+  with dashed border/cursor; status text remains readable, not faded away.
+- Removed redundant original-language line and missing-public-transcript notice.
+  Genuine transcripts/chapters still render. Loading, native playback controls,
+  metadata preload, media error/timeout, caption error and retry behavior unchanged.
+- Source block uses compact responsive layout with full original credit, external
+  link and licence text intact (no collapsed/hidden rights). Navigation uses a
+  labelled nav, outlined back link and existing primary Explore CTA,44px minimum
+  targets and3px token focus rings. Small mobile navigation stacks, no clipping.
+- ui-ux-pro-max informed disabled-state distinction, readable wrapping and focus.
+  Browser inventory empty: Visual QA NOT VERIFIED, including actual playback,
+  responsive375/768/1024/1280/1440 and zoom100/200%. Mock tests do not prove visual
+  or real media loading success. No Customer/API/backend/data changes.
+- Validation: Web345/345 PASS,0 failures/skips; lint/typecheck/build/diff-check
+  PASS. Build required running outside sandbox after spawn EPERM; existing
+  projectRepository dynamic-import chunk warning remains non-blocking.
+
+## S27.3.5 — Public Museum About Page (2026-10-23)
+
+- `/ve-bao-tang` now renders MuseumAboutPage rather than the generic placeholder.
+  Retains the exact page title, public breadcrumb, shared Header/Footer, Be Vietnam
+  Pro and existing blue/purple semantic tokens; no route URL or API changes.
+- Introduction uses the existing homepage museumIntro facade photo (1200×900,
+  4:3, object-fit cover), via MuseumHomeImage with its existing lazy loading,
+  accessible alt and failure fallback. Image files, watermark, source and licence
+  metadata in MUSEUM_IMAGES.md remain unchanged. No development captions added.
+- Desktop introduction has equal image/text columns with24–48px gap; at≤1023px
+  image precedes text in one column. Copy is reused from Home/Explore, without
+  adding historical claims, dates or visitor information. CTA “Khám phá bảo tàng”
+  links only to the existing `/kham-pha`, with44px minimum height and focus ring.
+- Two non-interactive information cards, “Về bảo tàng” and “Hành trình khám phá”,
+  reuse existing approved copy. Two columns become one at≤767px. Body text16px,
+  readable line length, fluid headings, natural height and wrapping; no spacers
+  or truncated text. All new style selectors are scoped to museum-about.
+- ui-ux-pro-max guidance informed fluid images, readable body text and reflow.
+  Visual QA: NOT VERIFIED (browser inventory empty); widths375/768/1024/1280/1440,
+  zoom100/200%, actual focus and image crop still require manual browser checking.
+- Validation: Web342/342 PASS (0 failures/skips), lint/typecheck/build/diff-check
+  PASS. Build retains the existing non-blocking projectRepository dynamic-import
+  warning. No Customer/Backend/Mobile/Admin, API, data or image changes.
+
+## S27.3.4 — Narration listing refinement (2026-10-23)
+
+- `/thuyet-minh` keeps its breadcrumb, title “Thuyết minh bảo tàng”, introduction,
+  actual catalog/MP4/poster, public links and shared shell/tokens/font. The listing
+  now has a dedicated museum-video--listing modifier; all new CSS is listing-only.
+- Single-video card is centered with1120px maximum width (previous1100), balanced
+  1.1:1 media/copy columns,20–32px padding,24–40px gap and unchanged16:9 thumbnail.
+  At≤1023px it stacks in DOM order, image above copy;≤479px uses16px padding.
+  Text wraps naturally without fixed card heights, truncation or large spacers.
+- Title scale22–28px, body16px/1.65, CTA44px minimum with decorative18px Play SVG.
+  CTA still navigates to the same public detail route, never triggers playback on
+  the list. Hover/focus-within card styles preserved; explicit3px token focus ring
+  for title/CTA. No image/video/data/schema/player behavior changed.
+- Listing hero/section spacing aligns with Explore, using natural32–48px top and
+  48–64px bottom spacing, not empty viewport fillers. Empty/error/availability and
+  credits preserved; development copy was already removed in S27.3.3.1.
+- ui-ux-pro-max informed visible keyboard focus, readable reflow and bounded media.
+  Browser inventory empty: Visual QA NOT VERIFIED, including375/768/1024/1280/1440,
+  hover/keyboard and zoom100/200%. Mock rules do not imply actual visual PASS.
+- Validation: Web340/340 PASS,0 failed/skipped; lint/typecheck/build/diff-check PASS.
+  Existing projectRepository mixed-import warning remains non-blocking. Build used
+  approved sandbox escalation. One new CSS assertion was narrowed to distinguish
+  forbidden fixed height from the required44px minimum touch target.
+
 ## S27.3.3.1 — Clean Public Museum visitor copy (2026-10-23)
 
 - Removed publication/development announcements from Explore introduction/catalog,

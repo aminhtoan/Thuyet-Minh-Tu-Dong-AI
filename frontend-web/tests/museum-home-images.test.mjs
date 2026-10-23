@@ -28,9 +28,9 @@ const image = src => ({ src, alt: 'Ảnh kiểm thử', width: 640, height: 360,
 const frameChild = tree => tree.props.children[0].props.children
 
 test('image errors fall through candidates once, then remove img entirely', () => {
-  const render = harness([image('/images/museum/hero.jpg'), image('/museum/posters/test.jpg')])
+  const render = harness([image('/museum/images/hero.jpg'), image('/museum/posters/test.jpg')])
   let tree = render('hero')
-  assert.equal(frameChild(tree).props.src, '/images/museum/hero.jpg')
+  assert.equal(frameChild(tree).props.src, '/museum/images/hero.jpg')
   frameChild(tree).props.onError()
   tree = render('hero')
   assert.equal(frameChild(tree).props.src, '/museum/posters/test.jpg')
@@ -50,7 +50,7 @@ test('empty assets use accessible caption and no speculative network image', () 
 })
 
 test('hero loads eagerly and other slots lazily with explicit dimensions and alt', () => {
-  const render = harness([image('/images/museum/hero.jpg')])
+  const render = harness([image('/museum/images/hero.jpg')])
   assert.equal(frameChild(render('hero')).props.loading, 'eager')
   const img = frameChild(render('museumIntro'))
   assert.equal(img.props.loading, 'lazy')
@@ -61,7 +61,7 @@ test('hero loads eagerly and other slots lazily with explicit dimensions and alt
 })
 
 test('development captions leave no empty elements; individual source credits are retained', () => {
-  const renderDemo = harness([{ ...image('/images/museum/museum-intro.jpg'), caption: 'DEMO_CAPTION' }])
+  const renderDemo = harness([{ ...image('/museum/images/museum-intro.jpg'), caption: 'DEMO_CAPTION' }])
   const tree = renderDemo('museumIntro')
   assert.equal(tree.props['aria-describedby'], undefined)
   assert.equal(tree.props.children[2], undefined)
@@ -71,7 +71,7 @@ test('development captions leave no empty elements; individual source credits ar
 })
 
 test('hero overlay content survives missing and failed background images', () => {
-  const render = harness([image('/images/museum/hero.jpg')])
+  const render = harness([image('/museum/images/hero.jpg')])
   const props = { children: 'HERO_CONTENT', className: 'museum-home__hero-backdrop' }
   frameChild(render('hero', props)).props.onError()
   const tree = render('hero', props)

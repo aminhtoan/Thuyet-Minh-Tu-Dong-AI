@@ -3,12 +3,12 @@ import { isPublicVideoAsset, museumPublicVideos, type MuseumPublicVideo } from '
 
 // Presentation slots only: adding an image never publishes an exhibition/video.
 export const museumHomeImages = {
-  hero: { src: '/images/museum/hero.jpg', alt: 'Không gian Bảo tàng Chứng tích Chiến tranh', width: 1600, height: 900 },
-  museumIntro: { src: '/images/museum/museum-intro.jpg', alt: 'Hình ảnh giới thiệu bảo tàng', width: 1200, height: 900 },
-  exhibitionHistory: { src: '/images/museum/exhibition-history.jpg', alt: 'Hình ảnh chủ đề Lịch sử và ký ức', width: 800, height: 600 },
-  exhibitionPeople: { src: '/images/museum/exhibition-people.jpg', alt: 'Hình ảnh chủ đề Câu chuyện con người', width: 800, height: 600 },
-  exhibitionPeace: { src: '/images/museum/exhibition-peace.jpg', alt: 'Hình ảnh chủ đề Giá trị của hòa bình', width: 800, height: 600 },
-  featuredVideo: { src: '/images/museum/featured-video.jpg', alt: 'Hình ảnh thuyết minh bảo tàng', width: 1280, height: 720 },
+  hero: { src: '/museum/images/hero.jpg', alt: 'Không gian Bảo tàng Chứng tích Chiến tranh', width: 1600, height: 900 },
+  museumIntro: { src: '/museum/images/museum-intro.jpg', alt: 'Hình ảnh giới thiệu bảo tàng', width: 1200, height: 900 },
+  exhibitionHistory: { src: '/museum/images/exhibition-history.jpg', alt: 'Hình ảnh chủ đề Lịch sử và ký ức', width: 800, height: 600 },
+  exhibitionPeople: { src: '/museum/images/exhibition-people.jpg', alt: 'Hình ảnh chủ đề Câu chuyện con người', width: 800, height: 600 },
+  exhibitionPeace: { src: '/museum/images/exhibition-peace.jpg', alt: 'Hình ảnh chủ đề Giá trị của hòa bình', width: 800, height: 600 },
+  featuredVideo: { src: '/museum/images/featured-video.jpg', alt: 'Hình ảnh thuyết minh bảo tàng', width: 1280, height: 720 },
 } as const
 
 export type MuseumHomeImageSlot = keyof typeof museumHomeImages
@@ -21,7 +21,7 @@ export function getMuseumHomeImageCandidates(
   catalog: readonly MuseumPublicVideo[] = museumPublicVideos,
 ): MuseumHomeImage[] {
   const configured = museumHomeImages[slot]
-  const demo = /^\/images\/museum\/[a-z0-9-]+\.(?:avif|webp|png|jpe?g)$/.test(configured.src) && assets.has(configured.src)
+  const demo = /^\/museum\/images\/[a-z0-9-]+\.(?:avif|webp|png|jpe?g)$/.test(configured.src) && assets.has(configured.src)
     ? [{ ...configured, caption: museumDemoImageCaption }] : []
   if (slot !== 'hero' && slot !== 'featuredVideo') return demo
 

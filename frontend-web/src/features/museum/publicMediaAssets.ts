@@ -5,7 +5,7 @@ const paths = Object.keys(import.meta.glob([
   '/public/museum/videos/**/*.{mp4,webm}',
   '/public/museum/posters/**/*.{avif,webp,png,jpg,jpeg}',
   '/public/museum/captions/**/*.vtt',
-  '/public/images/museum/**/*.{avif,webp,png,jpg,jpeg}',
+  '/public/museum/images/**/*.{avif,webp,png,jpg,jpeg}',
 ]))
 export const publicMuseumAssetPaths: ReadonlySet<string> = new Set(
   paths.map((path) => path.replace(/^\/public\//, '/')),

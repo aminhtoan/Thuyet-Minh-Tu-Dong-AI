@@ -51,11 +51,6 @@
 .museum-theme .museum-video__transcript h3 { font-size: var(--museum-font-size-md); }
 .museum-theme .museum-video__transcript-text { white-space: pre-wrap; line-height: 1.8; }
 .museum-theme .museum-video__transcript li { margin-bottom: var(--museum-space-3); }
-.museum-theme .museum-video__source { margin-top: var(--museum-space-6); padding: var(--museum-space-4); border-left: 3px solid var(--museum-color-accent); background: var(--museum-color-surface); color: var(--museum-color-muted-text); font-size: var(--museum-font-size-sm); }
-.museum-theme .museum-video__source h2 { margin-bottom: var(--museum-space-2); font-size: var(--museum-font-size-md); color: var(--museum-color-text); }
-.museum-theme .museum-video__source > p { margin-bottom: var(--museum-space-2); }
-.museum-theme .museum-video__rights { font-size: .8125rem; line-height: 1.7; }
-.museum-theme .museum-video__source p:last-child { margin-bottom: 0; }
 .museum-theme .museum-video__actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--museum-space-4); margin-top: var(--museum-space-6); }
 @media (max-width: 1023px) {
   .museum-theme .museum-video__experience, .museum-theme .museum-video__experience--with-transcript { grid-template-columns: minmax(0, 1fr); }
@@ -91,4 +86,47 @@
 }
 @media (max-width: 479px) {
   .museum-theme .museum-video--listing .museum-video__cards--featured .museum-video__card { padding: 16px; gap: 20px; }
+}
+
+/* Detail presentation only: source, variant eligibility and native playback stay unchanged. */
+.museum-theme .museum-video--detail > .museum-container { max-width: 1120px; }
+.museum-theme .museum-video--detail .museum-video__breadcrumb { margin-block: 20px 0; }
+.museum-theme .museum-video--detail .museum-video__breadcrumb li { min-width: 0; }
+.museum-theme .museum-video--detail .museum-video__detail { padding-block: 24px clamp(40px, 5vw, 64px); }
+.museum-theme .museum-video--detail .museum-section-heading { margin-bottom: 24px; }
+.museum-theme .museum-video--detail .museum-section-heading__title { max-width: 32ch; font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.3; text-wrap: balance; }
+.museum-theme .museum-video--detail .museum-section-heading__description { max-width: 65ch; margin-top: 12px; font-size: 1rem; line-height: 1.65; }
+.museum-theme .museum-video--detail .museum-video__languages { margin-bottom: 24px; padding: 16px; }
+.museum-theme .museum-video--detail .museum-video__languages legend { font-size: 1rem; }
+.museum-theme .museum-video--detail .museum-video__language-grid { gap: 12px; align-items: stretch; }
+.museum-theme .museum-video--detail .museum-video__language { min-width: 0; padding: 12px; gap: 10px; cursor: pointer; }
+.museum-theme .museum-video--detail .museum-video__language > span { min-width: 0; gap: 6px; }
+.museum-theme .museum-video--detail .museum-video__language strong { font-size: .875rem; line-height: 1.5; }
+.museum-theme .museum-video--detail .museum-video__language-code { display: block; margin-top: 2px; }
+.museum-theme .museum-video--detail .museum-video__language small { font-size: .8125rem; line-height: 1.5; }
+.museum-theme .museum-video--detail .museum-video__language-status--ready { color: var(--museum-color-primary); font-weight: 600; }
+.museum-theme .museum-video--detail .museum-video__language:has(input:not(:disabled)):hover { border-color: var(--museum-color-primary); }
+.museum-theme .museum-video--detail .museum-video__language:has(input:disabled) { cursor: not-allowed; border-style: dashed; }
+.museum-theme .museum-video--detail .museum-video__experience,
+.museum-theme .museum-video--detail .museum-video__experience--with-transcript { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 1040px; margin-inline: auto; gap: 12px; }
+.museum-theme .museum-video--detail .museum-video__player video:focus-visible,
+.museum-theme .museum-video--detail a:focus-visible,
+.museum-theme .museum-video--detail button:focus-visible { outline: 3px solid var(--museum-color-focus); outline-offset: 4px; }
+.museum-theme .museum-video--detail .museum-video__loading { margin-bottom: 0; }
+.museum-theme .museum-video--detail .museum-video__transcript { min-width: 0; }
+.museum-theme .museum-video--detail .museum-video__chapters { margin-top: 24px; padding: 16px 24px; border: 1px solid var(--museum-color-border); border-radius: var(--museum-radius-lg); background: var(--museum-color-surface); }
+.museum-theme .museum-video--detail .museum-video__chapters h3 { font-size: 1rem; }
+.museum-theme .museum-video--detail .museum-video__credit { min-width: 0; margin: 0; color: var(--museum-color-muted-text); font-size: .875rem; line-height: 1.65; overflow-wrap: anywhere; }
+.museum-theme .museum-video--detail .museum-video__credit .museum-video__source-link { display: inline-block; max-width: 100%; min-height: 24px; color: var(--museum-color-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.museum-theme .museum-video--detail .museum-video__credit a:hover { color: var(--museum-color-primary-hover); }
+.museum-theme .museum-video--detail .museum-video__actions { align-items: center; gap: 16px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--museum-color-border); }
+.museum-theme .museum-video--detail .museum-video__back-link,
+.museum-theme .museum-video--detail .museum-video__actions .museum-workspace-link { justify-content: center; min-height: 44px; max-width: 100%; padding: 10px 16px; border-radius: var(--museum-radius-md); font-size: .875rem; line-height: 1.5; font-weight: 600; text-align: center; text-decoration: none; }
+.museum-theme .museum-video--detail .museum-video__back-link { border: 1px solid var(--museum-color-border); background: var(--museum-color-surface); }
+.museum-theme .museum-video--detail .museum-video__back-link:hover { border-color: var(--museum-color-primary); background: var(--museum-color-accent-soft); }
+@media (max-width: 479px) {
+  .museum-theme .museum-video--detail .museum-video__languages { padding: 12px; }
+  .museum-theme .museum-video--detail .museum-video__language-grid { gap: 8px; }
+  .museum-theme .museum-video--detail .museum-video__language { padding: 10px; gap: 8px; }
+  .museum-theme .museum-video--detail .museum-video__actions { align-items: stretch; flex-direction: column; }
 }

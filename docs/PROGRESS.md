@@ -1,5 +1,146 @@
 # Project Progress
 
+## S27.6 — Final Public Museum UI/UX Polish (2026-10-23)
+
+- Standardized previously homepage-only compact Header/Footer proportions across
+  all public pages. Aligned About CTA/body rhythm; added scoped token transitions,
+  pressed CTA state and non-shrinking icons without changing shared Customer CSS.
+- Bounded breadcrumb wrapping/separators, scrollable mobile menu for small/zoomed
+  viewports, and menu-trigger hover. Removed misleading raised hover from passive
+  homepage topic cards; actual navigation/video cards keep interaction feedback.
+- Existing public copy/media/URLs/licence, real statuses and all application
+  logic remain unchanged. No redundant technical notices found on main rendered
+  pages; loading/errors, unpublished-language states and required rights kept.
+- Files for this step: styles/museum-layout.css, museum-theme.css, museum-home.css,
+  museum-about.css; tests/museum-design-system.test.mjs, museum-routing.test.mjs;
+  docs/UI.md and docs/PROGRESS.md. Prior uncommitted work preserved.
+- Validation: Web352/352 PASS,0 failed/skipped; lint/typecheck/build/diff-check
+  PASS. Build outside sandbox; existing chunk warning non-blocking. Asset hash
+  regressions included and PASS; no media altered.
+- Visual QA NOT VERIFIED: browser inventory empty. Manual responsive widths375/
+ 768/1024/1280/1440, zoom100/200%, keyboard/focus/menu and playback still pending.
+  This does not complete S27.5 browser acceptance or claim actual visual PASS.
+- No Customer/Mobile/Admin/Backend, config/API/routes/business changes; Gemini0,
+  MongoDB writes0, attempt retry/reset0, commit/push NO. Only S27.6, no new features.
+
+## S27.3.6.3 — Final Public Video Detail Polish (2026-10-23)
+
+- Prioritized short “Nguồn video gốc” link and removed only the redundant source
+  link-label wording from adjacent metadata. Existing YouTube label remains;
+  distinct author credits and full licence conditions remain visible/unchanged.
+  No unverified removal of supposed optional licence text. No data/catalog edits.
+- Improved source link typography/underline,24px target, screen-reader new-tab
+  hint; retained muted14px copy, wrapping, focus ring and compact12px player gap.
+  No changes to main layout/video/title/language choices/navigation or playback.
+- Files for this step: MuseumVideoDetailPage.tsx, museum-video.css,
+  museum-routing.test.mjs, docs/UI.md, docs/PROGRESS.md. Previous dirty work kept.
+- Web350/350 PASS,0 failed/skipped; lint/typecheck/build/diff-check PASS. Build
+  outside sandbox; existing chunk warning non-blocking. Browser inventory empty,
+  Visual QA NOT VERIFIED (responsive/zoom/focus/playback not visually exercised).
+- Gemini calls0, MongoDB writes0, uncertain-attempt operations0; no Customer,
+  Mobile/Admin/Backend/API/routes/config changes; no commit/push. Only S27.3.6.3.
+
+## S27.3.6.2 — Clean Public Video Detail Annotations (2026-10-23)
+
+- Replaced source/rights panel with a compact inline credit paragraph beneath
+  video, preserving external source URL, complete original licence/credit and
+  non-link fallback metadata. No large heading, border/background/padding or
+  empty panel remains; wrapping is allowed on narrow screens.12px player gap.
+- Retained “Sẵn sàng” / “Đang chuẩn bị”, actual media/thumbnail, playback, loading,
+  errors, breadcrumb/title and both navigation buttons. Real transcript/chapters
+  still available; no fake content or changes to video eligibility/business logic.
+- Files for this step: MuseumVideoDetailPage.tsx, museum-video.css,
+  museum-routing.test.mjs, docs/UI.md, docs/PROGRESS.md. Earlier dirty work kept.
+- Web349/349 PASS,0 failures/skips; lint/typecheck/build/diff-check PASS. Build
+  outside sandbox; existing non-blocking projectRepository chunk warning remains.
+  Visual QA NOT VERIFIED (not exercised in a browser).
+- Gemini0, MongoDB writes0; no Customer/Mobile/Admin/Backend changes, no attempt
+  retry/reset, media/config/source-rights changes or commit/push. Only S27.3.6.2.
+
+## S27.3.6.1 — Normalize Public Museum Assets (2026-10-23)
+
+- Validation: Web348/348 PASS,0 failed/skipped; lint/typecheck/build/diff-check
+  PASS. Verified8/8 canonical built media byte-identical; source legacy image
+  references0. Build retains non-blocking projectRepository chunk warning.
+- Inventoried both requested directories, all8 media,4 .gitkeep files, source
+  references and SHA-256. No original media duplicates. Copied6 JPEGs to canonical
+  public/museum/images and verified unchanged hashes; poster/MP4 unchanged,
+  captions still empty. No image processing, new media or fake captions.
+- Updated homeImages configuration/allowlist, Vite filename inventory, editorial
+  image path guard, routing/image fixtures and documentation. Existing media URL
+  guards retain legacy museum-media compatibility; no files there to migrate.
+- Kept six old /images/museum URLs as byte-identical compatibility copies because
+  external references cannot be verified. Deleted0 files. This is an explicit
+  retention exception, not a claim that the old directory is empty/removed.
+- Added real-file hash/inventory regressions; pre-existing dirty changes remain.
+  No Customer/Backend/Mobile/Admin, API, route, config-secret or database changes;
+  Gemini0, MongoDB writes0, uncertain-attempt operations0, no commit/push.
+
+## S27.3.6 — Public Museum Video Detail Polish (2026-10-23)
+
+- Validation: Web345/345 PASS,0 failures/skips; lint/typecheck/build/diff-check
+  PASS. Initial new chapter-time assertion adapted to the test helper's separated
+  JSX text nodes; full suite rerun PASS. Build passed outside sandbox after EPERM;
+  existing projectRepository dynamic-import warning unchanged.
+- Refined only public video detail presentation: compact breadcrumb/title/copy,
+  centered16:9 player, equal language choices with clear ready/unavailable states,
+  compact full source/rights block and consistent back/Explore navigation.
+- Removed redundant missing-transcript and original-language notices; retained
+  genuine transcripts/chapters and all native playback, error/timeout/caption and
+  publication/availability guards. No source URLs, media files or licence changes.
+- Files changed for this step: MuseumVideoDetailPage.tsx,
+  MuseumVideoLanguages.tsx, museum-video.css, museum-routing.test.mjs,
+  museum-video.test.mjs, docs/UI.md and docs/PROGRESS.md. Prior About-page and
+  other uncommitted changes preserved; no work on another page.
+- Browser inventory empty: Visual QA NOT VERIFIED; actual playback, keyboard,
+  focus/overflow,375/768/1024/1280/1440 widths and zoom100/200% need manual review.
+- No Gemini calls or MongoDB writes; no uncertain-attempt retry/reset, Customer,
+  Backend, Mobile, Admin, API, route, configuration or business changes; no commit/push.
+
+## S27.3.5 — Complete Public Museum About Page (2026-10-23)
+
+- Replaced the `/ve-bao-tang` placeholder with an image/text introduction, existing
+  homepage facade asset and approved Home/Explore copy. Preserved h1, public shell,
+  palette/font and existing `/kham-pha` CTA destination. Added two informational
+  cards: “Về bảo tàng” and “Hành trình khám phá”; no invented historical facts.
+- Scoped responsive styles: two-column introduction on desktop, stacked at≤1023px;
+  two information cards stack at≤767px. Fluid type,16px body, bounded4:3 image,
+ 44px CTA, focus ring and original image fallback. No development notices shown.
+- Files: MuseumAboutPage.tsx (new), museum-about.css (new), AppRouter.tsx,
+  museum-routing.test.mjs, docs/UI.md and docs/PROGRESS.md. Preserved existing
+  uncommitted work and source/licence metadata; image files unchanged.
+- Validation: Web342/342 PASS,0 failed/skipped; lint/typecheck/build/diff-check
+  PASS. Two initial new assertion failures (router-added attribute and a regex
+  matching text-transform) corrected; full suite rerun PASS. Existing Vite
+  projectRepository chunk warning remains non-blocking.
+- Visual QA NOT VERIFIED: no browser available in tool inventory. Manual widths
+ 375/768/1024/1280/1440 and zoom100/200% remain to check. No claim of visual PASS.
+- Gemini calls0; MongoDB writes0; no uncertain-attempt changes, Customer/Backend/
+  Mobile/Admin/config/business changes, commit/push or work beyond S27.3.5.
+
+## S27.3.4 — Final Public Museum Narration Listing (2026-10-23)
+
+- Refined listing-only hero/spacing and centered featured video card: max1120px,
+  1.1:1 two-column desktop layout, unchanged16:9 real poster, readable title/body,
+  24–40px gap/20–32px padding. Tablet≤1023px/mobile stack thumbnail before copy.
+  Added decorative Play SVG and explicit token focus ring to the existing public
+  detail-navigation CTA; no autoplay/player/API/business changes or new media/data.
+- Shared Header/Footer/font/tokens, exact breadcrumb/title/description, catalog
+  publication/rights guards, empty states and detail language/player logic intact.
+  No fake content or development notices added. No fixed-height Footer spacer.
+- Changed: MuseumVideosPage.tsx, museum-video.css, museum-routing.test.mjs and
+  UI/PROGRESS docs. Existing unrelated dirty work preserved. No Customer/Mobile/
+  Admin/Backend/config/database changes, Gemini calls, uncertain-attempt operations,
+  commit/push or work beyond S27.3.4.
+- Browser inventory empty: Visual QA NOT VERIFIED; actual widths375/768/1024/1280/
+  1440, zoom100/200%, hover/focus/keyboard and poster crop require manual checking.
+- Validation: Web340/340 PASS,0 skipped/failed; lint/typecheck/production build and
+  diff-check PASS. New mock/SSR tests cover listing-only scope, exact existing data,
+  thumbnail-first DOM order, decorative Play/navigation,1120px bounds, tablet stack,
+  focus and absence of fixed-height fillers; existing player/security tests pass.
+  Build used approved sandbox escalation; existing projectRepository mixed-import
+  warning remains. Gemini0, MongoDB writes0; no approve/TTS/render or retries.
+
 ## S27.3.3.1 — Clean Public Museum UI Text (2026-10-23)
 
 - Removed development/future-approval copy and exhibition preparation badges from
@@ -130,7 +271,7 @@
 ## S27.3.2.1 — Museum Homepage Image Slots (2026-10-23)
 
 - **Implementation/tests PASS; visual QA NOT VERIFIED.** Added six centralized
-  local image slots and public/images/museum/.gitkeep, no demo/generated images.
+  local image slots and public/museum/images/.gitkeep, no demo/generated images.
   Hero/introduction, three preparation cards and featured-video area share an
   accessible image/fallback component. Real approved poster retained and preferred
   for its featured video; no media replaced or moved. Custom/demo images are

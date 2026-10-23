@@ -21,7 +21,7 @@ export type MuseumExhibition = {
 export const museumExhibitions: readonly MuseumExhibition[] = []
 
 export function isMuseumPublicImage(image: MuseumPublicImage | undefined): image is MuseumPublicImage {
-  return Boolean(image && /^\/museum-media\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.(?:avif|webp|png|jpe?g)$/.test(image.src)
+  return Boolean(image && /^\/(?:museum\/images|museum-media)\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.(?:avif|webp|png|jpe?g)$/.test(image.src)
     && image.alt.trim() && image.caption.trim() && image.credit.trim())
 }
 

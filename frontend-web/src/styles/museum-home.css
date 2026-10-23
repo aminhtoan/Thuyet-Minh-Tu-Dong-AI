@@ -121,8 +121,6 @@
 .museum-theme .museum-home__intro-copy p:not(.museum-home__eyebrow) { max-width: 52ch; color: var(--museum-color-muted-text); margin-bottom: var(--museum-space-3); line-height: 1.65; }
 .museum-theme .museum-home__topics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--museum-space-6); }
 .museum-theme .museum-home__topic { display: flex; flex-direction: column; min-width: 0; height: 100%; padding: 16px; border-top: 3px solid var(--museum-color-accent); transition: border-color var(--museum-motion-fast), box-shadow var(--museum-motion-fast), background-color var(--museum-motion-fast); }
-.museum-theme .museum-home__topic:hover,
-.museum-theme .museum-home__topic:focus-within { border-color: var(--museum-color-accent); background: var(--museum-color-surface); box-shadow: var(--museum-shadow-md); }
 .museum-theme .museum-home__topic-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--museum-space-3); margin-bottom: var(--museum-space-4); padding-bottom: var(--museum-space-4); border-bottom: 1px solid var(--museum-color-border); }
 .museum-theme .museum-home__topic-index { color: var(--museum-color-primary); font-size: 1.5rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .museum-theme .museum-home__topic h3 { margin-bottom: var(--museum-space-2); font-size: 1.125rem; line-height: 1.45; letter-spacing: -.015em; }

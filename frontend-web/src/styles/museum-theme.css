@@ -91,6 +91,18 @@
   outline-offset: 3px;
 }
 
+/* Public CTA feedback only; never retheme Customer controls or native media. */
+.museum-theme :where(.museum-workspace-link, .museum-about__cta, .museum-video__back-link, .museum-menu-trigger) {
+  transition: background-color var(--museum-motion-fast), color var(--museum-motion-fast), border-color var(--museum-motion-fast);
+}
+.museum-theme :is(.museum-workspace-link, .museum-about__cta):active {
+  background: var(--museum-color-primary-pressed);
+}
+.museum-theme :where(.museum-home__link, .museum-about__cta, .museum-workspace-link) svg {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
 .museum-container {
   width: min(100%, calc(var(--museum-container-content) + 2 * var(--museum-container-gutter)));
   margin-inline: auto;

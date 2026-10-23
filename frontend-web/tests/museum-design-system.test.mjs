@@ -48,3 +48,22 @@ test('Museum primitives reuse existing Button, Card and Badge while headings kee
   assert.match(heading, /aria-describedby=\{description \? descriptionId : undefined\}/)
   assert.match(container, /size\?: 'readable' \| 'content' \| 'wide'/)
 })
+
+test('S27.6 shares shell proportions and CTA feedback without making editorial cards interactive', async () => {
+  const [layout, theme, home, about] = await Promise.all([
+    readSource('../src/styles/museum-layout.css'), readSource('../src/styles/museum-theme.css'),
+    readSource('../src/styles/museum-home.css'), readSource('../src/styles/museum-about.css'),
+  ])
+  const shell = layout.split('/* Shared compact shell:')[1]
+  assert.ok(shell)
+  assert.doesNotMatch(shell, /museum-public-layout--home/)
+  assert.match(shell, /museum-header__row[^}]*min-height: 72px; padding-block: 8px/)
+  assert.match(shell, /@media \(max-width: 767px\)[\s\S]*museum-header__row[^}]*min-height: 68px/)
+  assert.match(shell, /museum-footer[^}]*padding-block: clamp\(28px, 3vw, 40px\)/)
+  assert.match(shell, /breadcrumb\) li[^}]*max-width: 100%; overflow-wrap: anywhere/)
+  assert.match(shell, /museum-mobile-menu[^}]*overflow-y: auto; overscroll-behavior: contain/)
+  assert.match(theme, /:is\(.museum-workspace-link, .museum-about__cta\):active[^}]*var\(--museum-color-primary-pressed\)/)
+  assert.match(theme, /@media \(prefers-reduced-motion: reduce\)/)
+  assert.match(about, /museum-about__cta[^}]*min-height: 44px;[^}]*font-size: .875rem; line-height: 1.5/)
+  assert.doesNotMatch(home, /museum-home__topic:(?:hover|focus-within)/)
+})
