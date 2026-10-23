@@ -32,7 +32,7 @@ test('Web project empty states direct creation to the sidebar and distinguish fi
   const source = await readFile(new URL('../src/pages/ProjectsPlaceholder.tsx', import.meta.url), 'utf8');
   assert.match(source, /<Icon name="projects" width="44"/);
   assert.match(source, /filtered \? 'Không tìm thấy dự án phù hợp' : 'Chưa có dự án'/);
-  assert.match(source, /menu bên trái để bắt đầu/);
+  assert.match(source, /menu điều hướng để bắt đầu/);
   assert.doesNotMatch(source, /Xóa bộ lọc/);
   assert.equal((source.match(/to="\/projects\/new"/g) ?? []).length, 0);
 });

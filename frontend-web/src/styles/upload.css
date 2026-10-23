@@ -44,3 +44,15 @@
 .upload-primary-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-sm); }
 .upload-primary-actions .button { min-width: 10rem; }
 @media (max-width: 700px) { .upload-layout .upload-form-card { padding: 16px; }.upload-fields, .upload-action-card { grid-template-columns: 1fr; }.upload-dropzone { min-height: 190px; padding: 16px 12px; }.upload-file__head { align-items: flex-start; flex-direction: column; }.upload-primary-actions { width: 100%; justify-content: stretch; }.upload-primary-actions .button { width: 100%; } }
+
+/* S28.4: readable selected-file details and feedback, scoped to project creation. */
+.upload-page :is(.upload-section-heading > div, .field, .upload-file__actions, .upload-feedback) { min-width: 0; max-width: 100%; }
+.upload-page :is(.upload-error, .upload-feedback, .field__message, #upload-file-formats, .upload-section-heading, .upload-file__name) { overflow-wrap: anywhere; line-height: 1.6; }
+.upload-page #upload-file-formats { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.upload-page .upload-fields :is(input, select, textarea) { min-width: 0; font-size: 1rem; }
+.upload-page .upload-description { border-radius: var(--radius-md); }
+.upload-page .upload-file__head { flex-wrap: wrap; }
+.upload-page .upload-file__actions .button { white-space: normal; }
+.upload-page .upload-preview { max-width: 100%; object-fit: contain; }
+.upload-page input[type="file"]:focus-visible { position: static; width: 100%; height: auto; margin: 0; white-space: normal; clip-path: none; clip: auto; overflow: visible; }
+@media (prefers-reduced-motion: reduce) { .upload-page .upload-dropzone { transition-duration: .01ms; } }

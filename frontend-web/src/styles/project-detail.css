@@ -196,3 +196,11 @@
   .project-resume-upload__file { grid-template-columns: auto minmax(0, 1fr); }
   .project-resume-upload__file > span:last-child { grid-column: 2; }
 }
+
+/* S28.4: consistent form feedback without changing workflow or media limits. */
+.project-detail-form .project-detail-edit-status { margin: 0; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-secondary); color: var(--color-text-secondary); font-size: var(--font-size-sm); line-height: 1.6; }
+.project-detail-layout :is(.project-detail-message, .project-detail-edit-status, .project-detail-field__hint, .project-resume-upload__hint) { overflow-wrap: anywhere; line-height: 1.6; }
+.project-detail-layout .project-detail-field :is(input, select, textarea) { min-width: 0; font-size: 1rem; }
+.project-detail-layout .project-detail-field :is(input, textarea)[aria-invalid="true"] { border-color: var(--color-error); }
+.project-detail-layout .project-resume-upload input[type="file"]:focus-visible { position: static; width: 100%; height: auto; margin: 0; white-space: normal; clip-path: none; clip: auto; overflow: visible; }
+.project-detail-layout .project-resume-upload__file > span:last-child { overflow-wrap: anywhere; }

@@ -35,6 +35,8 @@ export function ProjectDetailPage() {
   const uploadLock = useRef(false);
   const uploadController = useRef<AbortController | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [savedFields, setSavedFields] = useState<{ name: string; description: string; sourceLanguage: string } | null>(null);
+  const dirty = Boolean(project && savedFields && (name.trim() !== savedFields.name.trim() || description.trim() !== savedFields.description.trim() || sourceLanguage !== savedFields.sourceLanguage));
   const navigate = useNavigate();
   const resumeNavigationNotice = typeof location.state === 'object'
     && location.state !== null
@@ -47,9 +49,19 @@ export function ProjectDetailPage() {
       // Populate the editable draft after the async project detail arrives.
       // oxlint-disable-next-line react/set-state-in-effect
       setName(project.name); setDescription(project.description ?? ''); setSourceLanguage(project.sourceLanguage);
+      // Keep the UI-only saved baseline aligned with the loaded project.
+      // oxlint-disable-next-line react/set-state-in-effect
+      setSavedFields({ name: project.name, description: project.description ?? '', sourceLanguage: project.sourceLanguage });
     }
   }, [project]);
   useEffect(() => () => uploadController.current?.abort(), []);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+  const confirmLeave = () => !dirty || window.confirm('Thông tin dự án có thay đổi chưa lưu. Rời trang và bỏ các thay đổi này?');
   if (isLoading) return <Card className="project-detail-load-state"><Spinner label="Đang tải dự án" /></Card>;
   if (error || !project || !projectId) return <Card className="project-detail-load-state"><ErrorState title="Không thể mở dự án" description={error ?? 'Dự án không tồn tại hoặc bạn không có quyền truy cập.'} /></Card>;
   const mediaState = projectMetadataState(project).media;
@@ -63,7 +75,7 @@ export function ProjectDetailPage() {
   const uploadBusy = uploadStatus === 'uploading';
   const trimmedName = name.trim();
   const validationError = !trimmedName ? 'Tên dự án là bắt buộc.' : description.trim().length > 1000 ? 'Mô tả không được vượt quá 1000 ký tự.' : null;
-  async function submit(event: FormEvent) { event.preventDefault(); if (!projectId || validationError || saveLock.current || uploadBusy) { if (validationError) setMessage({ kind: 'error', text: validationError }); return; } saveLock.current = true; setSaving(true); setMessage(null); try { await projectRepository.updateProject(projectId, { name: trimmedName, description: description.trim(), sourceLanguage }); setMessage({ kind: 'success', text: 'Đã lưu thay đổi dự án.' }); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể cập nhật dự án.' }); } finally { saveLock.current = false; setSaving(false); } }
+  async function submit(event: FormEvent) { event.preventDefault(); if (!projectId || validationError || saveLock.current || uploadBusy) { if (validationError) setMessage({ kind: 'error', text: validationError }); return; } saveLock.current = true; setSaving(true); setMessage(null); try { await projectRepository.updateProject(projectId, { name: trimmedName, description: description.trim(), sourceLanguage }); setSavedFields({ name, description, sourceLanguage }); setMessage({ kind: 'success', text: 'Đã lưu thay đổi dự án.' }); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể cập nhật dự án.' }); } finally { saveLock.current = false; setSaving(false); } }
   async function remove() { if (!projectId || saving || uploadBusy || !window.confirm(`Xóa dự án “${currentProject.name}” và toàn bộ tệp liên quan? Thao tác này không thể hoàn tác.`)) return; setSaving(true); try { await projectRepository.deleteProject(projectId); navigate('/projects', { replace: true }); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể xóa dự án.' }); setSaving(false); } }
   function selectUploadFile(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
@@ -105,7 +117,7 @@ export function ProjectDetailPage() {
     }
   }
   function cancelUpload() { uploadController.current?.abort(); }
-  return <><PageHeader title={project.name} description={project.description || 'Chưa có mô tả cho dự án này.'} actions={<div className="project-detail-header-actions"><ProjectStatusBadge status={project.status} /><Link className="button button--secondary button--md project-detail-back" to="/projects"><Icon name="arrow" width="16" />Quay lại dự án</Link></div>} />
+  return <><PageHeader title={project.name} description={project.description || 'Chưa có mô tả cho dự án này.'} actions={<div className="project-detail-header-actions"><ProjectStatusBadge status={project.status} /><Link className="button button--secondary button--md project-detail-back" to="/projects" onClick={event => { if (!confirmLeave()) event.preventDefault() }}><Icon name="arrow" width="16" />Quay lại dự án</Link></div>} />
     {resumeNavigationNotice && <p className="project-workflow-warning project-detail-resume-notice" role="status"><strong>Đã mở trang chi tiết an toàn.</strong> {resumeNavigationNotice}</p>}
     <div className="project-detail-layout">
       <Card padding="lg" className="project-detail-summary"><section aria-labelledby="workflow-heading"><div className="project-detail-section-heading"><span className="project-detail-section-icon" aria-hidden="true"><Icon name="sparkles" width="20" /></span><div><h2 id="workflow-heading">Tiến độ dự án</h2><p>Theo dõi các bước xử lý và tiếp tục khi dự án sẵn sàng.</p></div></div><WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="UPLOAD" />
@@ -119,24 +131,26 @@ export function ProjectDetailPage() {
         {mediaState === 'ERROR' && <p className="project-media-notice project-media-notice--error" role="alert">Không thể tải metadata phương tiện. Dữ liệu bên trên không được xem là xác nhận tệp đang trống.</p>}
         {(mediaState === 'UNKNOWN' || mediaState === 'LOADING') && <p className="project-media-notice" role="status">Metadata phương tiện chưa được xác minh đầy đủ.</p>}
         {canResumeUpload && <div className="project-resume-upload" aria-labelledby="resume-upload-heading"><div><h3 id="resume-upload-heading">Tiếp tục tải phương tiện</h3><p>Dự án nháp này đã được lưu. Tệp sẽ được tải lên đúng dự án hiện tại.</p></div>
-          <input ref={uploadInputRef} className="visually-hidden" id="resume-media-file" type="file" accept=".mp4,.mov,.webm,.mp3,.wav,.m4a,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/mp4" onChange={selectUploadFile} disabled={uploadStatus === 'uploading' || uploadStatus === 'success'} aria-describedby="resume-upload-hint" />
+          <input ref={uploadInputRef} className="visually-hidden" id="resume-media-file" type="file" accept=".mp4,.mov,.webm,.mp3,.wav,.m4a,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav,audio/mp4" onChange={selectUploadFile} disabled={uploadStatus === 'uploading' || uploadStatus === 'success'} aria-label="Chọn phương tiện cho dự án hiện tại" aria-invalid={Boolean(uploadFile && !uploadValidation.valid)} aria-describedby={uploadFile && !uploadValidation.valid ? 'resume-upload-hint resume-upload-error' : 'resume-upload-hint'} />
           <div className="project-resume-upload__picker-row"><Button type="button" variant="secondary" disabled={uploadStatus === 'uploading' || uploadStatus === 'success'} onClick={() => uploadInputRef.current?.click()}>{uploadFile ? 'Thay tệp' : 'Chọn tệp âm thanh hoặc video'}</Button>{uploadFile && uploadStatus !== 'success' && <Button type="button" variant="ghost" disabled={uploadBusy} onClick={clearUploadFile}>Xóa tệp đã chọn</Button>}</div>
           {uploadFile && <div className="project-resume-upload__file"><span className="project-resume-upload__file-icon" aria-hidden="true"><Icon name={uploadValidation.valid && uploadValidation.mediaType === 'VIDEO' ? 'video' : 'document'} width="20" /></span><strong>{uploadFile.name}</strong><span>{formatFileSize(uploadFile.size)}</span></div>}
-          {uploadFile && !uploadValidation.valid && <p className="project-detail-message project-detail-message--error" role="alert">{uploadValidation.error}</p>}
+          {uploadFile && !uploadValidation.valid && <p id="resume-upload-error" className="project-detail-message project-detail-message--error" role="alert">{uploadValidation.error}</p>}
           <p id="resume-upload-hint" className="project-resume-upload__hint">MP4, MOV, WEBM, MP3, WAV hoặc M4A · Tối đa {formatFileSize(MAX_MEDIA_FILE_SIZE)}</p>
           {uploadStatus === 'failed' && <p className="project-detail-message project-detail-message--error" role="alert">{uploadError}</p>}
           {uploadStatus === 'cancelled' && <p className="project-detail-message" role="status">Đã hủy tải lên. Tệp vẫn được chọn để bạn có thể thử lại.</p>}
-          {uploadStatus === 'success' && <div className="project-resume-upload__success" role="status"><strong>Tải phương tiện thành công.</strong><Link className="button button--primary button--md" to={`/projects/${project.id}/transcript`}>Tiếp tục đến bản ghi</Link></div>}
+          {uploadStatus === 'uploading' && <p role="status">Đang tải phương tiện. Vui lòng giữ trang mở cho đến khi hoàn tất.</p>}
+          {uploadStatus === 'success' && <div className="project-resume-upload__success" role="status"><strong>Tải phương tiện thành công.</strong><Link className="button button--primary button--md" to={`/projects/${project.id}/transcript`} onClick={event => { if (!confirmLeave()) event.preventDefault() }}>Tiếp tục đến bản ghi</Link></div>}
           {uploadStatus !== 'success' && <div className="project-resume-upload__actions"><Button type="button" loading={uploadStatus === 'uploading'} disabled={!uploadFile || !uploadValidation.valid || uploadStatus === 'uploading'} onClick={() => void resumeUpload()}>{uploadStatus === 'failed' || uploadStatus === 'cancelled' ? 'Thử tải lại' : 'Tải lên dự án này'}</Button>{uploadStatus === 'uploading' && <Button type="button" variant="secondary" onClick={cancelUpload}>Hủy tải lên</Button>}</div>}
         </div>}
       </section></Card>
-      <Card padding="lg" className="project-detail-card"><form className="project-detail-form" onSubmit={submit} noValidate>
+      <Card padding="lg" className="project-detail-card"><form className="project-detail-form" onSubmit={submit} noValidate aria-busy={saving}>
         <div className="project-detail-section-heading"><span className="project-detail-section-icon" aria-hidden="true"><Icon name="projects" width="20" /></span><div><h2>Thông tin dự án</h2><p>Cập nhật tên, mô tả và ngôn ngữ của nội dung nguồn.</p></div></div>
-        <div className="project-detail-field"><label htmlFor="project-detail-name">Tên dự án <span aria-hidden="true">*</span></label><input id="project-detail-name" value={name} maxLength={150} required aria-invalid={!trimmedName} aria-describedby={!trimmedName ? 'project-name-error' : undefined} onChange={(event) => setName(event.target.value)} disabled={saving || uploadBusy} />{!trimmedName && <span id="project-name-error" className="field__message field__message--error">Tên dự án là bắt buộc.</span>}</div>
-        <div className="project-detail-field"><label htmlFor="project-detail-description">Mô tả</label><textarea id="project-detail-description" value={description} maxLength={1000} rows={4} onChange={(event) => setDescription(event.target.value)} disabled={saving || uploadBusy} /><span className="project-detail-field__hint">Không bắt buộc · {description.length}/1000 ký tự</span></div>
+        <div className="project-detail-field"><label htmlFor="project-detail-name">Tên dự án <span aria-hidden="true">*</span></label><input id="project-detail-name" value={name} maxLength={150} required aria-invalid={!trimmedName} aria-describedby={!trimmedName ? 'project-name-hint project-name-error' : 'project-name-hint'} onChange={(event) => setName(event.target.value)} disabled={saving || uploadBusy} /><span id="project-name-hint" className="project-detail-field__hint">Bắt buộc · Tối đa 150 ký tự.</span>{!trimmedName && <span id="project-name-error" className="field__message field__message--error">Tên dự án là bắt buộc.</span>}</div>
+        <div className="project-detail-field"><label htmlFor="project-detail-description">Mô tả</label><textarea id="project-detail-description" value={description} maxLength={1000} rows={4} aria-describedby="project-description-hint" onChange={(event) => setDescription(event.target.value)} disabled={saving || uploadBusy} /><span id="project-description-hint" className="project-detail-field__hint">Không bắt buộc · {description.length}/1000 ký tự</span></div>
         <div className="project-detail-field"><label htmlFor="project-detail-language">Ngôn ngữ nguồn</label><select id="project-detail-language" value={sourceLanguage} onChange={(event) => setSourceLanguage(event.target.value)} disabled={saving || uploadBusy}>{languages.map((language) => <option key={language.code} value={language.code}>{language.nativeName}</option>)}</select></div>
-        {message && <p className={`project-detail-message project-detail-message--${message.kind}`} role={message.kind === 'error' ? 'alert' : 'status'}>{message.text}</p>}
-        <div className="project-detail-actions"><Button type="submit" loading={saving} disabled={saving || uploadBusy || Boolean(validationError)}>Lưu thay đổi</Button>{action.available && action.step !== 'upload' && <Link className="button button--secondary button--md" to={action.path}>{action.label}</Link>}<Button type="button" variant="danger" disabled={saving || uploadBusy} onClick={() => void remove()}>Xóa dự án</Button></div>
+        <p className="project-detail-edit-status" role="status" aria-atomic="true">{saving ? 'Đang lưu thông tin dự án...' : dirty ? 'Có thay đổi chưa lưu. Hãy lưu thông tin trước khi rời trang.' : 'Thông tin dự án đã được lưu.'}</p>
+        {message && (message.kind === 'error' || !dirty) && <p className={`project-detail-message project-detail-message--${message.kind}`} role={message.kind === 'error' ? 'alert' : 'status'}>{message.text}</p>}
+        <div className="project-detail-actions"><Button type="submit" loading={saving} disabled={saving || uploadBusy || Boolean(validationError)}>Lưu thay đổi</Button>{action.available && action.step !== 'upload' && <Link className="button button--secondary button--md" to={action.path} onClick={event => { if (!confirmLeave()) event.preventDefault() }}>{action.label}</Link>}<Button type="button" variant="danger" disabled={saving || uploadBusy} onClick={() => void remove()}>Xóa dự án</Button></div>
       </form></Card>
       </div>
     </div></>;

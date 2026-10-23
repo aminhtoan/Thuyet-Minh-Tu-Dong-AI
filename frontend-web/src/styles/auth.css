@@ -6,7 +6,7 @@
 .auth-layout__logo > span { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; background: var(--color-primary); border-radius: var(--radius-lg); }
 .auth-layout__pitch { margin: auto 0; }
 .auth-layout__eyebrow { color: var(--color-focus-on-dark); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); letter-spacing: 0.08em; text-transform: uppercase; }
-.auth-layout__pitch h1 { max-width: 34rem; margin-bottom: var(--space-lg); font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.05; letter-spacing: -0.05em; }
+.auth-layout__pitch .auth-layout__slogan { max-width: 34rem; margin-bottom: var(--space-lg); font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.05; letter-spacing: -0.05em; }
 .auth-layout__pitch > p:last-child { max-width: 31rem; color: var(--sidebar-text); font-size: var(--font-size-lg); }
 .auth-layout__visual { display: flex; height: 5rem; align-items: center; gap: 0.5rem; }
 .auth-layout__visual span { width: 0.35rem; height: 1.75rem; background: var(--color-accent); border-radius: var(--radius-full); }
@@ -45,7 +45,7 @@
 .login-page .auth-layout__brand { padding: clamp(2rem, 4vw, 4.5rem); }
 .login-page .auth-layout__brand-content { max-width: 38rem; min-height: 0; }
 .login-page .auth-layout__pitch { display: grid; gap: var(--space-md); margin: auto 0; }
-.login-page .auth-layout__pitch h1 { max-width: 32rem; margin: 0; font-size: clamp(2.25rem, 4vw, 3.75rem); line-height: 1.1; letter-spacing: -0.04em; }
+.login-page .auth-layout__pitch .auth-layout__slogan { max-width: 32rem; margin: 0; font-size: clamp(2.25rem, 4vw, 3.75rem); line-height: 1.1; letter-spacing: -0.04em; }
 .login-page .auth-layout__pitch > p { margin-block: 0; line-height: 1.65; }
 .login-page .auth-layout__visual { margin-top: var(--space-lg); }
 .login-page .auth-layout__form-panel { padding: clamp(2rem, 5vw, 4.5rem); }
@@ -62,7 +62,7 @@
 .register-page .auth-layout__brand { padding: clamp(2rem, 4vw, 4.5rem); }
 .register-page .auth-layout__brand-content { max-width: 38rem; min-height: 0; }
 .register-page .auth-layout__pitch { display: grid; gap: var(--space-md); margin: auto 0; }
-.register-page .auth-layout__pitch h1 { max-width: 32rem; margin: 0; font-size: clamp(2.25rem, 4vw, 3.75rem); line-height: 1.1; letter-spacing: -0.04em; }
+.register-page .auth-layout__pitch .auth-layout__slogan { max-width: 32rem; margin: 0; font-size: clamp(2.25rem, 4vw, 3.75rem); line-height: 1.1; letter-spacing: -0.04em; }
 .register-page .auth-layout__pitch > p { margin-block: 0; line-height: 1.65; }
 .register-page .auth-layout__visual { margin-top: var(--space-lg); }
 .register-page .auth-layout__form-panel { padding: clamp(1.5rem, 4vw, 3rem); }
@@ -79,25 +79,25 @@
 @media (max-width: 1023px) {
   .auth-layout { grid-template-columns: minmax(18rem, 0.8fr) minmax(27rem, 1.2fr); }
   .auth-layout__brand { padding: var(--space-xl); }
-  .auth-layout__pitch h1 { font-size: clamp(2.25rem, 5vw, 3.25rem); }
+  .auth-layout__pitch .auth-layout__slogan { font-size: clamp(2.25rem, 5vw, 3.25rem); }
   .login-page .auth-layout { grid-template-columns: minmax(17rem, 0.85fr) minmax(25rem, 1.15fr); }
   .login-page .auth-layout__brand { padding: var(--space-xl); }
-  .login-page .auth-layout__pitch h1 { font-size: clamp(2rem, 4vw, 2.8rem); }
+  .login-page .auth-layout__pitch .auth-layout__slogan { font-size: clamp(2rem, 4vw, 2.8rem); }
   .register-page .auth-layout { grid-template-columns: minmax(17rem, 0.85fr) minmax(25rem, 1.15fr); }
   .register-page .auth-layout__brand { padding: var(--space-xl); }
-  .register-page .auth-layout__pitch h1 { font-size: clamp(2rem, 4vw, 2.8rem); }
+  .register-page .auth-layout__pitch .auth-layout__slogan { font-size: clamp(2rem, 4vw, 2.8rem); }
 }
 
 @media (max-height: 720px) and (min-width: 721px) {
   .login-page .auth-layout__brand,
   .login-page .auth-layout__form-panel { padding-block: var(--space-lg); }
   .login-page .auth-layout__pitch { margin-block: var(--space-lg); }
-  .login-page .auth-layout__pitch h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); }
+  .login-page .auth-layout__pitch .auth-layout__slogan { font-size: clamp(1.9rem, 4vw, 2.8rem); }
   .login-page .auth-layout__visual { height: 3.75rem; margin-top: var(--space-sm); transform: scale(.8); transform-origin: left center; }
   .register-page .auth-layout__brand,
   .register-page .auth-layout__form-panel { padding-block: var(--space-md); }
   .register-page .auth-layout__pitch { margin-block: var(--space-md); }
-  .register-page .auth-layout__pitch h1 { font-size: clamp(1.8rem, 3.6vw, 2.5rem); }
+  .register-page .auth-layout__pitch .auth-layout__slogan { font-size: clamp(1.8rem, 3.6vw, 2.5rem); }
   .register-page .auth-layout__visual { height: 3.25rem; margin-top: var(--space-xs); transform: scale(.72); transform-origin: left center; }
   .register-page .auth-layout__heading { margin-bottom: 0.75rem; }
   .register-page .auth-form { gap: 0.75rem; }
@@ -127,4 +127,38 @@
   .register-page .auth-layout__form-card { padding: var(--space-md); border-radius: var(--radius-lg); }
   .register-page .auth-layout__heading h1 { font-size: 1.75rem; }
   .register-page .auth-form { gap: 0.75rem; }
+}
+
+/* S28.3: shared Customer auth rhythm; no changes to workflow or public styles. */
+:is(.login-page, .register-page) .auth-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+:is(.login-page, .register-page) .auth-layout__brand,
+:is(.login-page, .register-page) .auth-layout__form-panel,
+:is(.login-page, .register-page) .auth-layout__form-card { min-width: 0; }
+:is(.login-page, .register-page) .auth-layout__form-panel { padding: clamp(24px, 4vw, 56px); }
+:is(.login-page, .register-page) .auth-layout__form-card { width: min(100%, 27rem); }
+:is(.login-page, .register-page) .auth-layout__slogan { font-weight: var(--font-weight-bold); text-wrap: balance; }
+:is(.login-page, .register-page) .auth-layout__pitch > .auth-layout__slogan { max-width: 26ch; font-size: clamp(1.5rem, 2.2vw, 2rem); line-height: 1.35; }
+:is(.login-page, .register-page) .auth-layout__heading h1 { margin: 0; font-size: clamp(1.75rem, 2.5vw, 2.25rem); line-height: 1.25; text-align: left; }
+:is(.login-page, .register-page) .auth-layout__heading { margin-bottom: var(--space-lg); }
+:is(.login-page, .register-page) .auth-form { gap: var(--space-md); }
+:is(.login-page, .register-page) .auth-form .field,
+:is(.login-page, .register-page) .auth-form .field__control { min-width: 0; }
+:is(.login-page, .register-page) .auth-form .field__input { min-width: 0; font-size: 1rem; }
+:is(.login-page, .register-page) :is(.field__label, .field__message, .inline-message, .auth-layout__footer) { overflow-wrap: anywhere; line-height: 1.6; }
+:is(.login-page, .register-page) .inline-message { margin: 0; }
+:is(.login-page, .register-page) .field__control:has(input[aria-invalid="true"]) { border-color: var(--color-error); }
+:is(.login-page, .register-page) .field__control:focus-within { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+:is(.login-page, .register-page) .auth-form__submit { white-space: normal; line-height: 1.5; }
+:is(.login-page, .register-page) .auth-form__submit:active:not(:disabled) { transform: none; }
+:is(.login-page, .register-page) .auth-layout__footer { margin-top: var(--space-lg); }
+@media (max-width: 1023px) {
+  :is(.login-page, .register-page) .auth-layout__brand,
+  :is(.login-page, .register-page) .auth-layout__form-panel { padding: 24px; }
+}
+@media (max-width: 720px) {
+  :is(.login-page, .register-page) .auth-layout__form-panel { padding: 16px; }
+  :is(.login-page, .register-page) .auth-layout__form-card { padding: clamp(16px, 4vw, 24px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.login-page, .register-page) :is(.button, .field__control, .password-toggle) { transition-duration: 0.01ms; animation-duration: 0.01ms; }
 }

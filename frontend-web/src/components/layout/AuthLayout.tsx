@@ -16,7 +16,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
           <div className="auth-layout__logo"><span><Icon name="sparkles" width="24" /></span>Người kể chuyện AI</div>
           <div className="auth-layout__pitch">
             <p className="auth-layout__eyebrow">Thuyết minh đa ngôn ngữ</p>
-            <h1>Đưa mọi câu chuyện đến với khán giả bằng nhiều ngôn ngữ.</h1>
+            <p className="auth-layout__slogan">Đưa mọi câu chuyện đến với khán giả bằng nhiều ngôn ngữ.</p>
             <p>Chuẩn bị nội dung video và âm thanh theo quy trình thuyết minh đa ngôn ngữ liền mạch.</p>
           </div>
           <div className="auth-layout__visual" aria-hidden="true"><span /><span /><span /><span /><span /></div>
@@ -25,7 +25,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
       <section className="auth-layout__form-panel">
         <div className="auth-layout__mobile-brand"><span>AI</span>Người kể chuyện AI</div>
         <div className="auth-layout__form-card">
-          <header className="auth-layout__heading"><h1>{title}</h1><p>{description}</p></header>
+          <header className="auth-layout__heading"><h1>{title}</h1>{description && <p>{description}</p>}</header>
           {children}
           <footer className="auth-layout__footer">{footer}</footer>
         </div>

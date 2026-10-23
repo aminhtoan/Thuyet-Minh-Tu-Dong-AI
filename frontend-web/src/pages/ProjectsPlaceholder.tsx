@@ -25,7 +25,7 @@ function ProjectsEmptyState({ filtered }: { filtered: boolean }) {
   return <section className={`projects-empty${filtered ? ' projects-empty--filtered' : ''}`} aria-labelledby={titleId}>
     <span className="projects-empty__icon" aria-hidden="true"><Icon name="projects" width="44" /></span>
     <h2 id={titleId}>{filtered ? 'Không tìm thấy dự án phù hợp' : 'Chưa có dự án'}</h2>
-    <p>{filtered ? 'Hãy thử thay đổi từ khóa hoặc bộ lọc.' : "Chọn 'Tạo thuyết minh' trong menu bên trái để bắt đầu."}</p>
+    <p>{filtered ? 'Hãy thử thay đổi từ khóa hoặc bộ lọc.' : "Chọn 'Tạo thuyết minh' trong menu điều hướng để bắt đầu."}</p>
   </section>
 }
 

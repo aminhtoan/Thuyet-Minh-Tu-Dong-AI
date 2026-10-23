@@ -33,7 +33,12 @@ export function LoginForm() {
     const nextValues = { ...values, email: values.email.trim() }
     const nextErrors = validateLogin(nextValues)
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0) {
+      const form = event.currentTarget
+      const first = (['email', 'password'] as const).find(field => nextErrors[field])
+      requestAnimationFrame(() => { if (form.isConnected) form.querySelector<HTMLInputElement>(`input[name="${first}"]`)?.focus() })
+      return
+    }
 
     submitLock.current = true
     setSubmitting(true)
@@ -50,11 +55,11 @@ export function LoginForm() {
   }
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit} noValidate>
+    <form className="auth-form" onSubmit={handleSubmit} noValidate aria-busy={submitting}>
       {successMessage && <InlineMessage variant="success">{successMessage}</InlineMessage>}
       {formError && <InlineMessage variant="error">{formError}</InlineMessage>}
-      <Input label="Email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={values.email} error={errors.email} onChange={(event) => updateField('email', event.target.value)} required />
-      <PasswordField label="Mật khẩu" autoComplete="current-password" placeholder="Nhập mật khẩu" value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
+      <Input name="email" label="Email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={values.email} error={errors.email} onChange={(event) => updateField('email', event.target.value)} required />
+      <PasswordField name="password" label="Mật khẩu" autoComplete="current-password" placeholder="Nhập mật khẩu" value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
       <Button className="auth-form__submit" type="submit" loading={submitting}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</Button>
     </form>
   )

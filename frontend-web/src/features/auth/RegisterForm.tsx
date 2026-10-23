@@ -7,6 +7,7 @@ import { authService } from './authService'
 import { PasswordField } from './PasswordField'
 import type { FormErrors, RegisterFormValues } from './types'
 import { validateRegister } from './validation'
+import { getRegisterErrorMessage } from './loginError.mjs'
 
 const initialValues: RegisterFormValues = { fullName: '', email: '', password: '', confirmPassword: '' }
 
@@ -30,7 +31,12 @@ export function RegisterForm() {
     const nextValues = { ...values, fullName: values.fullName.trim(), email: values.email.trim() }
     const nextErrors = validateRegister(nextValues)
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0) {
+      const form = event.currentTarget
+      const first = (['fullName', 'email', 'password', 'confirmPassword'] as const).find(field => nextErrors[field])
+      requestAnimationFrame(() => { if (form.isConnected) form.querySelector<HTMLInputElement>(`input[name="${first}"]`)?.focus() })
+      return
+    }
 
     submitLock.current = true
     setSubmitting(true)
@@ -38,8 +44,8 @@ export function RegisterForm() {
     try {
       await authService.register(nextValues)
       navigate('/login', { replace: true, state: { message: 'Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.' } })
-    } catch {
-      setFormError('Không thể tạo tài khoản. Vui lòng thử lại.')
+    } catch (error) {
+      setFormError(getRegisterErrorMessage(error))
     } finally {
       submitLock.current = false
       setSubmitting(false)
@@ -47,12 +53,12 @@ export function RegisterForm() {
   }
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit} noValidate>
+    <form className="auth-form" onSubmit={handleSubmit} noValidate aria-busy={submitting}>
       {formError && <InlineMessage variant="error">{formError}</InlineMessage>}
-      <Input label="Họ và tên" autoComplete="name" placeholder="Nhập họ và tên" value={values.fullName} error={errors.fullName} onChange={(event) => updateField('fullName', event.target.value)} required />
-      <Input label="Email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={values.email} error={errors.email} onChange={(event) => updateField('email', event.target.value)} required />
-      <PasswordField label="Mật khẩu" autoComplete="new-password" placeholder="Tạo mật khẩu" helperText="Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và chữ số." value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
-      <PasswordField label="Xác nhận mật khẩu" autoComplete="new-password" placeholder="Nhập lại mật khẩu" value={values.confirmPassword} error={errors.confirmPassword} onChange={(event) => updateField('confirmPassword', event.target.value)} required />
+      <Input name="fullName" label="Họ và tên" autoComplete="name" placeholder="Nhập họ và tên" value={values.fullName} error={errors.fullName} onChange={(event) => updateField('fullName', event.target.value)} required />
+      <Input name="email" label="Email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={values.email} error={errors.email} onChange={(event) => updateField('email', event.target.value)} required />
+      <PasswordField name="password" label="Mật khẩu" autoComplete="new-password" placeholder="Tạo mật khẩu" helperText="Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và chữ số." value={values.password} error={errors.password} onChange={(event) => updateField('password', event.target.value)} required />
+      <PasswordField name="confirmPassword" label="Xác nhận mật khẩu" autoComplete="new-password" placeholder="Nhập lại mật khẩu" value={values.confirmPassword} error={errors.confirmPassword} onChange={(event) => updateField('confirmPassword', event.target.value)} required />
       <Button className="auth-form__submit" type="submit" loading={submitting}>{submitting ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}</Button>
     </form>
   )

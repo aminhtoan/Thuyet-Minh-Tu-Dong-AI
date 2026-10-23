@@ -1,5 +1,102 @@
 # Project Progress
 
+## S28.5 — Customer Transcript UI/UX Polish (2026-10-23)
+
+- Confirmed /projects/:projectId/transcript and existing workspace/player/editor.
+  Changes limited to TranscriptSegmentEditor.tsx, styles/transcript.css,
+  tests/transcript-compact-ui.test.mjs and UI/PROGRESS docs.
+- Removed nested transcript list scrolling; kept responsive two-column/stacked
+  architecture, native media aspect ratio, controls and timestamp seek unchanged.
+  Compact editor spacing, wrapping and focus clearance use current Customer tokens.
+- Added editing border, explicit unchanged/unsaved/saving status, aria-busy and
+  textarea status/error associations. Displays existing validator errors without
+  altering save rules, feature gate, max length, locks, CAS or conflict handling.
+  Existing saved/downstream warnings remain; no automatic save or new request.
+- Full Web371/371 and focused28/28 PASS; lint/typecheck/build PASS; existing Vite
+  mixed-import advisory non-blocking. Browser inventory empty: Visual QA NOT
+  VERIFIED. Manual checks needed at375/768/1024/1280/1440px, keyboard, long content,
+  native video/audio and real screen-reader feedback. No real media/API action run.
+- ui-ux-pro-max informed form feedback, reflow and scrolling; no redesign.
+  No Gemini calls, MongoDB writes, config/Backend/Museum/Mobile/Admin changes,
+  attempts touched or commit/push. Unrelated uncommitted work preserved.
+- Proposed S28.6: Customer Translation UI consistency/accessibility review, retaining
+  all UNCERTAIN/provider warnings and current safety guards. Not started.
+
+## S28.4 — Customer Project Forms & Upload UI/UX Polish (2026-10-23)
+
+- Improved required/helper copy and linked upload errors, persistent supported
+  formats/500MB guidance, long filename wrapping and visible native-picker focus.
+  Preserved name validation differences (create3–100/detail required/max150),
+  MIME/size rules, submit locks, cancellation and existing upload/save/delete APIs.
+- Detail now shows unsaved/saving/saved status and warns on browser unload and
+  explicit local exit links; no global router/auth/workflow change. Sidebar,
+  WorkflowSteps and SPA history navigation remain outside this limited warning.
+  Failed saves retain input; stale success is suppressed while edits are pending.
+- Create success explains the existing list-to-project-to-Transcript next step;
+  empty project copy uses device-neutral navigation wording. Scoped CSS only.
+- Changed: pages/NewProjectPlaceholder.tsx, ProjectDetailPage.tsx,
+  ProjectsPlaceholder.tsx; styles/upload.css, project-detail.css;
+  tests/project-form-polish.test.mjs, dashboard-project-list-ui.test.mjs; UI/PROGRESS.
+  Prior S28.2/S28.3 uncommitted work preserved.
+- Validation: Web368/368 PASS, focused17/17 PASS, lint/typecheck/build PASS.
+  Build required approved sandbox escalation; existing projectRepository dynamic
+  import advisory remains non-blocking. Visual QA NOT VERIFIED: no connected
+  browser; widths375/768/1024/1280/1440, zoom, keyboard/focus and long content still
+  need manual checks. No real create/upload, Gemini calls or MongoDB writes;
+  no config, attempt, Public Museum, Mobile, Admin or Backend changes; no commit/push.
+- Suggested S28.5: Transcript editor/player UI feedback and accessibility, preserving
+  current transcript validation and workflow guards; not started.
+
+## S28.3 — Customer Auth UI/UX Polish (2026-10-23)
+
+- Single task H1, subordinate existing slogan, matching27rem forms/spacing,
+  responsive shrinkable columns and long-error wrapping; preserved blue/navy,
+  Be Vietnam Pro and all current copy/fields. Auth-only styles do not affect Public.
+- Added first-invalid-field focus in visual order after submit, preserving values
+  and existing validators/ARIA associations. Form busy state and existing submit
+  locks/redirects retained. Safe register request messages classified using current
+  status/codes, with no API/auth/session changes or raw exceptions in UI.
+- Files for this step: components/layout/AuthLayout.tsx; features/auth/LoginForm.tsx,
+  RegisterForm.tsx, loginError.mjs, loginError.d.mts; styles/auth.css;
+  tests/auth-accessibility.test.mjs (new); docs/UI.md, docs/PROGRESS.md.
+  Prior S28.2 dirty files preserved, not overwritten/reverted.
+- Focused12/12 PASS; full Web363/363 PASS,0 failures/skips; lint/typecheck/build/
+  diff-check PASS. New test children-prop lint warning corrected; existing Vite
+  projectRepository chunk warning remains non-blocking.
+- Visual QA NOT VERIFIED, no browser available. Manual widths375/768/1024/1280/
+ 1440, keyboard/screen-reader/password-manager, zoom/long-error rendering pending.
+- Gemini0, MongoDB writes0; only mocks, no real auth requests, no changes to JWT,
+  refresh/logout/RBAC/redirect, validation rules, workflow, Public/Mobile/Admin/
+  Backend/config, uncertain attempts or commit/push. Only S28.3.
+- Proposed S28.4: project creation/detail/upload form consistency and next-step
+  guidance, preserving existing validation/API limits unless separately approved.
+
+## S28.2 — Customer Web Shell & Design System Polish (2026-10-23)
+
+- Added keyboard-only skip link and focusable main. Route changes wait for drawer
+  closure before focusing main; sidebar same-route navigation supported. Escape/
+  close/backdrop restoration and existing Tab/inert/scroll-lock behavior preserved.
+- Added safe persistent Vietnamese logout-failure alert and explicit login link;
+  no success state/navigation or auto-resubmit on failure. Existing authentication
+  unchanged, including local-session clearing even when server logout rejects.
+  Disabled failed logout action and excluded disabled account items from arrow keys.
+- Customer-only CSS improves button reflow/icons, pressed feedback without movement,
+  reduced-motion and responsive full-width Topbar error. Tokens/typography/layout
+  retained; no Dashboard/Projects/workflow source or Public Museum edits.
+- Changed: components/layout/AppShell.tsx, Topbar.tsx, styles/shell.css,
+  tests/customer-shell-a11y.test.mjs (new), docs/UI.md, docs/PROGRESS.md.
+- Full Web357/357 PASS,0 failed/skipped; lint/typecheck/build/diff-check PASS.
+  Focused shell/profile tests initially15/15 PASS, then full suite includes5 new
+  behavior/CSS tests. Initial mock failures fixed (DOM method and async VM timing),
+  not application safety bypasses. Existing Vite chunk warning non-blocking.
+- Visual QA NOT VERIFIED: no enabled browser.375/768/1024/1280/1440 viewport and
+  real focus/long-text/zoom/reduced-motion tests require manual checking. Only
+  mocked auth calls, no real session inspection/login/logout or database access.
+- Gemini0, MongoDB writes0, uncertain-attempt operations0; no Backend/Mobile/Admin,
+  API/routes/auth service/config changes, commit/push or work beyond S28.2.
+- Proposed S28.3: Login/Register heading hierarchy and focus/error presentation;
+  keep authentication/validation contracts and project/business changes separately scoped.
+
 ## S27.6 — Final Public Museum UI/UX Polish (2026-10-23)
 
 - Standardized previously homepage-only compact Header/Footer proportions across

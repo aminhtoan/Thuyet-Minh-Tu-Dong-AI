@@ -60,3 +60,37 @@ test('compact CSS keeps natural text height, active cascade, wrapping and native
   for (const event of ['onTimeUpdate', 'onSeeked', 'onPlay', 'onPause', 'onEnded']) assert.ok(player.includes(event));
   assert.doesNotMatch(player, /autoPlay/);
 });
+
+test('editing states expose unsaved and saving feedback without submitting automatically', () => {
+  const render = (props) => renderToStaticMarkup(React.createElement(exports.TranscriptSegmentEditor, { segment, editing: true, draftText: segment.text, ...props }));
+  assert.match(render({}), /Đang chỉnh sửa · Chưa có thay đổi/);
+  const changed = render({ draftText: 'Nội dung mới.' });
+  assert.match(changed, /transcript-segment--editing/);
+  assert.match(changed, /Nội dung chưa được lưu/);
+  assert.match(changed, /aria-describedby="transcript-segment-segment-test-counter transcript-segment-segment-test-edit-status"/);
+  const saving = render({ draftText: 'Nội dung mới.', saving: true });
+  assert.match(saving, /aria-busy="true"/);
+  assert.match(saving, /Đang lưu phân đoạn/);
+  assert.equal((saving.match(/disabled=""/g) || []).length, 3);
+});
+
+test('invalid text and conflict errors stay linked, preserving entered content', () => {
+  const empty = renderToStaticMarkup(React.createElement(exports.TranscriptSegmentEditor, { segment, editing: true, draftText: '   ' }));
+  assert.match(empty, /aria-invalid="true"/);
+  assert.match(empty, /Nội dung phân đoạn không được để trống/);
+  assert.match(empty, /edit-error/);
+  const conflict = renderToStaticMarkup(React.createElement(exports.TranscriptSegmentEditor, { segment, editing: true, draftText: 'Giữ nội dung nhập.', editError: 'Bản ghi đã thay đổi ở phiên khác.' }));
+  assert.match(conflict, /Giữ nội dung nhập/);
+  assert.match(conflict, /role="alert"/);
+  assert.match(conflict, /Bản ghi đã thay đổi ở phiên khác/);
+});
+
+test('transcript list uses page scrolling and retains responsive and reduced-motion guards', async () => {
+  const css = await readFile(new URL('../src/styles/transcript.css', import.meta.url), 'utf8');
+  const list = css.match(/\.transcript-segment-list \{([^}]*)\}/)[1];
+  assert.doesNotMatch(list, /max-height|overflow-y/);
+  assert.match(css, /max-width: 900px/);
+  assert.match(css, /max-width: 600px/);
+  assert.match(css, /prefers-reduced-motion: reduce/);
+  assert.match(css, /transcript-segment__editor-actions \.button:focus-visible/);
+});

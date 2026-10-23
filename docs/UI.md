@@ -1,5 +1,110 @@
 # UI Specification
 
+## S28.5 — Customer Transcript UI/UX Polish (2026-10-23)
+
+- Verified actual route /projects/:projectId/transcript: TranscriptPage renders
+  TranscriptWorkspace, SourceMediaPlayer and TranscriptSegmentEditor. Existing
+  workflow guards, feature-gated editing, seek and source loading are unchanged.
+- Removed the transcript list's desktop max-height/inner scrolling, leaving page
+  scrolling at every width. Retained 2:3 media/editor columns above900px and stacked
+  layout below; native video16:9, audio controls and all media lifecycle unchanged.
+  Reduced editor spacing, added shrinkable/wrapping content and focus clearance.
+- Editing has a distinct border plus explicit unchanged/unsaved/saving text.
+  Textarea references counter, status and inline error; busy state is announced.
+  Existing validator supplies empty/oversize messages without changing validity,
+  save-disable conditions, max4000, CAS/revision/conflict or request handlers.
+  Server success and downstream-revalidation feedback remain intact.
+- ui-ux-pro-max Quick Reference informed no nested scroll, truthful state feedback,
+  text reflow and focus. Local searches returned unrelated smooth-scroll advice,
+  so no smooth scrolling or new shortcut was introduced.
+- Web371/371 PASS, focused28/28 PASS, lint/typecheck/build PASS. Existing Vite
+  mixed-import advisory remains. Visual QA NOT VERIFIED (empty browser inventory):
+  manually check375/768/1024/1280/1440px, keyboard focus, long text, native media
+  and actual screen-reader announcements. Editing remains conditional on its
+  current gate; this step does not enable it or save real transcript data.
+- No API, services, Backend, other screens, config, Gemini or MongoDB changes.
+
+## S28.4 — Customer Project Forms and Upload (2026-10-23)
+
+- Kept create/detail contracts distinct: create name remains 3–100 characters;
+  detail remains required/max150; description max1000 and media max500MB unchanged.
+  Required/helper/error text now describes the current UI contract accurately.
+- Selected files retain visible format/size guidance and full wrapping filenames.
+  File errors are associated through aria-invalid/aria-describedby; keyboard focus
+  reveals the native picker, alongside the existing explicit picker button.
+  Upload progress remains indeterminate; no fabricated percentage or real upload.
+- Detail reports unsaved/saving/saved states, retains values on failed save and
+  hides stale success after editing. UI-only beforeunload and explicit local
+  back/next links warn before discarding edits. This is not a global router blocker:
+  Sidebar, WorkflowSteps and browser SPA back navigation are not intercepted.
+- Create success retains /projects destination and explains opening the saved
+  project to continue to Transcript. Empty-list guidance no longer assumes a
+  left-side menu. Scoped wrapping, shrinkable controls, focus and reduced-motion
+  rules preserve existing responsive layouts, colors and Be Vietnam Pro.
+- ui-ux-pro-max guided truthful submit feedback and form accessibility. Web368/368
+  PASS (17 focused), lint/typecheck/build PASS; existing Vite mixed-import advisory
+  remains. Visual QA NOT VERIFIED: browser inventory empty. Manually verify
+  375/768/1024/1280/1440px, long filenames/errors, keyboard and warning behavior.
+- No API, Backend, Museum, Mobile, Admin, validation-policy or workflow changes.
+  Tests use mock services only: no project creation, real upload or MongoDB writes.
+
+## S28.3 — Customer Login/Register UI and Accessibility (2026-10-23)
+
+- AuthLayout retains existing copy/navy branding but makes the slogan a paragraph
+  (24–32px) and keeps exactly one task H1 (28–36px). Empty descriptions no longer
+  render blank paragraphs. Both forms share27rem maximum width,16px field gaps,
+  left-aligned task headings and consistent label/body/footer rhythm.
+- Removed fixed minimum-column pressure at tablet widths through scoped equal
+  minmax(0,1fr) columns; existing≤720px single-panel layout retained. Shrinkable
+  fields,16px input text and natural wrapping for long error/help/footer text;
+  no clipping/nowrap or fixed card heights. Error border/focus-within ring,
+  stable pressed CTA and reduced-motion scoped only to login/register wrappers.
+- Invalid submit still calls unchanged validators, retains all values and focuses
+  the first invalid field in visual order on the next animation frame. The form
+  connection is checked to avoid focus after unmount. Input's existing unique
+  IDs, labels, aria-invalid and described-by remain intact, including PasswordField.
+- Added form aria-busy while preserving synchronous submit locks, loading button,
+  password visibility/autocomplete, payload normalization and exact redirects.
+  Register displays safe messages for known EMAIL_ALREADY_EXISTS,400,429,5xx and
+  network/timeout errors; unknown errors remain generic. No raw error text/logs.
+- ui-ux-pro-max informed task hierarchy, first-error focus and readable reflow.
+  Focused12/12 and full Web363/363 PASS; lint/typecheck/build/diff-check PASS.
+  Existing projectRepository dynamic-import warning remains non-blocking.
+- Visual QA NOT VERIFIED: browser inventory empty. Manual375/768/1024/1280/1440,
+  keyboard focus/error announcement, long errors, zoom and password-manager checks
+  pending. Mock-only form tests made no real login/register or database requests.
+
+## S28.2 — Customer Shell Accessibility and Feedback (2026-10-23)
+
+- Preserved Customer Sidebar/Topbar layout, palette, Be Vietnam Pro, route titles,
+  search and authentication services. No Public Museum style/layout changes.
+- Added first-focusable “Chuyển đến nội dung chính” link scoped to app-shell,
+  visible only on focus, targeting customer-main with tabindex=-1 and a main ref.
+  It is inert while the modal drawer is open. Initial mount does not steal focus;
+  pathname changes focus main after the drawer/body becomes non-inert. Query-only
+  changes do not move focus. Drawer navigation (including same-route clicks)
+  targets main; Escape/close/backdrop preserve menu-trigger focus restoration.
+- Existing drawer Tab/Shift+Tab trap, Escape, body scroll-lock, modal semantics
+  and inert background retained. Focus tests exercise actual handlers/effects with
+  mocked DOM/hooks, not a live browser or account.
+- Failed logout now renders persistent Vietnamese role=alert feedback outside
+  the profile menu, plus an explicit /login link. No failure navigation/success
+  claim, raw exception rendering or automatic retry. Existing authService.logout
+  still clears the local session in finally; UI says server logout is unconfirmed,
+  never promises the user remains authenticated. Further logout clicks disabled
+  after failure; account-menu arrow navigation skips disabled items.
+- Scoped button wrapping, line-height1.45, non-shrinking SVG icons and no pressed
+  position shift. Reduced-motion overrides for Customer buttons/fields/cards;
+  existing spacing/radius/font/color tokens and disabled styling retained.
+  Error feedback spans Topbar grid and naturally wraps at narrow widths.
+- ui-ux-pro-max informed skip-link, predictable focus and readable error feedback.
+  Full Web357/357 PASS,0 failures/skips; lint/typecheck/build/diff-check PASS.
+  Existing projectRepository dynamic-import build warning remains non-blocking.
+- Visual QA NOT VERIFIED: browser inventory empty. Manual375/768/1024/1280/1440,
+  100% zoom, Tab/Shift+Tab/Escape, route-change focus, long button/error text and
+  reduced-motion checks pending. Do not test logout failure by mutating real auth
+  sessions solely for visual QA; use mocks or separately approved test accounts.
+
 ## S27.6 — Final Public Museum UI Consistency (2026-10-23)
 
 - Inspection found homepage-only compact Header/Footer overrides, larger About

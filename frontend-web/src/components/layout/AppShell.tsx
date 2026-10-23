@@ -16,12 +16,28 @@ export function AppShell() {
   const { pathname } = useLocation()
   const sidebarRef = useRef<HTMLElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const mainRef = useRef<HTMLElement>(null)
+  const previousPath = useRef(pathname)
+  const pendingRouteFocus = useRef(false)
   const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Bản ghi' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Bản dịch' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Giọng đọc và thuyết minh' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Tạo thuyết minh' : /^\/projects\/[^/]+\/result$/.test(pathname) ? 'Kết quả' : titles[pathname] ?? 'Người kể chuyện AI'
 
   const closeSidebar = useCallback((restoreFocus = true) => {
     setSidebarOpen(false)
     if (restoreFocus) requestAnimationFrame(() => menuButtonRef.current?.focus())
   }, [])
+
+  useEffect(() => {
+    if (previousPath.current !== pathname) {
+      previousPath.current = pathname
+      pendingRouteFocus.current = true
+      setSidebarOpen(false)
+    }
+    // Wait for the drawer to close so the destination is no longer inert.
+    if (pendingRouteFocus.current && !(drawerMode && sidebarOpen)) {
+      pendingRouteFocus.current = false
+      mainRef.current?.focus()
+    }
+  }, [pathname, drawerMode, sidebarOpen])
 
   useEffect(() => {
     const media = window.matchMedia(drawerQuery)
@@ -68,9 +84,10 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
-      <Sidebar asideRef={sidebarRef} drawer={drawerMode} open={sidebarOpen} onClose={() => closeSidebar()} onNavigate={() => closeSidebar()} />
+      <a className="customer-skip-link" href="#customer-main" inert={drawerMode && sidebarOpen ? true : undefined} onClick={(event) => { event.preventDefault(); mainRef.current?.focus() }}>Chuyển đến nội dung chính</a>
+      <Sidebar asideRef={sidebarRef} drawer={drawerMode} open={sidebarOpen} onClose={() => closeSidebar()} onNavigate={() => { pendingRouteFocus.current = true; closeSidebar(false); if (!drawerMode || !sidebarOpen) { pendingRouteFocus.current = false; mainRef.current?.focus() } }} />
       {drawerMode && sidebarOpen && <button className="sidebar-overlay" type="button" tabIndex={-1} aria-hidden="true" onClick={() => closeSidebar()} />}
-      <div className="app-shell__body" aria-hidden={drawerMode && sidebarOpen ? true : undefined} inert={drawerMode && sidebarOpen ? true : undefined}><Topbar menuButtonRef={menuButtonRef} title={title} sidebarOpen={sidebarOpen} onMenuClick={() => setSidebarOpen((open) => !open)} /><main className="app-shell__main"><Outlet /></main></div>
+      <div className="app-shell__body" aria-hidden={drawerMode && sidebarOpen ? true : undefined} inert={drawerMode && sidebarOpen ? true : undefined}><Topbar menuButtonRef={menuButtonRef} title={title} sidebarOpen={sidebarOpen} onMenuClick={() => setSidebarOpen((open) => !open)} /><main id="customer-main" className="app-shell__main" tabIndex={-1} ref={mainRef}><Outlet /></main></div>
     </div>
   )
 }

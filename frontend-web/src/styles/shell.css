@@ -18,6 +18,44 @@
   padding: 24px 32px 40px;
 }
 
+.app-shell .customer-skip-link {
+  position: fixed;
+  z-index: 60;
+  top: 8px;
+  left: 16px;
+  max-width: calc(100% - 32px);
+  min-height: 44px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  color: var(--color-surface);
+  background: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  transform: translateY(-200%);
+}
+.app-shell .customer-skip-link:focus { transform: translateY(0); }
+.app-shell .customer-skip-link:focus-visible { outline: 3px solid var(--color-text-primary); outline-offset: 3px; }
+.app-shell .app-shell__main:focus-visible { outline-offset: -3px; }
+.app-shell .button { max-width: 100%; white-space: normal; line-height: 1.45; }
+.app-shell .button svg { flex-shrink: 0; }
+.app-shell .button--primary:active:not(:disabled) { transform: none; }
+.app-shell .topbar__logout-error {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  background: var(--color-error-light);
+  font-size: .875rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.app-shell .topbar__logout-error a { display: inline-block; min-height: 24px; max-width: 100%; color: inherit; text-decoration: underline; text-underline-offset: 4px; font-weight: var(--font-weight-semibold); }
+.app-shell .topbar-profile__item:disabled { opacity: .65; cursor: not-allowed; }
+
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -718,6 +756,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-shell .button,
+  .app-shell .field__control,
+  .app-shell .card { transition-duration: 0.01ms; animation-duration: 0.01ms; }
   .sidebar,
   .sidebar__link,
   .topbar__search,

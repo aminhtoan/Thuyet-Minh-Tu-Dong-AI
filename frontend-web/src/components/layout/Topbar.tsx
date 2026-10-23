@@ -14,6 +14,7 @@ export function Topbar({ menuButtonRef, title, onMenuClick, sidebarOpen }: Topba
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const profileId = useId();
@@ -50,18 +51,19 @@ export function Topbar({ menuButtonRef, title, onMenuClick, sidebarOpen }: Topba
   }
 
   function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    const items = [...event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+    const items = [...event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])')];
+    if (!items.length) return;
     const current = items.indexOf(document.activeElement as HTMLElement);
     const next = event.key === 'ArrowDown' ? (current + 1) % items.length : event.key === 'ArrowUp' ? (current - 1 + items.length) % items.length : event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : -1;
     if (next >= 0) { event.preventDefault(); items[next]?.focus(); }
   }
 
   async function logout() {
-    if (logoutLock.current || !window.confirm(confirmationMessages.logout)) return;
+    if (logoutLock.current || logoutError || !window.confirm(confirmationMessages.logout)) return;
     logoutLock.current = true;
     setLoggingOut(true);
     try { await authService.logout(); navigate('/login', { replace: true }); }
-    catch { setLoggingOut(false); logoutLock.current = false; }
+    catch { setLoggingOut(false); logoutLock.current = false; setLogoutError(true); }
   }
 
   return <header className={`topbar${showSearch ? ' topbar--search' : ''}${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}${isAccountPage ? ' topbar--account' : ''}`}>
@@ -84,8 +86,9 @@ export function Topbar({ menuButtonRef, title, onMenuClick, sidebarOpen }: Topba
         <div className="topbar-profile__summary"><span className="topbar-profile__avatar" aria-hidden="true">{identity.initial}</span><span><strong title={identity.name}>{identity.name}</strong>{identity.email && <small title={identity.email}>{identity.email}</small>}</span></div>
         <div className="topbar-profile__divider" />
         <Link className="topbar-profile__item" role="menuitem" to="/settings" onClick={() => setProfileOpen(false)}>Thông tin tài khoản</Link>
-        <button className="topbar-profile__item topbar-profile__item--danger" role="menuitem" type="button" disabled={loggingOut} onClick={() => void logout()}>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</button>
+        <button className="topbar-profile__item topbar-profile__item--danger" role="menuitem" type="button" disabled={loggingOut || logoutError} onClick={() => void logout()}>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</button>
       </div>}
     </div></div>
+    {logoutError && <p className="topbar__logout-error" role="alert">Chưa xác nhận được việc đăng xuất trên máy chủ. Vui lòng đăng nhập lại để tiếp tục.{' '}<Link to="/login">Đến trang đăng nhập</Link></p>}
   </header>;
 }
