@@ -15,15 +15,13 @@ test('Numeric history pagination derives pages from total, not a hardcoded fixtu
     assert.equal(numbers[0], 1); assert.equal(numbers.at(-1), 100)
   }
 })
-test('History numeric controls retain reset, disabled boundaries, summary and safe demo banner', async () => {
+test('Library paging retains disabled boundaries and resets after manual search', async () => {
   const source = await readFile(new URL('../src/pages/HistoryPlaceholder.tsx', import.meta.url), 'utf8')
-  assert.match(source, /onClick=\{\(\) => setPage\(number\)\}/)
-  assert.match(source, /aria-current=\{number === currentPage \? 'page' : undefined\}/)
   assert.match(source, /disabled=\{currentPage <= 1\}/)
   assert.match(source, /disabled=\{currentPage >= totalPages\}/)
   assert.match(source, /setPage\(1\)/)
-  assert.match(source, /Hiển thị \{pagination.from\}–\{pagination.to\} \/ \{pagination.total\} bản ghi/)
-  assert.match(source, /không có kết quả AI thật và không thực hiện nghiệp vụ/)
+  assert.match(source, /Trang \{currentPage\} \/ \{totalPages\}/)
+  assert.match(source, /filterLibrary\(products, applied\)/)
   assert.doesNotMatch(source, /history-simulated/)
-  assert.match(source, /Chỉ xem demo/)
+  assert.doesNotMatch(source, /createHistoryDemo|history-table/)
 })

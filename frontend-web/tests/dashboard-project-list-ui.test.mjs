@@ -34,5 +34,5 @@ test('Web project empty states direct creation to the sidebar and distinguish fi
   assert.match(source, /filtered \? 'Không tìm thấy dự án phù hợp' : 'Chưa có dự án'/);
   assert.match(source, /menu điều hướng để bắt đầu/);
   assert.doesNotMatch(source, /Xóa bộ lọc/);
-  assert.equal((source.match(/to="\/projects\/new"/g) ?? []).length, 0);
+  assert.equal((source.match(/to="\/projects\/new"/g) ?? []).length, 1);
 });

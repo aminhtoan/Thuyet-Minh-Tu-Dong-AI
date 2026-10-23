@@ -108,7 +108,7 @@
 }
 
 /* S28.7.1: Customer brand only; navigation and drawer behavior are unchanged. */
-.sidebar__brand-copy { font-size: 15px; line-height: 1.4; }
+.sidebar__brand-copy { font-size: 14px; line-height: 1.4; }
 .topbar__brand { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--color-text-primary); font-size: 14px; font-weight: 700; line-height: 1.4; }
 .topbar__brand svg { flex: 0 0 24px; color: var(--color-primary); }
 .topbar__brand span { overflow-wrap: anywhere; }

@@ -1,5 +1,87 @@
 # Project Progress
 
+## S28 — Final Narration Library UI Polish (2026-10-23)
+
+- Compact150px desktop Search, toolbar responsive to optional language selector;
+  mobile button full-width. Scoped empty card padding/gap reduced, content centered
+  with no fixed height. Exact15–20% rendered reduction remains unverified without
+  browser. Product cards and server-evidence eligibility untouched.
+- Changed pages/HistoryPlaceholder.tsx (empty-state class only),
+  styles/narration-library.css, tests/narration-library.test.mjs, docs/UI.md and
+  docs/PROGRESS.md. Preserved all prior uncommitted work.
+- Web391/391 PASS; lint/typecheck/build/diff-check PASS. Existing Vite advisory
+  non-blocking. Visual QA NOT VERIFIED: empty browser inventory. Manual toolbar,
+  empty-state height and narrow-screen review needed. Skill ui-ux-pro-max informed
+  spacing; no other screens/API/workflow/auth, Gemini calls, MongoDB writes,
+  attempts reset or commit/push.
+
+## S28 — Customer Narration Library UI (2026-10-23)
+
+- Replaced /history table with responsive3/2/1 product cards and verified media/
+  narration language, icon fallback, manual search/media/language filters and
+ 12-item paging. Empty creation CTA/loading/error/partial evidence states included.
+- Sidebar label/icon and Topbar title/description updated; existing /history links
+  in Dashboard/Result renamed only. No routes or API/auth/workflow changes.
+- Reused server workflow artifact attestation and RESULT access guard in pure
+  libraryPresentation.ts. Requires COMPLETED project/workflow, no active job,
+  matching result/narration artifact and language provenance; incomplete evidence
+  excluded with notice. No fabricated thumbnail/language/result or source-media
+  substitution. Legacy demo branch no longer used in library; helper files/data
+  preserved. One product per verified current project workflow, not all versions;
+  protected file availability still checked on existing Result page, not probed here.
+- Files: pages/HistoryPlaceholder.tsx; new features/results/libraryPresentation.ts,
+  styles/narration-library.css; Sidebar.tsx, Topbar.tsx, navigationLabels.mjs;
+  DashboardPlaceholder.tsx/ResultPage.tsx (link text only). Tests: new
+  narration-library.test.mjs; history-demo, history-pagination, data-state-integrity,
+  navigation-interaction and shell-refinement updated for new authorized UI;
+  docs/UI.md and docs/PROGRESS.md. Unrelated working-tree changes preserved.
+- Web390/390 PASS, library5/5 PASS; lint/typecheck/build/diff-check PASS, existing
+  Vite advisory only. Visual QA NOT VERIFIED (no browser connected). Manual card
+  widths/focus/live file access remain. ui-ux-pro-max informed reflow; no real API
+  request, Gemini call, MongoDB write, attempt reset or commit/push; Backend,
+  Public Museum, Mobile and Admin unchanged.
+
+## S28.7.3 — Create Project Page UI Redesign (2026-10-23)
+
+- Limited changes to pages/NewProjectPlaceholder.tsx, styles/upload.css,
+  tests/create-upload-detail-ui.test.mjs and docs/UI.md/PROGRESS.md. Preserved
+  existing uncommitted work; no other screen or transport/handler changes.
+- Content centered/max1024px, compact section padding/gaps; name+language row,
+  full-width description below; step labels updated to Thông tin dự án/Tệp phương
+  tiện/Hoàn tất. Desktop dropzone min176→136px with horizontal presentation,
+  mobile stacked; actions compact, natural page scroll retained.
+- Validation, MIME/max500MB, locks, status/feedback, real API and destination
+  unchanged. Existing mock tests cover invalid selected file/no upload, mock
+  success/existing destination, upload cancellation guards and unchanged limits.
+  Updated assertions verify labels, DOM order, full-width description and sizing.
+- Web385/385 PASS; lint/typecheck/build/diff-check PASS, existing Vite mixed-import
+  warning remains. Visual QA NOT VERIFIED (no connected browser); responsive,
+  zoom, long errors and keyboard review remain manual. Skill ui-ux-pro-max
+  informed grouping; no Gemini calls, MongoDB writes or real upload, old attempts
+  untouched, no config/Backend/Public/Mobile/Admin changes, no commit/push.
+
+## S28.7.2 — Customer Projects List UI Redesign (2026-10-23)
+
+- Compact Projects toolbar/table/pagination, one creation CTA to existing route,
+  shorter Projects-only Topbar description/title and14px Sidebar brand text.
+  Rows60px when content fits, name column32%, six columns/real-data/action mappings
+  unchanged. Preserved two-line names with full title/ARIA and focus expansion.
+- Reused default-closed filters and applied count, preserving selection on toggle.
+  Conditional reset/footer checks draft defaults; no automatic apply or fetch.
+  New mock interaction verifies open/close retention, reset without URL mutation,
+  Search apply/page-one and active count. No real Customer/API/DB requests run.
+- Files: pages/ProjectsPlaceholder.tsx; components/layout/Topbar.tsx (Projects copy
+  only); styles/project-list.css, shell.css (brand only); tests/projects-foundation,
+  projects-table-redesign, header-profile, dashboard-project-list-ui; new
+  tests/projects-compact-interaction.test.mjs; docs/UI.md and docs/PROGRESS.md.
+- Web385/385 PASS; lint/typecheck/build/diff-check PASS. Legacy tests prohibiting
+  the now-authorized CTA updated; no API/workflow/filter semantics changed.
+  Existing Vite advisory non-blocking. Visual QA NOT VERIFIED: no connected browser;
+  manual widths, keyboard, Sidebar wrapping and long-content checks remain.
+- ui-ux-pro-max informed disclosure/density. Gemini0, MongoDB writes0; no Dashboard,
+  Login/Register, Public/Mobile/Admin/Backend/config or attempts changed;
+  preserved uncommitted work, no commit/push.
+
 ## S28.7.1 — Dashboard Visual Polish & Real Museum Banner (2026-10-23)
 
 - Dashboard banner now uses existing museum hero.jpg with navy overlay, requested

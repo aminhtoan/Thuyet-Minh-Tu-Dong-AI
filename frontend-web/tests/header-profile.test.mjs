@@ -41,8 +41,9 @@ test('project list keeps its local search while the header search is route-aware
 test('project list moves its semantic heading into the route-aware topbar', async () => {
   const topbar = await readFile(new URL('../src/components/layout/Topbar.tsx', import.meta.url), 'utf8');
   const projects = await readFile(new URL('../src/pages/ProjectsPlaceholder.tsx', import.meta.url), 'utf8');
-  assert.match(topbar, /isProjectsPage \? <div className="topbar__page-heading"><h1>Dự án của tôi<\/h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn\.<\/p><\/div>/);
-  assert.doesNotMatch(projects, /<PageHeader|to="\/projects\/new"/);
+  assert.match(topbar, /isProjectsPage \? <div className="topbar__page-heading"><h1>Dự án của tôi<\/h1><p>Quản lý và tiếp tục các dự án thuyết minh\.<\/p><\/div>/);
+  assert.doesNotMatch(projects, /<PageHeader/);
+  assert.match(projects, /to="\/projects\/new"/);
 });
 
 test('profile interactions preserve focus styling and constrain long identities', async () => {

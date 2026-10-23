@@ -5,55 +5,40 @@ import { EmptyState } from '../components/common/EmptyState'
 import { ErrorState } from '../components/common/ErrorState'
 import { Spinner } from '../components/common/Spinner'
 import { Icon } from '../components/common/Icon'
-import { ProjectStatusBadge } from '../features/projects/ProjectStatusBadge'
-import { projectListLanguagePair, projectListPage } from '../features/projects/projectListPresentation'
-import { createHistoryDemo, isHistoryDemoEnabled } from '../features/results/historyDemo'
 import { Input } from '../components/common/Input'
 import { Button } from '../components/common/Button'
-import { projectStatusLabels } from '../localization/statusLabels.mjs'
-import { defaultHistoryFilters, filterHistory, historyDateError } from '../features/results/historyFilters'
-import '../styles/history.css'
-import type { Project, ProjectStatusFilter } from '../features/projects/types'
+import { languageNames } from '../features/projects/projectUtils'
 import { useCompleteHistory } from '../features/results/useCompleteHistory'
-import { historyPageNumbers } from '../features/results/historyPagination'
-import { hasIncompleteProjectMetadata } from '../features/projects/projectDataState'
+import { libraryProduct, filterLibrary } from '../features/results/libraryPresentation'
+import '../styles/narration-library.css'
 
+const defaults = { query: '', media: 'ALL', language: 'ALL' }
 export function HistoryPlaceholder() {
-  return import.meta.env.DEV && isHistoryDemoEnabled(import.meta.env.DEV, import.meta.env.VITE_HISTORY_DEMO) ? <DemoHistory /> : <ApiHistory />
-}
-function ApiHistory() {
-  const data = useCompleteHistory()
-  return <HistoryView {...data} demo={false} />
-}
-function DemoHistory() {
-  const projects = useMemo(() => createHistoryDemo(), [])
-  return <HistoryView projects={projects} isLoading={false} error={null} reload={() => {}} demo />
-}
-function HistoryView({ projects, isLoading, error, reload, demo }: { projects: Project[]; isLoading: boolean; error: string | null; reload: () => void; demo: boolean }) {
-  const [draft, setDraft] = useState(defaultHistoryFilters), [applied, setApplied] = useState(defaultHistoryFilters), [page, setPage] = useState(1), [validationError, setValidationError] = useState('')
-  const matches = useMemo(() => filterHistory(projects, applied), [projects, applied])
-  const pagination = projectListPage(matches, page)
-  const { projects: filteredProjects, page: currentPage, totalPages } = pagination
-  const hasIncompleteMetadata = !demo && hasIncompleteProjectMetadata(projects)
-
-  return <>
-    <Card className="history-panel" padding="sm">
-      {demo && <p className="history-demo-notice" role="note"><strong>Dữ liệu demo</strong> — Dữ liệu mô phỏng chỉ dùng để kiểm tra giao diện và bộ lọc, không có kết quả AI thật và không thực hiện nghiệp vụ.</p>}
-      <form className="history-filters" onSubmit={event => { event.preventDefault(); const message = historyDateError(draft); setValidationError(message); if (!message) { setApplied({ ...draft, query: draft.query.trim() }); setPage(1) } }}>
-        <Input className="history-search-field" label="Tìm kiếm dự án" placeholder="Nhập tên dự án..." type="search" value={draft.query} onChange={event => setDraft({ ...draft, query: event.target.value })} />
-        <label className="project-filter-select"><span>Thời gian</span><select value={draft.period} onChange={event => setDraft({ ...draft, period: event.target.value })}>{[['ALL', 'Tất cả thời gian'], ['TODAY', 'Hôm nay'], ['WEEK', '7 ngày gần đây'], ['MONTH', 'Tháng này'], ['YEAR', 'Năm nay'], ['CUSTOM', 'Khoảng ngày tùy chọn']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label className="project-filter-select"><span>Trạng thái</span><select value={draft.status} onChange={event => setDraft({ ...draft, status: event.target.value as ProjectStatusFilter })}><option value="ALL">Tất cả trạng thái</option>{Object.entries(projectStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <Button type="submit" disabled={isLoading}><Icon name="search" width="18" /> Tìm kiếm</Button>
-        {draft.period === 'CUSTOM' && <div className="history-date-range"><Input label="Từ ngày" type="date" value={draft.from} onChange={event => setDraft({ ...draft, from: event.target.value })} /><Input label="Đến ngày" type="date" value={draft.to} onChange={event => setDraft({ ...draft, to: event.target.value })} /></div>}
-        {validationError && <p role="alert" className="history-filter-error">{validationError}</p>}
-      </form>
-      {!isLoading && !error && hasIncompleteMetadata && <p className="history-data-notice" role="status"><strong>Dữ liệu chưa đầy đủ.</strong> Một số thông tin bản dịch hoặc phương tiện chưa tải được; các dự án hợp lệ khác vẫn được hiển thị.</p>}
-      {isLoading ? <div className="project-loading" role="status"><Spinner size="lg" /><p>Đang tải lịch sử...</p></div>
-        : error ? <ErrorState title="Không thể tải dự án" description={error} onRetry={reload} />
-: filteredProjects.length > 0 ? <div className="history-table-scroll" tabIndex={0} role="region" aria-label="Bảng lịch sử dự án"><table className="history-table"><caption className="visually-hidden">Lịch sử dự án thuyết minh theo ngày tạo</caption><thead><tr>{['Tên dự án', 'Ngôn ngữ', 'Ngày tạo', 'Trạng thái', 'Thao tác'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead><tbody>{filteredProjects.map(project => <tr key={project.id}><td><strong className="history-project-name" title={project.name} tabIndex={0}>{project.name}</strong></td><td>{projectListLanguagePair(project)}</td><td>{project.createdAt && Number.isFinite(Date.parse(project.createdAt)) ? <time dateTime={project.createdAt}>{new Date(project.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</time> : '—'}</td><td><ProjectStatusBadge status={project.status} /></td><td>{demo ? <span className="history-readonly">Chỉ xem demo</span> : <Link className="history-detail-link" to={'/projects/' + project.id} aria-label={'Xem chi tiết dự án ' + project.name}>Xem chi tiết</Link>}</td></tr>)}</tbody></table></div>
-            : projects.length === 0 ? <section className="state history-empty" aria-labelledby="history-empty-title"><Icon name="history" width="44" /><h2 id="history-empty-title">Chưa có lịch sử</h2><p>Các dự án và kết quả thuyết minh của bạn sẽ xuất hiện tại đây.</p></section>
-              : <EmptyState title="Không tìm thấy lịch sử phù hợp" description="Hãy thử thay đổi từ khóa hoặc bộ lọc." />}
-      {!isLoading && !error && matches.length > 0 && <div className="history-pagination-block"><p className="history-pagination-summary" aria-live="polite">Hiển thị {pagination.from}–{pagination.to} / {pagination.total} bản ghi</p><nav className="history-pagination" aria-label="Phân trang lịch sử"><Button variant="secondary" aria-label="Đến trang trước" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Trang trước</Button>{historyPageNumbers(currentPage, totalPages).map((number, index) => number === '…' ? <span key={'gap-' + index} aria-hidden="true">…</span> : <Button key={number} variant="secondary" className={'history-page-number' + (number === currentPage ? ' history-page-number--active' : '')} aria-label={'Đến trang ' + number} aria-current={number === currentPage ? 'page' : undefined} onClick={() => setPage(number)}>{number}</Button>)}<Button variant="secondary" aria-label="Đến trang sau" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Trang sau</Button></nav></div>}
-    </Card>
-  </>
+  const { projects, isLoading, error, reload } = useCompleteHistory()
+  const [draft, setDraft] = useState(defaults), [applied, setApplied] = useState(defaults), [page, setPage] = useState(1)
+  const products = useMemo(() => projects.flatMap(project => { const item = libraryProduct(project); return item ? [item] : [] }), [projects])
+  const languages = [...new Set(products.map(item => item.language))].sort()
+  const matches = useMemo(() => filterLibrary(products, applied), [products, applied])
+  const totalPages = Math.max(1, Math.ceil(matches.length / 12)), currentPage = Math.min(page, totalPages)
+  const visible = matches.slice((currentPage - 1) * 12, currentPage * 12)
+  const unverified = projects.some(project => project.status === 'COMPLETED' && !libraryProduct(project))
+  return <div className="narration-library">
+    <Card className="narration-library__toolbar"><form onSubmit={event => { event.preventDefault(); setApplied({ ...draft }); setPage(1) }}>
+      <Input label="Tìm kiếm sản phẩm" type="search" placeholder="Nhập tên dự án..." value={draft.query} onChange={event => setDraft({ ...draft, query: event.target.value })} />
+      <label>Loại phương tiện<select value={draft.media} onChange={event => setDraft({ ...draft, media: event.target.value })}><option value="ALL">Tất cả phương tiện</option><option value="VIDEO">Video</option><option value="AUDIO">Âm thanh</option></select></label>
+      {languages.length > 0 && <label>Ngôn ngữ thuyết minh<select value={draft.language} onChange={event => setDraft({ ...draft, language: event.target.value })}><option value="ALL">Tất cả ngôn ngữ</option>{languages.map(code => <option key={code} value={code}>{languageNames[code] ?? code}</option>)}</select></label>}
+      <Button type="submit" disabled={isLoading}><Icon name="search" width="18" />Tìm kiếm</Button>
+    </form></Card>
+    {isLoading ? <Card><div className="narration-library__state" role="status"><Spinner label="Đang tải thư viện thuyết minh" /><p>Đang tải thư viện thuyết minh...</p></div></Card>
+      : error ? <Card><ErrorState title="Không thể tải thư viện thuyết minh" description={error} onRetry={reload} /></Card> : <>
+        {unverified && <p className="narration-library__notice" role="status"><strong>Dữ liệu chưa đầy đủ.</strong> Một số dự án chưa có đủ xác nhận tệp kết quả và ngôn ngữ từ máy chủ nên chưa được hiển thị trong thư viện.</p>}
+        {visible.length ? <div className="narration-library__grid">{visible.map(item => <article className="narration-library__product" key={item.project.id}>
+          <div className="narration-library__visual" aria-hidden="true"><Icon name={item.mediaType === 'VIDEO' ? 'video' : 'wave'} width="48" height="48" /></div>
+          <div className="narration-library__body"><h2>{item.project.name}</h2><dl><div><dt>Phương tiện</dt><dd>{item.mediaType === 'VIDEO' ? 'Video' : 'Âm thanh'}</dd></div><div><dt>Ngôn ngữ thuyết minh</dt><dd>{languageNames[item.language] ?? item.language}</dd></div></dl>
+            <Link className="button button--primary button--md" to={item.path} aria-label={`Xem thuyết minh ${item.project.name}`}>Xem thuyết minh<Icon name="arrow" width="16" /></Link>
+          </div>
+        </article>)}</div> : <Card className="narration-library__empty"><EmptyState title={products.length ? 'Không tìm thấy sản phẩm phù hợp' : 'Chưa có sản phẩm thuyết minh.'} description={products.length ? 'Hãy thử thay đổi từ khóa hoặc bộ lọc.' : 'Tạo thuyết minh để bắt đầu một dự án mới.'} action={!products.length ? <Link className="button button--primary button--md" to="/projects/new">Tạo thuyết minh</Link> : undefined} /></Card>}
+        {matches.length > 12 && <nav className="narration-library__pagination" aria-label="Phân trang thư viện"><Button variant="secondary" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Trang trước</Button><span role="status">Trang {currentPage} / {totalPages}</span><Button variant="secondary" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Trang sau</Button></nav>}
+      </>}
+  </div>
 }

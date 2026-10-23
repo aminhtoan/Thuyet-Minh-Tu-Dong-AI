@@ -48,9 +48,13 @@ test('Create Project desktop layout stays compact without duplicating file guida
   assert.equal((createSource.match(/formatFileSize\(MAX_MEDIA_FILE_SIZE\)/g) ?? []).length, 1);
   assert.doesNotMatch(createSource, /upload-file--empty|Chưa có tệp nào được chọn/);
   assert.match(createSource, /<small id="upload-file-formats">Hỗ trợ:/);
-  assert.match(uploadCss, /\.upload-layout \{[^}]*gap: 16px;[^}]*max-width: 68rem/s);
-  assert.match(uploadCss, /\.upload-layout \.upload-form-card \{[^}]*gap: 14px;[^}]*padding: 22px 24px/s);
-  assert.match(uploadCss, /\.upload-dropzone \{[^}]*min-height: 176px/s);
+  assert.match(uploadCss, /\.upload-layout \{[^}]*gap: 14px;[^}]*max-width: 1024px/s);
+  assert.match(uploadCss, /\.upload-layout \.upload-form-card \{[^}]*gap: 12px;[^}]*padding: 18px 20px/s);
+  assert.match(uploadCss, /\.upload-dropzone \{[^}]*min-height: 136px/s);
+  assert.match(createSource, /<h2>Thông tin dự án<\/h2>/);
+  assert.match(createSource, /<h2>Hoàn tất<\/h2>/);
+  assert.ok(createSource.indexOf('htmlFor="source-language"') < createSource.indexOf('htmlFor="project-description"'));
+  assert.match(createSource, /className="field upload-field--full"><label className="field__label" htmlFor="project-description"/);
   assert.match(createSource, /status === 'validating'[\s\S]*className="upload-primary-actions"[\s\S]*Đang kiểm tra/);
 });
 
@@ -87,6 +91,6 @@ test('Project Detail CSS is isolated from Auth and Voice and remains responsive'
   assert.match(detailCss, /\.project-detail-content-grid[\s\S]*grid-template-columns: minmax\(0, 1\.05fr\) minmax\(0, \.95fr\)/);
   assert.match(detailCss, /@media \(max-width: 1100px\)[\s\S]*\.project-detail-content-grid \{ grid-template-columns: 1fr; \}/);
   assert.match(detailCss, /@media \(max-width: 640px\)/);
-  assert.match(uploadCss, /\.upload-layout[^{]*\{[^}]*max-width: 68rem/);
+  assert.match(uploadCss, /\.upload-layout[^{]*\{[^}]*max-width: 1024px/);
   assert.match(uploadCss, /\.upload-primary-actions/);
 });

@@ -17,7 +17,7 @@ const primaryItems: NavigationItem[] = [
   { label: navigationLabels.dashboard, to: '/dashboard', icon: 'dashboard' },
   { label: navigationLabels.projects, to: '/projects', icon: 'projects', end: true },
   { label: navigationLabels.create, to: '/projects/new', icon: 'mic' },
-  { label: navigationLabels.history, to: '/history', icon: 'history' },
+  { label: navigationLabels.history, to: '/history', icon: 'video' },
 ]
 
 function SidebarLink({ item, onNavigate }: { item: NavigationItem; onNavigate: () => void }) {

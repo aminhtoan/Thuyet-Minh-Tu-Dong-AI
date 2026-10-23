@@ -15,8 +15,8 @@ test('professional Projects table keeps six semantic columns with balanced name 
     1,
   )
   assert.match(source, /\['Tên dự án', 'Phương tiện', 'Ngôn ngữ', 'Ngày tạo', 'Trạng thái', 'Thao tác'\]/)
-  assert.match(css, /\.projects-page \.project-list-column--name \{[^}]*width: 28%/s)
-  assert.match(css, /\.projects-page \.project-list-column--action \{[^}]*width: 18%/s)
+  assert.match(css, /\.projects-page \.project-list-column--name \{[^}]*width: 32%/s)
+  assert.match(css, /\.projects-page \.project-list-column--action \{[^}]*width: 16%/s)
   assert.match(css, /\.projects-page \.project-list-table \{[^}]*table-layout: fixed/s)
   assert.match(css, /\.projects-page \.project-list-table \{[^}]*min-width: 0/s)
 })

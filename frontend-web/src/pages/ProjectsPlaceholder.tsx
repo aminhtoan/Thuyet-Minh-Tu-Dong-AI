@@ -77,6 +77,7 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
   }
   const hasActiveFilters = allProjects.length > 0
   const activeAdvancedFilterCount = [applied.period !== 'ALL', applied.status !== 'ALL', applied.sort !== 'NEWEST'].filter(Boolean).length
+  const canResetDraft = Boolean(draft.query || draft.status !== 'ALL' || draft.period !== 'ALL' || draft.from || draft.to || draft.sort !== 'NEWEST')
   const resetDraftFilters = () => {
     setDraft({ query: '', status: 'ALL', period: 'ALL', from: '', to: '', sort: 'NEWEST' })
     setValidationError('')
@@ -99,6 +100,7 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
 
   return (
     <div className="projects-page">
+      <div className="projects-page-actions"><Link className="button button--primary button--md" to="/projects/new"><Icon name="plus" width="18" />Tạo dự án</Link></div>
       <Card className="projects-panel project-list-a" padding="sm">
         {demo && <p className="project-list-demo-notice" role="note"><strong>Dữ liệu demo</strong> — Chỉ dùng để kiểm tra giao diện và bộ lọc, không thực hiện thao tác thật.</p>}
         <form className="project-list-filters" onSubmit={submitFilters}>
@@ -134,10 +136,10 @@ function ProjectListView({ projects: allProjects, isLoading, error, reload, demo
               </div>
               {draft.period === 'CUSTOM' && <div className="project-list-dates"><Input label="Từ ngày" type="date" value={draft.from} onChange={event => setDraft({ ...draft, from: event.target.value })} /><Input label="Đến ngày" type="date" value={draft.to} onChange={event => setDraft({ ...draft, to: event.target.value })} /></div>}
               {validationError && <p role="alert" className="project-list-error">{validationError}</p>}
-              <div className="project-list-advanced__footer">
+              {canResetDraft && <div className="project-list-advanced__footer">
                 <p>Đặt lại chỉ thay đổi lựa chọn đang soạn. Nhấn Tìm kiếm để áp dụng.</p>
                 <Button type="button" variant="ghost" size="sm" onClick={resetDraftFilters}>Đặt lại</Button>
-              </div>
+              </div>}
             </div>
           </div>
         </form>

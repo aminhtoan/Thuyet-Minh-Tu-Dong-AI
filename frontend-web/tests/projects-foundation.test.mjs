@@ -30,9 +30,9 @@ test('Projects typography, spacing and card treatment follow the approved founda
     '--projects-secondary-size: 13px',
   ]) assert.ok(css.includes(token), `missing ${token}`)
   assert.match(css, /\.projects-page \.projects-panel \{[^}]*border-radius: 16px;[^}]*box-shadow: var\(--shadow-sm\)/s)
-  assert.match(css, /\.projects-page \.project-list-filters \{[^}]*padding: 24px/s)
+  assert.match(css, /\.projects-page \.project-list-filters \{[^}]*padding: 16px/s)
   assert.match(css, /\.projects-page \.project-list-toolbar \{[^}]*gap: 12px/s)
-  assert.match(css, /\.projects-page \.project-pagination \{[^}]*gap: 16px;[^}]*padding: 16px 24px/s)
+  assert.match(css, /\.projects-page \.project-pagination \{[^}]*gap: 12px;[^}]*padding: 12px 16px/s)
 })
 
 test('Projects responsive guards fit desktop tables and keep narrow tables inside their own scroll region', () => {

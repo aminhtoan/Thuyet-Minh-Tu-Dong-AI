@@ -1,5 +1,89 @@
 # UI Specification
 
+## S28 — Final Library UI Polish (2026-10-23)
+
+- Library search submit150px desktop, width100% on narrow mobile. Toolbar uses
+  three columns without language data, four when a second direct label exists;
+  search/media stay on one desktop row, two-column tablet and stacked mobile.
+  Query/filter handlers and product-card CSS remain unchanged.
+- Added scoped empty-card class: outer padding20px, inner16px with uniform12px
+  gaps and reset icon/heading/description margins. Centered content retains natural
+  height; mobile padding16/12px. Reduction targets15–20% through spacing, not fixed
+  height or clipping; exact rendered percentage NOT VERIFIED without browser.
+- ui-ux-pro-max informed grouping/spacing. Web391/391 PASS, lint/typecheck/build/
+  diff-check PASS, existing Vite mixed-import advisory only. Visual QA NOT VERIFIED:
+  no connected browser; manual desktop/tablet/mobile and long-text checks remain.
+- Only HistoryPlaceholder.tsx (empty class), narration-library.css,
+  narration-library.test.mjs and UI/PROGRESS changed in this step; no data/service,
+  product eligibility, Sidebar/Header, route or other-screen changes.
+
+## S28 — Customer Narration Library (2026-10-23)
+
+- /history retained, menu position unchanged; label “Thư viện thuyết minh” and video
+  icon replace history wording. Topbar single H1 plus approved description; links
+  from Dashboard/Result now say Xem thư viện without changing destinations.
+- Replaced project-history table with white radius16px product cards,3 columns
+  above1000px content width,2 below,1 below560px. Natural name wrapping, explicit
+  media/language metadata, existing result route with verified language parameter,
+  visible keyboard focus/hover and reduced-motion. No thumbnail data exists in
+  current project DTO: video/audio icons are used, not source-media thumbnails.
+- Reuses useCompleteHistory, existing JWT/ownership API and RESULT route guard.
+  Product requires project COMPLETED, workflow COMPLETED, no active processing,
+  guard-approved type-specific artifact and language source RESULT for video or
+  NARRATION for audio. Status alone, translated source, job language or demo records
+  never become products. Missing proof on completed rows gets partial-data notice.
+  This is server workflow attestation, not a fresh file download/existence probe;
+  Result page still verifies/loads protected output through its original API.
+- Search and media/language filters are display-only, manual submit, with draft/
+  applied separation; language options only from verified products.12 cards/page,
+  previous/next buttons and safe bounds. Empty CTA to /projects/new; loading,
+  API error/reload and filtered empty distinct. Legacy demo helpers/history records
+  remain untouched, but library no longer uses the demo branch. Old status/date
+  filter UI replaced by product-oriented controls; API/history storage unchanged.
+- ui-ux-pro-max informed card reflow and accessibility. Web390/390 PASS,
+  focused library5/5 PASS, lint/typecheck/build/diff-check PASS; existing Vite
+  mixed-import advisory. Visual QA NOT VERIFIED: browser inventory empty. Manual
+ 375/768/1024/1280/1440px, keyboard, long names and real protected result access
+  remain. No live API/DB/provider requests made during validation.
+
+## S28.7.3 — Create Project Page Redesign (2026-10-23)
+
+- /projects/new content max1024px, centered,14px section gaps,18px/20px desktop
+  card padding. Step1 “Thông tin dự án”: name and source-language columns in DOM
+  order, then full-width description. Step2 “Tệp phương tiện”, step3 “Hoàn tất”.
+  Existing required,3–100 name/max1000 description and all errors unchanged.
+- Dropzone desktop horizontal icon/copy/picker reduces min-height176→136px (~23%).
+  Mobile stacks at<=700px, natural growth with min144px; no fixed-height clipping
+  or reduced copy/control text. Formats/500MB shown once, file selection/drag/drop,
+  preview, cancel/failure/success and upload handlers unchanged. Final actions
+  min46px, compact padding, stack on mobile; success still leads to /projects.
+- ui-ux-pro-max informed field grouping/reflow. Web385/385 PASS, lint/typecheck/
+  build/diff-check PASS; existing Vite advisory only. Visual QA NOT VERIFIED:
+  browser inventory empty and no current screenshots attached. Manually check
+ 375/768/1024/1280/1440px, low-height viewports, long errors/file names, focus and
+  drag/drop presentation. No real upload or project creation performed.
+
+## S28.7.2 — Customer Projects List Redesign (2026-10-23)
+
+- Kept route-aware single H1 in Topbar, shortened Projects-only description to
+  “Quản lý và tiếp tục các dự án thuyết minh.”; title24–26px. Added one explicit
+  “Tạo dự án” CTA above the panel pointing to existing /projects/new, no mutation.
+- Reused existing initially-closed filter disclosure, inert/aria-expanded controls,
+  draft/applied separation and active advanced-filter count. Reset/footer now
+  appear only when draft selections differ from defaults; reset still edits draft
+  only and Search remains required to apply. No debounce/query/paging changes.
+- Toolbar padding16px, controls46px minimum, search input44px minimum. Table retains
+  six columns, name32%/action16%, short rows60px with8px vertical cells. Existing
+  two-line names, title/full accessible names and focus-unclamp retained. Long/error
+  rows may grow rather than clip. Scroll stays within table on narrow screens.
+  Centered pagination uses12px gaps/padding. Sidebar brand text15→14px, width/menu
+  unchanged; natural wrapping remains supported rather than forced nowrap.
+- ui-ux-pro-max informed disclosure, density and reflow. Web385/385 PASS;
+  lint/typecheck/build/diff-check PASS. Existing Vite mixed-import warning only.
+  Visual QA NOT VERIFIED: browser inventory empty, no attached current screenshots.
+  Check375/768/1024/1280/1440px, logo wrapping, long project names, filter keyboard
+  and scroll/actions manually. Mock interaction tests are not visual verification.
+
 ## S28.7.1 — Customer Dashboard & Real Museum Banner (2026-10-23)
 
 - Dashboard hero reuses /museum/images/hero.jpg, the existing1960x1102 photograph

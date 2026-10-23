@@ -17,8 +17,8 @@ const expectedNavigation = {
   account: 'Tài khoản',
 };
 
-test('Web and Mobile expose the same Vietnamese navigation labels', () => {
-  assert.deepEqual(webNavigation, expectedNavigation);
+test('Web library label retains history route while Mobile labels stay unchanged', () => {
+  assert.deepEqual(webNavigation, { ...expectedNavigation, history: 'Thư viện thuyết minh' });
   assert.deepEqual(mobileNavigation, expectedNavigation);
 });
 

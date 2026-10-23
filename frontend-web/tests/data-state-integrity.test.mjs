@@ -65,5 +65,6 @@ test('Projects, Dashboard and History expose partial-data feedback without repla
     assert.match(source, /role="status"/)
   }
   assert.match(projectsPage, /<ProjectMedia project=\{project\}/)
-  assert.match(historyPage, /filteredProjects\.map/)
+  assert.match(historyPage, /visible\.map/)
+  assert.match(historyPage, /libraryProduct\(project\)/)
 })
