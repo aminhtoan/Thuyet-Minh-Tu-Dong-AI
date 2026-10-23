@@ -1,5 +1,24 @@
 # Project Progress
 
+## S28 — Expo SDK58 Upgrade (2026-10-24)
+
+- Mobile upgraded Expo57→58.0.17, React19.2.3→19.3.0, RN0.86.3→0.88.0,
+  Router58.0.25 and Expo-compatible native modules/types/eslint config.
+  See docs/EXPO_SDK58_UPGRADE.md for full version table and recovery notes.
+- Removed obsolete Tabs initialRouteName; dashboard stays first declared tab.
+  Kept SPA/synchronous Expo Web behavior explicit. RN0.88 FlatList nullable slots
+  migrated to undefined with no condition/handler changes. No UI redesign.
+- Clean npm ci/lock alignment PASS after old peer-tree and Windows path issues;
+  old partial dependencies/lock retained under .expo. Native android/ios absent,
+  no native reset/prebuild. SecureStore/API/upload/audio/video contracts unchanged.
+- Expo Doctor20/20, dependency check, TypeScript,64/64 tests, direct ESLint with
+  Expo flat config, Android/iOS Metro/Hermes exports and diff-check PASS.
+  Expo npm-run-lint wrapper NOT COMPLETED (environment hang); escalation retry
+  unexecuted due approval reviewer usage limit. Native Expo Go58 QA NOT VERIFIED.
+- Targeted shell-quote update removed critical finding; five high upstream npm
+  audit findings remain, no force downgrade. No Backend/Web/Admin edits, AI/TTS,
+  MongoDB/attempt actions, credentials/config endpoint changes or commit/push.
+
 ## S29.1 — Customer Web/Mobile Design Synchronization (2026-10-24)
 
 - Added canonical design/customer tokens + real screen manifest, deterministic

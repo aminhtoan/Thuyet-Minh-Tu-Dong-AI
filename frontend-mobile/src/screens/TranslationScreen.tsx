@@ -92,7 +92,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <FlatList data={sourceVisible ? editor.transcript?.segments : []} keyExtractor={(segment) => segment.id}
           contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
-          ListHeaderComponent={header} ListEmptyComponent={empty} ListFooterComponent={footer}
+          ListHeaderComponent={header} ListEmptyComponent={empty ?? undefined} ListFooterComponent={footer ?? undefined}
           ItemSeparatorComponent={SegmentSeparator} renderItem={({ item }) => {
             const translation = translationBySource.get(item.id);
             return <TranslationSegmentCard source={item} translation={translation}

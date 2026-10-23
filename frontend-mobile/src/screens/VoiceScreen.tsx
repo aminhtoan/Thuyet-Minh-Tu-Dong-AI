@@ -102,8 +102,8 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
   return <View style={styles.container}><MobileHeader title="Người kể chuyện AI" />
     <SafeAreaView edges={['bottom']} style={styles.container}>
       <FlatList data={showConfiguration ? editor.visibleVoices : []} keyExtractor={(voice) => voice.id}
-        contentContainerStyle={styles.content} ListHeaderComponent={header} ListEmptyComponent={empty}
-        ListFooterComponent={footer} ItemSeparatorComponent={VoiceSeparator}
+        contentContainerStyle={styles.content} ListHeaderComponent={header} ListEmptyComponent={empty ?? undefined}
+        ListFooterComponent={footer ?? undefined} ItemSeparatorComponent={VoiceSeparator}
         renderItem={({ item }) => <VoiceCard voice={item} selected={editor.draft?.voiceId === item.id}
           previewing={editor.previewingVoiceId === item.id} disabled={editor.busy}
           onPreview={() => editor.preview(item.id)} onSelect={() => editor.updateConfig({ voiceId: item.id })} />}

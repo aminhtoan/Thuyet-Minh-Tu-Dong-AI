@@ -18,8 +18,9 @@ test('status dictionaries cover every current frontend state', () => {
 });
 
 test('Web and Mobile use exactly the same Vietnamese status terminology', () => {
+  const webLabels = { ...web }, mobileLabels = { ...mobile };
   for (const key of ['projectStatusLabels', 'transcriptStatusLabels', 'translationStatusLabels', 'voiceStatusLabels', 'processingStatusLabels']) {
-    assert.deepEqual(web[key], mobile[key], `${key} differs between Web and Mobile`);
+    assert.deepEqual(webLabels[key], mobileLabels[key], `${key} differs between Web and Mobile`);
   }
 });
 
