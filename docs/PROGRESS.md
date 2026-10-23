@@ -1,5 +1,100 @@
 # Project Progress
 
+## S28.6.7 — Compact & Centered Login/Register (2026-10-23)
+
+- Shared max420px auth block and28px desktop card padding,28–30px headings,
+  input/control44–46px minima and46px submit minimum. Field gaps14–16px; no
+  reduced font size or forced single-screen form. Grid centering preserved;
+  natural page growth keeps Register actions reachable in low viewports.
+- Brand, panel colors, photo/gradient/right copy and business logic unchanged.
+  Updated styles/login.css, styles/register.css, tests/login-museum.test.mjs,
+  tests/register-museum.test.mjs, docs/UI.md and docs/PROGRESS.md. No components
+  or handlers changed; prior uncommitted work preserved.
+- Web382/382 PASS; lint/typecheck/build/diff-check PASS. Existing Vite mixed-import
+  warning remains. Visual QA NOT VERIFIED: no connected browser; manual widths,
+  low-height/long-error/zoom/focus checks remain. ui-ux-pro-max informed spacing.
+- Gemini0, MongoDB writes0, old attempts untouched; no commit/push.
+
+## S28.6.6 — Register Form Color & Contrast Polish (2026-10-23)
+
+- Scoped Register palette overrides: panel#E9EDF7, card#FFFFFF/#D8DEEC,
+  input#F1F4FA/#D3DAE9, heading/label/value/brand#14213D. Preserved purple CTA;
+  explicit focus/error precedence, readable placeholder and subtle icon emphasis.
+  Compact low-height desktop spacing retains natural scrolling and font/control
+  sizes. No shared token, Login layout, photo, gradient or copy changes.
+- Changed styles/register.css, tests/register-museum.test.mjs, docs/UI.md and
+  docs/PROGRESS.md only in this step. Prior uncommitted work preserved.
+- Web381/381 PASS; lint/typecheck/build/diff-check PASS. New tests cover scoped
+  color/focus/error/short-height rules and4.5:1 text contrast pairs. Existing Vite
+  import advisory non-blocking. Visual QA NOT VERIFIED: browser inventory empty;
+  real screenshot/layout/focus/zoom review remains manual.
+- ui-ux-pro-max informed contrast. No auth/validation/API/config changes, real
+  registration, Gemini calls, MongoDB writes or old attempts changed; no commit/push.
+
+## S28.6.5 — Customer Register Visual Redesign (2026-10-23)
+
+- Register mirrors approved Login brand/card/photo with42/58 desktop, tablet
+  rebalance and form-first mobile. Reuses styles/login.css without editing it;
+  new styles/register.css contains only scoped layout/compact spacing overrides.
+  Existing LoginPlaceholder and RegisterForm unchanged during this step.
+- Preserved all four fields/password guidance, validation/error focus, visibility,
+  loading, duplicate-submit lock, API/auth and redirect. No real submit performed.
+- Changed: pages/RegisterPlaceholder.tsx; new styles/register.css and
+  tests/register-museum.test.mjs; tests/login-museum.test.mjs and
+  register-polish.test.mjs updated for current supported Register layout;
+  docs/UI.md, docs/PROGRESS.md. Existing uncommitted Login work preserved.
+- Web379/379 PASS, lint/typecheck/build/diff-check PASS. Tests compare exact brand
+  and photo markup across Login/Register and retain existing auth regressions.
+  Vite mixed-import advisory remains non-blocking. Visual QA NOT VERIFIED: no
+  connected browser; responsive/zoom/crop still require manual checks.
+- ui-ux-pro-max informed spacing. Gemini0, MongoDB writes0; no Backend/Public/
+  Mobile/Admin, config or old attempts changed; commit/pushNO.
+
+## S28.6.4 — Login Brand Highlight (2026-10-23)
+
+- Updated only Login brand markup/styles:20–22px bold navy name,24px museum icon
+  in48px purple tile,11px purple tagline,20–24px card gap. Existing form layout,
+  card, museum photo/copy, authentication/validation/redirect untouched.
+- Files: pages/LoginPlaceholder.tsx, styles/login.css,
+  tests/login-museum.test.mjs, docs/UI.md, docs/PROGRESS.md.
+- Web376/376 PASS; lint/typecheck/build/diff-check PASS. Existing Vite mixed-import
+  warning remains. Visual QA NOT VERIFIED; manual narrow-screen wrapping review
+  needed. ui-ux-pro-max guided hierarchy; no Register/other screen changes.
+- No Gemini calls, MongoDB writes, old attempts changed or commit/push.
+
+## S28.6.3 — Customer Login Form Card (2026-10-23)
+
+- Added white max440px Login card (radius16px, #E5EAF2 border, subtle shadow,
+  padding32px desktop/24px mobile/20px small mobile) on #F5F7FB left panel.
+  Brand stays outside immediately above, aligned left. Heading/form/register link
+  inside; existing photo, copy, columns, validation, auth and redirect unchanged.
+- Files: pages/LoginPlaceholder.tsx, styles/login.css,
+  tests/login-museum.test.mjs, docs/UI.md, docs/PROGRESS.md. Earlier uncommitted
+  Login redesign preserved; no shared Register or other screen changes.
+- Web375/375 PASS; lint/typecheck/build/diff-check PASS. Existing Vite dynamic
+  import warning non-blocking. Visual QA NOT VERIFIED: browser inventory empty;
+  manual responsive/focus review remains. ui-ux-pro-max informed card grouping.
+- Gemini0, MongoDB writes0; no attempts touched, config changes or commit/push.
+
+## S28.6.1 — Customer Login Museum Photo Redesign (2026-10-23)
+
+- LoginPlaceholder now composes the existing unmodified LoginForm in its own
+  form-left/photo-right42/58 layout. Added styles/login.css, scoped to login-museum
+  classes; no shared AuthLayout/auth.css/Register changes in this step.
+- Brand changed locally to “Thuyết minh bảo tàng” with museum SVG; one H1
+  “Chào mừng trở lại”. Existing hero photograph inspected/reused without altering
+  image files or source/license records. Navy overlay, requested slogan and
+  description at bottom; tablet columns rebalance and mobile hides photo.
+- Added tests/login-museum.test.mjs for heading/brand, existing form ordering,
+  asset existence, Register isolation and responsive CSS. Existing auth validation,
+  focus-error, password visibility and duplicate-submit tests still pass.
+- Validation: full Web374/374 PASS; auth-focused12/12 PASS; lint/typecheck/build
+  PASS. Existing projectRepository mixed-import advisory remains. Visual QA NOT
+  VERIFIED (no connected browser); manually verify requested widths/crop/zoom.
+- ui-ux-pro-max informed contrast, reflow and mobile priority. No real login,
+  Gemini calls, database writes, config/Backend/Public/Mobile/Admin changes,
+  attempt resets or commit/push. Existing uncommitted work preserved.
+
 ## S28.5 — Customer Transcript UI/UX Polish (2026-10-23)
 
 - Confirmed /projects/:projectId/transcript and existing workspace/player/editor.

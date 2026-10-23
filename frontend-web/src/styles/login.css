@@ -1,0 +1,45 @@
+/* Museum auth visual primitives. Register overrides remain separately scoped. */
+.login-page .login-museum { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); min-height: 100svh; background: var(--color-background); }
+.login-museum__form-panel { display: grid; align-items: center; justify-items: center; min-width: 0; padding: clamp(24px, 4vw, 64px); background: #F5F7FB; }
+.login-museum__content { width: min(100%, 420px); min-width: 0; }
+.login-museum__card { width: 100%; min-width: 0; padding: 28px; background: #FFFFFF; border: 1px solid #E5EAF2; border-radius: 16px; box-shadow: 0 8px 28px rgb(17 28 50 / 6%); }
+.login-museum__card .auth-form, .login-museum__card .field { width: 100%; min-width: 0; }
+.login-museum__card .auth-form { gap: 16px; }
+.login-museum__card .field { gap: 6px; }
+.login-museum__card .field__control { min-height: 46px; }
+.login-museum__card .field__input { min-height: 44px; padding: 10px 12px; line-height: 1.5; }
+.login-museum__card .password-toggle { width: 44px; height: 44px; }
+.login-museum__card .auth-form__submit { min-height: 46px; padding: 10px 16px; line-height: 1.5; }
+.login-museum__brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; overflow-wrap: anywhere; }
+.login-museum__brand-icon { display: grid; place-items: center; flex: 0 0 48px; height: 48px; border-radius: var(--radius-md); color: var(--color-primary); background: var(--color-primary-light); }
+.login-museum__brand-copy { display: grid; gap: 4px; min-width: 0; }
+.login-museum__brand-name { color: #121F3B; font-size: clamp(20px, 1.6vw, 22px); font-weight: 700; line-height: 1.3; }
+.login-museum__brand-tagline { color: var(--color-primary); font-size: 11px; font-weight: var(--font-weight-semibold); line-height: 1.5; letter-spacing: .06em; }
+.login-museum__heading { margin-bottom: 20px; }
+.login-museum__heading h1 { margin: 0; color: var(--color-text-primary); font-size: clamp(28px, 2.1vw, 30px); line-height: 1.3; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.login-museum__footer { margin-top: 24px; color: var(--color-text-secondary); font-size: var(--font-size-sm); line-height: 1.7; text-align: center; overflow-wrap: anywhere; }
+.login-museum__footer a { color: var(--color-primary); font-weight: var(--font-weight-semibold); text-decoration: none; }
+.login-museum__footer a:hover { text-decoration: underline; }
+.login-museum__footer a:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; border-radius: var(--radius-sm); }
+.login-museum__photo { position: relative; display: flex; align-items: flex-end; isolation: isolate; min-width: 0; background: var(--color-sidebar); }
+.login-museum__photo > img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 38% center; }
+.login-museum__photo::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(17 28 50 / 8%) 20%, rgb(17 28 50 / 28%) 55%, rgb(17 28 50 / 94%) 100%); }
+.login-museum__message { width: 100%; min-width: 0; padding: clamp(32px, 5vw, 72px); color: #fff; }
+.login-museum__message p { max-width: 36ch; margin: 16px 0 0; font-size: 1rem; line-height: 1.7; overflow-wrap: anywhere; }
+.login-museum__message .login-museum__slogan { margin: 0; max-width: 22ch; font-size: clamp(1.75rem, 3vw, 2.75rem); font-weight: var(--font-weight-semibold); line-height: 1.25; text-wrap: balance; }
+@media (max-width: 1023px) {
+  .login-page .login-museum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .login-museum__form-panel { padding: 32px 24px; }
+  .login-museum__message { padding: 32px; }
+}
+@media (max-width: 767px) {
+  .login-page .login-museum { grid-template-columns: minmax(0, 1fr); }
+  .login-museum__photo { display: none; }
+  .login-museum__form-panel { padding: 32px 24px; }
+  .login-museum__brand { margin-bottom: 20px; }
+  .login-museum__card { padding: 24px; box-shadow: 0 4px 16px rgb(17 28 50 / 4%); }
+}
+@media (max-width: 400px) {
+  .login-museum__form-panel { padding: 24px 16px; }
+  .login-museum__card { padding: 20px; }
+}

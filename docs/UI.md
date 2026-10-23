@@ -1,5 +1,108 @@
 # UI Specification
 
+## S28.6.7 — Compact & Centered Auth Layout (2026-10-23)
+
+- Shared museum-auth content/card max420px (previous440), desktop padding28px
+  (previous32), heading28–30px. Existing Grid center alignment keeps the entire
+  brand+card block centered horizontally/vertically when space permits, with no
+  fixed left margin, transform or absolute positioning. Brand/card alignment and
+ 20–24px gap retained; photo/copy/gradient, columns and panel colors unchanged.
+- Native input min44px inside min46px control, visibility toggle44px and submit
+  min46px; natural growth allowed for text scaling/wrapped labels. Login form
+  gap16px, Register14px including short desktop heights; field internal gap6px.
+  Mobile card24px/20px padding retained. No fixed form height or clipping.
+- ui-ux-pro-max informed hierarchy and target sizes. Web382/382 PASS;
+  lint/typecheck/build/diff-check PASS; existing Vite mixed-import advisory only.
+  Visual QA NOT VERIFIED: browser inventory empty and no current screenshots
+  attached. Manually check375/768/1024/1280/1440px and short-height/long-error cases.
+- CSS/tests/docs only; no auth, validation, API, data or media changes.
+
+## S28.6.6 — Register Form Color & Contrast (2026-10-23)
+
+- Register-only panel#E9EDF7, white card with#D8DEEC border and subtle navy shadow;
+  input control surface#F1F4FA/border#D3DAE9, transparent native input, navy#14213D
+  heading/labels/value/brand and readable#59657A placeholders. Purple CTA unchanged.
+  Explicit focus-within and invalid-input rules override neutral/hover borders;
+  shared error text, ARIA, focus and reduced-motion behavior retained.
+- Brand icon gains a subtle purple border/shadow without sizing/layout changes.
+  Desktop<=800px height uses24px vertical card padding,12px form gap and16px
+  heading/footer gaps. No fixed height, clipping or forced screen fit; page scroll
+  remains natural. Mobile shadow reduced. Login CSS/markup, photo/gradient/copy,
+  fields, guidance and all auth/validation logic unchanged.
+- ui-ux-pro-max informed contrast and hierarchy. Automated relative-luminance
+  checks pass4.5:1 for the tested navy/white,panel,input, placeholder/input and
+  primary/input pairs; this is not a claim of complete visual/WCAG verification.
+- Web381/381 PASS; lint/typecheck/build/diff-check PASS. Existing Vite mixed-import
+  advisory remains. Visual QA NOT VERIFIED: no connected browser or attached
+  current screenshot; manually review low desktop heights and responsive states.
+
+## S28.6.5 — Register Visual Redesign (2026-10-23)
+
+- Register now reuses Login's visual CSS primitives: form-left42%/photo-right58%,
+  tablet50/50 below1024px, single form below768px. Exact same hero.jpg, alt text,
+  gradient, photo position and bottom-panel copy; no asset/license change.
+- Same navy20–22px brand, decorative24px museum SVG in48px purple tile and11px
+  tagline. White max440px/radius16px card on#F5F7FB with existing responsive
+  padding/shadow. Register-only14px form gap and20px heading/footer spacing keep
+  four fields compact. Natural height and page scroll permit long errors/zoom.
+- RegisterForm untouched: full name, email, both password visibility controls,
+  exact password guidance, validation, first-error focus, submit lock, loading,
+  auth request and login redirect retained. Login page/CSS unchanged in this step.
+  Existing shared field/button/focus/error styles remain applicable.
+- ui-ux-pro-max informed form spacing and responsive priorities. Web379/379 PASS;
+  lint/typecheck/build/diff-check PASS. Existing Vite mixed-import warning only.
+  Visual QA NOT VERIFIED: browser inventory empty. Check375/768/1024/1280/1440px,
+  long errors, zoom and keyboard manually; no real registration performed.
+
+## S28.6.4 — Login Brand Highlight (2026-10-23)
+
+- Login-only brand name now20–22px/700, navy#121F3B, below the unchanged28–36px
+  task heading scale. Decorative museum icon24px in a48px light-purple tile.
+  Added11px purple “NỀN TẢNG ĐA NGÔN NGỮ” under the name, with4px text gap;
+  shrinkable copy wraps naturally. Brand/card gap remains24px desktop/20px mobile.
+- ui-ux-pro-max informed subordinate type hierarchy. Card, form, photo/gradient,
+  right-panel text and authentication unchanged. Web376/376 PASS;
+  lint/typecheck/build/diff-check PASS, existing Vite mixed-import advisory only.
+  Visual QA NOT VERIFIED: browser unavailable in preceding connected inventory;
+  actual brand wrapping still needs manual verification.
+
+## S28.6.3 — Login Form Card (2026-10-23)
+
+- Login heading, existing LoginForm and registration link now share a white card:
+  max440px including padding/border, radius16px, border#E5EAF2, desktop padding32px
+  and subtle navy shadow. Left panel background#F5F7FB; logo/name outside the card,
+  aligned at its left edge with24px separation. Existing global border-box retained.
+- Mobile card padding24px (20px below401px) and reduced shadow; width100% of the
+  shrinkable parent, no fixed height/overflow clipping. Existing field/button
+  full-width and focus/error styles retained. ui-ux-pro-max informed grouping and
+  spacing without new fields or behavior. Photo/copy/42:58 desktop unchanged.
+- Web375/375 PASS; lint/typecheck/build/diff-check PASS. Existing Vite mixed-import
+  advisory remains. Visual QA NOT VERIFIED: no connected browser. Check card fit,
+  wrapping and keyboard focus at375/768/1024/1280/1440px manually.
+- Changed LoginPlaceholder.tsx, styles/login.css, tests/login-museum.test.mjs and
+  UI/PROGRESS only. No Register/auth/API/data changes or real requests.
+
+## S28.6.1 — Login with Existing Museum Photograph (2026-10-23)
+
+- Login alone now uses a dedicated login-museum layout: form first in DOM and
+  desktop42/58 columns, rebalanced50/50 below1024px, form-only below768px.
+  Shared AuthLayout/Register are unchanged. Min-height rather than fixed height
+  allows long errors/zoom to expand naturally; all columns and form are shrinkable.
+- Local brand is “Thuyết minh bảo tàng” with a decorative museum-building SVG;
+  task H1 is “Chào mừng trở lại”. Unmodified LoginForm retains Email/password,
+  visibility, validation focus, busy/submit locks and authentication/redirect.
+- Inspected hero.jpg and museum-intro.jpg. Reuses /museum/images/hero.jpg
+  (1960x1102) as full-height cover at38% center; bottom navy gradient supports the
+  requested slogan/description below the main facade. No file moved/edited, new
+  historical claim or license invented. Existing rights/source record remains
+  in MUSEUM_IMAGES.md; no separate mandatory credit is documented for this asset.
+- ui-ux-pro-max informed readable overlay text, natural reflow and form-first
+  mobile presentation. Palette/Be Vietnam Pro and shared input/focus styles kept.
+- Web374/374 PASS, auth-focused12/12 PASS, lint/typecheck/build PASS. Existing
+  Vite mixed-import warning remains. Visual QA NOT VERIFIED: browser inventory
+  empty. Check375/768/1024/1280/1440px, photo crop, contrast, keyboard and zoom
+  manually; static assertions are not visual verification.
+
 ## S28.5 — Customer Transcript UI/UX Polish (2026-10-23)
 
 - Verified actual route /projects/:projectId/transcript: TranscriptPage renders

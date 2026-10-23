@@ -1,0 +1,32 @@
+/* Reuse Login's visual primitives; only Register layout/rhythm is overridden. */
+.register-page .login-museum { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); min-height: 100svh; background: var(--color-background); }
+.register-page .login-museum__form-panel { padding-block: 32px; background: #E9EDF7; }
+.register-page .login-museum__card { background: #FFFFFF; border-color: #D8DEEC; box-shadow: 0 8px 28px rgb(20 33 61 / 9%); }
+.register-page .login-museum__heading h1,
+.register-page .login-museum__card .field__label,
+.register-page .login-museum__brand-name { color: #14213D; }
+.register-page .login-museum__brand-icon { box-shadow: 0 2px 8px rgb(var(--brand-primary-rgb) / 12%); border: 1px solid rgb(var(--brand-primary-rgb) / 20%); }
+.register-page .login-museum__card .field__control { background: #F1F4FA; border-color: #D3DAE9; }
+.register-page .login-museum__card .field__input { color: #14213D; background: transparent; }
+.register-page .login-museum__card .field__input::placeholder { color: #59657A; }
+.register-page .login-museum__card .field__control:hover:not(.field__control--disabled) { border-color: var(--color-primary); }
+.register-page .login-museum__card .field__control:focus-within { border-color: var(--color-primary); outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.register-page .login-museum__card .field__control:has(input[aria-invalid="true"]) { border-color: var(--color-error); }
+.register-page .login-museum__heading { margin-bottom: 20px; }
+.register-page .login-museum__card .auth-form { gap: 14px; }
+.register-page .login-museum__footer { margin-top: 20px; }
+@media (max-width: 1023px) {
+  .register-page .login-museum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-height: 800px) and (min-width: 768px) {
+  .register-page .login-museum__form-panel { padding-block: 24px; }
+  .register-page .login-museum__brand { margin-bottom: 20px; }
+  .register-page .login-museum__heading { margin-bottom: 16px; }
+  .register-page .login-museum__card .auth-form { gap: 14px; }
+  .register-page .login-museum__footer { margin-top: 16px; }
+}
+@media (max-width: 767px) {
+  .register-page .login-museum { grid-template-columns: minmax(0, 1fr); }
+  .register-page .login-museum__form-panel { padding-block: 24px; }
+  .register-page .login-museum__card { box-shadow: 0 4px 16px rgb(20 33 61 / 6%); }
+}
