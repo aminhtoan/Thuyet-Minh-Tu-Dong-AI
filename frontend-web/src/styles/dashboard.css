@@ -836,3 +836,32 @@
     transition: none;
   }
 }
+
+/* S28.7.1: real museum banner and compact presentation, not data changes. */
+.dashboard .dashboard-hero { display: flex; min-height: 240px; padding: 24px 32px; border-radius: 16px; isolation: isolate; background: var(--color-sidebar); }
+.dashboard-hero__photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center 52%; }
+.dashboard .dashboard-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(17 28 50 / 96%) 0%, rgb(17 28 50 / 88%) 45%, rgb(17 28 50 / 22%) 100%); }
+.dashboard .dashboard-hero__copy { max-width: 600px; min-width: 0; }
+.dashboard .dashboard-eyebrow { color: #fff; font-size: 11px; margin-bottom: 8px; }
+.dashboard .dashboard-hero h1 { max-width: 28ch; color: #fff; font-size: clamp(24px, 2.3vw, 30px); line-height: 1.25; text-wrap: balance; overflow-wrap: anywhere; margin-bottom: 10px; }
+.dashboard .dashboard-hero p { color: #fff; max-width: 52ch; font-size: 14px; margin-bottom: 16px; }
+.dashboard .hero-cta { width: fit-content; white-space: normal; font-size: 14px; }
+.dashboard .hero-cta:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.dashboard .quick-action { min-height: 100px; padding: 14px; gap: 12px; }
+.dashboard .quick-action strong { font-size: 16px; }
+.dashboard .quick-action small { font-size: 13px; }
+.dashboard .dashboard-chart-card, .dashboard .dashboard-donut-card { min-height: 320px; padding: 18px; }
+.dashboard .dashboard-chart, .dashboard .dashboard-donut, .dashboard .dashboard-donut__empty { min-height: 220px; }
+.dashboard .dashboard-donut__visual svg { width: min(100%, 200px); }
+.dashboard .dashboard-recent-row { min-height: 60px; padding-block: 10px; }
+.dashboard .dashboard-activity ul { gap: 12px; }
+.dashboard .dashboard-activity li p { margin-bottom: 4px; }
+@container dashboard (max-width: 760px) {
+  .dashboard .dashboard-hero { padding: 24px; min-height: 240px; }
+  .dashboard .dashboard-hero::after { background: linear-gradient(90deg, rgb(17 28 50 / 96%), rgb(17 28 50 / 80%)); }
+  .dashboard-hero__photo { object-position: 38% center; }
+}
+@container dashboard (max-width: 420px) {
+  .dashboard .dashboard-hero { padding: 20px; }
+  .dashboard .dashboard-hero h1 { font-size: 24px; }
+}

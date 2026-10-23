@@ -1,5 +1,25 @@
 # UI Specification
 
+## S28.7.1 — Customer Dashboard & Real Museum Banner (2026-10-23)
+
+- Dashboard hero reuses /museum/images/hero.jpg, the existing1960x1102 photograph
+  inspected during Login work. No asset moved/removed/edited; source/rights record
+  in MUSEUM_IMAGES.md unchanged, no new attribution/license claims. Removed rendered
+  video/wave illustration, leaving old CSS/assets intact. Full-container banner
+  radius16px/min-height240px, natural growth, navy left-to-right overlay and white
+  requested eyebrow/heading/description. CTA still /projects/new; mobile stronger
+  overlay/crop and wrapping preserve copy without fixed-height clipping.
+- Four existing shortcuts compacted to min100px/padding14px; analytics card minimum
+ 320px, donut max200px, recent rows min60px and activity gaps12px. Chart axis/bar
+  geometry, calculations, dataset completeness warnings, filters and actions kept.
+- Sidebar now “Thuyết minh bảo tàng” with museum SVG matching Login/Register;
+  Dashboard Topbar shows that brand, other page titles/search/account unchanged.
+  Shell fallback name updated. No menu routes/drawer/auth behavior changed.
+- ui-ux-pro-max informed hierarchy, wrapping and readable overlays. Web383/383
+  PASS; lint/typecheck/build/diff-check PASS. Existing Vite mixed-import advisory
+  remains. Visual QA NOT VERIFIED: no connected browser. Manually review
+ 375/768/1024/1280/1440px, crop, CTA/focus, charts and drawer/header wrapping.
+
 ## S28.6.7 — Compact & Centered Auth Layout (2026-10-23)
 
 - Shared museum-auth content/card max420px (previous440), desktop padding28px

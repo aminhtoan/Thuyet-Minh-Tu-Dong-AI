@@ -1,5 +1,24 @@
 # Project Progress
 
+## S28.7.1 — Dashboard Visual Polish & Real Museum Banner (2026-10-23)
+
+- Dashboard banner now uses existing museum hero.jpg with navy overlay, requested
+  copy, radius16px/min240px and existing creation CTA. No image/old asset deleted.
+  Compact shortcuts, chart-card spacing, donut display, recent rows and activity;
+  actual project data/calculations/filter/request/navigation logic unchanged.
+- Sidebar/Dashboard Topbar brand updated, matching museum icon via new
+  components/layout/MuseumBrandIcon.tsx. Login/Register unchanged in this step.
+- Changed DashboardPlaceholder.tsx, Sidebar.tsx, Topbar.tsx, AppShell.tsx,
+  styles/dashboard.css, styles/shell.css, tests/dashboard-hero-actions.test.mjs,
+  tests/customer-shell-a11y.test.mjs (new icon mock), docs/UI.md, docs/PROGRESS.md;
+  added MuseumBrandIcon.tsx. Existing uncommitted auth work preserved.
+- Web383/383 PASS; lint/typecheck/build/diff-check PASS. Initial shell mock failures
+  fixed by declaring the new icon dependency; no production auth behavior altered.
+  Existing Vite import advisory non-blocking. Visual QA NOT VERIFIED: empty browser
+  inventory; responsive widths/crop/zoom/focus and actual chart layout need manual QA.
+- ui-ux-pro-max guided contrast/reflow. Gemini0, MongoDB writes0; no Backend,
+  Public/Mobile/Admin, config, attempt or API changes; no commit/push.
+
 ## S28.6.7 — Compact & Centered Login/Register (2026-10-23)
 
 - Shared max420px auth block and28px desktop card padding,28–30px headings,

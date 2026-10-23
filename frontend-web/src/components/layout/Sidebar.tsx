@@ -2,6 +2,7 @@ import { type RefObject } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Icon, type IconName } from '../common/Icon'
 import { navigationLabels } from '../../localization/navigationLabels.mjs'
+import { MuseumBrandIcon } from './MuseumBrandIcon'
 
 type SidebarProps = {
   asideRef: RefObject<HTMLElement | null>
@@ -27,7 +28,7 @@ export function Sidebar({ asideRef, drawer, open, onClose, onNavigate }: Sidebar
   return (
     <aside ref={asideRef} id="app-sidebar" className={`sidebar${open ? ' sidebar--open' : ''}`} aria-label="Điều hướng chính" aria-hidden={drawer && !open ? true : undefined} aria-modal={drawer && open ? true : undefined} inert={drawer && !open ? true : undefined} role={drawer ? 'dialog' : undefined}>
       <div className="sidebar__header">
-        <NavLink to="/dashboard" className="sidebar__brand" onClick={onNavigate}><span className="sidebar__mark"><Icon name="wave" width="30" /></span><span className="sidebar__brand-copy">Người kể chuyện AI<small>Thuyết minh đa ngôn ngữ</small></span></NavLink>
+        <NavLink to="/dashboard" className="sidebar__brand" onClick={onNavigate}><span className="sidebar__mark"><MuseumBrandIcon /></span><span className="sidebar__brand-copy">Thuyết minh bảo tàng<small>Nền tảng đa ngôn ngữ</small></span></NavLink>
         <button className="sidebar__close" type="button" aria-label="Đóng điều hướng" onClick={onClose} data-sidebar-initial-focus><Icon name="close" width="20" /></button>
       </div>
       <nav className="sidebar__nav">{primaryItems.map((item) => <SidebarLink key={item.to} item={item} onNavigate={onNavigate} />)}</nav>

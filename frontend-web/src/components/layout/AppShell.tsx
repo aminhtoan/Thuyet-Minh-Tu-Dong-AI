@@ -19,7 +19,7 @@ export function AppShell() {
   const mainRef = useRef<HTMLElement>(null)
   const previousPath = useRef(pathname)
   const pendingRouteFocus = useRef(false)
-  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Bản ghi' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Bản dịch' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Giọng đọc và thuyết minh' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Tạo thuyết minh' : /^\/projects\/[^/]+\/result$/.test(pathname) ? 'Kết quả' : titles[pathname] ?? 'Người kể chuyện AI'
+  const title = /^\/projects\/[^/]+\/transcript$/.test(pathname) ? 'Bản ghi' : /^\/projects\/[^/]+\/translation$/.test(pathname) ? 'Bản dịch' : /^\/projects\/[^/]+\/voice$/.test(pathname) ? 'Giọng đọc và thuyết minh' : /^\/projects\/[^/]+\/generate$/.test(pathname) ? 'Tạo thuyết minh' : /^\/projects\/[^/]+\/result$/.test(pathname) ? 'Kết quả' : titles[pathname] ?? 'Thuyết minh bảo tàng'
 
   const closeSidebar = useCallback((restoreFocus = true) => {
     setSidebarOpen(false)

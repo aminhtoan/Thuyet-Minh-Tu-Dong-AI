@@ -36,6 +36,7 @@ function harness(component, { drawer = false, confirmed = true, logout = async (
   const dependencies = {
     react, 'react-router-dom': { Link: 'a', Outlet: 'outlet', useLocation: () => ({ pathname }), useNavigate: () => (...args) => navigation.push(args) },
     './Sidebar': { Sidebar: 'sidebar-test' }, './Topbar': { Topbar: 'topbar-test' },
+    './MuseumBrandIcon': { MuseumBrandIcon: 'brand-icon-test' },
     '../../localization/navigationLabels.mjs': { navigationLabels: {} }, './drawerFocus.mjs': { getDrawerTabTarget },
     '../../features/auth/authService': { authService: { me: async () => ({ user: { fullName: 'Test' } }), logout: () => { calls++; return logout() } } },
     '../../features/auth/profileUpdate.mjs': { subscribeProfileUpdates: () => () => {} },

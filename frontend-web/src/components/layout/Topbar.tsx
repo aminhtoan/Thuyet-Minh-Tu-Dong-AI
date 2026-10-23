@@ -5,6 +5,7 @@ import { subscribeProfileUpdates } from '../../features/auth/profileUpdate.mjs';
 import { getProfileIdentity } from '../../features/auth/profileIdentity.mjs';
 import { confirmationMessages } from '../../localization/confirmationMessages.mjs';
 import { Icon } from '../common/Icon';
+import { MuseumBrandIcon } from './MuseumBrandIcon';
 
 type TopbarProps = { menuButtonRef: RefObject<HTMLButtonElement | null>; title: string; onMenuClick: () => void; sidebarOpen: boolean };
 type HeaderUser = { id: string; fullName: string; email: string; role: string };
@@ -68,6 +69,7 @@ export function Topbar({ menuButtonRef, title, onMenuClick, sidebarOpen }: Topba
 
   return <header className={`topbar${showSearch ? ' topbar--search' : ''}${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}${isAccountPage ? ' topbar--account' : ''}`}>
     <div className="topbar__context">
+      {pathname === '/dashboard' && <span className="topbar__brand"><MuseumBrandIcon /><span>Thuyết minh bảo tàng</span></span>}
       <button ref={menuButtonRef} className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button>
       {isProjectsPage ? <div className="topbar__page-heading"><h1>Dự án của tôi</h1><p>Tìm kiếm, theo dõi và tiếp tục hành trình thuyết minh của bạn.</p></div> : isNewProjectPage ? <div className="topbar__create-heading"><h1>Tạo dự án mới</h1><p>Thêm thông tin và phương tiện để bắt đầu tạo thuyết minh.</p></div> : isHistoryPage ? <div className="topbar__history-heading"><h1>Lịch sử</h1><p>Theo dõi các dự án và mở lại kết quả đã tạo.</p></div> : isAccountPage ? <div className="topbar__account-heading"><h1>Tài khoản</h1><p>Quản lý thông tin cá nhân của bạn.</p></div> : <span className="topbar__title" title={title}>{title}</span>}
     </div>
