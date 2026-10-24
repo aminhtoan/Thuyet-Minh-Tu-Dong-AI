@@ -7,7 +7,7 @@ import { colors, spacing, typography } from '@/theme/tokens';
 import { createResumeLock, DashboardResumeError, resolveDashboardResume } from './dashboardResume';
 import type { Project } from './types';
 
-export function DashboardResumeButton({ projectId }: { projectId: string }) {
+export function DashboardResumeButton({ projectId, label = 'Tiếp tục' }: { projectId: string; label?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lock = useRef(createResumeLock());
@@ -41,6 +41,6 @@ export function DashboardResumeButton({ projectId }: { projectId: string }) {
       }
     });
   }
-  return <View style={styles.container}><Button loading={loading} disabled={loading} wrapLabel accessibilityLabel={`Tiếp tục dự án ${projectId}`} onPress={() => void open()}>{loading ? 'Đang mở' : 'Tiếp tục'}</Button>{error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}</View>;
+  return <View style={styles.container}><Button loading={loading} disabled={loading} wrapLabel accessibilityLabel={`${label} dự án ${projectId}`} onPress={() => void open()}>{loading ? 'Đang mở' : label}</Button>{error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}</View>;
 }
 const styles = StyleSheet.create({ container: { gap: spacing.sm }, error: { fontFamily: typography.family.regular, fontSize: typography.size.sm, lineHeight: 22, color: colors.error } });

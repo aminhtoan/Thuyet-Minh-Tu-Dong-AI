@@ -1,5 +1,46 @@
 # Project Progress
 
+## S29.4 — Customer Mobile My Projects (2026-10-24, PARTIAL)
+
+- Audited actual Web ProjectsPlaceholder/Topbar, useCompleteHistory,
+  historyFilters/projectListFilters/projectListPresentation, projectDataState,
+  repository/actions/route guard; Mobile ProjectsScreen/useProjectPage/cards and
+  protected routes. Published pre-edit gap table; full audit in UI.md.
+- Web confirmed: complete account reads via page100; client search (Vietnamese
+  accent-insensitive), status+local createdAt time filters, four sorts, pages10.
+  Name link→details; one workflow action. No progress/update column or inline
+  edit/delete. No demo behavior ported to Mobile.
+- Implemented complete bounded acquisition, native draft/apply/reset filters,
+  same selectors/sort/tie-break/page rules, real-data cards and metadata feedback.
+  Cap100 pages/10,000 projects fails closed rather than truncating; changing totals,
+  duplicate IDs and incomplete pages rejected. Existing list JWT client/ownership
+  API unchanged. Stale reads cancelled through metadata GET signals.
+- Projects continuation reuses S29.3.3 protected GET/resume/attempt checks and labels
+  from verified workflow; no AI dispatch. DashboardResumeButton optional label keeps
+  Dashboard default behavior. New card variant does not alter shared ProjectCard.
+  Existing vi→en attempt endpoint and Mobile target-language/editor limitations
+  remain; unsupported cases block safely. No new Backend endpoint/workflow.
+- Files created: ProjectListCard.tsx, ProjectListFilters.tsx, projectListModel.ts,
+  projectListData.ts, useCompleteProjectList.ts, my-projects-parity.test.mjs.
+  Updated ProjectsScreen.tsx, DashboardResumeButton.tsx (label only), types.ts,
+  projectRepository.ts (metadata/cancellation), sdk58-migration.test.mjs (multiline
+  optional-footer source assertion), UI.md/PROGRESS.md. No dependency/token/env edits.
+- Tests: Mobile158/158, Web400/400 PASS, zero skipped; both lint/TypeScript PASS;
+  Android Metro/Hermes offline export PASS; Web build PASS after sandbox EPERM
+  escalation, existing mixed-import advisory only. Token/Museum hash sync and
+  diff-check PASS. New tests cover multipage scope, caps/duplicates/data drift,
+  actual Web filter/sort/pagination/language comparisons, draft/reset/errors,
+  401 handling, title route, metadata, stale-reply cancellation, native layout
+  and Dashboard-safe reuse (17 new My Projects tests).
+- Pixel7 live: actual list/cards, first/last page, pagination1/2→2/2, bottom
+  clearance, filter disclosure and four sorts observed. No workflow/mutation
+  buttons clicked. Exact360/393dp, accessibility/font scaling, all filter cases,
+  detail/resume and real empty/error acceptance remain MANUAL PENDING. PARTIAL;
+  prior Dashboard manual acceptance statuses are preserved, not marked complete.
+- Safety: no Web/Backend/Admin/Public Museum/Login/Register/auth/config edits,
+  no MongoDB writes or Gemini/TTS calls, no attempt reset/retry, commit/push.
+  Stopped at S29.4; no S29.5 work.
+
 ## S29.3.3B — Dashboard time filter (2026-10-24, PARTIAL)
 
 - Audited Web/Mobile metrics, filters, chart, dataset, repository and loading hook.

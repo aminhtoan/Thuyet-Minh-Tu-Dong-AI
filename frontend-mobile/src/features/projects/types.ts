@@ -10,6 +10,6 @@ export type ProjectWorkflow = {
   targetLanguage: { code: string; source: 'JOB' | 'TRANSLATION' | 'NARRATION' | 'RESULT' } | null;
   artifact: { narrationReady: boolean; resultReady: boolean };
 };
-export type Project = { id: string; name: string; description?: string; sourceLanguage: LanguageCode; targetLanguage?: LanguageCode; status: ProjectStatus; workflow?: ProjectWorkflow; progress?: number; mediaType?: MediaType; mediaName?: string; mediaSize?: number; durationSeconds?: number; updatedAt: string; createdAt?: string };
+export type Project = { id: string; name: string; description?: string; sourceLanguage: LanguageCode; targetLanguage?: LanguageCode; status: ProjectStatus; workflow?: ProjectWorkflow; progress?: number; mediaType?: MediaType; mediaName?: string; mediaSize?: number; durationSeconds?: number; updatedAt: string; createdAt?: string; metadataState?: { media: 'READY' | 'EMPTY' | 'ERROR' | 'UNKNOWN'; translation: 'READY' | 'EMPTY' | 'ERROR' | 'UNKNOWN' } };
 export type ProjectStatistics = { total: number; completed: number; processing: number; failed: number };
 export type ProjectPagination = { page: number; limit: number; total: number; totalPages: number };

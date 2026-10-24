@@ -1,5 +1,70 @@
 # UI Specification
 
+## S29.4 — Customer Mobile My Projects (2026-10-24, PARTIAL)
+
+### Actual Web reference and pre-edit audit
+
+References: ProjectsPlaceholder.tsx, Topbar.tsx, useCompleteHistory.ts,
+historyFilters.ts, projectListFilters.ts, projectListPresentation.ts,
+projectDataState.ts, projectRepository.ts, projectAction.ts and workflowRouteGuard.ts.
+Read-only Backend verification: project.routes.ts requires JWT/CUSTOMER; project
+list/get constrain userId; page limit100 and totalPages ceil(total/limit).
+
+| Item | Web actual | Mobile before | S29.4 implementation |
+|---|---|---|---|
+| Heading | Dự án của tôi / Quản lý và tiếp tục các dự án thuyết minh. / Tạo dự án | Different description/create label | Matching copy and existing /projects/new CTA |
+| Collection | Read every API page100 via useCompleteHistory, then client filters/sort and ten items per UI page | Server page10 with immediate search/status | Complete loader, sequential page100, then ten UI items; no partial-account filtering |
+| Search | Draft until Search; trim, Vietnamese accent-insensitive contains | Sends on typing; server search | Same normalization, explicit submit, no requests on draft/filter/page changes |
+| Filters | Initially collapsed; time ALL/TODAY/WEEK/MONTH/YEAR/CUSTOM, all ten statuses, four sorts | Visible status chips only | Native accessible disclosures, same options/defaults/AND combination, applied count, draft-only reset |
+| Dates | createdAt local calendar, custom inclusive final day via exclusive next midnight | None | Same valid-date semantics; text-input invalid dates rejected (native replacement for browser date input) |
+| Sort | NEWEST/OLDEST by createdAt; NAME_ASC/NAME_DESC vi numeric collation; ID tie-break | Server creation descending | Same selector, no progress-based completion |
+| Project row | Name link, media, source→target, creation date, status, workflow action; no progress/updatedAt | Generic card with progress/update/status-based actions | Separate ProjectListCard only shows Web fields; title remains detail link; no redundant extra detail button |
+| Actions | Name→details, status-dependent workflow label; no inline edit/delete | Legacy status-based action | Same supported labels; reuse fresh guarded resume, fail-closed on unavailable language/attempt endpoint |
+| Pagination | Client pages10 after complete collection | Server pages10 | Client pages10; bounded acquisition of complete data, clamped page after reload/filter |
+| Feedback | Loading/error/empty/no matches; incomplete metadata notice | Less precise metadata fallback | Matching distinctions; no false empty-media/translation assertion after failed metadata GET |
+
+### Native implementation and safety
+
+- ProjectsScreen uses ProjectListFilters/ProjectListCard/useCompleteProjectList.
+  New projectListModel ports actual Web selectors/presentation. All content uses
+  Be Vietnam Pro and unchanged Customer semantic tokens,48dp controls, wrapping
+  names/actions, natural card height and native FlatList footer clearance.
+- projectListData requests page1..N sequentially with existing authenticated
+  projectRepository.listPage. Cap100 pages (10,000 projects); above-cap, changing
+  total, missing rows, duplicate IDs or malformed pagination return an error,
+  never a partial complete list. This is a documented safety limit relative to
+  Web's unbounded loop, not a new Backend/API limit. No demo mode or runtime fixtures.
+- Existing enrichment adds metadataState and preserves raw workflow. List signal
+  reaches media/translations GETs, so leaving/reloading cancels stale metadata
+  reads. Other consumers keep previous visible fields/behavior.
+- DashboardResumeButton gains optional label only; default Dashboard copy and
+  layout unchanged. Projects reuses its fresh owned project GET, English Customer
+  attempt GET,8s timeout, lock, no-refresh/no-retry and safe errors. UNCERTAIN and
+  unsafe durable attempt states cannot proceed. No new processing request.
+- Existing Mobile translation editor/target-catalog limitations remain: disabled
+  or unavailable vi→en attempt endpoint blocks continuation; unsupported targets
+  fall back to details. Processing with canResume=false also stays fail-closed.
+  Full Web workflow capability parity is NOT claimed. Backend remains authority.
+- Public Museum, auth, Login/Register, four Customer tabs and Dashboard layout
+  unchanged. No inline mutation controls or routes added. ui-ux-pro-max informed
+  progressive disclosure, draft/applied feedback, touch targets and text wrapping.
+
+### Validation / acceptance
+
+Mobile158/158 PASS, including17 new My Projects tests and existing Dashboard/
+navigation/auth tests. Web400/400 PASS. Mobile/Web lint and TypeScript PASS.
+Offline Android Metro/Hermes PASS; Web build PASS after sandbox spawn EPERM
+export/build-only escalation (existing mixed static/dynamic import advisory).
+Customer token sync, Museum content/image hash sync and diff-check PASS.
+
+Pixel7 observed actual list, first/last page cards, pagination1/2→2/2, footer
+clearance, native filter disclosure and all four sort options. No workflow action
+clicked. Exact360/393dp, screen reader/font scaling, real empty account/error,
+all filter combinations and detail/resume acceptance remain MANUAL PENDING.
+Earlier S29.3.x acceptance statuses are not changed. Overall PARTIAL.
+No Web/Backend/Admin/Public/auth/config edits, Gemini/TTS, MongoDB writes,
+UNCERTAIN reset/retry, commit or push.
+
 ## S29.3.3B — Dashboard time-filter verification (2026-10-24, PARTIAL)
 
 Month retains one bucket per local calendar day and horizontal scrolling. Pixel7

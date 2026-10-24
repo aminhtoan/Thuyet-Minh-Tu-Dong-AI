@@ -59,5 +59,5 @@ test('RN0.88 strict list slots keep empty/footer absence without null casts', as
   const transcript = await read('src/screens/TranscriptScreen.tsx');
   assert.match(transcript, /const footer = [^\r\n]+ : undefined;/);
   const projects = await read('src/screens/ProjectsScreen.tsx');
-  assert.match(projects, /ListFooterComponent=\{[^\r\n]+ : undefined\}/);
+  assert.match(projects, /ListFooterComponent=\{[\s\S]+? : undefined\}/);
 });
