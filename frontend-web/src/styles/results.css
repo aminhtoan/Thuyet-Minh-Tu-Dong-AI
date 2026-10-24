@@ -1,10 +1,274 @@
-.result-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-block: 24px; }
-.result-layout > * { min-width: 0; }
-.result-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.result-heading h2, .result-heading p { margin-top: 0; }
-.result-metadata { display: grid; gap: 14px; }
-.result-metadata div { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
-.result-metadata dd { margin: 0; overflow-wrap: anywhere; }
-.result-preview { background: var(--brand-dark); color: #fff; border-radius: 12px; min-height: 260px; padding: 24px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
-.result-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 24px; }
-@media (max-width: 800px) { .result-layout { grid-template-columns: 1fr; } }
+.result-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 24px;
+  margin-block: 24px;
+  align-items: stretch;
+}
+
+.result-layout > * {
+  min-width: 0;
+}
+
+.result-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
+}
+
+.result-heading h2 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.result-heading p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.result-metadata {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 20px 0;
+}
+
+.result-metadata div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.result-metadata dt {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.result-metadata dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.result-summary-box {
+  background: var(--brand-section);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 16px;
+}
+
+.result-summary-box h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.result-summary-box p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* Right Media Player Card */
+.result-media-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+}
+
+.result-media-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.result-media-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+.result-media-card__header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.result-media-card__format {
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Audio Player Container */
+.result-audio-player-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.result-audio-visual {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.result-audio-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.result-audio-icon-wrap svg {
+  width: 22px;
+  height: 22px;
+}
+
+.result-waveform-bars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 38px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.result-waveform-bars span {
+  display: block;
+  width: 4px;
+  background: var(--brand-primary);
+  border-radius: 4px;
+  opacity: 0.85;
+  transition: height 0.2s ease;
+}
+
+.result-audio-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.result-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  display: inline-block;
+  box-shadow: 0 0 0 2px var(--color-success-light);
+}
+
+.result-audio-controls-wrap {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.result-native-audio {
+  width: 100%;
+  height: 40px;
+  outline: none;
+}
+
+/* Video Player Container */
+.result-video-player-container {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.result-native-video {
+  width: 100%;
+  display: block;
+  max-height: 320px;
+  background: #000;
+}
+
+/* Download Footer */
+.result-download-footer {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.result-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 10px;
+  padding-block: 12px;
+  box-shadow: 0 2px 8px rgba(88, 80, 236, 0.2);
+  transition: transform 120ms ease, box-shadow 150ms ease;
+}
+
+.result-download-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(88, 80, 236, 0.3);
+}
+
+.result-download-btn:active {
+  transform: translateY(0);
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 24px;
+}
+
+@media (max-width: 800px) {
+  .result-layout {
+    grid-template-columns: 1fr;
+  }
+}

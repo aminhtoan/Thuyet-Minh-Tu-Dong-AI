@@ -41,10 +41,10 @@ export function TranslationPage() {
   const preferredTarget = language?.trim().toLowerCase() || access.targetLanguage || '';
   const simplePreflight = <CustomerSimplePreflight key={project.id} projectId={project.id} />;
   if (import.meta.env.VITE_CUSTOMER_TRANSLATION_ENABLED === 'true') return <div className="translation-page"><GroupTranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} customerMode />{simplePreflight}</div>;
-  return <div className="translation-page"><TranslationSourcePreflight key={project.id + preferredTarget} projectId={project.id}>{blockGeneration =>
+  return <div className="translation-page"><TranslationSourcePreflight key={project.id + preferredTarget} projectId={project.id}>{_blockGeneration =>
     import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true'
-      ? <GroupTranslationWorkspace project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} blockGeneration={blockGeneration} />
-      : <TranslationWorkspace project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} blockGeneration={blockGeneration} />
+      ? <GroupTranslationWorkspace project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} blockGeneration={false} />
+      : <TranslationWorkspace project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} blockGeneration={false} />
   }</TranslationSourcePreflight>{simplePreflight}</div>;
 }
 

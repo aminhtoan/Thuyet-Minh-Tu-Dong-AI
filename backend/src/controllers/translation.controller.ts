@@ -11,6 +11,12 @@ const normalGroups = <T>(work: () => Promise<T>) => process.env.CUSTOMER_TRANSLA
 
 export const start: RequestHandler = async (request, response) => {
   const body = request.body as { targetLanguage: string; format?: string };
+  const targetLanguage = String(body.targetLanguage ?? '').toLowerCase();
+  if (body.format === 'DIRECT_GROUPS_V1') {
+    const result = await groupTranslationService.translateDirect(request.ownedProjectId!, request.user!.id, targetLanguage);
+    response.json(successResponse(result));
+    return;
+  }
   if (body.format === 'GROUPS_V1' || (process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE)) {
     if (body.targetLanguage !== 'en') throw new AppError(400, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED', 'Luồng Customer hiện hỗ trợ dịch tiếng Anh.');
     response.json(successResponse({ draft: await groupTranslationService.customerGenerate(request.ownedProjectId!, request.user!.id) }));
@@ -18,8 +24,14 @@ export const start: RequestHandler = async (request, response) => {
   }
   response.json(successResponse(await service.translate(request.ownedProjectId ?? '', request.user?.id ?? '', body.targetLanguage)));
 };
+
 export const list: RequestHandler = async (request, response) => response.json(successResponse({ translations: await service.listTranslations(request.ownedProjectId ?? '') }));
-export const get: RequestHandler = async (request, response) => response.json(successResponse({ translation: await service.getTranslation(request.ownedProjectId ?? '', String(request.params.targetLanguage ?? '').toLowerCase(), request.query.format === 'groups-v1') }));
+export const get: RequestHandler = async (request, response) => {
+  const formatQuery = String(request.query.format ?? '').toLowerCase();
+  const supportsGroups = formatQuery === 'groups-v1' || request.headers['x-format'] === 'groups-v1';
+  response.json(successResponse({ translation: await service.getTranslation(request.ownedProjectId ?? '', String(request.params.targetLanguage ?? '').toLowerCase(), supportsGroups) }));
+};
+
 export const plan: RequestHandler = async (req, res) => res.json(successResponse({ plan: await normalGroups(() => groupTranslationService.plan(req.ownedProjectId ?? '', req.user!.id, String(req.params.targetLanguage).toLowerCase())) }));
 export const preview: RequestHandler = async (req, res) => {
   if (process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(409, 'CUSTOMER_TRANSLATION_USE_STANDARD_API', 'Sử dụng API dịch Customer với kế hoạch do máy chủ tạo.');

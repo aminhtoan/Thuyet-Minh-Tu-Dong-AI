@@ -8,7 +8,8 @@ export const requireProjectOwner: RequestHandler = async (request, _response, ne
     next(new AppError(400, 'VALIDATION_ERROR', 'ID dự án không hợp lệ.'));
     return;
   }
-  const project = await Project.findOne({ _id: id, userId: request.user?.id }).select('_id');
+  const filter = request.user?.role === 'ADMIN' ? { _id: id } : { _id: id, userId: request.user?.id };
+  const project = await Project.findOne(filter).select('_id');
   if (!project) {
     next(new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.'));
     return;

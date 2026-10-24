@@ -23,7 +23,7 @@ import { successResponse } from '../utils/api-response.js';
 
 export function createProjectRouter(groups: Pick<typeof translationController, 'plan' | 'preview' | 'draft' | 'approve' | 'get'> = translationController) {
 const projectRouter = Router();
-projectRouter.use(authenticate, authorize('CUSTOMER'));
+projectRouter.use(authenticate, authorize('CUSTOMER', 'ADMIN'));
 projectRouter.get('/:id/translations/simple-preflight', (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   if (process.env.NODE_ENV !== 'development') return next(new AppError(404, 'DIAGNOSTIC_NOT_AVAILABLE', 'Không tìm thấy kiểm tra.'));

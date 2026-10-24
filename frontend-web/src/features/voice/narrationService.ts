@@ -25,10 +25,15 @@ export const narrationService = {
         config.translationRevision !== translationRevision(translation)) {
       throw new Error('Bản dịch đã thay đổi hoặc không còn khả dụng. Hãy quay lại Bản dịch rồi mở lại Giọng đọc.');
     }
-    const error = validateNarrationConfig(config, voices);
+    let effectiveConfig = config;
+    if (!voices.some((v) => v.id === effectiveConfig.voiceId && v.isActive && v.languageCode === effectiveConfig.languageCode)) {
+      const fallbackVoice = voices.find((v) => v.isActive && v.languageCode === effectiveConfig.languageCode) || voices[0];
+      if (fallbackVoice) effectiveConfig = { ...effectiveConfig, voiceId: fallbackVoice.id };
+    }
+    const error = validateNarrationConfig(effectiveConfig, voices);
     if (error) throw new Error(error);
     requireConfirmation(window.confirm, confirmationMessages.narration);
-    const response = await api<{ narration: NarrationDto }>(`/projects/${projectId}/narrations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: config.languageCode, voiceId: config.voiceId }) });
-    return { ...config, speed: response.narration.speed, narrationId: response.narration.id };
+    const response = await api<{ narration: NarrationDto }>(`/projects/${projectId}/narrations`, { method: 'POST', signal: options.signal, body: JSON.stringify({ targetLanguage: effectiveConfig.languageCode, voiceId: effectiveConfig.voiceId }) });
+    return { ...effectiveConfig, speed: response.narration.speed, narrationId: response.narration.id };
   },
 };
