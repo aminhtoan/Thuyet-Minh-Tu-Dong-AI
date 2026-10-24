@@ -1,8 +1,1 @@
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { colors } from '@/theme/tokens';
-
-export default function Index() {
-  return <View accessibilityLabel="Đang khởi tạo phiên đăng nhập" style={styles.container}><ActivityIndicator color={colors.primary} size="large" /></View>;
-}
-
-const styles = StyleSheet.create({ container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background } });
+export { MuseumHomeScreen as default } from '@/features/museum/MuseumScreens';

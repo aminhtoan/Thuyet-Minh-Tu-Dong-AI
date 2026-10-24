@@ -24,7 +24,9 @@ test('SDK58 retains declared tabs, dashboard first, and protected authentication
   for (const name of ['dashboard', 'projects', 'history', 'settings', 'account']) assert.ok(tabs.includes(`name="${name}"`));
   assert.match(tabs, /name="settings" options=\{\{ href: null \}\}/);
   const root = await read('src/app/_layout.tsx');
-  for (const group of ['loading', 'public', 'private']) assert.ok(root.includes(`guard={guards.${group}}`));
+  assert.ok(root.includes('guard={guards.public} redirectTo="/khong-gian-cua-toi"'));
+  assert.ok(root.includes('guard={guards.private} redirectTo="/"'));
+  assert.doesNotMatch(root, /guard=\{guards.loading\}/);
   assert.match(root, /headerShown: false/);
   const config = JSON.parse(await read('app.json')).expo;
   assert.equal(config.web.output, 'single');

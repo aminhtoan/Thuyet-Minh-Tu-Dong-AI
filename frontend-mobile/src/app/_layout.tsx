@@ -13,14 +13,19 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={guards.loading}>
-        <Stack.Screen name="index" />
-      </Stack.Protected>
-      <Stack.Protected guard={guards.public}>
+      {/* Keep the launch URL valid while session guards change after hydration. */}
+      <Stack.Screen name="index" />
+      <Stack.Screen name="kham-pha" />
+      <Stack.Screen name="kham-pha/[slug]" />
+      <Stack.Screen name="thuyet-minh" />
+      <Stack.Screen name="thuyet-minh/[slug]" />
+      <Stack.Screen name="ve-bao-tang" />
+      <Stack.Screen name="khong-gian-cua-toi" />
+      <Stack.Protected guard={guards.public} redirectTo="/khong-gian-cua-toi">
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
       </Stack.Protected>
-      <Stack.Protected guard={guards.private}>
+      <Stack.Protected guard={guards.private} redirectTo="/">
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="projects/new" />
         <Stack.Screen name="projects/[projectId]/index" />

@@ -1,5 +1,80 @@
 # UI Specification
 
+## S29.2A — Public Museum on Expo Mobile (2026-10-24)
+
+| Web | Native route / screen | Parity |
+| --- | --- | --- |
+| `/` MuseumHomePage | `/` MuseumHomeScreen | Hero, introduction, three non-interactive topics, four planned languages, featured video and CTA |
+| `/kham-pha` MuseumExplorePage | `/kham-pha` MuseumExploreScreen | Same editorial previews; no fabricated exhibition links |
+| `/thuyet-minh` MuseumVideosPage | `/thuyet-minh` MuseumVideosScreen | Published/public/rights-confirmed catalog and real poster |
+| `/ve-bao-tang` MuseumAboutPage | `/ve-bao-tang` MuseumAboutScreen | Existing introduction, image and two information cards |
+| `/thuyet-minh/:slug` MuseumVideoDetailPage | `/thuyet-minh/[slug]` MuseumVideoDetailScreen | Metadata, availability, attribution, navigation; external source playback only |
+| `/kham-pha/:slug` MuseumExhibitionPage | `/kham-pha/[slug]` MuseumExhibitionScreen | Published-only lookup; currently empty catalog, same Not Found state |
+
+- Native Public style roles are isolated in features/museum/theme.ts and checked
+  against Web tokens.css/museum-theme.css. Purple/navy/cream-free surfaces, local
+  Be Vietnam Pro, adaptive scrolling cards, native48dp links, alt labels, selected
+  navigation, wrapping text and image failure fallback. UI/UX checklist informed
+  native touch/accessibility; no Customer CSS, dashboard tabs or auth UI reused.
+  Hero uses a navy scrim rather than adding a gradient dependency. No new package.
+- Opening `/` always renders Public Museum, including while session restores.
+  `/khong-gian-cua-toi` reuses the previous root bootstrap: loading → Login for a
+  guest / existing Dashboard for an authenticated session. Login success's public
+  guard redirects via that entry; private guard failure/logout returns `/`.
+  Protected project screens and JWT/role/storage/API logic are unchanged. A guest
+  deep link to a private screen stays blocked and returns the museum, not private
+  content. Public deep links do not require authentication.
+- `scripts/museum-mobile-sync.mjs` snapshots the real Web public catalog using its
+  existing publication filters, image slots, editorial topics and languages. It
+  copies seven existing JPGs byte-for-byte to frontend-mobile/assets/museum and
+  emits a local JSON catalog/static require map. No API/DB, Metro external imports,
+  fake data or automatically published content. Web source/assets remain untouched.
+  Additional home/about prose is copied from the corresponding existing Web pages.
+- Check: `node scripts/museum-mobile-sync.mjs`. Intentional Web catalog/image update:
+  `node scripts/museum-mobile-sync.mjs --write`, review generated diff and run tests.
+  Rights/source metadata and docs/MUSEUM_IMAGES.md remain authoritative; tests check
+  copied-image hashes, not an assertion that images are verified historical records.
+- IMPORTANT RIGHTS LIMITATION: Web video permission explicitly covers reposting on
+  the website only. No MP4 copied, streamed or autoplayed in the native app. Detail
+  opens the validated original YouTube URL only on a deliberate user press, shows
+  the existing credit/license and safe open-error feedback. Native player parity
+  is BLOCKED pending permission covering mobile redistribution. No fake transcript,
+  translated audio or captions; only Vietnamese exists at the real source.
+- Visual/device QA MANUAL PENDING: Pixel7 cold start, guest navigation, auth entry,
+  real login/logout (separate user action), Android Back, custom-scheme detail links,
+  safe area, image crop, large text/TalkBack, footer reachability and source handoff.
+  No real authentication, external-link opening or playback performed by Codex.
+
+## S29.2 — Mobile Login/Register refinement (2026-10-24)
+
+- Compared the actual Web Login/Register pages/forms and login.css, not the unused
+  legacy AuthLayout. Reuse shared purple/navy brand, museum icon, tagline, white
+  card and Be Vietnam Pro; retain a native single-column layout (no desktop photo
+  panel). Existing shared tokens/adapters unchanged; no Web/Dashboard redesign.
+- Mobile AuthLayout: aligned brand/card container max420dp, adaptive16/24dp card
+  padding, heading24sp, descriptions16sp/24 line-height. All auth Text uses the
+  appropriate local Be Vietnam Pro family. Labels, password guidance and feedback
+  use16sp rather than14sp; spacing between fields is16dp rather than24dp.
+- Auth-only Input appearance: min52dp control, readable helpers, native label/hint,
+  error announcement and focus/error borders. Button wrapLabel and InlineMessage
+  textStyle are opt-in additions; default shared-control rendering is preserved.
+  Auth CTA/link/password toggle min48dp, pressed feedback, footer link focus border,
+  wrapping text and no fixed text/card height or disabled font scaling.
+- Explicit four-edge SafeAreaView, bounded KeyboardAvoidingView/ScrollView chain;
+  iOS padding / Android height behavior, one natural scrolling region with bottom
+  content padding, handled taps and keyboard dismissal on drag. Keyboard Next moves
+  to the next input; invalid submit focuses the first invalid field. Existing
+  validation, entered data, password visibility, autofill, loading, submit lock,
+  auth calls, guards and redirect contracts retained.
+- UI/UX skill informed touch targets, native keyboard handling and readable text;
+  matched to current SDK58/RN docs rather than blindly applying older stack advice.
+- Mock tests cover widths320/375/393/768 and platform layout props, field styles,
+  visibility, keyboard focus, request errors and single-flight behavior. They do
+  not measure native scrolling, rendered text or the actual software keyboard.
+  Visual QA: NOT VERIFIED / MANUAL PENDING on Pixel7 and iOS. Verify keyboard open
+  at every field, scroll to Register CTA/footer, large text/landscape, TalkBack,
+  error focus and password toggle. No login/register API calls were made for QA.
+
 ## S29.1 — Customer Web/Mobile Design Synchronization (2026-10-24)
 
 - Canonical config `design/customer/tokens.json` generates Customer-scoped Web CSS,

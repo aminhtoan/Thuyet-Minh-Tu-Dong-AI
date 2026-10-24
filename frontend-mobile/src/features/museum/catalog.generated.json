@@ -1,0 +1,165 @@
+{
+  "images": {
+    "hero": {
+      "src": "/museum/images/hero.jpg",
+      "alt": "Không gian Bảo tàng Chứng tích Chiến tranh",
+      "width": 1600,
+      "height": 900
+    },
+    "museumIntro": {
+      "src": "/museum/images/museum-intro.jpg",
+      "alt": "Hình ảnh giới thiệu bảo tàng",
+      "width": 1200,
+      "height": 900
+    },
+    "exhibitionHistory": {
+      "src": "/museum/images/exhibition-history.jpg",
+      "alt": "Hình ảnh chủ đề Lịch sử và ký ức",
+      "width": 800,
+      "height": 600
+    },
+    "exhibitionPeople": {
+      "src": "/museum/images/exhibition-people.jpg",
+      "alt": "Hình ảnh chủ đề Câu chuyện con người",
+      "width": 800,
+      "height": 600
+    },
+    "exhibitionPeace": {
+      "src": "/museum/images/exhibition-peace.jpg",
+      "alt": "Hình ảnh chủ đề Giá trị của hòa bình",
+      "width": 800,
+      "height": 600
+    },
+    "featuredVideo": {
+      "src": "/museum/images/featured-video.jpg",
+      "alt": "Hình ảnh thuyết minh bảo tàng",
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "topics": [
+    {
+      "imageSlot": "exhibitionHistory",
+      "title": "Lịch sử và ký ức",
+      "description": "Nhìn lại quá khứ qua những câu chuyện được gìn giữ."
+    },
+    {
+      "imageSlot": "exhibitionPeople",
+      "title": "Câu chuyện con người",
+      "description": "Lắng nghe những góc nhìn và trải nghiệm về chiến tranh."
+    },
+    {
+      "imageSlot": "exhibitionPeace",
+      "title": "Giá trị của hòa bình",
+      "description": "Dành một khoảng lặng để suy ngẫm và kết nối với hiện tại."
+    }
+  ],
+  "narrationLanguages": [
+    {
+      "code": "en",
+      "icon": "EN",
+      "name": "English",
+      "label": "Tiếng Anh"
+    },
+    {
+      "code": "th",
+      "icon": "TH",
+      "name": "Thai",
+      "label": "Tiếng Thái"
+    },
+    {
+      "code": "ko",
+      "icon": "가",
+      "name": "Korean",
+      "label": "Tiếng Hàn"
+    },
+    {
+      "code": "zh-CN",
+      "icon": "中",
+      "name": "Simplified Chinese",
+      "label": "Tiếng Trung giản thể"
+    }
+  ],
+  "languages": [
+    {
+      "code": "vi",
+      "name": "Tiếng Việt",
+      "internationalName": "Vietnamese"
+    },
+    {
+      "code": "en",
+      "name": "Tiếng Anh",
+      "internationalName": "English"
+    },
+    {
+      "code": "th",
+      "name": "Tiếng Thái",
+      "internationalName": "Thai"
+    },
+    {
+      "code": "ko",
+      "name": "Tiếng Hàn",
+      "internationalName": "Korean"
+    },
+    {
+      "code": "zh-CN",
+      "name": "Tiếng Trung giản thể",
+      "internationalName": "Simplified Chinese"
+    }
+  ],
+  "videos": [
+    {
+      "slug": "bao-tang-chung-tich-chien-tranh",
+      "title": "Bảo tàng Chứng tích Chiến tranh — Video giới thiệu",
+      "description": "Khám phá những câu chuyện lịch sử qua video giới thiệu Bảo tàng Chứng tích Chiến tranh.",
+      "posterUrl": "/museum/posters/bao-tang-chung-tich-chien-tranh.jpg",
+      "sourceAttribution": {
+        "label": "YouTube",
+        "reference": "https://youtu.be/_MN6nsn-XDM"
+      },
+      "rights": {
+        "confirmed": true,
+        "license": "Được chủ kênh cho phép tải và đăng lại trên website, theo xác nhận của người dùng. Quyền cho phép cụ thể cho website, không phải giấy phép Creative Commons.",
+        "credit": "Nguồn video: YouTube — xem video gốc",
+        "verificationReference": "Người dùng xác nhận chủ kênh YouTube cho phép tải và đăng lại trên website — MUSEUM-06.2.2."
+      },
+      "visibility": "PUBLIC",
+      "publishedStatus": "PUBLISHED",
+      "sourceLanguage": "vi",
+      "languageVariants": [
+        {
+          "language": "vi",
+          "state": "AVAILABLE",
+          "videoUrl": "/museum/videos/bao-tang-chung-tich-chien-tranh.mp4"
+        },
+        {
+          "language": "en",
+          "state": "UNAVAILABLE"
+        },
+        {
+          "language": "th",
+          "state": "UNAVAILABLE"
+        },
+        {
+          "language": "ko",
+          "state": "UNAVAILABLE"
+        },
+        {
+          "language": "zh-CN",
+          "state": "UNAVAILABLE"
+        }
+      ]
+    }
+  ],
+  "exhibitions": [],
+  "imageHashes": {
+    "/museum/images/hero.jpg": "4909e09700a57b3b7b63c92f5a887888dce56705b31c165137dc104d6acc181b",
+    "/museum/images/museum-intro.jpg": "95fb96eb7a7c7ec4174b96284dc6f971a2c028fe1e0ac2c98c817dd1faffdfd0",
+    "/museum/images/exhibition-history.jpg": "332f75c449a9d9e9e6ba2f02b7b1fd6f410d454f3f7573b5db9cce96f6786d85",
+    "/museum/images/exhibition-people.jpg": "806dfc5ea54f22f5dcc7ea531938d46da126c3562d33023031f69d9ad00848bb",
+    "/museum/images/exhibition-peace.jpg": "186a2fc2b456619ae4e481afcb7442aa17c7fceb8dd6f585858744fb8f356558",
+    "/museum/images/featured-video.jpg": "c40f05dac8bf59d95928762ca41d467c13a959326d49a64e6c5602e30773640d",
+    "/museum/posters/bao-tang-chung-tich-chien-tranh.jpg": "c0864ca18256fa82076c73cde72d8734b9507107ca62266baaba2f740da181ef"
+  },
+  "playback": "EXTERNAL_SOURCE_ONLY"
+}

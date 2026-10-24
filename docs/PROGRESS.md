@@ -1,5 +1,101 @@
 # Project Progress
 
+## S29.2A — Public Museum Web → Expo Mobile (2026-10-24)
+
+- Audited actual Web Home/Explore/Videos/About, video/exhibition detail, header/
+  footer, image slots, public catalogs and permission records. Web has one public
+  video and no published exhibitions; no Backend/Admin/API duplication needed.
+- Added native public screens, shell/navigation/footer, isolated Museum style roles,
+  local images/fallback and published-only detail handling. `/` is now public for
+  every session state. Workspace entry reuses auth bootstrap; login still goes to
+  existing Dashboard, logout/private guard rejection to Museum Home. No Customer
+  Dashboard/tab redesign or changes to S29.2 auth forms/UI/authentication.
+- Added build-time museum-mobile-sync with Web publication filters and SHA-256
+  checks; seven JPG assets copied unchanged, catalog/asset adapter generated locally.
+  No runtime dependency on Web/Vite, auth API, database or private project data.
+- Video detail native playback PARTIAL/BLOCKED by existing website-only permission.
+  Preserved license/credit and original-source action; no MP4 bundled/streamed,
+  no invented audio/captions and no unavailable-language interactions.
+- Added8 public museum mock/contract tests and1 actual SDK URL matcher regression;
+  updated existing root tests for public home, guest workspace, loading, login/
+  logout guard destinations and deep links. Mobile91/91 PASS. Physical Pixel7 QA
+  MANUAL PENDING; no native rendering or real auth/logout call was claimed tested.
+- Final validation: Mobile TypeScript/ESLint, Android Metro/Hermes export (1341
+  modules,37 assets), Web400/400 regression, Customer token sync, Museum snapshot/
+  image hashes, script syntax and diff-check PASS. Temporary export remains at
+  frontend-mobile/dist-s292a-public-validation: cleanup was not executed because
+  automatic approval review hit its usage limit. No approval bypass attempted.
+- Flat listing routes avoid stale Windows typed-route watcher `/index` entries;
+  refreshed generated types using SDK58 CLI, no type casts/Router patch/config
+  bypass. Restart Metro from frontend-mobile if a running instance retains old
+  route context. Existing uncommitted root/auth work preserved.
+- No Gemini/TTS, MongoDB writes, attempt/quota operations, Web/Backend/Admin edits,
+  credentials/config changes, dependency installs or commit/push.
+
+## S29.2 — Mobile Auth UI Refinement (2026-10-24)
+
+- Scoped to Login/Register, AuthLayout and opt-in common-control presentation.
+  Read Web counterparts and synchronization rulebook; tokens/adapters unchanged.
+  Added shared native AuthFooter/authFormStyles and completed auth font families,
+  readable16sp helper/error text, compact420dp card, aligned brand/tagline and
+  adaptive padding. No Dashboard, Web, Public Museum, Admin or Backend edits.
+- Improved safe-area/keyboard/scroll props, 48dp link/toggle targets, wrapping CTA,
+  keyboard Next and first-error focus. Kept existing form fields, validation rules,
+  password behavior, auth API contracts, submit locks and guard-owned navigation.
+  RN0.88 native input ref uses ComponentRef<typeof TextInput>, not the component type.
+- Added9 mocked UI tests; Mobile82/82 and Web400/400 regression tests PASS.
+  Mobile TypeScript/ESLint, read-only token synchronization and Web lint/typecheck/
+  build PASS. Offline Android Metro/Hermes export PASS (1321 modules,30 assets),
+  temporary export removed after validation; diff-check PASS.
+  Web build retains existing mixed static/dynamic import advisory;
+  sandbox spawn EPERM resolved by an approved local build, no source workaround.
+- Physical Pixel7/iOS keyboard, safe areas, real font rendering, scrolling with
+  large text and TalkBack remain MANUAL PENDING; tests do not prove visual QA.
+  No real auth, AI/TTS, MongoDB, translation-attempt or quota operations, config
+  changes, dependencies, commit/push. Prior uncommitted root-route work preserved.
+
+## S28.2 — SDK58 root URL regression verification (2026-10-24)
+
+- Preserved the pending S28.1 bootstrap fix: always-registered index, loading until
+  session restoration, explicit Login/Dashboard redirects and unchanged auth guards.
+  No additional speculative navigation/config/UI changes made in S28.2.
+- Added root-url-matching.test.mjs exercising the installed Router58.0.25 route
+  discovery, native URL extraction and linking matcher against actual app filenames.
+  Both linking configs match custom-scheme `/` and Expo Go QR roots to index;
+  Login/Dashboard/deep links match existing screens and unknown paths match Not Found.
+  Native URL-unwrapping and route imports are stubbed: no session/API/database use.
+- Live Metro8081 manifest identifies frontend-mobile with routerRoot=src/app;
+  served Android development bundle contains root index and Dashboard redirect.
+  These observations do not prove which bundle the phone executed. The continuing
+  phone error is NOT REPRODUCED locally; stale device state/cache is a hypothesis,
+  not a confirmed root cause. Earlier component-only tests did not cover URL matching.
+- Mobile 73/73 tests, TypeScript/design check, ESLint (Expo config), offline Android
+  Metro/Hermes export (1319 modules, 30 assets) and diff-check PASS. Temporary export
+  output removed after validation; the running Metro process was not restarted.
+  Physical-device cold start/reload/logout and deep-link
+  verification MANUAL PENDING. Restart Metro with `npx expo start --clear` from
+  frontend-mobile (stop that Metro terminal first), fully close/reopen Expo Go and
+  rescan its new QR. Do not clear SecureStore or reset project/translation data.
+- No Backend/Web/Admin/auth/API/data changes, AI/TTS calls or commit/push.
+
+## S28.1 — Fix SDK58 startup Unmatched Route (2026-10-24)
+
+- Found root `index` guarded by loading only; once session restoration completed,
+  the launch URL `/` no longer had an accessible bootstrap screen. The existing
+  index only rendered a spinner and provided no deterministic auth redirect.
+- Keep index outside Protected groups. Reuse the same loading UI, redirect logged
+  out users to `/login`, authenticated users to `/(tabs)/dashboard`. Public/private
+  guards now explicitly redirect rejected access through `/`; auth, SecureStore,
+  valid screen registrations, scheme and generated Not Found remain unchanged.
+- Added component-level mocked startup/reload/login/logout and guard regression
+  tests. Mobile 69/69 tests, TypeScript/design check, direct ESLint (Expo config)
+  and Expo Doctor 20/20 PASS. Offline Android Metro/Hermes export PASS (1319
+  modules, 30 assets); initial sandbox EPERM resolved with approved compiler run.
+- Physical Android Expo Go QA NOT VERIFIED: verify cold start with/without session,
+  reload, login/logout, valid authenticated deep links and unknown-route Not Found.
+  Component mocks do not replace native navigation tests. No UI/API/Backend/Web/
+  Admin/database/config changes, AI/TTS calls, attempt actions or commit/push.
+
 ## S28 — Expo SDK58 Upgrade (2026-10-24)
 
 - Mobile upgraded Expo57→58.0.17, React19.2.3→19.3.0, RN0.86.3→0.88.0,
