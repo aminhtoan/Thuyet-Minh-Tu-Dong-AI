@@ -2883,3 +2883,61 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
   API/UI/PROGRESS docs. Skill ui-ux-pro-max informed non-misleading live status copy.
   Gemini0, database writes/connections0; no attempts/reservations, .env change,
   restart, commit/push. Can prepare separate configuration approval; not executed.
+## S29.4B — Customer Mobile navigation (2026-10-24): PARTIAL
+
+- Audited actual Web Sidebar/Topbar/routes/library eligibility and Mobile tab
+  layouts, auth guards, header, create form, legacy history and account screens.
+- Implemented four main navigation slots matching Web order and semantic icons;
+  new SDK 58 tab bar uses emitter/navigateToTab, native safe insets, equal widths,
+  keyboard hiding and shared Customer tokens. Account is reached from avatar,
+  with back navigation; existing logout/session implementation stays intact.
+- Reused the existing create form in `/(tabs)/create`; preserved `/projects/new`
+  as a protected redirect and retained tab state. Existing `/history`, `/account`
+  and `/settings` remain accessible without being primary tabs.
+- Missing: a native completed-products library matching Web. Its fourth slot is
+  disabled rather than opening legacy all-status history or a fabricated screen.
+  This is an explicit implementation dependency for a separately scoped step;
+  no claim of four fully functional tabs or completed library parity.
+- Changes: CustomerBottomNavigation.tsx, MobileHeader.tsx, tab layout/create,
+  projects/new compatibility route, NewProjectScreen.tsx, navigation label module
+  and declaration; customer-navigation-parity, dashboard-ui-polish,
+  navigation-interaction and sdk58-migration tests; UI/PROGRESS docs.
+- Validation: Mobile 167/167 tests PASS; Web regression 400/400 PASS. Mobile
+  TypeScript, ESLint and Android Metro/Hermes export PASS. Token synchronization,
+  Museum asset synchronization and diff-check PASS. Pixel 7 observed Dashboard
+  and create navigation; exact 360/393dp and full account/back, keyboard, safe-area
+  and tab-state visual acceptance remain MANUAL PENDING.
+- No real upload, create, logout, Gemini/TTS, MongoDB writes, attempt reset,
+  authentication/workflow guard change, Web/Backend/Public Museum source change,
+  commit or push. No next step started.
+## S29.4C — Customer Mobile Narration Library Web Parity (2026-10-24): PARTIAL
+
+- Implemented native `/library` and enabled fourth Customer tab. Preserved
+  `/history` as legacy all-status project history, Account via avatar and three
+  existing tabs. Reused Button/Card/Input/Spinner/EmptyState/ErrorState, current
+  tokens, authenticated projectRepository and complete-page loader.
+- Audited actual Web HistoryPlaceholder, useCompleteHistory, libraryPresentation,
+  RESULT guard, repository and ResultPage. Eligibility, descending updatedAt order,
+  metadata, search/media/language, manual apply, pages12 and read-only result action
+  now match. No fake products, preview thumbnails or extra library actions added.
+- Files added: app/(tabs)/library.tsx, screens/LibraryScreen.tsx,
+  features/results/libraryPresentation.ts, features/results/useLibrary.ts,
+  tests/narration-library.test.mjs. Updated CustomerBottomNavigation, tab layout,
+  ProjectWorkflow/DTO types and navigation/Dashboard tests, UI/PROGRESS docs.
+  Existing S29.4B edits retained; no other screen redesigned.
+- Tested: Mobile180/180, Web400/400 PASS (0 skipped). Mobile TypeScript/ESLint,
+  Android Metro/Hermes, Web lint/typecheck/build, token/Museum synchronization and
+  diff-check PASS. New tests13 cover Web selector parity, missing artifact/language,
+  multiple API pages,401/403, filters/pagination, states, result navigation and
+  session-race isolation. All automated data/API fixtures are isolated mocks.
+- Pixel7 visually observed real empty library and active tab. No actual completed
+  artifact available in observed state, no media opened. Exact360/393dp, large
+  text/gesture safe area and avatar/back remain MANUAL PENDING. Expo Go overlay
+  obscured avatar; no emulator setting/authentication change made.
+- Known dependency: pre-existing Mobile ResultScreen limits language to its
+  vi/en/ja/ko catalog; Web accepts verified normalized codes. Existing native
+  result playback/share and legacy-history return remain unchanged. This step
+  does not certify result playback or full end-to-end parity for every language.
+- Safety: no Web/Backend/Public Museum/Login/Register/config/API/guard changes,
+  no MongoDB writes, AI/TTS/render/job dispatch, UNCERTAIN retry/reset, commit or
+  push. No S29.5 work started.

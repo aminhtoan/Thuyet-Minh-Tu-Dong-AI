@@ -18,7 +18,7 @@ import { stagePickerAsset } from '@/features/projects/stagePickerAsset';
 import type { LanguageCode } from '@/features/projects/types';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
-export function NewProjectScreen() {
+export function NewProjectScreen({ withinTabs = false }: { withinTabs?: boolean } = {}) {
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
   const [nameTouched, setNameTouched] = useState(false);
@@ -110,8 +110,8 @@ export function NewProjectScreen() {
   function cancelUpload() { controllerRef.current?.abort(); setStatus('cancelled'); }
 
   return <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <MobileHeader title="Người kể chuyện AI" />
-    <SafeAreaView edges={['bottom']} style={styles.container}>
+    {!withinTabs && <MobileHeader title="Người kể chuyện AI" />}
+    <SafeAreaView edges={withinTabs ? [] : ['bottom']} style={styles.container}>
       <MobileScreen title="Dự án mới" description="Nhập thông tin dự án và chọn video hoặc âm thanh để bắt đầu." action={<Button size="sm" variant="ghost" onPress={() => router.replace('/projects')}>Quay lại danh sách dự án</Button>} contentContainerStyle={styles.scrollContent} keyboardDismissMode="on-drag">
         <Card style={styles.section}>
           <View style={styles.heading}><Text style={styles.step}>01</Text><View style={styles.headingText}><Text style={styles.sectionTitle}>Thông tin dự án</Text><Text style={styles.muted}>Đặt tên dự án và chọn ngôn ngữ được sử dụng trong phương tiện.</Text></View></View>

@@ -1,7 +1,7 @@
 import { ApiError, api } from '../../lib/api';
 import { mergeUpdatedProject } from './projectEditing.mjs';
-import type { LanguageCode, MediaType, Project, ProjectPagination, ProjectStatus } from './types';
-type ProjectDto = { id: string; name: string; description?: string; sourceLanguage: LanguageCode; status: ProjectStatus; progress: number; createdAt: string; updatedAt: string };
+import type { LanguageCode, MediaType, Project, ProjectPagination, ProjectStatus, ProjectWorkflow } from './types';
+type ProjectDto = { id: string; name: string; description?: string; sourceLanguage: LanguageCode; status: ProjectStatus; progress: number; workflow?: ProjectWorkflow; createdAt: string; updatedAt: string };
 type MediaDto = { originalName: string; mediaType: MediaType; fileSize: number; duration: number | null };
 type TranslationDto = { targetLanguage: LanguageCode; updatedAt: string };
 type State = { projects: readonly Project[]; loading: boolean; error: string | null };

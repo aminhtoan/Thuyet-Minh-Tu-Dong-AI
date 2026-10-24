@@ -22,7 +22,7 @@ test('SDK58 retains declared tabs, dashboard first, and protected authentication
   assert.doesNotMatch(tabs, /<Tabs\s+initialRouteName=/);
   assert.equal([...tabs.matchAll(/<Tabs.Screen name="([^"]+)"/g)][0][1], 'dashboard');
   for (const name of ['dashboard', 'projects', 'history', 'settings', 'account']) assert.ok(tabs.includes(`name="${name}"`));
-  assert.match(tabs, /name="settings" options=\{\{ href: null \}\}/);
+  assert.match(tabs, /name="settings" options=\{\{ href: null/);
   const root = await read('src/app/_layout.tsx');
   assert.ok(root.includes('guard={guards.public} redirectTo="/khong-gian-cua-toi"'));
   assert.ok(root.includes('guard={guards.private} redirectTo="/"'));

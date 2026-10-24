@@ -195,6 +195,7 @@ test('Dashboard detail/resume actions share one equal-width row at360/393dp with
 test('Dashboard header/scroll use shared brand/font and no duplicated bottom safe area', () => {
   const header = compile('components/layout/MobileHeader.tsx', {
     ...base, 'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
+    'expo-router': { router: { navigate: () => {}, canGoBack: () => false, replace: () => {} } },
     '@expo/vector-icons/MaterialCommunityIcons': { default: 'Icon' },
   }).MobileHeader({ title: tokens.customerBrand.name, dashboard: true });
   assert.ok(text(header).includes('Thuyết minh bảo tàng'));
@@ -209,15 +210,18 @@ test('Dashboard header/scroll use shared brand/font and no duplicated bottom saf
   assert.equal(nodes(tree).filter(node => node.props.children === 'Khởi tạo hành trình thuyết minh đa ngôn ngữ').length, 0, 'no duplicate title outside Hero');
 });
 
-test('Customer tabs remain four visible routes, equal width, native safe-area-managed and separate from Public', () => {
+test('Customer tab routes preserve Dashboard, Projects and create; account/history remain hidden and separate from Public', () => {
   const tree = compile('app/(tabs)/_layout.tsx', {
     ...base, '@expo/vector-icons/MaterialCommunityIcons': { default: 'Icon' },
     'expo-router': { Tabs: Object.assign(() => {}, { Screen: 'TabScreen' }) },
     '@/components/layout/MobileHeader': { MobileHeader: 'MobileHeader' },
+    '@/components/layout/CustomerBottomNavigation': { CustomerBottomNavigation: 'CustomerBottomNavigation' },
     '@/localization/navigationLabels.mjs': { navigationLabels },
   }).default();
   const visible = tree.props.children.filter(node => node.props.options.href !== null);
-  assert.deepEqual(Array.from(visible, node => node.props.name), ['dashboard', 'projects', 'history', 'account']);
+  assert.deepEqual(Array.from(visible, node => node.props.name), ['dashboard', 'projects', 'create', 'library']);
+  assert.equal(tree.props.backBehavior, 'history');
+  assert.equal(tree.props.tabBar({}).type, 'CustomerBottomNavigation');
   const options = tree.props.screenOptions;
   assert.equal(options.tabBarItemStyle.flex, 1);
   assert.equal(options.tabBarItemStyle.minWidth, 0);

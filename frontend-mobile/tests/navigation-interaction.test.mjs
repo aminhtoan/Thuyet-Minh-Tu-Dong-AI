@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { validateLoginValues, validateRegisterValues } from '../src/features/auth/authValidation.mjs';
 import { confirmationMessages as mobileConfirmations } from '../src/localization/confirmationMessages.mjs';
-import { navigationLabels as mobileNavigation } from '../src/localization/navigationLabels.mjs';
+import { libraryNavigationLabel, navigationLabels as mobileNavigation } from '../src/localization/navigationLabels.mjs';
 import { validateLoginValues as validateWebLogin, validateRegisterValues as validateWebRegister } from '../../frontend-web/src/features/auth/authValidation.mjs';
 import { confirmationMessages as webConfirmations } from '../../frontend-web/src/localization/confirmationMessages.mjs';
 import { navigationLabels as webNavigation } from '../../frontend-web/src/localization/navigationLabels.mjs';
@@ -13,16 +13,18 @@ test('shared navigation labels match except the documented history/library capab
   // Mobile still lists project history, not verified completed library products.
   assert.equal(webNavigation.history, 'Thư viện thuyết minh');
   assert.equal(mobileNavigation.history, 'Lịch sử');
+  assert.equal(libraryNavigationLabel, webNavigation.history);
   assert.deepEqual(Object.values(mobileNavigation), ['Bảng điều khiển', 'Dự án của tôi', 'Tạo thuyết minh', 'Lịch sử', 'Tài khoản']);
 });
 
-test('legacy Settings renders Account while only Account is visible in tabs', async () => {
+test('legacy Settings renders Account while account/history remain secondary routes', async () => {
   const [tabs, settings] = await Promise.all([
     readFile(new URL('../src/app/(tabs)/_layout.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/screens/SettingsScreen.tsx', import.meta.url), 'utf8'),
   ]);
-  assert.match(tabs, /name="settings" options=\{\{ href: null \}\}/);
-  assert.match(tabs, /name="account"/);
+  assert.match(tabs, /name="settings" options=\{\{ href: null/);
+  assert.match(tabs, /name="account" options=\{\{ href: null/);
+  assert.match(tabs, /name="history" options=\{\{ href: null/);
   assert.match(settings, /<AccountScreen \/>/);
 });
 

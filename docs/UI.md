@@ -2920,3 +2920,87 @@ evidence. No model selector, mutation/retry button, layout or theme change added
 ui-ux-pro-max error-clarity/semantic-feedback guidance informed the copy; existing
 status/live regions are preserved. Browser verification NOT RUN; mock Web tests299
 PASS, lint/typecheck/production build PASS.
+## S29.4B — Customer Mobile navigation parity (2026-10-24)
+
+- Web reference: dashboard `/dashboard`, projects `/projects`, create narration
+  `/projects/new`, completed-products library `/history`; account `/settings` via
+  avatar and secondary navigation. All remain authenticated Customer routes.
+- Mobile main navigation now has exactly four slots, in this order: Bảng điều
+  khiển, Dự án của tôi, Tạo thuyết minh, Thư viện thuyết minh. Shared Customer
+  colors/fonts, equal flexible widths, centered wrapping labels, native bottom
+  insets and touch targets of at least 48dp are retained. Keyboard hides the bar.
+- Create reuses NewProjectScreen at `/(tabs)/create` (URL `/create`). The existing
+  protected `/projects/new` redirects there; it does not mount a second form.
+  Tab switching retains mounted state. No upload or creation occurs on navigation.
+- Avatar opens the existing `/account`; account and its `/settings` alias remain
+  protected and hidden from the main bar. Account has a back action. Existing
+  session/logout behavior and confirmation are unchanged; no live logout tested.
+- **PARTIAL:** Mobile HistoryScreen is legacy project history, not a verified
+  completed-products library. `/history` and current links remain intact and
+  hidden from the main bar. The fourth library slot is visibly non-interactive,
+  accessibility-disabled, with a hint explaining that its screen is not yet
+  implemented. It does not open history, a placeholder route or invented results.
+  A separate library implementation must match Web artifact eligibility, results
+  access and available filters before this slot can be enabled.
+- Regression: Mobile 167/167 and Web 400/400 PASS; Mobile TypeScript/ESLint,
+  Android Metro/Hermes export, token synchronization and Museum asset checks PASS.
+- Pixel 7 observed: four labels/icons, Dashboard active state, existing create
+  form and create active state; Public Museum still has its separate five items.
+  Exact 360/393dp, large text, gesture insets, account/back, keyboard and form-state
+  preservation across real tab switches remain MANUAL PENDING. Automated layout
+  and state tests do not establish full visual acceptance.
+- Only Mobile and documentation changed. No Web, Public Museum, Backend, API,
+  auth/workflow guard, credentials, database, Gemini/TTS or attempt changes.
+## S29.4C — Customer Mobile Narration Library Web Parity (2026-10-24)
+
+Implemented:
+- Web reference `/history`: HistoryPlaceholder.tsx, useCompleteHistory.ts,
+  libraryPresentation.ts and workflowRouteGuard.ts. Title/description, icon-only
+  media fallback, verified metadata and sole card action “Xem thuyết minh” match.
+  Web library has no inline playback, download/share or extra KPI. Those belong
+  to the existing result page, not the library.
+- Native `/library` uses LibraryScreen, libraryPresentation and useLibrary.
+  Legacy `/history` remains unchanged. Four Customer tabs are now functional;
+  library has its own active route and Account remains accessible through avatar.
+- Eligibility matches Web: project COMPLETED, workflow COMPLETED at RESULT,
+  no processing, valid normalized target language, VIDEO/RESULT/resultReady or
+  AUDIO/NARRATION/narrationReady. Progress100, source media URLs and translation
+  metadata never attest completion. Incomplete completed rows produce the same
+  data-incomplete notice and are excluded from products.
+- Reuses authenticated projectRepository.listPage and loadCompleteProjectList
+  (100 per API page, bounded100pages, fail-closed on incomplete/changing datasets).
+  All pages load before client search/filter and12-product pagination. Sort is
+  updatedAt descending, as Web. No media file is downloaded by the library.
+- Draft/applied query/media/language values stay separate until Search. Language
+  options only use eligible products. Native wrapping radio choices replace
+  selects. Loading/error/empty/no-match states remain distinct, retry only GET.
+  Fetch cancellation and session-revision comparison reject stale account data.
+- Result action passes exact project ID/language to existing protected result
+  route. Existing players/cache/share behavior is reused without modification;
+  no media URL is assembled by the library and no AI/job request is triggered.
+
+Tested:
+- Mobile180/180 and Web400/400 tests PASS, including13 new library tests and
+  updated Customer navigation/Dashboard regression. Selector combinations are
+  compared directly with actual Web functions; ownership401/403 propagate as
+  errors, incomplete pagination never becomes an empty-success library.
+- Mobile TypeScript/ESLint, Android Metro/Hermes export PASS. Web lint/typecheck/
+  build PASS (existing mixed-import advisory). Token and Museum asset sync PASS.
+  Hermes and Vite required approved escalation for sandbox spawn EPERM.
+
+Manual QA pending / known differences:
+- Pixel7 observed actual library empty state, title/description, search/media
+  choices, four-tab layout and library active state. No fixture data injected.
+  Exact360/393dp, large text, gesture clearance, product cards/media playback and
+  full account/back cycle remain NOT VERIFIED. Expo Go floating control obscured
+  avatar during this check; its menu was closed without changing settings.
+- Existing Mobile ResultScreen accepts only vi/en/ja/ko catalog languages, while
+  Web result routing accepts verified normalized codes. Library preserves every
+  verified code instead of inventing availability or silently selecting another
+  language. Result support outside that catalog remains a pre-existing dependency.
+- Existing result page retains its legacy “Xem lịch sử” action and native share;
+  these were not reworked or added to the library. No global result-workflow guard
+  change was made. Full end-to-end acceptance remains PARTIAL until real eligible
+  artifacts and Android playback have been verified safely.
+- No Web/Backend/Public Museum/Login/Register/API/authentication changes, no
+  MongoDB writes, Gemini/TTS/render, attempt reset/retry, config change or commit.
