@@ -1,5 +1,244 @@
 # Project Progress
 
+## S29.3.3B — Dashboard time filter (2026-10-24, PARTIAL)
+
+- Audited Web/Mobile metrics, filters, chart, dataset, repository and loading hook.
+  Month means one bucket per local calendar day, using createdAt, not updatedAt.
+  There is no end-of-day midnight cutoff; month1–12 converts once to index0–11.
+  Missing/duplicate account data suppresses charts rather than producing totals.
+- Pixel7 live: October2026 early visible days were zero; horizontal swipe revealed
+  positive bars for dates17/18/19/21. The apparent all-zero result was the viewport,
+  not missing monthly data. Counting formula and approved chart UI unchanged.
+- Separate confirmed filter defect fixed: valid date/month/year edits now keep
+  the draft anchor synchronized across mode changes before Apply, with Web-like
+  month-end clamping. Invalid text is retained for validation. No request added.
+- Changed DashboardTimeFilter.tsx, dashboard-charts.test.mjs,
+  dashboard-functional-parity.test.mjs, UI.md/PROGRESS.md. Preserved prior changes.
+- Mobile141/141 PASS, TypeScript/ESLint PASS, Android Metro/Hermes offline PASS,
+  token/Museum hash synchronization and diff-check PASS. Added tests against Web
+  for first/last day, outside month, leap day, Dec/Jan, UTC/Vietnam/LosAngeles,
+  empty data, unique date buckets and draft mode-switch/apply/reset. Windows
+  timezone fixture restores Date cache after each comparison.
+- Monthly-data visibility verified on Pixel7; full post-fix filter acceptance
+  remains MANUAL PENDING. Overall PARTIAL. No Web/Backend/config/auth/workflow
+  edits, AI calls, MongoDB writes, attempt reset/retry, commit or push.
+
+## S29.3.3 — Customer Mobile Dashboard Functional Parity (2026-10-24, PARTIAL)
+
+- Audited actual Web DashboardPlaceholder, projectRepository/useProjects,
+  dashboardMetrics, projectUtils, projectAction/workflowRouteGuard/dashboardResume;
+  checked current Backend list bounds, owned project workflow and Customer attempt
+  GET. No runtime/API/database operations used for audit or tests.
+- Dataset parity: isolated Dashboard hook reads one page100, same as Web. Verified
+  total/unique IDs required before both charts can claim account statistics.
+  Accounts over100 or missing pagination show incomplete feedback; no unbounded
+  reads/aggregation. Refresh on Dashboard focus; safe read retry on load error.
+- Added day/month/year native filter with draft/applied/reset semantics. Local
+  createdAt calendar, month-end clamp, leap-year coverage, bar-only changes;
+  unchanged donut/recents/activity. Scrollable month/year chart labels stay inside
+  card. S29.3.2 render order/no KPI/four Customer tabs preserved.
+- Continue: fresh owned project GET, validated existing workflow route, target
+  language and result artifact; eight-second timeout, abort-on-unmount, duplicate
+  lock, visible safe errors. Extra existing vi→en attempt GET blocks UNCERTAIN and
+  other unsafe states. No processing POST, refresh, automatic retry or AI call.
+  Missing/disabled attempt endpoint or unsupported Mobile target language blocks
+  safely; existing Customer draft review editor parity remains out of scope.
+- Files this step: DashboardScreen; ProjectCard (Dashboard action only); project
+  types; DashboardCharts/dashboardChartMetrics; new dashboardData,
+  useDashboardProjects, dashboardResume, DashboardResumeButton,
+  DashboardTimeFilter; three existing Dashboard tests and new
+  dashboard-functional-parity.test.mjs; UI.md/PROGRESS.md. Existing S29.2/S29.3.2
+  dirty changes preserved; no dependencies/config/tokens modified this step.
+- Final validation: Mobile136/136, Web400/400 PASS, zero skipped; both lint and
+  TypeScript PASS; Web build PASS with existing mixed-import advisory; Android
+  Metro/Hermes offline export PASS (initial sandbox Hermes spawn EPERM; approved
+  export-only escalation); design-token and Museum data/image hash sync PASS;
+  git diff --check PASS. Web source-check expected local useProjects name; retained
+  that local name via explicit Dashboard-hook import alias without editing Web.
+- MANUAL PENDING: Pixel7 360/393dp, screen-reader/font scaling/filter keyboard,
+  chart scrolling, navigation/focus/safe area and actual authenticated Backend
+  responses. Functional account-wide statistics above100 remain unavailable in
+  both current Web and Mobile. Not claiming COMPLETE or full translation parity.
+- Safety: no Web/Backend/Public Museum/Login/Register/Customer tabs edits this
+  step; no live MongoDB access/writes, Gemini/TTS calls, attempt resets/retries,
+  environment changes, commit or push. Stopped at S29.3.3.
+
+## S29.3.2 — Customer Mobile Dashboard Web Parity (2026-10-24, PARTIAL)
+
+- Audited actual Web render/source/selectors before editing. Confirmed no KPI
+  cluster. Reference order: Hero/create ->4 quick links -> successful charts ->
+  recent projects -> recent activity (or existing loading/error feedback).
+- Removed Mobile Dashboard's KPI import/render only, retained StatCard/statistics
+  selectors. Matched four quick links/copy/routes and ordering, used Web's same
+  real local Hero image/copy, increased recent display limit4->5, added matching
+  status-derived activity up to4 items with empty state and existing/history link.
+  Optional MobileScreen.headerContent avoids duplicate intro; other screens unchanged.
+- Changed this step: DashboardScreen.tsx, new DashboardHero.tsx, MobileScreen.tsx,
+  dashboard-ui-polish.test.mjs, dashboard-project-list-ui.test.mjs, UI.md/PROGRESS.md.
+  Preserved all pre-existing S29 changes including Public navigation and chart
+  dependency, and kept Customer four-tab layout untouched. No new dependencies.
+- Validation executed: Mobile121/121, Web400/400, both lint/typecheck, Web build,
+  token synchronization, Museum image/content hashes, Android Metro/Hermes and
+  diff-check PASS. Export ignored .expo/validation/s2932-android (1456 modules/37
+  assets). Web retains pre-existing ineffective-dynamic-import warning.
+- NOT acceptance-complete: first20/unknown completeness vs Web full-account data;
+  missing metadata flags, chart month/year controls, interactive donut, and Web's
+  guarded single resume action. Existing Mobile project actions/media/progress
+  retained to avoid workflow changes; Mobile history is not the Web library.
+  Full before/after comparison and gaps documented in UI.md. No fake parity claim.
+- Visual QA Pixel7/360/393dp MANUAL PENDING: no emulator observation this step.
+  Need inspect section order/no KPIs, real-data cards/chart legends, scrolling to
+  activity end, text scaling and native safe areas. Do not close S29.3.2 as fully
+  complete until visual acceptance and remaining functional differences are resolved.
+- No Web/Backend/Admin/Public/Login/Register modifications, API changes, credentials
+  or env edits, database access/writes, Gemini/TTS/video processing, attempt changes,
+  runtime restart, commit or push.
+
+## S29.3.1 — Customer Mobile Dashboard charts (2026-10-24)
+
+- Added DashboardCharts.tsx and dashboardChartMetrics.ts; DashboardScreen renders
+  the two stacked chart cards only after successful loading, keeping KPI2x2 and
+  all existing quick/recent/navigation UI. Uses existing projects/selector; no
+  additional request, repository, API or workflow changes.
+- Ported Web's default local-calendar7-day grouping, integer scale, one-decimal
+  status percentages and donut arc geometry. Regression compares Web outputs
+  directly. COMPLETED remains a status, never inferred from progress100. Missing
+  createdAt is reported/excluded rather than fabricated from updatedAt.
+- Explicit scope on each card: loaded projects, not whole account (existing first20
+  repository limit and lack of completeness metadata retained). Mobile intentionally
+  supports default7-day chart only, not Web's month/year filter/hover controls.
+- Installed only direct dependency react-native-svg15.16.0 using Expo SDK58 install;
+  package.json/lockfile changed (+13 transitive packages per npm), no native folders
+  or config edits. Expo docs/bundledNativeModules confirm Expo Go support. Native
+  Views render bars; SVG Circle/G primitives render donut. Shared fonts/tokens.
+- Mobile118/118 PASS, including new chart7/7 and retained Dashboard9/9; ESLint,
+  TypeScript, token sync, Museum hashes and diff-check PASS. Offline Android
+  Metro/Hermes PASS (1456 modules/37 assets), ignored .expo/validation/s2931-android.
+  Web400/400, lint/typecheck/build PASS without Web edits; existing build warning.
+  npm reports5 high vulnerabilities; no security audit/remediation or broad upgrades
+  attempted. Pixel7/360/393dp, font scaling/TalkBack/native SVG visual QA pending.
+- Files: DashboardCharts.tsx, dashboardChartMetrics.ts, DashboardScreen.tsx,
+  dashboard-charts.test.mjs, dashboard-ui-polish.test.mjs, Mobile package/lockfile,
+  docs/UI.md and PROGRESS.md. All pre-existing changes preserved. No runtime
+  restart, credentials/config edits, Gemini/TTS, database access/writes, attempt
+  operations, commit or push.
+
+## S29.3 — Customer Mobile Dashboard UI refinement (2026-10-24)
+
+- Audited existing Mobile Dashboard against Customer Web and shared design rules.
+  Added scoped Dashboard header/scroll styles; clear full-width48dp create CTA,
+  explicit2x2 KPI rows, shared fonts/semantic accents and compact quick actions.
+  Dashboard-only project card variant keeps two-line names, bounded status,
+  readable progress and stacked48dp wrapped actions. Other cards retain defaults.
+- Shared Badge/ProgressBar gain optional text styling only; status mapping,
+  progress normalization, projectAction, data fetching/auth/business logic unchanged.
+  Regression covers TRANSLATING at100% still not completed, actual navigation
+  targets, loading/error/empty, KPI rows, badge colors and four Customer tabs.
+- Customer bottom navigator retains four routes/native safe-area ownership;
+  equal-flex items, Be Vietnam Pro labels and explicit below-icon positioning.
+  No Public Museum/Login/Register changes or cross-area navigation coupling.
+- Mobile111/111 (Dashboard9/9), TypeScript, ESLint and offline Android Metro/Hermes
+  PASS (1341 modules/37 assets); artifact .expo/validation/s293-android ignored.
+  Shared token sync/Museum hashes/diff-check PASS. Web400/400, lint/typecheck/build
+  PASS; existing ineffective-dynamic-import build warning remains, no Web edits.
+- Capability limit preserved: repository currently loads first20 projects;
+  Mobile KPIs use loaded records, not a new global statistics API. Pixel7/iOS,
+  small phones, enlarged fonts, scrolling/footer and native safe areas remain
+  Visual QA MANUAL PENDING; no claim of live-data/device validation.
+- Source changes: DashboardScreen, StatCard, ProjectCard, ProjectStatusBadge,
+  MobileHeader, MobileScreen, Badge, ProgressBar, Customer tabs/_layout and new
+  dashboard-ui-polish.test.mjs plus these docs. Preserved pre-existing dirty work.
+  No new dependencies/token changes/config edits, Gemini/TTS, database access,
+  attempt operations, service restart, commit or push.
+
+## S29.2B.4 — Fix full-width Public Museum navigation (2026-10-24)
+
+- Root cause confirmed in installed Expo Router/Radix: Slot merges a direct
+  child's style callback as an object, removing the old Pressable's flex styles.
+  Added a ref-forwarding tab button boundary so styles are created after Slot.
+  Existing Link navigation preserved. Removed bar row maxWidth; explicit100%
+  bar/row width and flex1/minWidth0 tabs. Safe area/ScrollView placement unchanged.
+- Regression uses the installed merge implementation to reproduce previous failure
+  and verify native style callback/ref/event preservation. Checks equal widths and
+ 48dp target allocation at360/393/411/1024dp; physical render MANUAL PENDING.
+- Public19/19/all Mobile102/102 tests PASS; final TypeScript PASS after correcting
+  ref typing to ComponentRef<typeof Pressable> for RN0.88. ESLint and offline
+  Android Metro/Hermes PASS (1341 modules/37 assets); asset/hash/token sync and
+  diff-check PASS. Ignored artifact .expo/validation/s292b4-android.
+- Only MuseumUI/theme/tests and these docs changed for B.4; preserved earlier dirty
+  work. No Hero/CTA/images/content/Customer navigation/Web/Backend/Admin changes,
+  Gemini/TTS/database access, config edits, attempt actions or commit/push.
+
+## S29.2B.3 — Fix Public Museum bottom navigation alignment (2026-10-24)
+
+- Changed only public tab layout and final Home CTA styling (theme/MuseumUI plus
+  tests/docs). Centered five equal tabs with11sp wrapping labels,8dp separation,
+ 48dp minimum touch width and80dp minimum height; preserved active purple/icons.
+  Final CTA uses explicit white text/dark purple with navy pressed feedback.
+- Previous styles confirmed flex-start/12sp/2dp tab gaps. No source evidence of
+  a low-contrast final CTA color pair; actual device appearance cause remains
+  unverified. No safe-area duplication or absolute overlay found; retained the
+  single SafeAreaView and bar outside ScrollView without extra bottom insets.
+- Public18/18/all Mobile101/101 PASS. TypeScript, ESLint, asset/hash sync, token
+  sync and diff-check PASS. Offline Android Metro/Hermes PASS,1341 modules/37
+  assets; ignored artifact .expo/validation/s292b3-android. Device visual QA
+  MANUAL PENDING (360dp/Pixel7, system font scaling, Android/iOS bottom safe area).
+- No Hero/image/content/route/auth changes. No Web/Backend/Admin/Customer screen
+  changes, Gemini/TTS/database operations, config changes, reset/retry or commit/push.
+
+## S29.2B.2 — Final Public Museum Mobile UI polish (2026-10-24)
+
+- Limited changes to Home's three CTA appearances and Public bottom navigation.
+  Reused Web's white primary/light outline Hero hierarchy and purple final CTA;
+  added scoped variants, readable pressed states and keyboard-focus treatment.
+  Equal-width tabs now reserve centered icon/label slots, allow labels to wrap
+  and retain48dp minimum touch width, active state and safe-area space.
+- Public16/16/all Mobile99/99 PASS; ESLint, TypeScript and offline Android
+  Metro/Hermes PASS (1341 modules/37 assets). Museum content/image hashes,
+  Customer token sync and diff-check PASS. Export retained under ignored
+  .expo/validation/s292b2-android. No services restarted.
+- User's Pixel7 visual approval applies to B.1. Visual QA of these B.2 changes:
+  MANUAL PENDING. Preserved Hero sizing, all images/copy/routes, Login/Register,
+  Customer Dashboard, Web/Backend/Admin. No Gemini/TTS or database access/writes,
+  config changes, attempt operations, commit or push.
+
+## S29.2B.1 — Fix Public Museum Mobile Hero image (2026-10-24)
+
+- Confirmed root cause in installed React Native Image: local source dimensions
+  precede style; old aspectRatio-only sizing retained source height. Moved ratio
+  ownership to a View with explicit100%x100% absolute Image child. Hero remains
+  contain, capped at200dp with paired16:9 width cap and navy letterboxing; copy
+  and both CTA links unchanged. Same fix covers Intro/topic/poster images.
+- Added regressions for native source-dimension override,16:9/200dp cap across
+  logical viewport widths, shared Intro frame and accessible failure sizing.
+  Public14/14 and all Mobile97/97 PASS; TypeScript, ESLint, offline Android
+  Metro/Hermes (1341 modules/37 assets), asset/hash sync, token sync and diff-check
+  PASS. Bundle artifact: ignored .expo/validation/s292b1-android.
+- Pixel7 visual QA MANUAL PENDING; expected sizing is not a device observation.
+  Preserved routes, bottom navigation/safe area, Login/Register, Customer Dashboard,
+  Web and Backend. No Gemini/TTS, MongoDB access/writes, config changes or commit/push.
+
+## S29.2B — Public Museum Mobile UI Refinement (2026-10-24)
+
+- Scoped edits to MuseumUI/MuseumScreens/theme and Public UI tests. Brand-only
+  header; five-item fixed-in-layout bottom links with icons/active/focus/pressed
+  feedback. Bar is outside scrolling content and inside safe-area edges, never
+  an overlay. Workspace entry/auth/Customer tabs and every S29.2A route unchanged.
+- Hero image displayed fully at16:9 above navy copy; primary/secondary CTA hierarchy
+  clarified. Improved intro typography/rhythm and two-column language cards with
+  natural equal-row sizing, wrapping text, neutral glyphs and unchanged availability.
+- Four additional regressions cover bar placement/safe-area props,48dp targets,
+  active detail paths/Customer isolation, Hero contain/CTA hierarchy and two-column
+  non-interactive language cards. Mobile95/95 tests PASS (focused Public12/12).
+  TypeScript, Museum snapshot/image hashes, Customer token sync and diff-check PASS.
+- Final ESLint (all Mobile src/tests and focused modified files) PASS. Offline
+  Android Metro/Hermes export PASS (1341 modules,37 assets), artifact retained in
+  ignored .expo/validation/s292b-android. No runtime services started/restarted.
+- No new native device QA performed: Pixel7/iOS layout, actual scrolling, hardware
+  Back, font scaling and TalkBack remain MANUAL PENDING. No runtime restart, real
+  auth, source-video opening, Gemini/TTS, database writes or attempt actions.
+  No Web/Backend/Admin/Login/Register/Dashboard/config/dependency changes; no commit/push.
+
 ## S29.2A — Public Museum Web → Expo Mobile (2026-10-24)
 
 - Audited actual Web Home/Explore/Videos/About, video/exhibition detail, header/

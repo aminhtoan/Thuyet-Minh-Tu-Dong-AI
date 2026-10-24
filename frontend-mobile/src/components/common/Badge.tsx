@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View, type ViewProps } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewProps } from 'react-native';
 import { colors, radius, typography } from '@/theme/tokens';
 import { getDisplayStatus } from '@/utils/displayLabels';
 
 type BadgeVariant = 'default' | 'info' | 'success' | 'warning' | 'error';
-type BadgeProps = ViewProps & { children: ReactNode; variant?: BadgeVariant };
+type BadgeProps = ViewProps & { children: ReactNode; variant?: BadgeVariant; labelStyle?: StyleProp<TextStyle> };
 
-export function Badge({ children, variant = 'default', style, ...props }: BadgeProps) {
+export function Badge({ children, variant = 'default', style, labelStyle, ...props }: BadgeProps) {
   const label = typeof children === 'string' ? getDisplayStatus(children) : children;
-  return <View style={[styles.badge, styles[variant], style]} {...props}><Text style={[styles.label, styles[`${variant}Label`]]}>{label}</Text></View>;
+  return <View style={[styles.badge, styles[variant], style]} {...props}><Text style={[styles.label, styles[`${variant}Label`], labelStyle]}>{label}</Text></View>;
 }
 
 const styles = StyleSheet.create({

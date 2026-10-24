@@ -21,9 +21,9 @@ export function StatCard({ label, value, tone = 'default' }: StatCardProps) {
 const styles = StyleSheet.create({
   card: {
     position: 'relative',
-    width: '47%',
-    minHeight: 84,
-    flexGrow: 1,
+    flex: 1,
+    minWidth: 0,
+    minHeight: 112,
     overflow: 'hidden',
     justifyContent: 'center',
     paddingVertical: 14,
@@ -57,11 +57,15 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.textMuted,
-    fontSize: 12.5,
+    fontFamily: typography.family.semibold,
+    fontSize: typography.size.sm,
+    lineHeight: 20,
+    minHeight: 40,
     fontWeight: typography.weight.semibold,
     letterSpacing: 0.15,
   },
   value: {
+    fontFamily: typography.family.bold,
     color: colors.textPrimary,
     fontSize: 28,
     fontWeight: typography.weight.bold,

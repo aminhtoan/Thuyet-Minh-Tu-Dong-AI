@@ -1,5 +1,329 @@
 # UI Specification
 
+## S29.3.3B — Dashboard time-filter verification (2026-10-24, PARTIAL)
+
+Month retains one bucket per local calendar day and horizontal scrolling. Pixel7
+October2026 initially showed zero early days; swiping revealed positive later
+days. No artificial values or layout changes added. Formula unchanged:
+count(createdAt local date equals bucket key); day uses seven inclusive dates,
+year twelve local months. No updatedAt or midnight end-boundary filtering.
+
+DashboardTimeFilter synchronizes valid day/month/year edits into the draft date
+before switching modes, matching Web's single draft anchor. Month-end clamps on
+edit, including leap years; Apply/reset/close semantics retained. ui-ux-pro-max
+guidance informed truthful data and consistent draft/applied state, not changing
+the chart to manufacture nonzero bars.
+
+Mobile141/141, TypeScript, ESLint, Android Metro/Hermes, token/image sync and
+diff-check PASS. Isolated boundary/timezone/mode-switch comparisons use actual
+Web selectors. Pixel7 monthly data visibility VERIFIED; full post-fix filter
+interaction Visual QA MANUAL PENDING. No Web/Backend/database/AI/config edits.
+
+## S29.3.3 — Customer Mobile Dashboard Functional Parity (2026-10-24, PARTIAL)
+
+### Verified Web audit and scoped Mobile implementation
+
+| Area | Actual Web source | Mobile change |
+|---|---|---|
+| Dataset | projectRepository/useProjects: GET /projects?page=1&limit=100; pagination retained; NOT an all-pages aggregation | Dashboard-only hook reuses projectRepository.listPage with page1/limit100, reloads on focus, ignores cancelled results. Existing Projects/repository consumers unchanged. |
+| Completeness | Dashboard suppresses both charts when pagination.total exceeds loaded records | Both charts require verified first-page total equal to unique loaded IDs. Missing metadata/duplicates fail closed. More than100 records: explicit incomplete-data feedback, not partial account statistics. No pagination loop. |
+| Statistics | dashboardMetrics/projectUtils: createdAt in device-local calendar; COMPLETED by status only; processing status set, FAILED, residual Other | Same selectors/one-decimal percentage and integer scale. No progress100 completion inference or invented data. |
+| Time filter | DashboardPlaceholder: day/default today (seven days including anchor), month (all calendar days), year (12 months); draft/apply/reset; bar only | Native accessible disclosure/radio/input controls; reset changes draft only; apply commits; close/reopen restores applied values. Month/year labels scroll inside chart, not the page. Donut/recent projects/activity unaffected. |
+| Continue | Fresh owned GET /projects/:id, workflow.canResume, projectAction/workflowRouteGuard, trusted target language and result artifact checks; eight-second bound | Fresh GET, exact returned ID, same current-step route mapping, eight-second timeout/cancellation, synchronous duplicate lock, localized error and no navigation on failed verification. No cached status/progress routing. |
+
+Routes reused: /projects/:id, /transcript, /translation, /voice, /generate,
+/result, with verified language query when available; no new routes/endpoints.
+List enrichment retains existing media/translations GETs and current session client.
+Continue GETs explicitly disable auth refresh/resubmission; no generation POST.
+
+### Safety differences and capability limits
+
+- Backend project workflow does not incorporate normal Customer TranslationAttempt.
+  For translation and later steps, additionally use existing authenticated GET
+  /projects/:id/translations/customer-draft/en. UNCERTAIN, PROCESSING, NOT_SENT,
+  EXPIRED, failure or unknown attempt states block Continue. Public API status is
+  DRAFT_SAVED (not the storage enum DRAFT). Existing saved Customer drafts do not
+  enter Mobile's legacy translation editor; later steps still require fresh
+  Backend workflow/language/artifact evidence. Transcript/upload navigation does
+  not require a source that may not exist yet.
+- This existing attempt GET is vi→en-specific and requires Customer translation
+  enabled. If unavailable, Continue for translation/later steps fails closed;
+  other-language Customer attempt parity is not claimed. Mobile's existing
+  language catalog is also narrower than Web: unsupported targets are blocked,
+  never silently replaced. No new API or translation UI invented to hide gaps.
+- Web's error fallback can open project details with a notice. Mobile deliberately
+  remains on Dashboard with an accessible error and existing Chi tiết action.
+- Existing protected destination screens remain unchanged; this is navigation,
+  not new mutation authority or a workflow lock. Backend remains authoritative
+  for subsequent explicit actions. No opening/clicking Continue calls AI.
+- S29.3.2 Hero, four quick links, charts/recent/activity order, no KPI and four
+  Customer tabs retained. No new dependency or shared-token changes. ui-ux-pro-max
+  guidance informed48dp controls, visible errors, draft disclosure and data scope.
+
+### Validation and unverified work
+
+Mobile136/136 and Web400/400 regression tests PASS; both lint/typecheck PASS;
+Web production build PASS (existing mixed static/dynamic import advisory).
+Offline Android Metro/Hermes export PASS after sandbox spawn EPERM was resolved
+with export-only escalation. Customer token sync and Museum content/image hashes
+PASS. git diff --check PASS. No Web/Backend/Museum/Login/Register source edits.
+
+Visual QA: MANUAL PENDING on Pixel7 at360/393dp, including filter keyboard,
+month/year horizontal chart labels, font scaling, screen reader, timeout/errors,
+return-to-Dashboard refresh, final scroll and safe area. Mock layout assertions
+and Hermes compilation are not device acceptance. Live authenticated workflow
+integration NOT RUN. Overall PARTIAL, not a claim of full Mobile translation parity.
+No Gemini/TTS, database access/writes, attempt reset/retry or commit/push.
+
+## S29.3.2 — Customer Mobile Dashboard Web Parity (2026-10-24, PARTIAL)
+
+### Source audit (not based on previous UI docs)
+
+Reference: frontend-web/src/pages/DashboardPlaceholder.tsx, dashboardMetrics.mjs,
+projectUtils.ts, useProjects.ts and projectRepository.ts. Web render order:
+Hero photo/eyebrow/heading/description/create CTA; four quick links; loading/error
+or successful content; metadata notice if applicable; time chart + status donut;
+recent projects (up to5); recent activity (up to4). No four-KPI cluster is rendered.
+Web grouping uses createdAt/local time, integer linear scale; donut uses actual
+COMPLETED/processing/FAILED/residual counts and one-decimal percentages. Web offers
+day/month/year filters and blocks charts when the account dataset is incomplete.
+Web's recent action performs supported Backend checks before navigation, not a
+generation call. Activity derives from project statuses/updatedAt, not an audit API.
+
+| Component | Web now | Mobile before | Mobile after / action |
+|---|---|---|---|
+| Header | Customer brand/navigation | Customer native header | Kept, no navigation edits |
+| Hero/CTA | Museum photo + welcome copy + create | Plain page heading + CTA | Reuses same local photo/Web copy, native dark scrim, existing create route |
+| Four KPIs | Absent |4 cards | Removed Dashboard render/import; selectors/StatCard retained |
+| Quick links | Create, Transcript, Translation, Voice | Create, My projects |4 labels/details/routes match source; stacked phone rows |
+| Charts | Time columns + status donut | Same two, before quick links | Retained formulas/colors; moved after quick links; existing scoped-data warning retained |
+| Recent projects | Up to5 rows | Up to4 cards | Up to5 native cards; current Mobile actions/workflow preserved |
+| Activity | Up to4 status updates | Missing | Added corresponding section from same recent data, empty state/history route |
+| Bottom nav | Desktop shell |4 native Customer tabs | Kept unchanged, separate Public navigation |
+
+### Implemented / tested
+
+- DashboardHero uses existing assets/museum/images/hero.jpg (same content as Web),
+  no asset edits/downloads. Content-height card, bounded absolute Image dimensions,
+  navy scrim, shared Be Vietnam Pro/tokens and existing48dp create Button. No
+  duplicate MobileScreen heading: optional headerContent replaces only Dashboard's
+  intro; other consumers unchanged. No dependency/config/auth/API changes.
+- Loading/error now occur after quick links like Web; charts/recent/activity are
+  withheld until success. Successful empty still shows chart empty states, recent
+  empty/create CTA and activity empty. The same actual project records are passed
+  to charts/cards/activity; no fabricated counts/history. COMPLETED is never based
+  on progress. Source-driven regression compares four link labels/details/routes,
+  section ordering/no KPIs, recent limit5/activity4, Hero copy/asset and empty states.
+- Mobile121/121 PASS, TypeScript/ESLint PASS, Customer tokens/Museum image hashes
+  PASS, offline Android Metro/Hermes PASS (1456 modules/37 assets), diff-check PASS.
+  Web400/400 plus lint/typecheck/build PASS with no Web source changes (existing
+  ineffective-dynamic-import warning only). Auth/navigation regressions included.
+
+### Remaining parity gaps / not complete
+
+- Mobile repository currently loads first20 projects without collection pagination
+  completeness or enrichment-result flags. Web's full-account statistics and
+  metadata/incomplete-list notice cannot be claimed from those records. Existing
+  explicit loaded-record scope remains; data layer was not expanded in this UI step.
+- Mobile chart remains default7-day range; Web's editable day/month/year controls
+  and interactive donut focus/hover are not ported. Native static labels/legends
+  expose values. Zero-value legend rows remain visible on Mobile, unlike Web.
+- Existing Mobile ProjectCard retains language pair/media/progress and two actions;
+  Web uses source-language column and guarded single Tiếp tục. No cosmetic relabel
+  was used to pretend identical workflow checks. Mobile history is still project
+  history, not Web's verified product library; activity link truthfully says Xem lịch sử.
+- Visual QA: NOT VERIFIED / MANUAL PENDING. Need Pixel7 at360/393dp to compare
+  Hero/quick links/charts/recent/activity ordering; confirm no KPI, no overflow,
+  large-font labels, safe-area4-tab navigation and scroll to final activity link.
+  No automated emulator screenshots or live Customer session checks were performed.
+  S29.3.2 is PARTIAL, not acceptance-complete; remaining functional parity and
+  physical visual QA must be resolved before declaring full Web parity.
+
+## S29.3.1 — Customer Mobile Dashboard charts (2026-10-24)
+
+- Audited Web ProjectTimeChart/StatusDonutChart and dashboardMetrics.mjs. Web uses
+  createdAt grouped by device-local date (default seven days, optional month/year),
+  linear integer ticks and four status buckets: completed/success, processing/info,
+  failed/error, residual other/textMuted. Percentages round to one decimal; zero,
+  loading/error and incomplete-full-dataset states are distinct.
+- Mobile now places two separate stacked cards after the unchanged2x2 KPIs.
+  Bar chart uses the same seven-day default/calendar/linear-scale formula and
+  direct counts/date labels. Donut uses the same distribution and arc/gap formula,
+  semantic tokens, native-font total and wrapping text legends with counts/%.
+  Added react-native-svg15.16.0 via Expo install (SDK58's recommended bundled module);
+  bars use native Views. No larger chart framework or animation dependency.
+- Both cards receive the existing useProjects projects, no API/client/hooks added.
+  Status counts reuse calculateProjectStatistics; progress100 never changes status.
+  Mobile repository still loads up to20 records and lacks completeness metadata:
+  both charts explicitly say they cover loaded projects, NOT the entire account.
+  Web's full-account/incomplete-dataset contract is not claimed on Mobile. No
+  pagination fetching or business logic changes. Date-missing/invalid records
+  excluded from time series with a visible count; never substitute updatedAt.
+- Default range is seven days ending today; Web month/year filters and hover
+  interactions are not added in this step. Native labels/legend provide all values
+  without requiring hover. Empty time range has explicit text, zero total uses
+  only the empty ring (no fabricated slices). Loading/error uses existing parent
+  feedback with charts withheld until successful load.
+- Cards shrink to available width, seven equal bar columns/minWidth0,200dp bounded
+  donut, wrapping legends; no text line truncation, no screen-height sizing. Shared
+  tokens/Be Vietnam Pro preserved; no changes to quick actions, recent cards, tabs,
+  Public Museum, Login/Register or Web source.
+- Mobile118/118 (charts7/7 plus Dashboard9/9), lint/typecheck, Android Metro/Hermes,
+  token sync, Museum content/hash check and diff-check PASS. Web400/400 and
+  lint/typecheck/build PASS, existing ineffective-dynamic-import warning remains.
+  npm install reported5 high vulnerabilities; not assessed/remediated in chart
+  scope, no audit-fix/force upgrade performed. Dependency readiness is not a
+  security audit. Visual QA Pixel7/360/393dp, large fonts, TalkBack and SVG native
+  rendering: MANUAL PENDING; offline export does not verify real device visuals.
+
+## S29.3 — Customer Mobile Dashboard refinement (2026-10-24)
+
+- Compared DashboardScreen/MobileHeader/ProjectCard/StatCard and Customer Tabs
+  with Web DashboardPlaceholder, shared tokens and WEB_MOBILE_DESIGN_SYNC.md.
+  Existing Mobile gaps: missing font-family on most text,47%-width wrapping KPIs,
+ 220dp project title minimum,44dp small actions and crowded metadata/badges.
+- Dashboard-only header/scroll variants use shared Thuyết minh bảo tàng branding,
+  bank-outline icon and Be Vietnam Pro. Description matches Web's museum content
+  management message; full-width48dp Tạo thuyết minh CTA keeps/projects/new.
+  No new banner/image, chart, route or feature was added.
+- Four KPIs use two explicit stretch rows with equal flex/minWidth0 cards,
+ 112dp minimum height,14sp labels and28sp bold values. Reserved label area aligns
+  values; cards may grow with large system fonts rather than clip. Status accent
+  colors retain shared success/info/error meanings. Hide KPI values during load
+  or error rather than showing an apparent confirmed zero; empty success shows0.
+- Quick actions retain their two routes, use64dp minimum rows,40dp icon containers,
+  wrapping text and pressed feedback. Xem tất cả now has an actual48dp target.
+- Dashboard ProjectCard variant uses12dp padding/8dp gaps, removes220dp minimum,
+  keeps two-line project name and puts bounded/wrapping status below the title.
+  Actions stack at48dp with wrapped labels. Metadata/progress/badge use shared
+  fonts; common Badge/ProgressBar expose optional text style only, leaving default
+  consumers' styling/normalization unchanged. Non-Dashboard cards keep old layout.
+- projectAction, projectUtils, repository, status mapping and API are unchanged.
+  COMPLETED alone controls completed action/statistic; progress100 is not completion.
+  Failed action still only navigates to the existing workflow screen, never dispatches.
+  Existing repository fetches first20 projects: Mobile KPIs/recent projects remain
+  scoped to loaded records, unlike Web's complete aggregation. No parity claimed.
+- Four native Customer tabs preserved, with equal flex items/minWidth0,11sp shared
+  labels below icons and purple active tint. Native navigator still owns bottom
+  safe-area sizing; no absolute bar, fixed height or duplicate bottom inset. Public
+  Museum's separate five-item bar and all S29.2 work remain untouched.
+- Mobile111/111 tests (new Dashboard9/9), ESLint, TypeScript, offline Android
+  Metro/Hermes, token sync, Museum hash check and diff-check PASS. Web regression
+ 400/400, lint/typecheck/build PASS without Web source changes. Web build retains
+  its projectRepository ineffective-dynamic-import warning (nonblocking).
+- Visual QA: NOT VERIFIED. Pixel7/small phone360/393dp: header wrapping, CTA,
+  KPI2x2/equal rows, long names/badges, large font scaling, action targets, scroll
+  to final card, all four native tabs and Android/iOS system-bar clearance need
+  manual verification. Offline export is not device acceptance.
+
+## S29.2B.4 — Full-width Public Museum bottom navigation (2026-10-24)
+
+- Confirmed installed Expo Link/asChild uses a Radix Slot merge that spreads a
+  direct child's function-valued style into an object. Old PublicTab placed its
+  Pressable style callback directly under Link: native flex/spacing/active styles
+  were lost. Previous tests bypassed Link/Slot and therefore missed the defect.
+- PublicTab now passes a ref-forwarding PublicTabButton through Link. That child
+  creates the Pressable callback AFTER Slot merge; Link onPress/ref remain intact.
+  Scoped only to Public tabs; other Museum links and Customer navigation unchanged.
+- Bar and row explicitly width100%; removed row maxWidth760. Tabs flex1/zero basis,
+  minWidth0, centered icon/text, unchanged11sp wrapping labels/active purple. Bar
+  remains a sibling after ScrollView inside the existing single safe-area boundary.
+- Regression runs the installed Radix merge, reproduces old style loss and checks
+  new native callbacks, ref, events and equal-width styles after merge. Arithmetic
+  coverage at360/393/411/1024dp confirms width allocation and48dp minimum targets;
+  this is not a native screenshot/layout measurement.
+- Public19/19/all Mobile102/102, TypeScript, ESLint, Android Metro/Hermes, image/hash
+  and token checks, diff-check PASS. Visual QA Pixel7/360/393dp and iOS safe area:
+  MANUAL PENDING. No Hero/CTA/content/asset changes in this step.
+
+## S29.2B.3 — Bottom navigation alignment and final CTA (2026-10-24)
+
+- Confirmed previous tab styles used flex-start,12sp labels and only2dp between
+  columns. Tabs now use flex1/zero basis, centered icon+label groups,11sp/16dp
+  labels with a32dp minimum text area and no vertical shrinking.8dp gaps and4dp
+  inner horizontal padding separate labels; labels wrap rather than truncate.
+  Five targets fit320/360/375/393/411dp arithmetic checks with minimum48dp width
+  and80dp height. Active purple/fill/icon assets remain unchanged.
+- Final Home CTA now explicitly owns its white foreground, independent of the
+  legacy primary flag, on dark purple #3730A3 (pressed navy). Existing source was
+  already purple/white; device-specific cause of perceived low contrast remains
+  unverified. This scoped treatment does not change Hero CTAs or any route.
+- Safe area remains applied once by MuseumFrame. The navigation is a nonshrinking
+  sibling after flex1 ScrollView, not an overlay; no extra bottom inset/padding
+  was introduced. Regression checks cover CTA/footer in scrolling content.
+- Public18/18 and all Mobile101/101 PASS; lint, typecheck, offline Android
+  Metro/Hermes, Museum asset/hash sync, Customer token sync and diff-check PASS.
+  Visual QA on Pixel7/iOS and enlarged system fonts: MANUAL PENDING; mock layout
+  assertions are not device-render evidence. Hero/images/content remain unchanged.
+
+## S29.2B.2 — Final Public Museum Mobile CTA/navigation polish (2026-10-24)
+
+- Home-only CTA variants mirror Public Web: white/text-dark Hero primary,
+  light-outline/white-text secondary, purple/white final CTA. Minimum52dp height,
+  bold labels,12dp radius and distinct pressed/focus feedback. Other MuseumLink
+  callers retain their existing styles; routes/actions/content are unchanged.
+- Five public bottom links use equal zero-basis columns, centered40x28dp icon
+  slots and centered wrapping labels with a two-line minimum area. Minimum48dp
+  width/80dp height; natural growth supports larger text without line truncation.
+  Selected fill/top-border and filled icon remain; safe-area/layout reservation
+  unchanged. No overlay, animation or Customer navigation changes.
+- Public16/16/all Mobile99/99 tests, ESLint, TypeScript, Android Metro/Hermes,
+  asset/content hash sync, Customer token sync and diff-check PASS. Contrast tests
+  cover the three CTA variants in normal/pressed states (at least4.5:1).
+- User confirmed B.1 Hero/image/cards/navigation on Pixel7. B.2 visual changes
+  remain MANUAL PENDING: reload and inspect CTA prominence and all five labels,
+  including increased system font size. Hero16:9/cap/assets are unchanged.
+
+## S29.2B.1 — Public Museum Mobile image sizing fix (2026-10-24)
+
+- Confirmed native Image merges local asset width/height before custom styles.
+  Width100% plus aspectRatio alone left the original source height defined;
+  S29.2B's mocked ratio-prop check did not cover native source-style merging.
+- MuseumImage now reserves its ratio on a View frame. The absolute child Image
+  explicitly sets both width and height100%, so asset dimensions cannot size it.
+  Hero uses contain, a navy background,16:9 and a200dp height cap paired with a
+ 355.56dp width cap to retain the ratio. Expected height at375dp viewport is193dp;
+  typical Pixel7 logical widths reach200dp. No viewport-height dependency.
+- Hero title/description/both CTAs remain directly below the frame, unchanged.
+  Intro/topic images retain4:3 and posters16:9 with their existing cover behavior;
+  they receive the same intrinsic-height correction without redesign. Accessible
+  load-error fallback reserves the same frame. Original assets/credits unchanged.
+- Mobile97/97 tests PASS (Public14/14), TypeScript/ESLint and offline Android
+  Metro/Hermes PASS. Museum image/content hash check and Customer token sync PASS.
+  Visual QA: NOT VERIFIED; reload Pixel7 to check actual image sizing/copy/CTAs,
+  scrolling, About imagery and bottom navigation. No runtime/auth/data changes.
+
+## S29.2B — Public Museum Mobile UI refinement (2026-10-24)
+
+- Preserved all S29.2A routes/content/catalogs/asset bytes and S29.2 Login/Register
+  and Customer Dashboard. Public Museum theme remains isolated from Customer tokens.
+- MuseumFrame now has a compact, brand-only header and five-item bottom navigation:
+  Trang chủ, Khám phá, Thuyết minh, Giới thiệu, Của tôi. Uses existing Expo Router
+  links/paths, no new route groups or nested Tabs. Của tôi still enters the existing
+  auth-aware /khong-gian-cua-toi route. Customer bottom navigation is unchanged.
+- Bottom navigation is a non-shrinking sibling after the flex1 ScrollView, within
+  the existing four-edge SafeAreaView. No absolute-position overlay or guessed
+  bottom inset; layout reserves the bar's natural height. Five equal items with
+  min48dp width/min64dp height, outline/filled icons, labels, selected tint/top-border,
+  pressed and keyboard-focus feedback. Nested detail paths select their parent;
+  partial-prefix paths do not. Labels may wrap/grow with system text scaling.
+- Removed cramped header links and workspace CTA; interface-language text moved
+  to footer without changing content. Existing footer links remain available.
+- Hero keeps the full image in a separate16:9 contain frame, not a portrait crop
+  determined by text/CTA height. Navy copy area uses28/38sp heading,16/26sp lead,
+  compact20dp padding and distinct solid-primary/outlined-secondary actions. No
+  edits to source image, metadata or watermark. Final native crop/render QA pending.
+- Intro uses24/34sp heading and16/28sp body with consistent12/16dp rhythm and its
+  existing responsive4:3 image. Planned-language cards use exactly two rows of two
+  equal flexible cards,44dp neutral glyph tiles,16sp names, natural text wrapping
+  and compact non-interactive status badges. No fixed card/text height or truncation.
+- UI/UX checklist informed reserved safe-area layout, five-item navigation, native
+  touch targets and readable wrapping; not a redesign of underlying navigation/auth.
+- Visual QA: MANUAL PENDING for this revision on Pixel7/iOS: gesture + three-button
+  navigation safe areas, footer reachability, all five destinations and Android Back,
+  deep-link active tabs, large text/landscape, TalkBack and actual image framing.
+  Source photos inspected, but this is not native-screen visual acceptance.
+
 ## S29.2A — Public Museum on Expo Mobile (2026-10-24)
 
 | Web | Native route / screen | Parity |

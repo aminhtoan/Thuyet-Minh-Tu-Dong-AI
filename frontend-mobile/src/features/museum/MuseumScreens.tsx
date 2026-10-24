@@ -1,16 +1,23 @@
 import { useState } from 'react';
-import { Image, Linking, Pressable, Text, View } from 'react-native';
+import { Linking, Pressable, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { museumAssets } from './assets.generated';
 import { publicMuseum, publishedExhibitions, findPublicVideo, languageAvailable, publicSourceUrl } from './catalog';
 import { MuseumFrame, MuseumImage, MuseumLink, MuseumTitle } from './MuseumUI';
 import { ms } from './theme';
 
 function Intro() {
-  return <View style={ms.section}><MuseumImage path={publicMuseum.images.museumIntro.src} alt={publicMuseum.images.museumIntro.alt} /><Text style={ms.eyebrow}>Lắng nghe quá khứ</Text><Text accessibilityRole="header" style={ms.heading}>Gìn giữ ký ức. Kết nối hôm nay.</Text>
-    <Text style={ms.body}>Bảo tàng Chứng tích Chiến tranh là điểm khởi đầu cho hành trình tìm hiểu lịch sử qua những câu chuyện về chiến tranh và con người.</Text>
-    <Text style={ms.body}>Website hướng đến trải nghiệm khám phá và lắng nghe thuyết minh, giúp người xem tiếp cận nội dung bảo tàng bằng nhiều ngôn ngữ.</Text>
+  return <View style={ms.intro}><MuseumImage path={publicMuseum.images.museumIntro.src} alt={publicMuseum.images.museumIntro.alt} /><View style={ms.introCopy}><Text style={ms.eyebrow}>Lắng nghe quá khứ</Text><Text accessibilityRole="header" style={ms.introHeading}>Gìn giữ ký ức. Kết nối hôm nay.</Text>
+    <Text style={ms.introBody}>Bảo tàng Chứng tích Chiến tranh là điểm khởi đầu cho hành trình tìm hiểu lịch sử qua những câu chuyện về chiến tranh và con người.</Text>
+    <Text style={ms.introBody}>Website hướng đến trải nghiệm khám phá và lắng nghe thuyết minh, giúp người xem tiếp cận nội dung bảo tàng bằng nhiều ngôn ngữ.</Text></View>
   </View>;
+}
+function LanguageCards() {
+  const languages = publicMuseum.narrationLanguages;
+  return <View style={ms.languageGrid}>{[languages.slice(0, 2), languages.slice(2, 4)].map((row, index) => <View key={index} style={ms.languageRow}>{row.map(language => <View key={language.code} style={[ms.card, ms.languageCard]}>
+    <View accessible={false} importantForAccessibility="no-hide-descendants" style={ms.languageIcon}><Text style={ms.icon}>{language.icon}</Text></View>
+    <Text style={ms.languageTitle}>{language.label}</Text><Text style={ms.small}>{language.name}</Text>
+    <View style={ms.badge}><Text style={ms.languageBadge}>Đang chuẩn bị</Text></View>
+  </View>)}</View>)}</View>;
 }
 function Topics() {
   return <View style={ms.section}>{publicMuseum.topics.map(topic => {
@@ -20,16 +27,15 @@ function Topics() {
   })}</View>;
 }
 export function MuseumHomeScreen() {
-  const [heroFailed, setHeroFailed] = useState(false);
   return <MuseumFrame><View style={ms.hero}>
-    {!heroFailed && <Image source={museumAssets[publicMuseum.images.hero.src]} style={ms.heroImage} resizeMode="cover" accessible={false} onError={() => setHeroFailed(true)} />}
-    <View style={ms.heroCopy}><Text style={[ms.eyebrow, ms.whiteText]}>Bảo tàng Chứng tích Chiến tranh</Text><Text accessibilityRole="header" style={[ms.title, ms.whiteText]}>Những câu chuyện lịch sử từ hiện thực.</Text><Text style={[ms.body, ms.whiteText]}>Một không gian để tìm hiểu về chiến tranh, lắng nghe những câu chuyện con người và suy ngẫm về giá trị của hòa bình.</Text><MuseumLink href="/kham-pha" primary>Khám phá bảo tàng</MuseumLink><MuseumLink href="/thuyet-minh" primary>Xem thuyết minh</MuseumLink></View>
+    <MuseumImage path={publicMuseum.images.hero.src} alt={publicMuseum.images.hero.alt} hero />
+    <View style={ms.heroCopy}><Text style={[ms.eyebrow, ms.whiteText]}>Bảo tàng Chứng tích Chiến tranh</Text><Text accessibilityRole="header" style={ms.heroTitle}>Những câu chuyện lịch sử từ hiện thực.</Text><Text style={ms.heroLead}>Một không gian để tìm hiểu về chiến tranh, lắng nghe những câu chuyện con người và suy ngẫm về giá trị của hòa bình.</Text><View style={ms.heroActions}><MuseumLink href="/kham-pha" homeCta="light">Khám phá bảo tàng</MuseumLink><MuseumLink href="/thuyet-minh" inverse outlined homeCta="outline">Xem thuyết minh</MuseumLink></View></View>
     </View><Intro /><MuseumLink href="/ve-bao-tang">Tìm hiểu về bảo tàng</MuseumLink>
     <Text accessibilityRole="header" style={ms.heading}>Không gian trưng bày</Text><Topics />
     <MuseumTitle title="Lắng nghe theo cách của bạn" description="Khám phá những câu chuyện lịch sử qua nhiều ngôn ngữ, kết nối ký ức với người nghe trên khắp thế giới." />
-    <View style={ms.row}>{publicMuseum.narrationLanguages.map(language => <View key={language.code} style={[ms.card, ms.language]}><Text accessible={false} style={ms.icon}>{language.icon}</Text><Text style={ms.subheading}>{language.label}</Text><Text style={ms.small}>{language.name}</Text><View style={ms.badge}><Text style={ms.small}>Đang chuẩn bị</Text></View></View>)}</View>
+    <LanguageCards />
     <View style={ms.card}><MuseumImage path={publicMuseum.videos[0]?.posterUrl ?? publicMuseum.images.featuredVideo.src} alt="Video giới thiệu Bảo tàng Chứng tích Chiến tranh" poster /><Text style={ms.eyebrow}>Thuyết minh nổi bật</Text><Text accessibilityRole="header" style={ms.heading}>Một hành trình qua những câu chuyện</Text><Text style={ms.body}>Video thuyết minh về Bảo tàng Chứng tích Chiến tranh.</Text><MuseumLink href="/thuyet-minh" primary>Đến trang Thuyết minh</MuseumLink></View>
-    <View style={ms.section}><Text accessibilityRole="header" style={ms.heading}>Dành thời gian để khám phá.</Text><Text style={ms.body}>Mỗi câu chuyện là một lời mời tìm hiểu và suy ngẫm.</Text><MuseumLink href="/kham-pha" primary>Bắt đầu khám phá</MuseumLink></View>
+    <View style={ms.section}><Text accessibilityRole="header" style={ms.heading}>Dành thời gian để khám phá.</Text><Text style={ms.body}>Mỗi câu chuyện là một lời mời tìm hiểu và suy ngẫm.</Text><MuseumLink href="/kham-pha" primary homeCta="primary">Bắt đầu khám phá</MuseumLink></View>
   </MuseumFrame>;
 }
 export function MuseumExploreScreen() {
