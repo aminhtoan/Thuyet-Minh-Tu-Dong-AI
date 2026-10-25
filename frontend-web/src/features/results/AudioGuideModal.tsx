@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { resultService, type LanguageVariant } from './resultService'
 import type { Result } from './types'
 import { languageNames } from '../projects/projectUtils'
-
 import { env } from '../../config/env'
+import { trackListen } from '../analytics/analyticsService'
 
 export interface PublicLanguageOption {
   code: string
@@ -39,6 +39,17 @@ export function AudioGuideModal({
   const [duration, setDuration] = useState(0)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const lastTrackedAudioRef = useRef<string | null>(null)
+
+  const trackAudioPlay = () => {
+    if (!audioUrl || lastTrackedAudioRef.current === audioUrl) return
+    lastTrackedAudioRef.current = audioUrl
+    void trackListen({
+      platform: 'web',
+      projectId,
+      languageCode: currentLang,
+    })
+  }
 
   // Close on Escape key
   useEffect(() => {
@@ -149,6 +160,7 @@ export function AudioGuideModal({
       audioRef.current.pause()
     } else {
       audioRef.current.play().catch(() => {})
+      trackAudioPlay()
     }
   }
 
@@ -256,7 +268,10 @@ export function AudioGuideModal({
               ref={audioRef}
               src={audioUrl}
               autoPlay
-              onPlay={() => setIsPlaying(true)}
+              onPlay={() => {
+                setIsPlaying(true)
+                trackAudioPlay()
+              }}
               onPause={() => setIsPlaying(false)}
               onEnded={() => {
                 setIsPlaying(false)

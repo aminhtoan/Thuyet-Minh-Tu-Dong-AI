@@ -5,6 +5,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { trackListen } from '@/services/analyticsService';
 import type { ResultSource } from './useResult';
 
 export function ResultPlayer({ source, video }: { source: ResultSource; video: boolean }) {
@@ -33,7 +34,7 @@ export function ResultAudio({ source }: { source: ResultSource }) {
   return <View style={styles.media}>
     {(!status.isLoaded || status.isBuffering) && !status.error && <Spinner label="Đang tải âm thanh kết quả" />}
     {(status.error || controlError) && <Text accessibilityRole="alert" style={styles.error}>Không thể phát âm thanh. Vui lòng kiểm tra kết nối hoặc tải lại kết quả.</Text>}
-    <Button disabled={!status.isLoaded || Boolean(status.error)} onPress={async () => { try { if (status.playing) player.pause(); else { if (status.didJustFinish) await player.seekTo(0); player.play(); } } catch { setControlError(true); } }}>{status.playing ? 'Tạm dừng' : 'Phát âm thanh'}</Button>
+    <Button disabled={!status.isLoaded || Boolean(status.error)} onPress={async () => { try { if (status.playing) player.pause(); else { if (status.didJustFinish) await player.seekTo(0); player.play(); void trackListen({ platform: 'mobile' }); } } catch { setControlError(true); } }}>{status.playing ? 'Tạm dừng' : 'Phát âm thanh'}</Button>
     <Text style={styles.text}>{time(status.currentTime)} / {time(status.duration)}</Text>
     <Pressable accessibilityRole="adjustable" accessibilityLabel="Vị trí phát âm thanh" accessibilityValue={{ min: 0, max: Math.max(1, status.duration), now: status.currentTime }} accessibilityActions={[{ name: 'increment', label: 'Tiến 10 giây' }, { name: 'decrement', label: 'Lùi 10 giây' }]} onAccessibilityAction={event => void seek(status.currentTime + (event.nativeEvent.actionName === 'increment' ? 10 : -10))} disabled={!status.isLoaded} onLayout={event => setWidth(event.nativeEvent.layout.width)} onPress={event => void seek(status.duration * event.nativeEvent.locationX / width)} style={styles.seek}>
       <View style={styles.track}><View style={[styles.fill, { width: `${status.duration > 0 ? Math.min(100, status.currentTime / status.duration * 100) : 0}%` }]} /></View>

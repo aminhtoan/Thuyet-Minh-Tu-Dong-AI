@@ -9,6 +9,7 @@ import { useLibrary } from '../results/useLibrary';
 import { libraryProduct } from '../results/libraryPresentation';
 import { resultService } from '../results/resultService';
 import type { Result } from '../results/types';
+import { trackListen } from '../../services/analyticsService';
 
 function Intro() {
   return <View style={ms.intro}><MuseumImage path={publicMuseum.images.museumIntro.src} alt={publicMuseum.images.museumIntro.alt} /><View style={ms.introCopy}><Text style={ms.eyebrow}>Lắng nghe quá khứ</Text><Text accessibilityRole="header" style={ms.introHeading}>Gìn giữ ký ức. Kết nối hôm nay.</Text>
@@ -170,8 +171,18 @@ function AudioGuideCard({ guide }: { guide: AudioGuide }) {
   const togglePlay = useCallback(() => {
     if (status === 'idle' || status === 'error') { void load(); return; }
     if (status === 'loading') return;
-    if (isPlaying) { player.pause(); } else { player.play(); }
-  }, [status, isPlaying, player, load]);
+    if (isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+      void trackListen({
+        platform: 'mobile',
+        projectId: activeLang.projectId,
+        narrationId: activeLang.narrationId,
+        languageCode: activeLang.code,
+      });
+    }
+  }, [status, isPlaying, player, load, activeLang]);
 
   const btnLabel = status === 'loading' ? 'Đang tải...'
     : isPlaying ? '⏸ Đang phát thuyết minh'

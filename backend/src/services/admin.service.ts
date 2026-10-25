@@ -8,6 +8,7 @@ import { Project, type ProjectDocument } from '../models/Project.js';
 import { Translation } from '../models/Translation.js';
 import { User, type UserDocument } from '../models/User.js';
 import { Voice } from '../models/Voice.js';
+import { ListenEvent } from '../models/ListenEvent.js';
 import type { ProcessingJobStatus, ProcessingJobType } from '../constants/processing-job.constants.js';
 import type { MediaType, ProjectStatus } from '../constants/project.constants.js';
 import type { UserStatus } from '../constants/user.constants.js';
@@ -49,14 +50,31 @@ const jobDto = async (job: InstanceType<typeof ProcessingJob>) => {
 
 export const dashboard = async () => {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const [totalCustomers, totalProjects, processing, failed, recentProjects, recentJobs, recentActivities, queuedJobs, activeJobs, completedToday, failedJobs] = await Promise.all([
+  const [totalCustomers, totalProjects, processing, failed, totalListens, webListens, mobileListens, recentProjects, recentJobs, recentActivities, queuedJobs, activeJobs, completedToday, failedJobs] = await Promise.all([
     User.countDocuments(availableCustomerFilter()), Project.countDocuments(), Project.countDocuments({ status: { $in: processingStatuses } }), Project.countDocuments({ status: 'FAILED' }),
+    ListenEvent.countDocuments(), ListenEvent.countDocuments({ platform: 'web' }), ListenEvent.countDocuments({ platform: 'mobile' }),
     Project.find().sort({ updatedAt: -1 }).limit(5), ProcessingJob.find().sort({ updatedAt: -1 }).limit(5), ActivityLog.find().sort({ createdAt: -1 }).limit(6),
     ProcessingJob.countDocuments({ status: 'QUEUED' }), ProcessingJob.countDocuments({ status: 'PROCESSING' }), ProcessingJob.countDocuments({ status: 'COMPLETED', completedAt: { $gte: today } }), ProcessingJob.countDocuments({ status: 'FAILED' }),
   ]);
-  return { stats: { totalCustomers, totalProjects, processing, failed }, recentProjects: await Promise.all(recentProjects.map(projectDto)),
-    processingJobs: await Promise.all(recentJobs.map(jobDto)), recentActivities: await Promise.all(recentActivities.map(activityDto)),
-    jobSummary: { queued: queuedJobs, processing: activeJobs, completedToday, failed: failedJobs }, generatedAt: new Date() };
+  return {
+    stats: {
+      totalCustomers,
+      totalProjects,
+      processing,
+      failed,
+      totalListens,
+      listenStats: {
+        total: totalListens,
+        web: webListens,
+        mobile: mobileListens,
+      },
+    },
+    recentProjects: await Promise.all(recentProjects.map(projectDto)),
+    processingJobs: await Promise.all(recentJobs.map(jobDto)),
+    recentActivities: await Promise.all(recentActivities.map(activityDto)),
+    jobSummary: { queued: queuedJobs, processing: activeJobs, completedToday, failed: failedJobs },
+    generatedAt: new Date(),
+  };
 };
 
 type UsersInput = PageInput & { search?: string; status?: UserStatus; sort: 'NEWEST'|'OLDEST'|'NAME_ASC'|'NAME_DESC' };

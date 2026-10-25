@@ -30,3 +30,8 @@ android/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Reports & documentation drafts (ignored from git)
+reports/
+bao-cao/
+

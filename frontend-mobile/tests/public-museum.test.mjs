@@ -62,6 +62,7 @@ function renderer(slug, open = async () => {}) {
     '../results/libraryPresentation': { libraryProduct: () => null },
     '../results/resultService': { resultService: { getByProjectId: async () => null, downloadProtected: async () => '', cleanup: async () => {} } },
     '../../config/env': { env: { apiBaseUrl: 'http://localhost:8080/api' } },
+    '../../services/analyticsService': { trackListen: async () => {} },
   });
   return name => { cursor = 0; return exports[name](); };
 }

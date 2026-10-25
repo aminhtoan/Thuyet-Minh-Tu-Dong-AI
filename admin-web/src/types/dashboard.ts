@@ -13,7 +13,14 @@ export type DashboardActivity = {
 };
 export type AdminDashboardData = {
   source: 'ADMIN_API';
-  stats: { totalCustomers: number; totalProjects: number; processing: number; failed: number };
+  stats: {
+    totalCustomers: number;
+    totalProjects: number;
+    processing: number;
+    failed: number;
+    totalListens?: number;
+    listenStats?: { total: number; web: number; mobile: number };
+  };
   recentProjects: DashboardProject[];
   processingJobs: DashboardJob[];
   recentActivities: DashboardActivity[];

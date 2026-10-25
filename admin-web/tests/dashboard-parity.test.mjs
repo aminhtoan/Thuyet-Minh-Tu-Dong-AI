@@ -15,7 +15,7 @@ function compile(file, dependencies = {}) {
 }
 const metrics = compile('utils/dashboardMetrics.ts');
 const format = compile('utils/dashboardFormat.ts');
-const payload = () => ({ stats: { totalCustomers: 9, totalProjects: 31, processing: 0, failed: 9 }, recentProjects: [], processingJobs: [], recentActivities: [], jobSummary: { queued: 0, processing: 0, completedToday: 15, failed: 28 }, generatedAt: '2026-10-25T09:00:00Z' });
+const payload = () => ({ stats: { totalCustomers: 9, totalProjects: 31, processing: 0, failed: 9, totalListens: 20, listenStats: { total: 20, web: 12, mobile: 8 } }, recentProjects: [], processingJobs: [], recentActivities: [], jobSummary: { queued: 0, processing: 0, completedToday: 15, failed: 28 }, generatedAt: '2026-10-25T09:00:00Z' });
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function nodes(tree, predicate) {
   if (Array.isArray(tree)) return tree.flatMap(v => nodes(v, predicate));
@@ -24,8 +24,8 @@ function nodes(tree, predicate) {
 }
 test('KPI selector separates9 FAILED projects from28 FAILED jobs; no sum from recent lists or attempt data', () => {
   const d = payload(); const cards = metrics.dashboardKpis(d.stats);
-  assert.deepEqual(Array.from(cards, c => c.value), [9, 31, 0, 9]);
-  assert.equal(cards[2].label, 'Dự án đang xử lý'); assert.equal(cards[3].label, 'Dự án thất bại');
+  assert.deepEqual(Array.from(cards, c => c.value), [9, 31, 0, 9, 20]);
+  assert.equal(cards[2].label, 'Dự án đang xử lý'); assert.equal(cards[3].label, 'Dự án thất bại'); assert.equal(cards[4].label, 'Lượt khách nghe');
   assert.equal(d.jobSummary.failed, 28); assert.equal(d.jobSummary.completedToday, 15);
   const backend = readFileSync(new URL('../../backend/src/services/admin.service.ts', import.meta.url), 'utf8');
   assert.match(backend, /Project.countDocuments\(\{ status: 'FAILED' \}\)/);
@@ -36,7 +36,7 @@ test('KPI selector separates9 FAILED projects from28 FAILED jobs; no sum from re
 test('invalid/missing aggregates reject instead of silently converting unavailable data to zeros', () => {
   metrics.assertDashboardMetrics(payload());
   for (const value of [null, {}, { ...payload(), stats: { ...payload().stats, failed: undefined } }, { ...payload(), jobSummary: { ...payload().jobSummary, failed: -1 } }, { ...payload(), stats: { ...payload().stats, totalCustomers: NaN } }, { ...payload(), generatedAt: 'invalid' }]) assert.throws(() => metrics.assertDashboardMetrics(value));
-  metrics.assertDashboardMetrics({ ...payload(), stats: { totalCustomers: 0, totalProjects: 0, processing: 0, failed: 0 } });
+  metrics.assertDashboardMetrics({ ...payload(), stats: { totalCustomers: 0, totalProjects: 0, processing: 0, failed: 0, totalListens: 0 } });
 });
 test('real service uses protected GET only, preserves status/progress and server totals, no fixture fallback', async () => {
   const d = payload(); d.recentProjects = [{ id: 'p', name: 'Synthetic', user: null, sourceLanguage: 'vi', targetLanguages: ['en'], status: 'FAILED', progress: 100, updatedAt: d.generatedAt }];
@@ -81,7 +81,7 @@ test('actual Dashboard renders loading/error without KPI zeros and announces suc
     assert.equal(nodes(tree, n => n.type === (state.error ? 'DashboardErrorState' : 'DashboardSkeleton')).length, 1);
   }
   const tree = page({ loading: false, error: false, data: { ...payload(), source: 'ADMIN_API' }, refresh() {} });
-  assert.equal(nodes(tree, n => n.type === 'StatCard').length, 4); assert.match(JSON.stringify(tree), /API quản trị/);
+  assert.equal(nodes(tree, n => n.type === 'StatCard').length, 5); assert.match(JSON.stringify(tree), /API quản trị/);
   assert.doesNotMatch(JSON.stringify(tree), /dữ liệu minh họa|Backend chưa kết nối/);
 });
 test('job summary and limited lists use honest units and labels, including empty job lists', () => {

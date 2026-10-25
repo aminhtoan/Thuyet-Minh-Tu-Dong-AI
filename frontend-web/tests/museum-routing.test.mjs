@@ -28,6 +28,7 @@ function renderRoute(path, authenticated = false, editorialCatalog, publicVideoC
         if (!name.startsWith('.')) return require(name)
         if (name.endsWith('.css')) return {}
         if (name.endsWith('/lib/api')) return { session: { isAuthenticated: () => authenticated } }
+        if (name.endsWith('/config/env')) return { env: { apiBaseUrl: 'http://localhost:8080/api' } }
         if (name.endsWith('/publicMediaAssets')) return { publicMuseumAssetPaths: videoAssets }
         // Existing workspace pages are markers; the real RequireAuth is loaded below.
         if (/\/pages\//.test(name) && !/\/Museum(?:Placeholder|Home|About|Explore|Exhibition|Videos|VideoDetail)Page$/.test(name)) {

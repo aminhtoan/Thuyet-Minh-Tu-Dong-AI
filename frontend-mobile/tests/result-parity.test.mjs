@@ -113,6 +113,7 @@ function playerSetup(status = {}) {
   const module = compile('features/results/ResultPlayer.tsx', { react,
     'expo-audio': { useAudioPlayer: (_source, options) => { assert.equal(options.downloadFirst, false); return player; }, useAudioPlayerStatus: () => audioStatus },
     'expo-video': { useVideoPlayer: () => player, VideoView: 'VideoView' }, '@/components/common/Button': { Button: 'Button' }, '@/components/common/Spinner': { Spinner: 'Spinner' }, '@/theme/tokens': tokens,
+    '@/services/analyticsService': { trackListen: async () => {} },
   });
   return { module, calls, player, react, source: { uri: 'https://test.invalid/protected', headers: { Authorization: 'test-fixture' } } };
 }
