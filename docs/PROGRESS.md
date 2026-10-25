@@ -3241,3 +3241,94 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
   draft and diagnostics. Do not reset/retry B or reuse its UNCERTAIN claim. Actual
   provider outcome for a future attempt is not guaranteed by mock tests. No real
   AI/TTS calls, database writes, attempts/jobs, config changes, commit or push.
+## S30.6 — Result VIDEO voice metadata parity (2026-10-25): PARTIAL
+
+- Read-only verification: test3 `6addbb022c02bfbe89cce9bd` and test video trung
+  `6addbf3422ee238cff209ff6` are COMPLETED. Their saved CURRENT narration records
+  both contain speed1 and voiceId resolving to Alloy/providerVoiceId alloy. The
+  VIDEO Result `6addbfae22ee238cff20a02d` references exactly narration
+  `6addbfa422ee238cff20a029`, sourceNarrationRevision1. No missing stored metadata
+  or broken Result/narration linkage found; TTS/video jobs are completed.
+- Confirmed Web mapping defect: Result API exposes narrationId, while narration
+  API serializer exposes voice/name and speed. resultService already loads both
+  lists but discarded voiceName/speed on its VIDEO return branch. ResultPage uses
+  useResult -> resultService -> resultRows, so the missing values became Khong co
+  du lieu. AUDIO populated both fields from its selected narration.
+- Fixed only Web resultService: join a selected video's exact narrationId within
+  the requested project and matching target language; never select the newest
+  unrelated narration or current voice configuration. AUDIO/VIDEO share metadata
+  validation: nonempty voice name, finite positive recorded speed. Missing fields
+  remain missing independently; no default Alloy/1x or fabricated data. Result
+  selection/playback routes and artifact fields otherwise preserved. No API,
+  Backend production, workflow, authentication, media file or database change.
+- Added tests/result-voice-metadata.test.mjs (7/7 PASS): real service mapping and
+  resultRows for both artifact types, missing/invalid metadata, independently
+  missing fields, exact older narration linkage, project/language isolation and
+  selected video's own metadata. Updated Backend downstream-stale-guards test to
+  verify actual serializers expose narration voice/speed and correct Result FK.
+  Only these two test files, Web resultService and this progress entry changed.
+- Validation: Customer Result/Generate/workflow subset25/25 PASS; Backend related
+  suite37/37 PASS, affected serializer/stale suite3/3 PASS after added assertions;
+  Backend/Web TypeScript, ESLint exit0, builds and diff-check PASS. Web retains
+  exhaustive-deps/dynamic-import warnings and bundle-size warning. Full Web suite
+  is NOT PASS:379 PASS/39 FAIL of418; failures are Public Museum VM/CommonJS
+  harness errors (Cannot use import.meta outside a module). Running its public
+  anonymous-routing case alone reproduces the same error; Customer pages are
+  markers in that harness, not the Result service under change. No unrelated
+  Public Museum source/tests changed to hide those failures.
+- Mobile Result counterpart reviewed; it retains a separate VIDEO mapping and
+  metadata parity gap, left unchanged per scope. Mobile result mock tests15/15
+  and both design-token checks PASS. This step does not claim Mobile metadata fix.
+- Expected existing Web results after reload: Alloy and1x for both verified
+  projects, drawn from each actual narration. Customer authenticated browser/API
+  end-to-end visual acceptance remains MANUAL PENDING; database evidence plus
+  serializer/mock tests do not substitute for that acceptance. No AI/TTS calls,
+  media processing, MongoDB writes, attempts/jobs, reset/retry, config changes,
+  commit or push. Full-suite Museum failures and manual UI review keep overall
+  status PARTIAL despite the focused metadata correction passing.
+## S31.2 — Admin Dashboard UI/UX and data audit (2026-10-25): PARTIAL
+
+- Audited UI/PROGRESS, Dashboard/cards/hook/service/layout/navigation, Customer
+  tokens and existing Backend admin.service.dashboard source before editing.
+  Root inaccuracies were project KPI descriptions claiming jobs and unconditional
+  mock banners on an API-driven UI. The observed9 failed projects versus28 failed
+  jobs is not a contradiction: many jobs can belong to one project.15 completed
+  today is a job count based on Backend-local midnight, not completed projects.
+- Existing authenticated ADMIN GET /api/admin/dashboard remains the sole data
+  source. Server countDocuments aggregates are used directly; recentProject/job/
+  activity lists are5/5/6 and never treated as full-system lists. Customer count
+  filters role CUSTOMER and deletedAt:null; project total includes all Project
+  documents; processing covers TRANSCRIBING/TRANSLATING/GENERATING_AUDIO/
+  PROCESSING_VIDEO; failed projects use FAILED. Job counters are separate and
+  TranslationAttempt failures/UNCERTAIN are not included. No Backend edit.
+- No authenticated browser session/API query was used, so the user's latest
+  9/31/0/9 and15/28 figures remain independently NOT VERIFIED; only their source
+  definitions are verified. No DB privileges substituted for ADMIN authentication.
+- Added pure dashboardMetrics KPI definitions/aggregate validation. Service marks
+  successfully validated existing API data, rejects unavailable/malformed counts
+  and lists, preserves raw statuses (including FAILED with progress100), and has
+  no runtime fixture fallback. Refresh has a synchronous pending lock and abort
+  fence; safe error handling hides unavailable counts, ignores late/unmounted
+  responses and allows a later read-only refresh to recover.
+- UI: improved4 KPI cards, full-width recent-project table, job/summary columns,
+  activity list, scoped Be Vietnam Pro/purple/slate tokens, readable cards/table
+  spacing, responsive grids, focus and reduced-motion. Removed stale mock labels;
+  added source/update notice and collapsed definitions. Admin brand changed to
+  Thuyết minh bảo tàng; all routes/active-state/auth logic remain intact.
+- Files changed this step: admin-web/src/pages/AdminDashboardPage.tsx;
+  hooks/useAdminDashboard.ts; services/adminDashboardService.ts; types/dashboard.ts;
+  utils/dashboardMetrics.ts (new); dashboard/{SystemStatusCard,ProcessingJobsCard,
+  RecentProjectsCard,RecentActivityCard}.tsx; layout/{AdminAppShell,AdminSidebar,
+  AdminMuseumMark}.tsx (last new); styles/{dashboard,admin-shell}.css (last new);
+  tests/dashboard-parity.test.mjs (new); docs/UI.md and this entry. S31.1 Login and
+  unrelated Customer/Backend/Mobile changes preserved without overwrite.
+- Validation: Admin15/15 PASS, including7 Dashboard tests for units, server totals,
+  malformed data, no fake fallback, loading/error, refresh duplicates/recovery/
+  abort, status-vs-progress, navigation and responsive/token contracts. TypeScript,
+  ESLint/build/diff-check PASS. Customer shell/brand/Dashboard/Result regression
+  24/24 PASS; no Customer source changed. Browser visual QA1280/1440/1920 and
+  tablet/mobile-browser, live authentication/API counters and refresh remain
+  MANUAL PENDING. Source/CSS tests do not constitute visual acceptance.
+- No real data/API/config/Backend/auth/session/role change; no Gemini/TTS/FFmpeg,
+  MongoDB write, new/retried/reset job/attempt, commit or push. No Admin Mobile or
+  S31.3 implemented. Overall PARTIAL pending authenticated live/visual acceptance.

@@ -1,25 +1,51 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
-import { Icon } from '../components/common/Icon';
-import { Badge } from '../components/common/Badge';
 import { adminAuthService } from '../services/adminAuthService';
+import { environment } from '../config/env';
+import '../styles/admin-login.css';
 export function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const submitting = useRef(false);
   const navigate = useNavigate();
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current) return;
     const form = event.currentTarget;
     const fields = new FormData(form);
     const email = String(fields.get('email') ?? '').trim(); const password = String(fields.get('password') ?? '');
-    if (!email || !password) { setError('Vui lòng nhập email và mật khẩu.'); return; }
+    if (!email || !password) {
+      setError('Vui lòng nhập email và mật khẩu.');
+      (form.elements.namedItem(!email ? 'email' : 'password') as HTMLInputElement | null)?.focus();
+      return;
+    }
+    submitting.current = true; setLoading(true); setError(null);
     try { await adminAuthService.login(email, password); form.reset(); navigate('/dashboard', { replace: true }); }
     catch { setError('Không thể đăng nhập bằng tài khoản quản trị này.'); }
+    finally { submitting.current = false; setLoading(false); }
   }
-  return <main className="login-page"><section className="login-brand"><div className="brand"><Icon name="wave" width="34" height="40" /><span>Người kể chuyện AI<small>Trang quản trị</small></span></div><div className="login-intro"><Badge tone="primary">ADMIN WORKSPACE</Badge><h1>Một góc nhìn.<br />Toàn bộ hệ thống.</h1><p>Không gian quản trị cho nền tảng thuyết minh đa ngôn ngữ.</p><div className="login-art" aria-hidden="true"><Icon name="wave" width="140" height="90" /><span /><span /><span /></div></div><small>Foundation S12 · React + TypeScript</small></section>
-    <section className="login-form-area"><form className="login-form card" onSubmit={submit} noValidate><Badge tone="primary">ADMIN</Badge><h2>Đăng nhập quản trị</h2><p>Chỉ dành cho tài khoản quản trị.</p><div className="demo-notice">Tài khoản sẽ được xác thực an toàn qua backend.</div>
-      <label htmlFor="email">Email</label><input id="email" name="email" type="email" autoComplete="off" placeholder="admin@example.com" required aria-describedby={error ? 'login-error' : undefined} />
-      <label htmlFor="password">Mật khẩu</label><input id="password" name="password" type="password" autoComplete="current-password" placeholder="Nhập mật khẩu" required aria-describedby={error ? 'login-error' : undefined} />
-      {error && <p id="login-error" role="alert" className="form-error">{error}</p>}<Button type="submit">Đăng nhập quản trị <Icon name="arrow" width="18" /></Button><small>Mật khẩu không được lưu trên trình duyệt.</small>
-    </form></section></main>;
+  return <main className="admin-login">
+    <section className="admin-login__panel" aria-labelledby="admin-login-heading">
+      <div className="admin-login__content">
+        <a className="admin-login__brand" href={environment.publicMuseumUrl} aria-label="Thuyết minh bảo tàng — Trang chủ bảo tàng">
+          <span className="admin-login__mark"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m3 9 9-6 9 6H3Zm2 3v6m5-6v6m4-6v6m5-6v6M3 21h18M3 18h18" /></svg></span>
+          <span><strong>Thuyết minh bảo tàng</strong><small>NỀN TẢNG ĐA NGÔN NGỮ</small></span>
+        </a>
+        <form className="admin-login__card" onSubmit={submit} noValidate aria-busy={loading}>
+          <header><span className="admin-login__eyebrow">Dành cho quản trị viên</span><h1 id="admin-login-heading">Đăng nhập quản trị</h1><p>Đăng nhập để quản lý hệ thống thuyết minh bảo tàng.</p></header>
+          <div className="admin-login__field"><label htmlFor="email">Email <span aria-hidden="true">*</span></label>
+            <input id="email" name="email" type="email" autoComplete="username" placeholder="Nhập email quản trị" required disabled={loading} aria-describedby={error ? 'login-error' : undefined} /></div>
+          <div className="admin-login__field"><label htmlFor="password">Mật khẩu <span aria-hidden="true">*</span></label>
+            <input id="password" name="password" type="password" autoComplete="current-password" placeholder="Nhập mật khẩu" required disabled={loading} aria-describedby={error ? 'login-error' : undefined} /></div>
+          {error && <p id="login-error" role="alert" className="admin-login__error">{error}</p>}
+          <Button type="submit" disabled={loading} aria-busy={loading}>{loading ? 'Đang đăng nhập…' : 'Đăng nhập quản trị'}</Button>
+          <p className="admin-login__note">Chỉ dành cho tài khoản có quyền quản trị.</p>
+        </form>
+      </div>
+    </section>
+    <section className="admin-login__photo" aria-label="Giới thiệu Thuyết minh bảo tàng">
+      <div className="admin-login__message"><p className="admin-login__slogan">Kết nối lịch sử qua nhiều ngôn ngữ.</p><p>Ứng dụng AI hỗ trợ tạo và quản lý nội dung thuyết minh bảo tàng.</p></div>
+    </section>
+  </main>;
 }

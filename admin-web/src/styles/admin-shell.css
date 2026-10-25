@@ -1,0 +1,22 @@
+@font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/semibold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+
+/* Shared shell/primitive appearance only. Login is scoped separately. */
+.admin-shell { --background: #F8FAFC; --surface: #FFFFFF; --surface-muted: #F1F5F9; --sidebar: #FFFFFF; --text: #0F172A; --secondary: #475569; --muted: #64748B; --border: #E2E8F0; --primary: #5850EC; --primary-hover: #4538CF; --primary-soft: #F0EEFF; --radius: 12px; --shadow: 0 1px 2px rgb(15 23 42 / 6%); min-height: 100vh; background: var(--background); font-family: 'Be Vietnam Pro', sans-serif; }
+.admin-shell .brand { align-items: flex-start; gap: 10px; font-size: 16px; line-height: 1.4; }
+.admin-shell .brand > span { min-width: 0; overflow-wrap: anywhere; }
+.admin-shell .brand small { margin-top: 5px; font-size: 10px; line-height: 1.5; }
+.admin-shell .brand > svg { margin-top: 2px; }
+.admin-shell .nav-link { min-height: 44px; font-size: 13px; }
+.admin-shell .nav-link:hover { background: var(--primary-soft); }
+.admin-shell :is(a, button, input, summary, [tabindex]):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.admin-shell .button { min-height: 44px; border-radius: 10px; }
+.admin-shell .page-container { min-width: 0; max-width: 1600px; padding: 24px 28px 40px; }
+.admin-shell .page-header { margin: 4px 0 24px; gap: 20px; }
+.admin-shell .page-header h1 { font-size: clamp(24px, 2vw, 30px); }
+.admin-shell .topbar { min-height: 68px; height: auto; padding-block: 12px; }
+.admin-shell .breadcrumb { min-width: 0; flex-wrap: wrap; gap: 8px; }
+.admin-shell .breadcrumb strong { overflow-wrap: anywhere; }
+@media (max-width: 700px) { .admin-shell .page-container { padding: 20px 16px 32px; } .admin-shell .page-header { gap: 16px; } .admin-shell .topbar { padding-inline: 16px; } }
+@media (prefers-reduced-motion: reduce) { .admin-shell *, .admin-shell *::before, .admin-shell *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

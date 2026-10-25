@@ -3145,3 +3145,44 @@ Manual QA pending / known differences:
   artifacts and Android playback have been verified safely.
 - No Web/Backend/Public Museum/Login/Register/API/authentication changes, no
   MongoDB writes, Gemini/TTS/render, attempt reset/retry, config change or commit.
+## S31.2 — Admin Dashboard UI and data integrity (2026-10-25)
+
+- Retained desktop Sidebar/Topbar/breadcrumb/content layout and all eight Admin
+  destinations. Sidebar brand is now Thuyết minh bảo tàng with museum SVG and
+  multilingual platform/Admin subtitle; brand still points to /dashboard, not a
+  Customer route. Login/Register and authentication/session/role guards unchanged.
+- Scoped admin-shell.css maps existing primitive variables to Customer purple,
+  navy/text, white/slate surfaces, Be Vietnam Pro, border/radius/shadow and44px
+  controls. Local fonts from the existing Admin Login assets are reused. Shell
+  focus/reduced-motion/wrapping apply to necessary shared primitives; no Admin
+  page content outside Dashboard was redesigned.
+- KPI cards now say Khách hàng, Tổng dự án, Dự án đang xử lý, Dự án thất bại.
+  Dashboard uses existing GET /api/admin/dashboard, with no fixture fallback or
+  new endpoint. Invalid/missing aggregate fields are errors, never fake zeros.
+  Successful API origin and generatedAt are shown; refreshing retains the prior
+  timestamp with an explicit updating message. Failed refresh clears unavailable
+  counts and exposes the existing safe retry/error state.
+- Removed the unconditional shell/demo banner and job-card mock claim: these were
+  stale text despite a real API client. They did not establish a mock data source.
+  No mock/demo mode was introduced. Added collapsed data definitions explaining
+  project/job/attempt/activity separation and recent-list limits. Job summary is
+  labelled Thống kê công việc rather than suggesting a health check.
+- Recent projects use full-width table card; jobs and job-summary form two
+  columns, recent activity is a readable two-column list. Grid becomes one column
+  below1100px; KPIs become2 columns, then1 below380px. Tables scroll locally with
+  keyboard focus instead of widening the page; long names/activity text wrap.
+- Metric definitions verified against Backend source (not changed): CUSTOMER
+  count excludes soft-deleted accounts; Project total has no extra filter;
+  processing counts4 Project states; failures count Project.status=FAILED. Job
+  queued/processing/failed count ProcessingJob statuses; completedToday counts
+  completedAt since Backend-local midnight. TranslationAttempt is not counted.
+  Recent lists are limited5/5/6, so totals are never derived from those lists.
+- User-observed9 customers/31 projects/0 processing projects/9 failed projects and
+  15 jobs completed today/28 failed jobs are different units/scopes. Their latest
+  live numeric values are NOT VERIFIED by an authenticated ADMIN request in this
+  step. Live Backend timezone is also not exposed by the existing response.
+- Admin tests15/15 PASS (7 new Dashboard cases); Customer related regression24/24
+  PASS. Admin TypeScript, ESLint, build and diff-check PASS. Browser1280/1440/1920
+  and small viewport visual QA, exact overflow/crop/focus and live API refresh are
+  MANUAL PENDING. No real login, API mutation, AI/TTS/FFmpeg, MongoDB write, job/
+  attempt reset, commit/push or S31.3 work performed.

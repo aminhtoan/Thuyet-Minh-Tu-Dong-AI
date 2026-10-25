@@ -1,0 +1,36 @@
+@font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/semibold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+
+.admin-login { --login-navy: #111C32; --login-primary: #5850EC; --login-muted: #475569; display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); min-height: 100vh; min-height: 100svh; background: #E9EDF7; color: #14213D; font-family: 'Be Vietnam Pro', sans-serif; }
+.admin-login__panel { display: flex; align-items: center; justify-content: center; min-width: 0; padding: clamp(24px, 4vw, 56px) 24px; }
+.admin-login__content { width: 100%; max-width: 420px; min-width: 0; }
+.admin-login__brand { display: flex; align-items: center; gap: 12px; min-height: 48px; margin-bottom: 24px; color: #121F3B; text-decoration: none; border-radius: 8px; }
+.admin-login__mark { display: grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; border-radius: 12px; background: #EEE9FF; color: var(--login-primary); }
+.admin-login__brand > span:last-child { min-width: 0; }
+.admin-login__brand strong { display: block; font-size: 21px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
+.admin-login__brand small { display: block; margin-top: 3px; color: #4538CF; font-size: 11px; font-weight: 600; letter-spacing: .07em; }
+.admin-login__brand:hover strong { color: var(--login-primary); }
+.admin-login__card { padding: 28px; border: 1px solid #D8DEEC; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgb(15 23 42 / 9%); }
+.admin-login__eyebrow { color: #4538CF; font-size: 12px; font-weight: 600; }
+.admin-login__card h1 { margin: 8px 0 10px; font-size: clamp(26px, 2.2vw, 30px); line-height: 1.3; letter-spacing: -.025em; }
+.admin-login__card header p { margin: 0 0 24px; color: var(--login-muted); font-size: 14px; overflow-wrap: anywhere; }
+.admin-login__field { display: grid; gap: 6px; margin-top: 16px; }
+.admin-login__field label { font-size: 14px; font-weight: 600; }
+.admin-login__field input { width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; border: 1px solid #D3DAE9; border-radius: 10px; color: #14213D; background: #F1F4FA; }
+.admin-login__field input:hover:not(:disabled) { border-color: #794CFF; }
+.admin-login__field input:focus-visible { border-color: var(--login-primary); outline: 3px solid #DAD6FF; outline-offset: 1px; }
+.admin-login__field input:disabled { cursor: wait; opacity: .75; }
+.admin-login__card .button { width: 100%; min-height: 46px; margin-top: 24px; border-radius: 10px; background: var(--login-primary); font-weight: 600; }
+.admin-login__card .button:hover:not(:disabled) { background: #4538CF; }
+.admin-login__card .button:disabled { opacity: .65; cursor: wait; }
+.admin-login__error { margin: 16px 0 0; padding: 10px 12px; border: 1px solid #FECACA; border-radius: 10px; color: #B91C1C; background: #FEF2F2; font-size: 14px; overflow-wrap: anywhere; }
+.admin-login__note { margin: 16px 0 0; color: var(--login-muted); font-size: 12px; text-align: center; }
+.admin-login__photo { display: flex; align-items: flex-end; min-width: 0; padding: clamp(32px, 5vw, 72px); color: #fff; background: linear-gradient(180deg, rgb(17 28 50 / 12%) 20%, rgb(17 28 50 / 90%) 100%), url('/images/admin-login-museum.jpg') 55% center / cover, var(--login-navy); }
+.admin-login__message { max-width: 620px; }
+.admin-login__message p { margin-bottom: 0; font-size: 16px; line-height: 1.7; }
+.admin-login__message .admin-login__slogan { margin-bottom: 16px; font-size: clamp(30px, 3.1vw, 44px); font-weight: 700; line-height: 1.25; letter-spacing: -.025em; }
+.admin-login a:focus-visible, .admin-login .button:focus-visible { outline: 3px solid var(--login-primary); outline-offset: 4px; }
+@media (max-width: 1100px) { .admin-login { grid-template-columns: minmax(0, 48fr) minmax(0, 52fr); } .admin-login__panel { padding-inline: 24px; } }
+@media (max-width: 767px) { .admin-login { grid-template-columns: minmax(0, 1fr); } .admin-login__panel { padding: 32px 20px; } .admin-login__photo { display: none; } }
+@media (max-width: 400px) { .admin-login__panel { padding-inline: 16px; } .admin-login__card { padding: 22px 20px; box-shadow: 0 2px 8px rgb(15 23 42 / 6%); } .admin-login__brand { gap: 10px; } .admin-login__brand strong { font-size: 20px; } }

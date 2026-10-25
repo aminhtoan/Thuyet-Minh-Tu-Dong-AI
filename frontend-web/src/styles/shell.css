@@ -112,6 +112,10 @@
 .topbar__brand { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--color-text-primary); font-size: 14px; font-weight: 700; line-height: 1.4; }
 .topbar__brand svg { flex: 0 0 24px; color: var(--color-primary); }
 .topbar__brand span { overflow-wrap: anywhere; }
+.app-shell .topbar__brand { text-decoration: none; border-radius: 4px; }
+.app-shell .topbar__brand:hover { color: var(--color-primary); }
+.app-shell .topbar__brand:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 4px; }
+.app-shell .sidebar__brand:hover { background-color: rgb(255 255 255 / 8%); }
 .topbar__context:has(.topbar__brand) .topbar__title { display: none; }
 .topbar__context:has(.topbar__brand) .topbar__menu { order: -1; }
 

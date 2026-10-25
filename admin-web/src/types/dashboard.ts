@@ -12,6 +12,7 @@ export type DashboardActivity = {
   entityId: string; description: string; createdAt: string;
 };
 export type AdminDashboardData = {
+  source: 'ADMIN_API';
   stats: { totalCustomers: number; totalProjects: number; processing: number; failed: number };
   recentProjects: DashboardProject[];
   processingJobs: DashboardJob[];

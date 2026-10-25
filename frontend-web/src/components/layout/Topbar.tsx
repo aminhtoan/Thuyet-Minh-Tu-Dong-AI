@@ -70,7 +70,7 @@ export function Topbar({ menuButtonRef, title, onMenuClick, sidebarOpen }: Topba
 
   return <header className={`topbar${showSearch ? ' topbar--search' : ''}${isProjectsPage ? ' topbar--projects' : ''}${isNewProjectPage ? ' topbar--create' : ''}${isHistoryPage ? ' topbar--history' : ''}${isAccountPage ? ' topbar--account' : ''}`}>
     <div className="topbar__context">
-      {pathname === '/dashboard' && <span className="topbar__brand"><MuseumBrandIcon /><span>{customerBrand.name}</span></span>}
+      {pathname === '/dashboard' && <Link to="/" className="topbar__brand" aria-label={`${customerBrand.name} — Trang chủ bảo tàng`}><MuseumBrandIcon /><span>{customerBrand.name}</span></Link>}
       <button ref={menuButtonRef} className="topbar__menu" type="button" onClick={onMenuClick} aria-label={sidebarOpen ? 'Đóng điều hướng' : 'Mở điều hướng'} aria-controls="app-sidebar" aria-expanded={sidebarOpen}><Icon name="menu" width="22" /></button>
       {isProjectsPage ? <div className="topbar__page-heading"><h1>Dự án của tôi</h1><p>Quản lý và tiếp tục các dự án thuyết minh.</p></div> : isNewProjectPage ? <div className="topbar__create-heading"><h1>Tạo dự án mới</h1><p>Thêm thông tin và phương tiện để bắt đầu tạo thuyết minh.</p></div> : isHistoryPage ? <div className="topbar__history-heading"><h1>Thư viện thuyết minh</h1><p>Xem lại các sản phẩm thuyết minh đã hoàn thành của bạn.</p></div> : isAccountPage ? <div className="topbar__account-heading"><h1>Tài khoản</h1><p>Quản lý thông tin cá nhân của bạn.</p></div> : <span className="topbar__title" title={title}>{title}</span>}
     </div>

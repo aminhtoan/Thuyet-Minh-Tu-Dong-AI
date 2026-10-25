@@ -46,8 +46,12 @@ const install = (t: test.TestContext, sourceRevision: number | undefined, transc
 
 test('current provenance chain remains readable and appears in lists', async (t) => {
   install(t, 2, 2);
-  assert.equal((await getNarration(projectId, narrationId.toString())).id, narrationId.toString());
-  assert.equal((await getResult(projectId, resultId.toString())).id, resultId.toString());
+  const narration = await getNarration(projectId, narrationId.toString());
+  const result = await getResult(projectId, resultId.toString());
+  assert.equal(narration.id, narrationId.toString());
+  assert.equal(narration.projectId, projectId); assert.equal(narration.voice.name, 'Giọng thử nghiệm'); assert.equal(narration.speed, 1);
+  assert.equal(result.id, resultId.toString()); assert.equal(result.narrationId, narration.id);
+  assert.equal(result.projectId, narration.projectId); assert.equal(result.targetLanguage, narration.targetLanguage);
   assert.equal((await listNarrations(projectId)).length, 1);
   assert.equal((await listResults(projectId)).length, 1);
 });

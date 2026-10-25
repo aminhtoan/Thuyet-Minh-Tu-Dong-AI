@@ -14,9 +14,13 @@ export interface LanguageVariant {
 }
 
 type VideoResultDto = { id: string; projectId: string; narrationId: string; targetLanguage: string; mimeType: string; fileSize: number; duration: number; width: number | null; height: number | null; fileUrl: string; createdAt: string };
-type NarrationDto = { id: string; projectId: string; targetLanguage: string; voice: { id: string; name: string }; speed: number; mimeType: string; fileSize: number; duration: number | null; audioUrl: string; createdAt: string };
+type NarrationDto = { id: string; projectId: string; targetLanguage: string; voice?: { id: string; name?: string | null } | null; speed?: number | null; mimeType: string; fileSize: number; duration: number | null; audioUrl: string; createdAt: string };
 
 const newest = <T extends { createdAt: string }>(items: T[]) => [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+const narrationMetadata = (narration?: NarrationDto) => ({
+  voiceName: typeof narration?.voice?.name === 'string' && narration.voice.name.trim() ? narration.voice.name : undefined,
+  speed: typeof narration?.speed === 'number' && Number.isFinite(narration.speed) && narration.speed > 0 ? narration.speed : undefined,
+});
 
 export const resultService = {
   async getByProjectId(projectId: string, language?: LanguageCode): Promise<Result | null> {
@@ -24,11 +28,17 @@ export const resultService = {
       api<{ results: VideoResultDto[] }>(`/projects/${projectId}/results`),
       api<{ narrations: NarrationDto[] }>(`/projects/${projectId}/narrations`),
     ]);
-    const video = newest(results.filter((item) => !language || item.targetLanguage === language));
-    if (video) return { id: video.id, projectId, languageCode: video.targetLanguage, mediaType: 'VIDEO', artifactType: 'VIDEO', createdAt: video.createdAt, mimeType: video.mimeType, fileSize: video.fileSize, duration: video.duration, width: video.width, height: video.height, filePath: video.fileUrl };
-    const audio = newest(narrations.filter((item) => !language || item.targetLanguage === language));
+    const projectNarrations = narrations.filter(item => item.projectId === projectId);
+    const video = newest(results.filter((item) => item.projectId === projectId && (!language || item.targetLanguage === language)));
+    if (video) {
+      // Use the narration actually rendered into this video, not a newer voice
+      // configuration, a same-language neighbour, or another project's record.
+      const narration = projectNarrations.find(item => item.id === video.narrationId && item.targetLanguage === video.targetLanguage);
+      return { id: video.id, projectId, languageCode: video.targetLanguage, mediaType: 'VIDEO', artifactType: 'VIDEO', createdAt: video.createdAt, mimeType: video.mimeType, fileSize: video.fileSize, duration: video.duration, width: video.width, height: video.height, filePath: video.fileUrl, ...narrationMetadata(narration) };
+    }
+    const audio = newest(projectNarrations.filter((item) => !language || item.targetLanguage === language));
     if (!audio) return null;
-    return { id: audio.id, projectId, languageCode: audio.targetLanguage, mediaType: 'AUDIO', artifactType: 'AUDIO', createdAt: audio.createdAt, mimeType: audio.mimeType, fileSize: audio.fileSize, duration: audio.duration ?? undefined, voiceName: audio.voice.name, speed: audio.speed, filePath: audio.audioUrl };
+    return { id: audio.id, projectId, languageCode: audio.targetLanguage, mediaType: 'AUDIO', artifactType: 'AUDIO', createdAt: audio.createdAt, mimeType: audio.mimeType, fileSize: audio.fileSize, duration: audio.duration ?? undefined, ...narrationMetadata(audio), filePath: audio.audioUrl };
   },
   async getAvailableLanguages(projectId: string): Promise<string[]> {
     try {
