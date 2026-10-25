@@ -1,6 +1,22 @@
 # Project Progress
 
-## S29.4G.1 — Mobile avatar Account loading/navigation fix (2026-10-24): PARTIAL acceptance
+## S30 — Listen Analytics: Detailed MP3 & Language Breakdown (2026-10-25): FULL
+
+- Backend Aggregation: Added `getListenBreakdown()` in [backend/src/services/analytics.service.ts](file:///o:/multilingual-ai-narration/backend/src/services/analytics.service.ts) aggregating Top 5 MP3 narrations (`topAudios`) and Top 5 languages (`topLanguages`) via MongoDB aggregation pipelines (`$group`, `$sort`, `$limit`) with localized names and country flags.
+- Admin API Integration: Integrated `listenAnalytics` into `GET /api/admin/dashboard` in [backend/src/services/admin.service.ts](file:///o:/multilingual-ai-narration/backend/src/services/admin.service.ts) and `GET /api/analytics/listen-stats` in [backend/src/controllers/analytics.controller.ts](file:///o:/multilingual-ai-narration/backend/src/controllers/analytics.controller.ts).
+- Admin Web UI:
+  - Added [admin-web/src/components/dashboard/TopAudiosCard.tsx](file:///o:/multilingual-ai-narration/admin-web/src/components/dashboard/TopAudiosCard.tsx) displaying ranked Top 5 MP3 narrations with rank badge, title, language flag/tag, total listens, and web/mobile distribution.
+  - Added [admin-web/src/components/dashboard/LanguageDistributionCard.tsx](file:///o:/multilingual-ai-narration/admin-web/src/components/dashboard/LanguageDistributionCard.tsx) displaying Top 5 languages with flag, percentage distribution progress bar, listen counts, and platform breakdown.
+  - Mounted cards in [admin-web/src/pages/AdminDashboardPage.tsx](file:///o:/multilingual-ai-narration/admin-web/src/pages/AdminDashboardPage.tsx) ensuring "Hoạt động gần đây" stays at the very bottom, with silent 5s background polling in [admin-web/src/hooks/useAdminDashboard.ts](file:///o:/multilingual-ai-narration/admin-web/src/hooks/useAdminDashboard.ts).
+- Mobile & Dev Connectivity:
+  - Configured dev CORS in [backend/src/app.ts](file:///o:/multilingual-ai-narration/backend/src/app.ts) to permit all ngrok tunnel domains (including `.ngrok-free.dev`) and LAN IPs.
+  - Improved [frontend-mobile/src/features/museum/MuseumScreens.tsx](file:///o:/multilingual-ai-narration/frontend-mobile/src/features/museum/MuseumScreens.tsx) with immediate stream readiness and direct user-gesture audio playback/tracking, resolving mobile browser autoplay blocking.
+- Verification & Testing:
+  - Admin Web: 16/16 tests PASS (`npm test`), `tsc --noEmit` PASS, `oxlint` PASS (0 errors, 0 warnings).
+  - Backend: `node --import tsx --test tests/analytics.test.ts` (5/5 PASS), `tsc --noEmit` PASS, `eslint` PASS.
+  - Frontend Web: 47/47 tests PASS (`tests/analytics-listen.test.mjs`, `tests/museum-routing.test.mjs`).
+  - Frontend Mobile: 207/207 tests PASS (`npm test`), `tsc --noEmit` PASS.
+
 
 - Root cause CONFIRMED: installed SDK58 converts Tabs.Screen href:null to hidden;
   its useVisibleTabsWithRedirect then replaces focused Account with Dashboard.

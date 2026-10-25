@@ -48,13 +48,42 @@ const jobDto = async (job: InstanceType<typeof ProcessingJob>) => {
     createdAt: job.createdAt, updatedAt: job.updatedAt };
 };
 
+import { getListenBreakdown } from './analytics.service.js';
+
 export const dashboard = async () => {
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const [totalCustomers, totalProjects, processing, failed, totalListens, webListens, mobileListens, recentProjects, recentJobs, recentActivities, queuedJobs, activeJobs, completedToday, failedJobs] = await Promise.all([
-    User.countDocuments(availableCustomerFilter()), Project.countDocuments(), Project.countDocuments({ status: { $in: processingStatuses } }), Project.countDocuments({ status: 'FAILED' }),
-    ListenEvent.countDocuments(), ListenEvent.countDocuments({ platform: 'web' }), ListenEvent.countDocuments({ platform: 'mobile' }),
-    Project.find().sort({ updatedAt: -1 }).limit(5), ProcessingJob.find().sort({ updatedAt: -1 }).limit(5), ActivityLog.find().sort({ createdAt: -1 }).limit(6),
-    ProcessingJob.countDocuments({ status: 'QUEUED' }), ProcessingJob.countDocuments({ status: 'PROCESSING' }), ProcessingJob.countDocuments({ status: 'COMPLETED', completedAt: { $gte: today } }), ProcessingJob.countDocuments({ status: 'FAILED' }),
+  const [
+    totalCustomers,
+    totalProjects,
+    processing,
+    failed,
+    totalListens,
+    webListens,
+    mobileListens,
+    recentProjects,
+    recentJobs,
+    recentActivities,
+    queuedJobs,
+    activeJobs,
+    completedToday,
+    failedJobs,
+    listenAnalytics,
+  ] = await Promise.all([
+    User.countDocuments(availableCustomerFilter()),
+    Project.countDocuments(),
+    Project.countDocuments({ status: { $in: processingStatuses } }),
+    Project.countDocuments({ status: 'FAILED' }),
+    ListenEvent.countDocuments(),
+    ListenEvent.countDocuments({ platform: 'web' }),
+    ListenEvent.countDocuments({ platform: 'mobile' }),
+    Project.find().sort({ updatedAt: -1 }).limit(5),
+    ProcessingJob.find().sort({ updatedAt: -1 }).limit(5),
+    ActivityLog.find().sort({ createdAt: -1 }).limit(6),
+    ProcessingJob.countDocuments({ status: 'QUEUED' }),
+    ProcessingJob.countDocuments({ status: 'PROCESSING' }),
+    ProcessingJob.countDocuments({ status: 'COMPLETED', completedAt: { $gte: today } }),
+    ProcessingJob.countDocuments({ status: 'FAILED' }),
+    getListenBreakdown(),
   ]);
   return {
     stats: {
@@ -69,6 +98,7 @@ export const dashboard = async () => {
         mobile: mobileListens,
       },
     },
+    listenAnalytics,
     recentProjects: await Promise.all(recentProjects.map(projectDto)),
     processingJobs: await Promise.all(recentJobs.map(jobDto)),
     recentActivities: await Promise.all(recentActivities.map(activityDto)),

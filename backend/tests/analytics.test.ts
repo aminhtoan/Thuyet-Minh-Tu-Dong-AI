@@ -111,16 +111,18 @@ test('Analytics API and listen tracking', async (t) => {
     assert.equal(data(mobileRes).platform, 'mobile');
   });
 
-  await t.test('GET /api/analytics/listen-stats returns aggregated metrics', async () => {
+  await t.test('GET /api/analytics/listen-stats returns aggregated metrics and breakdowns', async () => {
     const statsRes = await request('/api/analytics/listen-stats');
     assert.equal(statsRes.status, 200);
     const stats = data(statsRes);
     assert.ok(typeof stats.total === 'number' && stats.total >= 2);
     assert.ok(typeof stats.web === 'number' && stats.web >= 1);
     assert.ok(typeof stats.mobile === 'number' && stats.mobile >= 1);
+    assert.ok(Array.isArray(stats.topLanguages));
+    assert.ok(Array.isArray(stats.topAudios));
   });
 
-  await t.test('GET /api/admin/dashboard includes totalListens and listenStats', async () => {
+  await t.test('GET /api/admin/dashboard includes totalListens, listenStats and listenAnalytics', async () => {
     const res = await request('/api/admin/dashboard', adminToken);
     assert.equal(res.status, 200);
     const payload = data(res);
@@ -133,5 +135,11 @@ test('Analytics API and listen tracking', async (t) => {
     assert.ok(typeof stats.totalListens === 'number' && stats.totalListens >= 2);
     assert.ok(typeof stats.listenStats.web === 'number' && stats.listenStats.web >= 1);
     assert.ok(typeof stats.listenStats.mobile === 'number' && stats.listenStats.mobile >= 1);
+    const listenAnalytics = payload.listenAnalytics as {
+      topLanguages: Array<{ code: string; count: number; name: string }>;
+      topAudios: Array<{ title: string; count: number }>;
+    };
+    assert.ok(Array.isArray(listenAnalytics.topLanguages));
+    assert.ok(Array.isArray(listenAnalytics.topAudios));
   });
 });

@@ -15,7 +15,18 @@ function compile(file, dependencies = {}) {
 }
 const metrics = compile('utils/dashboardMetrics.ts');
 const format = compile('utils/dashboardFormat.ts');
-const payload = () => ({ stats: { totalCustomers: 9, totalProjects: 31, processing: 0, failed: 9, totalListens: 20, listenStats: { total: 20, web: 12, mobile: 8 } }, recentProjects: [], processingJobs: [], recentActivities: [], jobSummary: { queued: 0, processing: 0, completedToday: 15, failed: 28 }, generatedAt: '2026-10-25T09:00:00Z' });
+const payload = () => ({
+  stats: { totalCustomers: 9, totalProjects: 31, processing: 0, failed: 9, totalListens: 20, listenStats: { total: 20, web: 12, mobile: 8 } },
+  listenAnalytics: {
+    topLanguages: [{ code: 'en', name: 'Tiếng Anh', flag: '🇬🇧', count: 12, percentage: 60, web: 7, mobile: 5 }],
+    topAudios: [{ projectId: 'p1', title: 'Hiện vật A', languageCode: 'en', languageName: 'Tiếng Anh', flag: '🇬🇧', count: 12, web: 7, mobile: 5 }],
+  },
+  recentProjects: [],
+  processingJobs: [],
+  recentActivities: [],
+  jobSummary: { queued: 0, processing: 0, completedToday: 15, failed: 28 },
+  generatedAt: '2026-10-25T09:00:00Z',
+});
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function nodes(tree, predicate) {
   if (Array.isArray(tree)) return tree.flatMap(v => nodes(v, predicate));
@@ -47,6 +58,8 @@ test('real service uses protected GET only, preserves status/progress and server
   assert.equal(result.source, 'ADMIN_API'); assert.equal(result.stats.totalProjects, 31); assert.equal(result.recentProjects.length, 1);
   assert.equal(result.recentProjects[0].status, 'FAILED'); assert.equal(result.recentProjects[0].progress, 100);
   assert.equal(result.recentProjects[0].customerName, 'Tài khoản không còn tồn tại');
+  assert.equal(result.listenAnalytics?.topLanguages[0].code, 'en');
+  assert.equal(result.listenAnalytics?.topAudios[0].title, 'Hiện vật A');
   const failing = compile('services/adminDashboardService.ts', { '../utils/dashboardMetrics': metrics, '../lib/api': { adminApi: async () => { throw Error('offline'); } } }).adminDashboardService;
   await assert.rejects(failing.getDashboard(), /offline/);
 });
@@ -72,7 +85,7 @@ test('loading, refresh duplicate lock, aborted stale completion and API error ne
 });
 function page(state) {
   const deps = { '../hooks/useAdminDashboard': { useAdminDashboard: () => state }, '../utils/dashboardMetrics': metrics, '../utils/dashboardFormat': format };
-  for (const [name, path] of [['AdminPageHeader', 'layout'], ['StatCard', 'common'], ['Button', 'common'], ['DashboardSkeleton', 'dashboard'], ['DashboardErrorState', 'dashboard'], ['RecentProjectsCard', 'dashboard'], ['SystemStatusCard', 'dashboard'], ['ProcessingJobsCard', 'dashboard'], ['RecentActivityCard', 'dashboard']]) deps[`../components/${path}/${name}`] = { [name]: name };
+  for (const [name, path] of [['AdminPageHeader', 'layout'], ['StatCard', 'common'], ['Button', 'common'], ['DashboardSkeleton', 'dashboard'], ['DashboardErrorState', 'dashboard'], ['TopAudiosCard', 'dashboard'], ['LanguageDistributionCard', 'dashboard'], ['RecentProjectsCard', 'dashboard'], ['SystemStatusCard', 'dashboard'], ['ProcessingJobsCard', 'dashboard'], ['RecentActivityCard', 'dashboard']]) deps[`../components/${path}/${name}`] = { [name]: name };
   return compile('pages/AdminDashboardPage.tsx', deps).AdminDashboardPage();
 }
 test('actual Dashboard renders loading/error without KPI zeros and announces successful API data only after load', () => {
@@ -82,7 +95,34 @@ test('actual Dashboard renders loading/error without KPI zeros and announces suc
   }
   const tree = page({ loading: false, error: false, data: { ...payload(), source: 'ADMIN_API' }, refresh() {} });
   assert.equal(nodes(tree, n => n.type === 'StatCard').length, 5); assert.match(JSON.stringify(tree), /API quản trị/);
+  assert.equal(nodes(tree, n => n.type === 'TopAudiosCard').length, 1);
+  assert.equal(nodes(tree, n => n.type === 'LanguageDistributionCard').length, 1);
   assert.doesNotMatch(JSON.stringify(tree), /dữ liệu minh họa|Backend chưa kết nối/);
+});
+test('listen analytics cards render audio and language rankings with accurate metrics and honest empty states', () => {
+  const { TopAudiosCard } = compile('components/dashboard/TopAudiosCard.tsx', { '../common/Card': { Card: 'section' } });
+  const { LanguageDistributionCard } = compile('components/dashboard/LanguageDistributionCard.tsx', { '../common/Card': { Card: 'section' } });
+
+  const emptyAudio = TopAudiosCard({ items: [] });
+  assert.match(JSON.stringify(emptyAudio), /Chưa có dữ liệu lượt nghe thuyết minh/);
+  const emptyLang = LanguageDistributionCard({ items: [] });
+  assert.match(JSON.stringify(emptyLang), /Chưa có dữ liệu lượt nghe ngôn ngữ/);
+
+  const fullAudio = TopAudiosCard({ items: payload().listenAnalytics.topAudios });
+  assert.match(JSON.stringify(fullAudio), /Hiện vật A/);
+  assert.match(JSON.stringify(fullAudio), /12/);
+  assert.match(JSON.stringify(fullAudio), /Web/);
+  assert.match(JSON.stringify(fullAudio), /Mobile/);
+
+  const fullLang = LanguageDistributionCard({ items: payload().listenAnalytics.topLanguages });
+  assert.match(JSON.stringify(fullLang), /Tiếng Anh/);
+  assert.match(JSON.stringify(fullLang), /60/);
+  assert.match(JSON.stringify(fullLang), /Web/);
+  assert.match(JSON.stringify(fullLang), /Mobile/);
+
+  const css = read('styles/dashboard.css');
+  assert.match(css, /\.top-audios-card/);
+  assert.match(css, /\.language-distribution-card/);
 });
 test('job summary and limited lists use honest units and labels, including empty job lists', () => {
   const { SystemStatusCard } = compile('components/dashboard/SystemStatusCard.tsx', { '../common/Card': { Card: 'section' }, '../common/StatusBadge': { StatusBadge: 'badge' } });
@@ -101,3 +141,4 @@ test('Admin navigation and responsive shell retain existing destinations, guards
   const { colors } = JSON.parse(readFileSync(new URL('../../design/customer/tokens.json', import.meta.url), 'utf8'));
   for (const token of ['primary', 'primaryHover', 'background', 'surface', 'textPrimary', 'textSecondary', 'border']) assert.ok(shell.toUpperCase().includes(colors[token].toUpperCase()));
 });
+

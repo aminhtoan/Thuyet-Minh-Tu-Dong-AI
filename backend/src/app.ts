@@ -16,10 +16,27 @@ app.use(
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
 );
+function isAllowedDevOrigin(origin: string): boolean {
+  if (origin.startsWith('exp://')) return true;
+  try {
+    const url = new URL(origin);
+    const host = url.hostname;
+    if (/(?:^|\.)ngrok(?:-free)?\.(?:app|dev|io)$/i.test(host)) return true;
+    if (/^(?:192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[0-1])\.\d+\.\d+|127\.0\.0\.1|localhost)$/.test(host)) return true;
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || env.corsOrigins.includes(origin)) {
+      if (
+        !origin ||
+        env.corsOrigins.includes(origin) ||
+        (env.nodeEnv === 'development' && isAllowedDevOrigin(origin))
+      ) {
         callback(null, true);
         return;
       }

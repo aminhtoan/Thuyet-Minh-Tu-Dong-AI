@@ -18,11 +18,31 @@ export function useAdminDashboard() {
     });
     return () => controller.abort();
   }, [request]);
-  function refresh() {
+  function refresh(silent = false) {
     if (pending.current) return;
     pending.current = true;
     active.current?.abort();
-    setError(false); setLoading(true); setRequest(value => value + 1);
+    if (!silent) {
+      setError(false);
+      setLoading(true);
+    }
+    setRequest(value => value + 1);
   }
-  return { data, loading, error, refresh };
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const interval = setInterval(() => {
+      if (!document.hidden && !pending.current) {
+        refresh(true);
+      }
+    }, 5000);
+    const onFocus = () => {
+      if (!pending.current) refresh(true);
+    };
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
+  return { data, loading, error, refresh: () => refresh(false) };
 }

@@ -11,6 +11,32 @@ export type DashboardActivity = {
   id: string; userId: string; action: string; entityType: string;
   entityId: string; description: string; createdAt: string;
 };
+export type TopLanguageItem = {
+  code: string;
+  name: string;
+  flag: string;
+  count: number;
+  percentage: number;
+  web: number;
+  mobile: number;
+};
+
+export type TopAudioItem = {
+  projectId: string;
+  title: string;
+  languageCode: string;
+  languageName: string;
+  flag: string;
+  count: number;
+  web: number;
+  mobile: number;
+};
+
+export type ListenAnalytics = {
+  topLanguages: TopLanguageItem[];
+  topAudios: TopAudioItem[];
+};
+
 export type AdminDashboardData = {
   source: 'ADMIN_API';
   stats: {
@@ -21,6 +47,7 @@ export type AdminDashboardData = {
     totalListens?: number;
     listenStats?: { total: number; web: number; mobile: number };
   };
+  listenAnalytics?: ListenAnalytics;
   recentProjects: DashboardProject[];
   processingJobs: DashboardJob[];
   recentActivities: DashboardActivity[];

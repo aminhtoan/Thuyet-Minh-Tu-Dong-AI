@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
 import { ListenEvent } from '../models/ListenEvent.js';
+import { getListenBreakdown } from '../services/analytics.service.js';
 import { successResponse } from '../utils/api-response.js';
 
 export const trackListen: RequestHandler = async (request, response) => {
@@ -37,11 +38,12 @@ export const getListenStats: RequestHandler = async (_request, response) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [total, web, mobile, todayCount] = await Promise.all([
+  const [total, web, mobile, todayCount, breakdown] = await Promise.all([
     ListenEvent.countDocuments(),
     ListenEvent.countDocuments({ platform: 'web' }),
     ListenEvent.countDocuments({ platform: 'mobile' }),
     ListenEvent.countDocuments({ createdAt: { $gte: today } }),
+    getListenBreakdown(),
   ]);
 
   response.json(
@@ -50,6 +52,8 @@ export const getListenStats: RequestHandler = async (_request, response) => {
       web,
       mobile,
       today: todayCount,
+      topLanguages: breakdown.topLanguages,
+      topAudios: breakdown.topAudios,
     }),
   );
 };

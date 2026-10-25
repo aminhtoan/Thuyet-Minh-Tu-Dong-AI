@@ -18,7 +18,8 @@ export async function trackListen(data: TrackListenInput = {}): Promise<void> {
       headers['authorization'] = `Bearer ${tokens.accessToken}`;
     }
 
-    await fetch(`${env.apiBaseUrl}/analytics/listen`, {
+    const base = (env.apiBaseUrl || '').replace(/\/+$/, '');
+    const res = await fetch(`${base}/analytics/listen`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -26,7 +27,10 @@ export async function trackListen(data: TrackListenInput = {}): Promise<void> {
         ...data,
       }),
     });
-  } catch {
-    // Best-effort: never interrupt mobile audio playback
+    if (!res.ok) {
+      console.warn('[Analytics] Track listen failed with HTTP', res.status);
+    }
+  } catch (err) {
+    console.warn('[Analytics] Track listen network error:', err);
   }
 }
