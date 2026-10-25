@@ -19,3 +19,6 @@ export const languageVariants: RequestHandler = async (request, response) => {
   const variants = await projectService.getLanguageVariants(projectId(request), userId(request), currentLanguage);
   response.json(successResponse({ variants }));
 };
+export const publicAudioGuides: RequestHandler = async (_request, response) => {
+  response.json(successResponse({ guides: await projectService.getPublicAudioGuides() }));
+};

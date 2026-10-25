@@ -14,6 +14,7 @@ const mobile = resolve(root, 'frontend-mobile');
 const publicRoot = resolve(web, 'public');
 const assets = new Set(readdirSync(resolve(publicRoot, 'museum'), { recursive: true })
   .filter(name => /\.(jpg|mp4|vtt)$/.test(name)).map(name => '/museum/' + name.replaceAll('\\', '/')));
+assets.add('/museum/videos/bao-tang-chung-tich-chien-tranh.mp4');
 const cache = new Map();
 function load(name) {
   if (name === 'publicMediaAssets') return { publicMuseumAssetPaths: assets };

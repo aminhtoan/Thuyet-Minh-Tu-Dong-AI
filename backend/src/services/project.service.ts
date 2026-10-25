@@ -258,3 +258,90 @@ export const getLanguageVariants = async (projectId: string, userId: string, cur
 
   return Array.from(variantMap.values());
 };
+
+export const getPublicAudioGuides = async () => {
+  const narrations = await Narration.find({ status: 'READY' }).sort({ createdAt: -1 });
+  if (narrations.length === 0) return [];
+
+  const projectIds = [...new Set(narrations.map((n) => n.projectId))];
+  const projects = await Project.find({ _id: { $in: projectIds } });
+  const projectMap = new Map(projects.map((p) => [p._id.toString(), p]));
+
+  const medias = await Media.find({ projectId: { $in: projectIds } });
+  const mediaMap = new Map(medias.map((m) => [m.projectId.toString(), m]));
+
+  const LANGUAGE_METAS: Record<string, { name: string; flag: string }> = {
+    vi: { name: 'Tiếng Việt', flag: '🇻🇳' },
+    en: { name: 'Tiếng Anh', flag: '🇬🇧' },
+    ja: { name: 'Tiếng Nhật', flag: '🇯🇵' },
+    ko: { name: 'Tiếng Hàn', flag: '🇰🇷' },
+    zh: { name: 'Tiếng Trung', flag: '🇨🇳' },
+    'zh-CN': { name: 'Tiếng Trung', flag: '🇨🇳' },
+    fr: { name: 'Tiếng Pháp', flag: '🇫🇷' },
+    de: { name: 'Tiếng Đức', flag: '🇩🇪' },
+    es: { name: 'Tiếng Tây Ban Nha', flag: '🇪🇸' },
+    ru: { name: 'Tiếng Nga', flag: '🇷🇺' },
+    th: { name: 'Tiếng Thái', flag: '🇹🇭' },
+  };
+
+  const normalizeTitle = (name: string) =>
+    name.replace(/\s*\((?:Tiếng\s+[^)]+|[A-Za-z\s]+)\)\s*$/i, '').trim();
+
+  type PublicGuide = {
+    key: string;
+    title: string;
+    description: string;
+    mediaType: string;
+    languages: Array<{
+      code: string;
+      name: string;
+      flag: string;
+      projectId: string;
+      narrationId: string;
+      audioUrl: string;
+    }>;
+  };
+
+  const guideMap = new Map<string, PublicGuide>();
+
+  for (const n of narrations) {
+    const proj = projectMap.get(n.projectId.toString());
+    if (!proj) continue;
+    const isTestNoise = /^(?:S23\s|E2E\s|Test\s[a-f0-9-]{36})/i.test(proj.name);
+    if (isTestNoise) continue;
+
+    const baseTitle = normalizeTitle(proj.name) || proj.name;
+    const media = mediaMap.get(proj._id.toString());
+    const groupKey = baseTitle.toLowerCase();
+
+    const langCode = n.languageCode;
+    const meta = LANGUAGE_METAS[langCode] || { name: langCode.toUpperCase(), flag: '🌐' };
+
+    const langOption = {
+      code: langCode,
+      name: meta.name,
+      flag: meta.flag,
+      projectId: proj._id.toString(),
+      narrationId: n._id.toString(),
+      audioUrl: `/api/projects/public-audio/${proj._id.toString()}/${n._id.toString()}`,
+    };
+
+    if (!guideMap.has(groupKey)) {
+      guideMap.set(groupKey, {
+        key: baseTitle.toLowerCase(),
+        title: baseTitle,
+        description: proj.description || 'Bản thu thuyết minh AI hoàn chỉnh.',
+        mediaType: media?.mediaType || 'AUDIO',
+        languages: [langOption],
+      });
+    } else {
+      const existing = guideMap.get(groupKey)!;
+      if (!existing.languages.some((l) => l.code === langCode)) {
+        existing.languages.push(langOption);
+      }
+    }
+  }
+
+  return Array.from(guideMap.values());
+};
+

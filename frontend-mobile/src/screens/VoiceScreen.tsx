@@ -65,8 +65,8 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
           accessibilityState={{ selected: editor.gender === gender }} onPress={() => editor.setGender(gender)}>{gender === 'All' ? 'Tất cả' : gender === 'Female' ? 'Nữ' : gender === 'Male' ? 'Nam' : 'Trung tính'}</Button>)}
       </View>
     </>}
-    {editor.previewError && <Card><ErrorState title="Không thể nghe thử giọng đọc" description={editor.previewError}
-      onRetry={() => { if (editor.failedPreviewId) void editor.preview(editor.failedPreviewId); }} /></Card>}
+    {editor.previewError ? <Card><ErrorState title="Không thể nghe thử giọng đọc" description={editor.previewError}
+      onRetry={() => { if (editor.failedPreviewId) void editor.preview(editor.failedPreviewId); }} /></Card> : null}
   </View>;
 
   const empty = editor.status === 'LOADING' ? <Card style={styles.loading}><Spinner label="Đang tải giọng đọc" /><Text style={styles.note}>Đang tải giọng đọc và cấu hình...</Text></Card>
@@ -90,7 +90,7 @@ function VoiceWorkspace({ project, language }: { project: Project; language?: La
       <Text style={styles.description}>Ngôn ngữ: {languageNames[editor.draft.languageCode]}</Text>
       <Text style={styles.description}>Giọng đọc: {editor.selectedVoice?.name ?? 'Chưa chọn'}</Text>
       <Text style={styles.description}>Tốc độ: {formatSpeed(editor.draft.speed)}</Text>
-      {editor.validationError && <Text accessibilityLiveRegion="polite" style={styles.error}>{editor.validationError}</Text>}
+      {editor.validationError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{editor.validationError}</Text> : null}
       <Text accessibilityLiveRegion="polite" style={styles.label}>{editor.status === 'SAVING' ? 'Đang lưu cấu hình...' : editor.dirty ? 'Thay đổi chưa lưu' : editor.saved ? 'Đã lưu' : 'Chọn giọng đọc để cấu hình thuyết minh.'}</Text>
       <Button loading={editor.status === 'SAVING'} disabled={!editor.canSave} onPress={editor.save}>Tạo giọng đọc</Button>
       <Button variant="secondary" disabled={!editor.dirty || editor.busy} onPress={editor.reset}>Đặt lại thay đổi</Button>

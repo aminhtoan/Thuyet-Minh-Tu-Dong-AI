@@ -41,6 +41,6 @@ export function DashboardResumeButton({ projectId, label = 'Tiếp tục' }: { p
       }
     });
   }
-  return <View style={styles.container}><Button loading={loading} disabled={loading} wrapLabel accessibilityLabel={`${label} dự án ${projectId}`} onPress={() => void open()}>{loading ? 'Đang mở' : label}</Button>{error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}</View>;
+  return <View style={styles.container}><Button loading={loading} disabled={loading} wrapLabel accessibilityLabel={`${label} dự án ${projectId}`} onPress={() => void open()}>{loading ? 'Đang mở' : label}</Button>{error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}</View>;
 }
 const styles = StyleSheet.create({ container: { gap: spacing.sm }, error: { fontFamily: typography.family.regular, fontSize: typography.size.sm, lineHeight: 22, color: colors.error } });

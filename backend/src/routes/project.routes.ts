@@ -23,6 +23,11 @@ import { successResponse } from '../utils/api-response.js';
 
 export function createProjectRouter(groups: Pick<typeof translationController, 'plan' | 'preview' | 'draft' | 'approve' | 'get'> = translationController) {
 const projectRouter = Router();
+
+// Public endpoints: allow museum visitors to discover and listen to published audio guides
+projectRouter.get('/public-audio-guides', projectController.publicAudioGuides);
+projectRouter.get('/public-audio/:projectId/:narrationId', narrationController.publicAudio);
+
 projectRouter.use(authenticate, authorize('CUSTOMER', 'ADMIN'));
 projectRouter.get('/:id/translations/simple-preflight', (req, res, next) => {
   res.set('Cache-Control', 'no-store');

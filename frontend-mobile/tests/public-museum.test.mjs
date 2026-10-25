@@ -37,11 +37,16 @@ function renderer(slug, open = async () => {}) {
   const slots = [];
   let cursor = 0;
   const exports = compile('MuseumScreens.tsx', {
-    react: { useState: initial => {
-      const i = cursor++;
-      if (!(i in slots)) slots[i] = initial;
-      return [slots[i], value => { slots[i] = value; }];
-    } },
+    react: {
+      useState: initial => {
+        const i = cursor++;
+        if (!(i in slots)) slots[i] = initial;
+        return [slots[i], value => { slots[i] = value; }];
+      },
+      useMemo: fn => fn(),
+      useCallback: fn => fn,
+      useEffect: () => {},
+    },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'react-native': { ...native, Linking: { openURL: open } },
     'expo-router': { useLocalSearchParams: () => ({ slug }) },
@@ -49,6 +54,14 @@ function renderer(slug, open = async () => {}) {
     './assets.generated': { museumAssets: Object.fromEntries(Object.keys(snapshot.imageHashes).map(path => [path, 1])) },
     './theme': theme,
     './MuseumUI': { MuseumFrame: 'MuseumFrame', MuseumImage: 'MuseumImage', MuseumLink: 'MuseumLink', MuseumTitle: 'MuseumTitle' },
+    'expo-audio': {
+      useAudioPlayer: () => ({ play: () => {}, pause: () => {} }),
+      useAudioPlayerStatus: () => ({ playing: false }),
+    },
+    '../results/useLibrary': { useLibrary: () => ({ projects: [], loading: false, error: null, refresh: () => {} }) },
+    '../results/libraryPresentation': { libraryProduct: () => null },
+    '../results/resultService': { resultService: { getByProjectId: async () => null, downloadProtected: async () => '', cleanup: async () => {} } },
+    '../../config/env': { env: { apiBaseUrl: 'http://localhost:8080/api' } },
   });
   return name => { cursor = 0; return exports[name](); };
 }
