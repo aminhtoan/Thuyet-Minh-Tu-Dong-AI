@@ -1,6 +1,8 @@
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
+import { Button } from '../components/common/Button';
 import { ErrorState } from '../components/common/ErrorState';
 import { Spinner } from '../components/common/Spinner';
 import { WorkflowSteps } from '../components/common/WorkflowSteps';
@@ -11,6 +13,8 @@ import { resolveWorkflowRouteAccess } from '../features/projects/workflowRouteGu
 import type { Project } from '../features/projects/types';
 import { useResult } from '../features/results/useResult';
 import { resultRows } from '../features/results/resultUtils';
+import { resultService, type LanguageVariant } from '../features/results/resultService';
+import { AddLanguageModal } from '../features/projects/AddLanguageModal';
 import '../styles/results.css';
 
 export function ResultPage() {
@@ -31,12 +35,93 @@ function GuardedResult({ project, language }: { project: Project; language: stri
 }
 
 function ResultWorkspace({ project, language }: { project: Project; language?: string }) {
+  const navigate = useNavigate();
   const { result, mediaUrl, loading, error, reload } = useResult(project.id, language);
+  const [variants, setVariants] = useState<LanguageVariant[]>([]);
+  const [addLanguageModalOpen, setAddLanguageModalOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void resultService.getLanguageVariants(project.id, language).then((items) => {
+      if (active) setVariants(items);
+    });
+    return () => {
+      active = false;
+    };
+  }, [project.id, language]);
+
+  const renderLanguageBar = () => (
+    <div className="result-language-bar">
+      <div className="result-language-tabs" role="tablist" aria-label="Các ngôn ngữ thuyết minh">
+        {variants.map((v) => {
+          const isActive = v.projectId === project.id && (!language || v.language === language);
+          return (
+            <button
+              key={v.language}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              className={`result-language-tab${isActive ? ' result-language-tab--active' : ''}`}
+              onClick={() => {
+                if (isActive) return;
+                if (v.hasResult) {
+                  navigate(`/projects/${v.projectId}/result?language=${v.language}`);
+                } else {
+                  navigate(`/projects/${v.projectId}/translation?language=${v.language}`);
+                }
+              }}
+            >
+              <span>{v.flag}</span>
+              <span>{v.name}</span>
+              {v.hasResult && <span className="result-tab-dot" title="Đã có bản thuyết minh" />}
+            </button>
+          );
+        })}
+      </div>
+      <Button
+        variant="secondary"
+        className="result-add-language-btn"
+        onClick={() => setAddLanguageModalOpen(true)}
+      >
+        + Thêm ngôn ngữ thuyết minh mới
+      </Button>
+    </div>
+  );
+
   if (loading) return <Spinner label="Đang tải kết quả" />;
   if (error) return <ErrorState title="Không tải được kết quả" description={error} onRetry={reload} />;
-  if (!result) return <Card><h2>Kết quả chưa sẵn sàng</h2><p>Máy chủ chưa trả về tệp kết quả đã được xác nhận cho ngôn ngữ này.</p></Card>;
-  return <>
+  if (!result) {
+    return (
+      <>
+        <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="RESULT" />
+        {renderLanguageBar()}
+        <Card>
+          <h2>Kết quả chưa sẵn sàng</h2>
+          <p>Máy chủ chưa trả về tệp kết quả đã được xác nhận cho ngôn ngữ này.</p>
+          <div style={{ marginBlockStart: '16px' }}>
+            <Button
+              variant="primary"
+              onClick={() => navigate(`/projects/${project.id}/translation?language=${language ?? 'en'}`)}
+            >
+              Tiếp tục quy trình dịch và tạo giọng đọc
+            </Button>
+          </div>
+        </Card>
+        <AddLanguageModal
+          open={addLanguageModalOpen}
+          projectId={project.id}
+          projectName={project.name}
+          existingLanguages={variants.map((v) => v.language)}
+          onClose={() => setAddLanguageModalOpen(false)}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
       <WorkflowSteps workflow={project.workflow} projectId={project.id} pageStep="RESULT" />
+      {renderLanguageBar()}
       <div className="result-layout">
         <Card>
           <div className="result-heading">
@@ -137,5 +222,13 @@ function ResultWorkspace({ project, language }: { project: Project; language?: s
           </div>
         </Card>
       </div>
-  </>;
+      <AddLanguageModal
+        open={addLanguageModalOpen}
+        projectId={project.id}
+        projectName={project.name}
+        existingLanguages={variants.map((v) => v.language)}
+        onClose={() => setAddLanguageModalOpen(false)}
+      />
+    </>
+  );
 }

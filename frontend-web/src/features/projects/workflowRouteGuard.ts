@@ -40,7 +40,7 @@ export function resolveWorkflowRouteAccess(workflow: ProjectWorkflow | undefined
   const targetRequired = (['VOICE', 'GENERATE', 'RESULT'] as WorkflowDestination[]).includes(destination)
     || (destination === 'TRANSLATION' && ['PROCESSING', 'FAILED'].includes(workflow.state));
   if (targetRequired && !targetLanguage) return { allowed: false, canMutate: false, targetLanguage: null, reason: 'Chưa xác định được ngôn ngữ đích từ dữ liệu quy trình.' };
-  if (requested && targetLanguage && requested !== targetLanguage) return { allowed: false, canMutate: false, targetLanguage, reason: 'Ngôn ngữ trên liên kết không khớp dữ liệu quy trình.' };
+  if (requested && targetLanguage && requested !== targetLanguage && destination !== 'TRANSLATION') return { allowed: false, canMutate: false, targetLanguage, reason: 'Ngôn ngữ trên liên kết không khớp dữ liệu quy trình.' };
 
   if (destination === 'RESULT' && (workflow.state !== 'COMPLETED' || !hasResultArtifact(workflow))) {
     return { allowed: false, canMutate: false, targetLanguage, reason: 'Tệp kết quả chưa được máy chủ xác nhận sẵn sàng.' };
