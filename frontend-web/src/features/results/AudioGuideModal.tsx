@@ -134,6 +134,15 @@ export function AudioGuideModal({
     }
   }, [projectId, currentLang, availableLanguages])
 
+  // Auto-play when audioUrl is ready
+  useEffect(() => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play().catch(() => {
+        // Autoplay may be blocked by browser policy until user clicks play
+      })
+    }
+  }, [audioUrl])
+
   const togglePlay = () => {
     if (!audioRef.current) return
     if (isPlaying) {
@@ -246,6 +255,7 @@ export function AudioGuideModal({
             <audio
               ref={audioRef}
               src={audioUrl}
+              autoPlay
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onEnded={() => {
@@ -254,7 +264,10 @@ export function AudioGuideModal({
               }}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
-              preload="metadata"
+              onError={(e) => {
+                console.error('Lỗi phát âm thanh:', e)
+              }}
+              preload="auto"
             />
           )}
 
