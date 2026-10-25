@@ -1,2 +1,137 @@
-import{Link,useParams}from'react-router-dom';import{AdminPageHeader}from'../components/layout/AdminPageHeader';import{Card}from'../components/common/Card';import{EmptyState}from'../components/common/EmptyState';import{StatusBadge}from'../components/common/StatusBadge';import{Button}from'../components/common/Button';import{OperationProgress,OperationSkeleton}from'../components/operations/OperationsCommon';import{useProject}from'../hooks/useOperations';
-export function AdminProjectDetailPage(){const{projectId=''}=useParams(),{data,loading,error,retry}=useProject(projectId);if(loading)return <OperationSkeleton/>;if(error||!data)return <Card><EmptyState icon="alert" title="Không thể tải dự án" description="Vui lòng thử lại."/><Button onClick={retry}>Thử lại</Button></Card>;if(!data.project)return <Card><EmptyState icon="projects" title="Không tìm thấy dự án" description="Dự án không tồn tại."/></Card>;const p=data.project;return <><Link className="detail-back" to="/projects">← Dự án</Link><AdminPageHeader title={p.name} description="Thông tin thực từ backend." action={<StatusBadge status={p.status}/>}/><div className="operation-detail-grid"><Card><h2>Tổng quan</h2><dl className="profile-list"><div><dt>Khách hàng</dt><dd>{p.userId?<Link to={`/users/${p.userId}`}>{p.customerName}</Link>:p.customerName}</dd></div><div><dt>Email</dt><dd>{p.customerEmail}</dd></div><div><dt>Mô tả</dt><dd>{p.description||'—'}</dd></div><div><dt>Ngôn ngữ nguồn</dt><dd>{p.sourceLanguage.toUpperCase()}</dd></div><div><dt>Ngôn ngữ đích</dt><dd>{p.targetLanguages.map(x=>x.toUpperCase()).join(', ')||'Chưa có'}</dd></div><div><dt>Trạng thái</dt><dd><StatusBadge status={p.status}/></dd></div><div><dt>Tiến độ</dt><dd><OperationProgress value={p.progress} label="Tiến độ dự án"/></dd></div></dl></Card><Card><h2>Phương tiện nguồn</h2>{p.media?<dl className="media-metadata"><div><dt>Tên tệp</dt><dd>{p.media.fileName}</dd></div><div><dt>Loại</dt><dd>{p.media.mediaType}</dd></div><div><dt>MIME</dt><dd>{p.media.mimeType}</dd></div><div><dt>Dung lượng</dt><dd>{p.media.sizeMb} MB</dd></div><div><dt>Thời lượng</dt><dd>{p.media.duration}</dd></div></dl>:<EmptyState icon="projects" title="Chưa có phương tiện" description="Dự án chưa tải tệp nguồn."/>}</Card></div><Card><h2>Công việc liên quan</h2>{data.jobs.length?<div className="table-scroll"><table><thead><tr><th>Loại</th><th>Trạng thái</th><th>Tiến độ</th><th>Thao tác</th></tr></thead><tbody>{data.jobs.map(j=><tr key={j.id}><td>{j.type}</td><td><StatusBadge status={j.status}/></td><td><OperationProgress value={j.progress} label={`Tiến độ ${j.id}`}/></td><td><Link to={`/jobs/${j.id}`}>Xem</Link></td></tr>)}</tbody></table></div>:<EmptyState icon="jobs" title="Chưa có công việc xử lý" description="Backend chưa ghi nhận tác vụ liên quan."/>}</Card></>}
+import { Link, useParams } from 'react-router-dom';
+import { AdminPageHeader } from '../components/layout/AdminPageHeader';
+import { Card } from '../components/common/Card';
+import { EmptyState } from '../components/common/EmptyState';
+import { StatusBadge } from '../components/common/StatusBadge';
+import { Button } from '../components/common/Button';
+import { OperationProgress, OperationSkeleton } from '../components/operations/OperationsCommon';
+import { useProject } from '../hooks/useOperations';
+
+export function AdminProjectDetailPage() {
+  const { projectId = '' } = useParams();
+  const { data, loading, error, retry } = useProject(projectId);
+
+  if (loading) return <OperationSkeleton />;
+  if (error || !data) {
+    return (
+      <Card>
+        <EmptyState icon="alert" title="Không thể tải dự án" description="Vui lòng thử lại." />
+        <Button onClick={retry}>Thử lại</Button>
+      </Card>
+    );
+  }
+  if (!data.project) {
+    return (
+      <Card>
+        <EmptyState icon="projects" title="Không tìm thấy dự án" description="Dự án không tồn tại." />
+      </Card>
+    );
+  }
+
+  const p = data.project;
+
+  return (
+    <>
+      <Link className="detail-back" to="/projects">← Dự án</Link>
+      <AdminPageHeader
+        title={p.name || 'Dự án'}
+        description="Thông tin chi tiết dự án từ hệ thống."
+        action={<StatusBadge status={p.status} />}
+      />
+      <div className="operation-detail-grid">
+        <Card>
+          <h2>Tổng quan</h2>
+          <dl className="profile-list">
+            <div>
+              <dt>Khách hàng</dt>
+              <dd>{p.userId ? <Link to={`/users/${p.userId}`}>{p.customerName}</Link> : p.customerName}</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd>{p.customerEmail || '—'}</dd>
+            </div>
+            <div>
+              <dt>Mô tả</dt>
+              <dd>{p.description || '—'}</dd>
+            </div>
+            <div>
+              <dt>Ngôn ngữ nguồn</dt>
+              <dd>{(p.sourceLanguage || '').toUpperCase()}</dd>
+            </div>
+            <div>
+              <dt>Ngôn ngữ đích</dt>
+              <dd>{(p.targetLanguages || []).map((x) => x.toUpperCase()).join(', ') || 'Chưa có'}</dd>
+            </div>
+            <div>
+              <dt>Trạng thái</dt>
+              <dd><StatusBadge status={p.status} /></dd>
+            </div>
+            <div>
+              <dt>Tiến độ</dt>
+              <dd><OperationProgress value={p.progress} label="Tiến độ dự án" /></dd>
+            </div>
+          </dl>
+        </Card>
+        <Card>
+          <h2>Phương tiện nguồn</h2>
+          {p.media ? (
+            <dl className="media-metadata">
+              <div>
+                <dt>Tên tệp</dt>
+                <dd>{p.media.fileName}</dd>
+              </div>
+              <div>
+                <dt>Loại</dt>
+                <dd>{p.media.mediaType}</dd>
+              </div>
+              <div>
+                <dt>MIME</dt>
+                <dd>{p.media.mimeType}</dd>
+              </div>
+              <div>
+                <dt>Dung lượng</dt>
+                <dd>{p.media.sizeMb} MB</dd>
+              </div>
+              <div>
+                <dt>Thời lượng</dt>
+                <dd>{p.media.duration}</dd>
+              </div>
+            </dl>
+          ) : (
+            <EmptyState icon="projects" title="Chưa có phương tiện" description="Dự án chưa tải tệp nguồn." />
+          )}
+        </Card>
+      </div>
+
+      <Card>
+        <h2>Công việc liên quan</h2>
+        {data.jobs?.length ? (
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Loại</th>
+                  <th>Trạng thái</th>
+                  <th>Tiến độ</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.jobs.map((j) => (
+                  <tr key={j.id}>
+                    <td>{j.type}</td>
+                    <td><StatusBadge status={j.status} /></td>
+                    <td><OperationProgress value={j.progress} label={`Tiến độ ${j.id}`} /></td>
+                    <td><Link to={`/jobs/${j.id}`}>Xem</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState icon="jobs" title="Chưa có công việc xử lý" description="Chưa ghi nhận tác vụ liên quan." />
+        )}
+      </Card>
+    </>
+  );
+}

@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import mongoose, { type ClientSession } from 'mongoose';
+
 import { Project } from '../../models/Project.js';
 import { Transcript } from '../../models/Transcript.js';
 import { TranscriptSegment } from '../../models/TranscriptSegment.js';
@@ -58,7 +60,7 @@ export async function boundedTranslationRecord(filter: Record<string, unknown>, 
   if (!admission) return session ? Translation.findOne(filter).session(session) : Translation.findOne(filter);
   const match = { ...filter };
   for (const key of ['_id', 'projectId', 'transcriptId']) if (typeof match[key] === 'string') match[key] = new mongoose.Types.ObjectId(match[key] as string);
-  const [row] = await Translation.aggregate([{ $match: match }, { $limit: 1 }, { $project: { record: { $cond: [{ $lte: [{ $bsonSize: '$$ROOT' }, 128 * 1024] }, '$$ROOT', null] } } }]).session(session);
+  const [row] = await Translation.aggregate([{ $match: match }, { $limit: 1 }, { $project: { record: { $cond: [{ $lte: [{ $bsonSize: '$$ROOT' }, 4 * 1024 * 1024] }, '$$ROOT', null] } } }]).session(session);
   if (!row) return null;
   if (!row.record) throw new AppError(413, 'TRANSLATION_RESPONSE_TOO_LARGE', 'Bản dịch vượt giới hạn thử nghiệm.');
   return Translation.hydrate(row.record);
@@ -292,6 +294,33 @@ export class GroupTranslationService {
       return { translation: await groupedDto(saved, this.admission) };
     });
   }
+  async translateDirect(projectId: string, ownerId: string, targetLanguage: string) {
+    enabled();
+    const source = await this.context(projectId, ownerId, targetLanguage);
+    const existing = await this.boundedRecord({ transcriptId: new mongoose.Types.ObjectId(source.transcriptId), projectId: new mongoose.Types.ObjectId(projectId), targetLanguage, status: 'READY' });
+    if (existing && existing.alignmentFormat === 'GROUPS_V1') {
+      try {
+        assertApprovedCurrent(existing, source);
+        return { project: { id: projectId, status: 'TRANSLATED' }, translation: await groupedDto(existing, this.admission), idempotent: true };
+      } catch {
+        // Stale or unverified existing record; proceed to re-plan
+      }
+    }
+    const plan = await this.plan(projectId, ownerId, targetLanguage);
+    const draft = await this.preview(projectId, ownerId, {
+      targetLanguage,
+      sourceRevision: plan.sourceRevision,
+      groupingVersion: plan.groupingVersion,
+      groups: plan.groups.map(g => g.sourceSegmentIds),
+      idempotencyKey: randomUUID(),
+    });
+    const approved = await this.approve(projectId, ownerId, draft.draftId, {
+      outputDigest: draft.outputDigest,
+      reviewed: true,
+    });
+    return { project: { id: projectId, status: 'TRANSLATED' }, ...approved, idempotent: false };
+  }
 }
+
 export const groupTranslationService = new GroupTranslationService();
 const customerActive = new Set<string>(); // Per-process, held until underlying work settles, not client disconnect.

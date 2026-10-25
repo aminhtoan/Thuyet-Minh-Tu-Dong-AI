@@ -23,7 +23,7 @@ import { successResponse } from '../utils/api-response.js';
 
 export function createProjectRouter(groups: Pick<typeof translationController, 'plan' | 'preview' | 'draft' | 'approve' | 'get'> = translationController) {
 const projectRouter = Router();
-projectRouter.use(authenticate, authorize('CUSTOMER'));
+projectRouter.use(authenticate, authorize('CUSTOMER', 'ADMIN'));
 projectRouter.get('/:id/translations/simple-preflight', (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   if (process.env.NODE_ENV !== 'development') return next(new AppError(404, 'DIAGNOSTIC_NOT_AVAILABLE', 'Không tìm thấy kiểm tra.'));
@@ -43,6 +43,8 @@ projectRouter.get('/', validate(listProjectsSchema), projectController.list);
 projectRouter.get('/:id', validate(projectIdSchema), projectController.get);
 projectRouter.patch('/:id', validate(updateProjectSchema), projectController.update);
 projectRouter.delete('/:id', validate(projectIdSchema), projectController.remove);
+projectRouter.get('/:id/language-variants', validate(projectIdSchema), requireProjectOwner, projectController.languageVariants);
+projectRouter.post('/:id/branch-language', validate(projectIdSchema), requireProjectOwner, projectController.branchLanguage);
 projectRouter.post('/:id/media', requireProjectOwner, uploadMedia, mediaController.upload);
 projectRouter.get('/:id/media', requireProjectOwner, mediaController.get);
 projectRouter.get('/:id/media/file', requireProjectOwner, streamSourceMedia);

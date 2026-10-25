@@ -1,1 +1,1 @@
-import{adminApi}from'../lib/api';import type{SystemSettings}from'../types/system';export const adminSettingsService={getSettings(o:{signal?:AbortSignal}={}){return adminApi<SystemSettings>('/admin/settings',{signal:o.signal})}};
+import{adminApi}from'../lib/api';import type{SystemSettings}from'../types/system';export const adminSettingsService={getSettings(o:{signal?:AbortSignal}={}){return adminApi<{settings:SystemSettings}>('/admin/settings',{signal:o.signal}).then(x=>x.settings)}};

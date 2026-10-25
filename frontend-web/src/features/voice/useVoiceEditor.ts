@@ -43,7 +43,23 @@ export function useVoiceEditor(projectId: string, language?: LanguageCode) {
         voiceService.getVoices(translation.targetLanguage, { signal: controller.signal }),
         narrationService.getConfig(projectId, translation.targetLanguage, { signal: controller.signal }),
       ]);
-      if (!controller.signal.aborted) dispatch({ translation, voices, saved, draft: saved ? { ...saved } : createNarrationConfig(translation), status: saved ? 'SAVED' : 'READY', error: null, failedAction: null });
+      const validSaved = saved && voices.some((v) => v.id === saved.voiceId && v.isActive) ? saved : null;
+      const initialVoiceId = validSaved?.voiceId || voices[0]?.id || '';
+      const initialDraft: NarrationConfig = {
+        ...(validSaved || createNarrationConfig(translation)),
+        voiceId: initialVoiceId,
+      };
+      if (!controller.signal.aborted) {
+        dispatch({
+          translation,
+          voices,
+          saved: validSaved,
+          draft: initialDraft,
+          status: validSaved ? 'SAVED' : 'READY',
+          error: null,
+          failedAction: null,
+        });
+      }
     } catch (cause) {
       if (!controller.signal.aborted) dispatch({ status: 'FAILED', failedAction: 'load', error: cause instanceof Error ? cause.message : 'Không thể tải danh sách giọng đọc.' });
     }
@@ -109,8 +125,8 @@ export function useVoiceEditor(projectId: string, language?: LanguageCode) {
   }
   function retry() {
     if (busy) return;
-    if (state.failedAction === 'save') void save();
-    else { dispatch({ status: 'LOADING', error: null, failedAction: null }); void load(); }
+    dispatch({ status: 'LOADING', error: null, failedAction: null });
+    void load();
   }
   return {
     ...state, busy, dirty, validationError, gender, query,

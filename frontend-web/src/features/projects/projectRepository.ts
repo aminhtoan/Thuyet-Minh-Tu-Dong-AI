@@ -43,5 +43,14 @@ export const projectRepository = {
   },
   async updateProject(id: string, patch: { name?: string; description?: string; sourceLanguage?: string }) { await api(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }); await projectRepository.refresh(); },
   async deleteProject(id: string) { await api(`/projects/${id}`, { method: 'DELETE' }); setState({ projects: state.projects.filter((item) => item.id !== id) }); },
+  async branchLanguage(projectId: string, targetLanguage: string): Promise<{ project: Project; targetLanguage: string }> {
+    const response = await api<{ project: ProjectDto; targetLanguage: string }>(`/projects/${projectId}/branch-language`, {
+      method: 'POST',
+      body: JSON.stringify({ targetLanguage }),
+    });
+    const project = await enrich(response.project);
+    setState({ projects: [project, ...state.projects] });
+    return { project, targetLanguage: response.targetLanguage };
+  },
   update: (id: string, patch: Partial<Project>) => setState({ projects: state.projects.map((project) => project.id === id ? { ...project, ...patch } : project) }),
 };

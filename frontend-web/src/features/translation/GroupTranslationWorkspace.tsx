@@ -60,8 +60,19 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
       if (!active) return;
       const choices = translationTargetChoices(catalog, project.sourceLanguage).filter(l => !customerMode || l.code === 'en');
       setLanguages(choices); setCatalogReady(true); setTranscript(source);
-      if (!target || !choices.some(c => c.code === target) || !source) return;
-      const stored = await groupTranslationService.saved(project.id, target, controller.signal);
+      let effectiveTarget = target;
+      if (effectiveTarget && !choices.some(c => c.code === effectiveTarget)) {
+        const fallback = choices.find(c => c.code === 'en')?.code || choices[0]?.code || '';
+        if (fallback) {
+          effectiveTarget = fallback;
+          setTarget(fallback);
+          const next = new URLSearchParams(params);
+          next.set('language', fallback);
+          setParams(next, { replace: true });
+        }
+      }
+      if (!effectiveTarget || !choices.some(c => c.code === effectiveTarget) || !source) return;
+      const stored = await groupTranslationService.saved(project.id, effectiveTarget, controller.signal);
       if (!active) return;
       if (stored) { setSaved(stored); return; }
       if (customerMode) {
@@ -77,7 +88,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
         if (restored.targetLanguage !== target) throw new Error('Bản nháp không thuộc ngôn ngữ đang chọn.');
         setDraft(restored); return;
       }
-      const next = await groupTranslationService.plan(project.id, target, controller.signal);
+      const next = await groupTranslationService.plan(project.id, effectiveTarget, controller.signal);
       if (active) { setPlan(next); setGroups(next.groups); }
     })().catch(e => { if (active) setError(message(e)); }).finally(() => { if (active) setBusy(null); });
     return () => { active = false; controller.abort(); };
@@ -106,6 +117,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
       const value = customerMode ? await groupTranslationService.customerGenerate(project.id) : await groupTranslationService.preview(project.id, plan, groups, requestKey.current);
       if (mounted.current) { setDraft(value); setReviewed(false); const next = new URLSearchParams(params); next.set('draft', value.draftId); next.set('language', value.targetLanguage); setParams(next, { replace: true }); }
     } catch (e) { if (mounted.current) {
+      requestKey.current = null;
       setError(customerMode ? `${message(e)} Chỉ tải lại dữ liệu; không tự gửi lại yêu cầu AI.` : message(e));
       if (customerMode) setAttempt({ status: 'UNCERTAIN', phase: 'UNKNOWN', diagnosticCode: null, updatedAt: null, canGenerate: false });
     } }
@@ -153,7 +165,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
       </div>
       {error && <Card className="translation-feedback translation-feedback--error"><div ref={feedbackRef} tabIndex={-1} role="alert"><h2>Không thể hoàn tất thao tác</h2><p>{customerMode ? 'Chưa thể xác nhận kết quả. Hãy kiểm tra trạng thái; không gửi lại yêu cầu dịch.' : error}</p></div>{customerMode && <details className="translation-diagnostics"><summary>Chi tiết chẩn đoán</summary><p>{error}</p></details>}<Button variant="secondary" disabled={Boolean(busy)} onClick={() => setReload(n => n + 1)}>Tải lại dữ liệu (không gọi AI)</Button></Card>}
       <Card className="translation-language-card"><div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{translationLanguageLabel({ code: project.sourceLanguage, name: project.sourceLanguage, nativeName: '' })}</p></div>
-        <div className="translation-language-field"><label htmlFor="group-target">Ngôn ngữ đích</label><select id="group-target" value={target} disabled={!canMutate || Boolean(busy)} onChange={e => changeTarget(e.target.value)}>
+        <div className="translation-language-field"><label htmlFor="group-target">Ngôn ngữ đích</label><select id="group-target" value={target} disabled={Boolean(busy)} onChange={e => changeTarget(e.target.value)}>
           <option value="">Chọn ngôn ngữ cần dịch</option>{languages.map(l => <option key={l.code} value={l.code}>{translationLanguageLabel(l)}</option>)}
         </select></div>
       </Card>

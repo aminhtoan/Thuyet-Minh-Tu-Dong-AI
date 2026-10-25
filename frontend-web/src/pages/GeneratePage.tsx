@@ -43,7 +43,7 @@ export function GeneratePage() {
 
 function GenerateWorkspace({ project, language, canMutate, notice }: { project: Project; language?: LanguageCode; canMutate: boolean; notice: string | null }) {
   const processing = useProcessing(project.id, language);
-  const [confirmed, setConfirmed] = useState(false);
+  const [confirmed, setConfirmed] = useState(true);
   const navigate = useNavigate();
   const { context, snapshot, busy } = processing;
   const target = context?.config.languageCode ?? language;
@@ -85,8 +85,8 @@ function GenerateWorkspace({ project, language, canMutate, notice }: { project: 
           <Button variant="secondary" disabled={busy} onClick={() => edit('voice')}>Chỉnh sửa giọng đọc</Button></div>
         <p className="processing-note">Dự án video sẽ được ghép với âm thanh thuyết minh bằng FFmpeg. Dự án âm thanh dùng trực tiếp tệp giọng đọc đã tạo.</p>
         {snapshot.status === 'WAITING' && <>
-          <label className="generation-confirmation"><input type="checkbox" checked={confirmed} disabled={!canMutate} onChange={(event) => setConfirmed(event.target.checked)} />Tôi đã kiểm tra ngôn ngữ, giọng đọc và tốc độ đọc.</label>
-          <Button disabled={!canMutate || !confirmed} onClick={processing.start}>{project.mediaType === 'VIDEO' ? 'Tạo video' : 'Tạo âm thanh'}</Button>
+          <label className="generation-confirmation"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />Tôi đã kiểm tra ngôn ngữ, giọng đọc và tốc độ đọc.</label>
+          <Button loading={busy} disabled={!canMutate || !confirmed} onClick={processing.start}>{project.mediaType === 'VIDEO' ? 'Tạo video' : 'Tạo âm thanh'}</Button>
         </>}
       </Card>
       <Card className="processing-panel">

@@ -9,7 +9,7 @@
     "prebuild": "npm run design:check",
     "pretypecheck": "npm run design:check",
     "dev": "vite",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "typecheck": "tsc -b --noEmit",

@@ -43,3 +43,4 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 }
 
 void start();
+// reloaded
