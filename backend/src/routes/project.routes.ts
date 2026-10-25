@@ -69,7 +69,7 @@ projectRouter.post('/:id/narrations', validate(startNarrationSchema), requirePro
 projectRouter.get('/:id/narrations', requireProjectOwner, narrationController.list);
 projectRouter.get('/:id/narrations/:narrationId', validate(narrationIdSchema), requireProjectOwner, narrationController.get);
 projectRouter.get('/:id/narrations/:narrationId/audio', validate(narrationIdSchema), requireProjectOwner, narrationController.audio);
-projectRouter.post('/:id/process', validate(processMediaSchema), requireProjectOwner, resultController.process);
+projectRouter.post('/:id/process', authorize('CUSTOMER'), validate(processMediaSchema), requireProjectOwner, resultController.process);
 projectRouter.get('/:id/results', requireProjectOwner, resultController.list);
 projectRouter.get('/:id/results/:resultId', validate(resultIdSchema), requireProjectOwner, resultController.get);
 projectRouter.get('/:id/results/:resultId/file', validate(resultIdSchema), requireProjectOwner, resultController.file);

@@ -16,7 +16,7 @@ export const trackListenSchema = z.object({
     narrationId: z
       .string()
       .trim()
-      .refine((val) => !val || mongoose.isValidObjectId(val), {
+      .refine((val) => !val || val === 'source' || mongoose.isValidObjectId(val), {
         message: 'Mã thuyết minh không hợp lệ.',
       })
       .optional(),

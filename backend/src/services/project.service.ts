@@ -346,6 +346,32 @@ export const getPublicAudioGuides = async () => {
     }
   }
 
+  for (const guide of guideMap.values()) {
+    if (!guide.languages.some((l) => l.code === 'vi')) {
+      const primaryLang = guide.languages[0];
+      const pId = primaryLang?.projectId;
+      if (pId) {
+        guide.languages.unshift({
+          code: 'vi',
+          name: 'Tiếng Việt',
+          flag: '🇻🇳',
+          projectId: pId,
+          narrationId: 'source',
+          audioUrl: `/api/projects/public-audio/${pId}/source`,
+        });
+      }
+    } else {
+      const viIndex = guide.languages.findIndex((l) => l.code === 'vi');
+      if (viIndex > 0) {
+        const viOption = guide.languages[viIndex];
+        if (viOption) {
+          guide.languages.splice(viIndex, 1);
+          guide.languages.unshift(viOption);
+        }
+      }
+    }
+  }
+
   return Array.from(guideMap.values());
 };
 

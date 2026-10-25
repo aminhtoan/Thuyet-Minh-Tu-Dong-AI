@@ -11,6 +11,7 @@
 - Mobile & Dev Connectivity:
   - Configured dev CORS in [backend/src/app.ts](file:///o:/multilingual-ai-narration/backend/src/app.ts) to permit all ngrok tunnel domains (including `.ngrok-free.dev`) and LAN IPs.
   - Improved [frontend-mobile/src/features/museum/MuseumScreens.tsx](file:///o:/multilingual-ai-narration/frontend-mobile/src/features/museum/MuseumScreens.tsx) with immediate stream readiness and direct user-gesture audio playback/tracking, resolving mobile browser autoplay blocking.
+- Public Vietnamese Audio: Ensured Tiếng Việt (🇻🇳) is always present as the first/default language option across all published audio guide cards, streaming original source media via `GET /api/projects/public-audio/:id/source` and recording listen analytics under `languageCode: 'vi'`.
 - Verification & Testing:
   - Admin Web: 16/16 tests PASS (`npm test`), `tsc --noEmit` PASS, `oxlint` PASS (0 errors, 0 warnings).
   - Backend: `node --import tsx --test tests/analytics.test.ts` (5/5 PASS), `tsc --noEmit` PASS, `eslint` PASS.

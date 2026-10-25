@@ -1,4 +1,5 @@
 import type { RequestHandler } from 'express';
+import mongoose from 'mongoose';
 import { ListenEvent } from '../models/ListenEvent.js';
 import { getListenBreakdown } from '../services/analytics.service.js';
 import { successResponse } from '../utils/api-response.js';
@@ -18,7 +19,7 @@ export const trackListen: RequestHandler = async (request, response) => {
   const event = await ListenEvent.create({
     platform,
     projectId: projectId || null,
-    narrationId: narrationId || null,
+    narrationId: narrationId && mongoose.isValidObjectId(narrationId) ? narrationId : null,
     userId: userId || null,
     languageCode: languageCode || null,
     userAgent,
