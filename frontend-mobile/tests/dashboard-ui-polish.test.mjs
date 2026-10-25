@@ -195,7 +195,8 @@ test('Dashboard detail/resume actions share one equal-width row at360/393dp with
 test('Dashboard header/scroll use shared brand/font and no duplicated bottom safe area', () => {
   const header = compile('components/layout/MobileHeader.tsx', {
     ...base, 'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' },
-    'expo-router': { router: { navigate: () => {}, canGoBack: () => false, replace: () => {} } },
+    'expo-router': { useFocusEffect: fn => fn(), usePathname: () => '/dashboard', router: { navigate: () => {}, canGoBack: () => false, replace: () => {} } },
+    react: { useRef: value => ({ current: value }), useCallback: fn => fn }, '@/features/auth/useCurrentUser': { useCurrentUser: () => ({ user: null, status: 'authenticated' }) },
     '@expo/vector-icons/MaterialCommunityIcons': { default: 'Icon' },
   }).MobileHeader({ title: tokens.customerBrand.name, dashboard: true });
   assert.ok(text(header).includes('Thuyết minh bảo tàng'));
@@ -218,8 +219,8 @@ test('Customer tab routes preserve Dashboard, Projects and create; account/histo
     '@/components/layout/CustomerBottomNavigation': { CustomerBottomNavigation: 'CustomerBottomNavigation' },
     '@/localization/navigationLabels.mjs': { navigationLabels },
   }).default();
-  const visible = tree.props.children.filter(node => node.props.options.href !== null);
-  assert.deepEqual(Array.from(visible, node => node.props.name), ['dashboard', 'projects', 'create', 'library']);
+  const navigable = tree.props.children.filter(node => node.props?.options?.href !== null && node.type);
+  assert.deepEqual(Array.from(navigable, node => node.props.name), ['dashboard', 'projects', 'create', 'library', 'account']);
   assert.equal(tree.props.backBehavior, 'history');
   assert.equal(tree.props.tabBar({}).type, 'CustomerBottomNavigation');
   const options = tree.props.screenOptions;

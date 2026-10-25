@@ -4,7 +4,7 @@ import { digest } from './group-plan.js';
 import type { GroupDraft } from './group-draft-store.js';
 import { GEMINI_TRANSLATION_ERRORS } from './gemini-translation.provider.js';
 import { withCustomerExecution, type ExecutionPhase, type ExecutionTrace } from './customer-execution.js';
-import { TranslationProviderFailure, providerFailureReason, type ProviderDiagnostic } from './provider-failure.js';
+import { TranslationProviderFailure, providerFailureReason, type ProviderDiagnostic, type TransportDiagnostic } from './provider-failure.js';
 import { customerTranslationQuota, type CustomerTranslationQuota } from '../../config/customer-translation-quota.js';
 
 export type AttemptScope = { ownerId: string; projectId: string; targetLanguage: string; sourceRevision: string };
@@ -21,7 +21,7 @@ function statusOf(row: { state?: string; phase?: string; executionVersion?: numb
     try { const draft = JSON.parse(row.draftJson ?? '') as GroupDraft; status = Date.parse(draft.expiresAt) > Date.now() ? 'DRAFT_SAVED' : 'EXPIRED'; } catch { /* fail closed */ }
   } else if (row.state === 'FAILED_PRE_DISPATCH' || row.state === 'FAILED_RESPONSE') status = row.state;
   else if (row.executionVersion === 1 && row.state === 'CLAIMED' && Date.now() - time < 180000) status = row.phase === 'PREPARING' ? 'NOT_SENT' : 'PROCESSING';
-  const providerHttpStatus = [400, 503].includes(row.providerHttpStatus ?? 0) ? row.providerHttpStatus! : null;
+  const providerHttpStatus = [400, 408, 429, 503, 504].includes(row.providerHttpStatus ?? 0) ? row.providerHttpStatus! : null;
   return { status, phase: row.executionVersion === 1 ? row.phase ?? 'UNKNOWN' : 'UNKNOWN', diagnosticCode: row.diagnosticCode && safeCodes.has(row.diagnosticCode) ? row.diagnosticCode : null, providerHttpStatus, updatedAt: Number.isFinite(time) ? new Date(time).toISOString() : null, canGenerate: false };
 }
 const repository = {
@@ -73,9 +73,9 @@ const repository = {
     const result = await TranslationAttempt.updateOne({ _id: key(s), binding, state: 'CLAIMED', executionVersion: 1, phase: previous }, { $set: { phase } }, { writeConcern: { w: 'majority', j: true } });
     if (result.modifiedCount !== 1) throw uncertain();
   },
-  fail: async (s: AttemptScope, binding: string, state: string, phase: ExecutionPhase, diagnosticCode: string, providerHttpStatus: number | null, providerDiagnostic?: ProviderDiagnostic) => {
+  fail: async (s: AttemptScope, binding: string, state: string, phase: ExecutionPhase, diagnosticCode: string, providerHttpStatus: number | null, providerDiagnostic?: ProviderDiagnostic, transportDiagnostic?: TransportDiagnostic) => {
     // Never overwrite an already persisted draft after a lost acknowledgement.
-    const result = await TranslationAttempt.updateOne({ _id: key(s), binding, state: 'CLAIMED', executionVersion: 1 }, { $set: { state, phase, diagnosticCode, failedAt: new Date(), ...(providerHttpStatus ? { providerHttpStatus } : {}), ...(providerDiagnostic ? { providerDiagnostic } : {}) } }, { writeConcern: { w: 'majority', j: true } });
+    const result = await TranslationAttempt.updateOne({ _id: key(s), binding, state: 'CLAIMED', executionVersion: 1 }, { $set: { state, phase, diagnosticCode, failedAt: new Date(), ...(providerHttpStatus ? { providerHttpStatus } : {}), ...(providerDiagnostic ? { providerDiagnostic } : {}), ...(transportDiagnostic ? { transportDiagnostic } : {}) } }, { writeConcern: { w: 'majority', j: true } });
     return result.matchedCount === 1;
   },
 };
@@ -143,11 +143,12 @@ export class CustomerAttemptStore {
       const code = safeCode(error);
       const providerHttpStatus = error instanceof TranslationProviderFailure ? error.providerHttpStatus : null;
       const providerDiagnostic = error instanceof TranslationProviderFailure ? error.providerDiagnostic : undefined;
+      const transportDiagnostic = error instanceof TranslationProviderFailure ? error.transportDiagnostic : undefined;
       const state = trace.response ? 'FAILED_RESPONSE' : trace.metadata || trace.generation ? 'UNCERTAIN' : 'FAILED_PRE_DISPATCH';
       let diagnosticSaved = false;
-      try { diagnosticSaved = await this.repo.fail(s, binding, state, trace.phase, code, providerHttpStatus, providerDiagnostic); } catch { /* DB outage: keep the durable dispatch fence, never retry provider. */ }
+      try { diagnosticSaved = await this.repo.fail(s, binding, state, trace.phase, code, providerHttpStatus, providerDiagnostic, transportDiagnostic); } catch { /* DB outage: keep the durable dispatch fence, never retry provider. */ }
       // Strict allowlist only: no Error object, stack, message, input or headers.
-      console.error('CUSTOMER_TRANSLATION_FAILURE', { attemptId: key(s), state, phase: trace.phase, code, providerHttpStatus, providerReason: providerFailureReason(providerHttpStatus), providerDiagnostic, diagnosticSaved });
+      console.error('CUSTOMER_TRANSLATION_FAILURE', { attemptId: key(s), state, phase: trace.phase, code, providerHttpStatus, providerReason: providerFailureReason(providerHttpStatus), providerDiagnostic, transportDiagnostic, diagnosticSaved });
       if (error instanceof AppError) throw error;
       throw new AppError(502, state === 'FAILED_PRE_DISPATCH' ? 'TRANSLATION_FAILED_PRE_DISPATCH' : 'TRANSLATION_ATTEMPT_UNCERTAIN', 'Không thể hoàn tất yêu cầu dịch. Chỉ tải lại dữ liệu, không gửi lại AI.');
     }

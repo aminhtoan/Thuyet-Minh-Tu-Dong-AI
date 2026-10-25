@@ -66,7 +66,7 @@ test('normal service authorizes dynamically, derives plan, durable replay/restar
       await assert.rejects(service.customerGenerate(project, owner)); assert.equal(calls, before);
     } finally { delete process.env.CUSTOMER_TRANSLATION_METHOD; }
   });
-  for (const status of [400, 402, 500, 503]) await t.test(`SDK HTTP ${status} evidence survives service and durable failure mapping`, async ctx => {
+  for (const status of [400, 402, 500, 503, 504]) await t.test(`SDK HTTP ${status} evidence survives service and durable failure mapping`, async ctx => {
     sourceRevision++; process.env.GEMINI_API_KEY = 'synthetic-only';
     let metadata = 0, generation = 0; const logs: unknown[] = [];
     ctx.mock.method(console, 'error', (...args) => logs.push(args));
@@ -74,17 +74,18 @@ test('normal service authorizes dynamically, derives plan, durable replay/restar
       if (init?.method !== 'POST') { metadata++; return Response.json({ supportedGenerationMethods: ['generateContent'] }); }
       generation++; return Response.json({ error: { code: status, message: 'PRIVATE_KEY_AND_TRANSCRIPT', status: 'INVALID_ARGUMENT', details: [{ '@type': 'type.googleapis.com/google.rpc.BadRequest', fieldViolations: [{ field: 'generation_config.thinking_config.thinking_level', description: 'PRIVATE_DESCRIPTION' }] }] } }, { status });
     });
-    repo.fail = async (s: any, _b: string, state: string, phase: string, diagnosticCode: string, providerHttpStatus: number | null, providerDiagnostic: unknown) => {
-      Object.assign(rows.get(JSON.stringify(s)), { state, phase, diagnosticCode, providerHttpStatus, providerDiagnostic }); return true;
+    repo.fail = async (s: any, _b: string, state: string, phase: string, diagnosticCode: string, providerHttpStatus: number | null, providerDiagnostic: unknown, transportDiagnostic: unknown) => {
+      Object.assign(rows.get(JSON.stringify(s)), { state, phase, diagnosticCode, providerHttpStatus, providerDiagnostic, transportDiagnostic }); return true;
     };
     const failing = new GroupTranslationService(new GeminiGroupTranslationProvider(), new GroupDraftStore());
-    await assert.rejects(failing.customerGenerate(project, owner), (e: any) => e instanceof TranslationProviderFailure && e.providerHttpStatus === status && e.statusCode === 502 && e.code === 'TRANSLATION_PROVIDER_ERROR' && !e.message.includes('PRIVATE'));
+    await assert.rejects(failing.customerGenerate(project, owner), (e: any) => e instanceof TranslationProviderFailure && e.providerHttpStatus === status && e.statusCode === 502 && e.code === (status === 504 ? 'TRANSLATION_TIMEOUT' : 'TRANSLATION_PROVIDER_ERROR') && !e.message.includes('PRIVATE'));
     const row = [...rows.values()].reverse().find(r => r.providerHttpStatus === status);
     assert.equal(row.state, 'UNCERTAIN'); assert.equal(row.phase, 'GENERATION_DISPATCHING'); assert.equal(row.draftJson, undefined);
+    assert.equal(row.transportDiagnostic.origin, 'HTTP_RESPONSE'); assert.equal(row.transportDiagnostic.operation, 'GENERATION');
     assert.deepEqual(row.providerDiagnostic, status === 400 ? { status: 'INVALID_ARGUMENT', reasons: [], parameters: ['generationConfig.thinkingConfig.thinkingLevel'] } : undefined);
     assert.doesNotMatch(JSON.stringify(row), /PRIVATE/);
     const state = await failing.customerState(project, owner);
-    assert.equal(state.attempt?.providerHttpStatus, [400, 503].includes(status) ? status : null);
+    assert.equal(state.attempt?.providerHttpStatus, [400, 503, 504].includes(status) ? status : null);
     await assert.rejects(failing.customerGenerate(project, owner));
     process.env.CUSTOMER_TRANSLATION_MODEL_SELECTION = 'FALLBACK';
     try { await assert.rejects(failing.customerGenerate(project, owner)); }
@@ -104,7 +105,12 @@ test('normal POST keeps JWT/CUSTOMER/ownership and strict payload; no permit or 
   const url = `http://127.0.0.1:${(server.address() as any).port}/api/projects/${project}/translations`;
   const post = (user?: string, body = { targetLanguage: 'en' } as any) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(user ? { Authorization: `Bearer ${signAccessToken(user, user === admin ? 'ADMIN' : 'CUSTOMER')}` } : {}) }, body: JSON.stringify(body) });
   try {
-    assert.equal((await post()).status, 401); assert.equal((await post(admin)).status, 403); assert.equal((await post(other)).status, 404);
+    assert.equal((await post()).status, 401);
+    // The router permits ADMIN generally, but this fixture owns no matching
+    // project for it. Ownership must hide that project before dispatch (404).
+    const denied = await post(admin); assert.equal(denied.status, 404);
+    assert.equal((await denied.json()).error.code, 'PROJECT_NOT_FOUND'); assert.equal(calls, 0);
+    assert.equal((await post(other)).status, 404);
     assert.equal((await post(owner, { targetLanguage: 'en', sourceDigest: 'forged', permit: 'forged' })).status, 400);
     assert.equal((await post(owner, { targetLanguage: 'fr' })).status, 400);
     assert.equal((await post(owner)).status, 200); assert.equal((await post(owner, { targetLanguage: 'en', format: 'GROUPS_V1' })).status, 200); assert.equal(calls, 2);

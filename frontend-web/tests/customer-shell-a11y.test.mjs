@@ -106,7 +106,7 @@ test('failed logout announces a safe error without navigation or automatic retry
   let reject
   const h = harness('Topbar', { logout: () => new Promise((_, failure) => { reject = failure }) })
   let tree = h.render()
-  find(tree, n => n.props?.className === 'topbar-profile__trigger').props.onClick(); tree = h.render()
+  find(tree, n => n.props?.className === 'topbar-profile__menu-trigger').props.onClick(); tree = h.render()
   const button = find(tree, n => n.type === 'button' && n.props.role === 'menuitem')
   button.props.onClick(); button.props.onClick(); assert.equal(h.calls, 1)
   reject(new Error('SECRET_RESPONSE_MUST_NOT_RENDER')); await new Promise(setImmediate)
@@ -126,7 +126,7 @@ test('logout success uses the existing service and destination; canceled confirm
   for (const confirmed of [false, true]) {
     const h = harness('Topbar', { confirmed })
     let tree = h.render()
-    find(tree, n => n.props?.className === 'topbar-profile__trigger').props.onClick(); tree = h.render()
+    find(tree, n => n.props?.className === 'topbar-profile__menu-trigger').props.onClick(); tree = h.render()
     find(tree, n => n.type === 'button' && n.props.role === 'menuitem').props.onClick()
     await new Promise(setImmediate); tree = h.render()
     assert.equal(h.calls, confirmed ? 1 : 0)
@@ -135,6 +135,40 @@ test('logout success uses the existing service and destination; canceled confirm
     assert.equal(find(tree, n => n.props?.role === 'alert'), undefined)
     h.unmount()
   }
+})
+
+test('avatar and current identity link directly to protected Account, separately from logout menu', () => {
+  const h = harness('Topbar');
+  let tree = h.render();
+  const account = find(tree, n => n.props?.className === 'topbar-profile__account-link');
+  assert.equal(account.type, 'a'); assert.equal(account.props.to, '/settings');
+  assert.match(account.props['aria-label'], /Mở tài khoản/);
+  assert.equal(text(find(account, n => n.props?.className === 'topbar-profile__avatar')), 'T');
+  account.props.onClick(); tree = h.render();
+  assert.equal(h.calls, 0, 'no logout/session mutation');
+  assert.equal(h.navigation.length, 0, 'navigation belongs to Link; no Dashboard fallback');
+  assert.equal(find(tree, n => n.props?.role === 'menu'), undefined);
+  find(tree, n => n.props?.className === 'topbar-profile__menu-trigger').props.onClick();
+  tree = h.render(); assert.ok(find(tree, n => n.props?.role === 'menu'));
+  h.unmount();
+})
+
+test('existing authService logout clears session; protected Account blocks guests and login restores current identity', async () => {
+  let tokens = null, current = 'A';
+  const session = { get: () => tokens, set: value => { tokens = value }, clear: () => { tokens = null }, isAuthenticated: () => Boolean(tokens?.accessToken) };
+  const service = {}, guard = {};
+  const api = async path => path === '/auth/logout' ? {} : { user: { id: current, fullName: `Fixture ${current}`, email: `${current}@example.invalid`, role: 'CUSTOMER' }, accessToken: `fixture-${current}`, refreshToken: 'fixture-refresh' };
+  const source = readFileSync(new URL('../src/features/auth/authService.ts', import.meta.url), 'utf8');
+  runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: service, require: name => name === '../../lib/api' ? { api, session } : { publishProfileUpdate() {} } });
+  runInNewContext(ts.transpileModule(readFileSync(new URL('../src/routes/RequireAuth.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
+    exports: guard, require: name => name === '../lib/api' ? { session } : name === 'react-router-dom' ? { Navigate: 'Navigate', Outlet: 'Outlet', useLocation: () => ({ pathname: '/settings', search: '' }) } : require(name),
+  });
+  await service.authService.login({ email: 'a@example.invalid', password: 'fixture' });
+  assert.equal(guard.RequireAuth().type, 'Outlet'); assert.equal((await service.authService.me()).user.id, 'A');
+  await service.authService.logout(); assert.equal(tokens, null);
+  assert.equal(guard.RequireAuth().type, 'Navigate'); assert.equal(guard.RequireAuth().props.to, '/login');
+  current = 'B'; await service.authService.login({ email: 'b@example.invalid', password: 'fixture' });
+  assert.equal(guard.RequireAuth().type, 'Outlet'); assert.equal((await service.authService.me()).user.email, 'B@example.invalid');
 })
 
 test('shell CSS scopes skip-link, wrapping, disabled and reduced-motion to Customer', () => {

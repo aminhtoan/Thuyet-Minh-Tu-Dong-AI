@@ -1,5 +1,89 @@
 # Project Progress
 
+## S29.4G.1 — Mobile avatar Account loading/navigation fix (2026-10-24): PARTIAL acceptance
+
+- Root cause CONFIRMED: installed SDK58 converts Tabs.Screen href:null to hidden;
+  its useVisibleTabsWithRedirect then replaces focused Account with Dashboard.
+  Tested actual installed SDK processing/redirect with isolated navigator fixtures.
+  Removed hidden flag only from Account; custom bar continues to expose four main
+  entries. Existing `/account` screen/URL reused, no duplicate or new tab button.
+- Profile GET now bounded15s, abortable and ends loading on success/error/timeout.
+  Existing session identity/sequence guards suppress old profiles and late replies.
+  Logout revoke is bounded15s with no retry; existing local token/cache cleanup
+  preserved; Account sends guest to Login so normal login can be performed again.
+- Pixel7 live: avatar from Dashboard opened Account after fix; actual profile and
+  logout button displayed, loading finished. Back returned to Dashboard. Existing
+  authenticated session preserved. No real logout/login automated. Metro running;
+  bounded ReactNativeJS log scan found no matching exception categories, not proof
+  of global log absence. Exact360/393dp and real logout/login MANUAL PENDING.
+- Validation: Mobile206/206 tests PASS (0 skip), TypeScript/ESLint PASS, Android
+  Metro/Hermes export PASS, token/Museum sync and diff-check PASS. New tests cover
+  installed SDK redirect reproduction/fix, hung profile timeout/error/manual GET
+  retry, late-reply isolation and logout timeout cleanup. No real test accounts/DB.
+- Files: `(tabs)/_layout.tsx`, features/auth/useCurrentUser.ts, authService.ts,
+  AccountScreen.tsx; header-account-navigation/customer-navigation-parity,
+  navigation-interaction/dashboard-ui-polish tests; UI/PROGRESS docs. Existing
+  Header `/account` destination, protected guards, four main tabs preserved.
+- Safety: no Customer Web/Admin/Backend/Public Museum/config/database/AI changes,
+  no Gemini/TTS/render, no UNCERTAIN action, no commit/push. No next step started.
+
+## S29.4F — Customer Mobile Header Navigation Fix (2026-10-24): PARTIAL
+
+- Implemented: shared icon/brand touch region→existing Public Museum `/`, avatar
+  →existing `/account` or guest `/login`, current CUSTOMER initial,48dp targets,
+  duplicate navigation protection and existing back behavior. Explicit user home
+  destination takes precedence over audited Web Sidebar `/dashboard`; no Web edit.
+- Account/Header share session-scoped authenticated useCurrentUser; late GETs and
+  old account data cannot overwrite the current profile. Kept real name/email,
+  errors/retry and original logout confirmation, added duplicate-submit lock.
+- Reused authService/SecureStore session cleanup and protected-route redirect;
+  cleared project cache on logout/new login and guarded pending cache responses
+  by epoch. No new authentication provider, Backend API or workflow route added.
+- Files: MobileHeader.tsx, AccountScreen.tsx, authService.ts,
+  features/projects/projectRepository.ts; new features/auth/useCurrentUser.ts and
+  tests/header-account-navigation.test.mjs; updated navigation/Dashboard mocks;
+  UI/PROGRESS docs. Prior S29.4D working-tree changes retained.
+- Tested: Mobile203/203 PASS (8 new tests), navigation/authentication regressions,
+  TypeScript/ESLint (no warnings), Android Metro/Hermes, shared-token/Museum sync,
+  diff-check PASS. Final focused8 tests rerun after hook dependency cleanup.
+- Logout/login only mocked, with real session/authService compiled against isolated
+  SecureStore/fetch fixtures: tokens removed, private guards disabled, account B
+  restored correctly, offline server logout still clears local session. Project
+  cache delayed-response race tested. No real session logged out or credential read.
+- Manual QA pending: Pixel7 exact360/393dp, logo/home, avatar/account/back and
+  user-driven logout/login acceptance. Emulator capture did not reliably show app;
+  no click into that capture. Do not interpret mock/layout success as visual PASS.
+- Safety: no Web/Backend/Public Museum UI/config/database edits or writes, no AI/
+  TTS/render, no attempt reset/retry, no commit/push. No next-step work.
+
+## S29.4D — Customer Mobile Result Screen Web Parity (2026-10-24): PARTIAL
+
+- Audited actual Web ResultPage/useResult/resultService/resultUtils, RESULT guard,
+  language rules, authenticated media and Backend artifact DTO paths. Confirmed
+  original Mobile blocked noncatalog results via isLanguageCode and fetched
+  artifacts before project/workflow checks. Result had no matching Web guard,
+  eager cache download and an unsafe out-of-scope processing CTA when empty.
+- Implemented fresh authenticated project-first result load and equivalent RESULT
+  guard, normalized confirmed language independent of the unchanged AI catalog,
+  identity/path validation, in-memory authenticated streaming, safe player states,
+  blur/session cleanup, manual save/cache cleanup and project/library navigation.
+  Metadata and summary now follow actual Web section order with Customer tokens.
+- New: features/results/resultAccess.ts, resultMedia.ts, ResultPlayer.tsx and
+  tests/result-parity.test.mjs. Modified ResultScreen.tsx, useResult.ts,
+  resultService.ts, resultUtils.ts; updated ai-workflow-ui/sdk58-migration tests
+  for extracted players. UI/PROGRESS docs updated. S29.4C library retained.
+- Automated validation: Mobile195/195 PASS, Web400/400 PASS,0 skipped;15 new RESULT
+  tests. Mobile TypeScript/ESLint, Android Metro/Hermes PASS; shared token/Museum
+  synchronization and diff-check PASS. No live API/media fixture or real database
+  used by tests. Hermes export needed approved sandbox escalation for compiler.
+- Manual QA pending: Pixel7 exact360/393dp, real eligible audio/video range stream,
+  codecs/loading/seek/pause/fullscreen, native save filename/location, safe area and
+  back navigation. No real result opened/created in this step. Native export sheet
+  is the platform download equivalent, not guaranteed automatic filesystem save.
+- No Web/Backend/Public Museum/Login/Register/authentication/workflow AI/config or
+  catalog changes; no MongoDB writes, Gemini/TTS/render/jobs, old-attempt reset or
+  retry, commit/push. No S29.5 work started.
+
 ## S29.4 — Customer Mobile My Projects (2026-10-24, PARTIAL)
 
 - Audited actual Web ProjectsPlaceholder/Topbar, useCompleteHistory,
@@ -2941,3 +3025,219 @@ S25.7.6.1: triển khai bộ lọc tên/ngày tạo/trạng thái AND, submit/En
 - Safety: no Web/Backend/Public Museum/Login/Register/config/API/guard changes,
   no MongoDB writes, AI/TTS/render/job dispatch, UNCERTAIN retry/reset, commit or
   push. No S29.5 work started.
+## S30.1 — Video MP4 processing fix (2026-10-25): PARTIAL
+
+- Read-only investigation of project `6addad0fd70ccfecdc62b77c` found three
+  VIDEO_PROCESSING jobs FAILED with MEDIA_PROCESSING_FAILED and no Result.
+  Existing narration `6addade8d70ccfecdc62b7af` is READY, English MP3. No existing
+  project, job, narration, translation or attempt was changed.
+- Confirmed and reproduced a Result transaction defect on the isolated MongoDB
+  8.0.17 replica set: parallel operations on the same session intermittently
+  raise MongoServerError 117. Replaced transaction Promise.all reads and revision
+  fence writes with sequential awaits. Historical jobs discarded their detailed
+  errors, so code 117 cannot be attributed conclusively to each old failure.
+  Reference: https://mongoosejs.com/docs/transactions.html#note-about-parallelism-in-transactions
+- Fixed post-commit confirmation handling: a subsequent read failure preserves
+  the committed Result, completed job and artifact, returning a safe confirmation
+  error. Preparation failures now enter the job failure handler as well.
+- Added bounded, sanitized stage/exit/signal/duration diagnostics for FFprobe,
+  FFmpeg, validation and persistence failures. Optional ProcessingJob diagnostics
+  are excluded from ordinary queries. Customer responses expose no server path,
+  raw stderr or private database error. No logging service or dependency added.
+  Previously these handled errors produced neither structured processing logs
+  nor persisted cause details, explaining why a terminal could show startup only;
+  this does not establish where historical terminal output was captured.
+- FFmpeg remains a child process of the Backend request, not a separate worker.
+  Existing MP3 narration is explicitly mapped and encoded as AAC in MP4; changing
+  TTS_AUDIO_FORMAT or regenerating narration is unnecessary. Output now requires
+  H.264 video, AAC audio, MP4 container and a nonempty artifact before persistence.
+- Real input FFprobe: H.264 360x640, 28.142585 seconds; English MP3 narration
+  24kHz mono, 10.848 seconds. Independent render using the patched adapter created
+  a 1,573,111-byte H.264/AAC MP4, 28.142583 seconds. Both video/audio decode passed;
+  audio mapping uses the existing English narration, with silence padded to source
+  duration. SHA-256 checks confirmed both inputs unchanged; temporary output was
+  removed. Manual viewing/listening and actual Customer Result playback remain
+  NOT VERIFIED. A separate real FFmpeg regression passed Unicode/space paths and
+  portrait input. No Unicode workaround or media replacement was necessary.
+- Validation: 35 distinct Backend test cases PASS (including Node's parent test
+  count): 7 diagnostics/process tests, 8 isolated Result lifecycle cases, 19
+  provenance/workflow/stale-guard cases and 1 real FFmpeg Unicode/decode case.
+  The initial combined run passed 33 cases; the affected Result suite was rerun
+  after adding preparation failure coverage and passed 8/8. Web workflow/result
+  regression 28/28 PASS. Backend TypeScript, ESLint, build and diff-check PASS.
+  Windows sandbox initially blocked child processes (EPERM); permitted local
+  executions passed. The legacy media test that connects using normal .env was
+  deliberately not run; all persistence fixtures used a verified Docker-only
+  replica set and were cleaned without touching development/production data.
+- Changed: backend/src/models/ProcessingJob.ts; result.service.ts;
+  media-processing/{ffmpeg-media-processor,media-processor.interface,
+  processing-diagnostics}.ts; tests/{media-diagnostics,media-ffmpeg-real,
+  result-isolated}.test.ts; this progress entry. Existing unrelated Mobile/Web
+  and documentation changes were preserved.
+- Real workflow retry NOT performed. Separate approval would authorize an
+  authenticated owner POST `/api/projects/6addad0fd70ccfecdc62b77c/process` with
+  `{"narrationId":"6addade8d70ccfecdc62b7af"}` after rechecking current guards.
+  It creates a NEW VIDEO_PROCESSING job, preserves the three old failures, writes
+  a Result/artifact on success, updates Project/job lifecycle and activity logs,
+  and fences upstream revisions transactionally without changing their content
+  or revision values. It does not translate, call TTS/AI or touch UNCERTAIN
+  attempts. No retry, development/production MongoDB writes, API-key/config change,
+  commit or push occurred. End-to-end completion awaits approved workflow run
+  and authenticated Result playback/download verification.
+## S30.3 — Customer translation HTTP 504 handling (2026-10-25): PARTIAL
+
+- Read-only recheck of `6addb6e3e12594669c2bd4d3`: attempt remains UNCERTAIN /
+  GENERATION_DISPATCHING, TRANSLATION_PROVIDER_ERROR, numeric HTTP evidence 504,
+  from 08:00:00.558Z to 08:02:00.784Z (15:00–15:02 local). No persisted draft,
+  requestId/responseId/transport diagnostics, English translation, narration or
+  Result. Original stdout logs were not available as repository log files.
+  The exact historical gateway/Google service producing the 504 is INCONCLUSIVE;
+  elapsed time alone is not proof of a local timeout or provider execution.
+- Rebuilt the source plan with existing pure planner/contract, without writes:
+  READY revision1, 4 groups, 41 segments, 250 source bytes, 947 JSON bytes, largest
+  group109 bytes; SIMPLE limits PASS and attempt source revision still matches.
+  No evidence of an input-limit failure, FFmpeg dispatch or missing source revision.
+- Confirmed defects fixed: HTTP408/504 mapped to TRANSLATION_TIMEOUT while keeping
+  numeric HTTP evidence; attempt status now exposes safe 408/429/504 codes as well
+  as 400/503. Old database rows are unchanged and their 504 is now visible to Web.
+  Web diagnostic feedback explains uncertain timeout and forbids resubmission;
+  the important safety warning remains visible, technical details collapsible.
+- Added optional durable operator diagnostics: HTTP_RESPONSE / LOCAL_ABORT /
+  NETWORK, METADATA/GENERATION, elapsed milliseconds and allowlisted opaque
+  request correlation headers. No raw headers, body, prompts or API key logged.
+  Expired signals are checked before durable dispatch and before fetch, including
+  the interval after metadata/source validation. A local abort is not assigned a
+  synthetic HTTP status and cannot inherit successful metadata as its error origin.
+- Preserved model/method/thinking, shared120-second overall deadline, SDK timeout,
+  one metadata/one generation request, zero retries, output8192 tokens, response
+  byte limit, per-owner/global admission, JWT/ownership, quotas, revision/digest
+  guards and durable unique attempt key. No arbitrary timeout increase, batching
+  change, model fallback or claim reset. Client disconnect does not authorize a
+  second request. No translation is completed without validated durable draft.
+- Recovery: existing generateContent transport is synchronous; the documented
+  API contract provides no result-lookup method used by this app. No durable old
+  request ID or saved bytes exist to reconcile this attempt. Do not assume a
+  response ID can retrieve missing output. Lost save acknowledgement recovery
+  continues to read/reuse the same already-validated saved bytes, never regenerate.
+  References: https://ai.google.dev/api/generate-content and
+  https://ai.google.dev/gemini-api/docs/troubleshooting . No provider call made.
+- Resolved prior7 regression FAILs through verified fixture issues: ADMIN's
+  owner-free lookup had no matching project, so assert PROJECT_NOT_FOUND/404 and
+  zero dispatch rather than expecting a later403; restore mutable mock user role
+  in finally to stop cascading failures. Explicitly isolate legacy tests from the
+  development CUSTOMER_TRANSLATION_ENABLED value. No production auth/route guard
+  changed and no assertion was broadened to accept arbitrary failures.
+- Validation: Backend focused translation/timeout/attempt/workflow/Result guards
+  95/95 PASS (previous run78 PASS/7 FAIL); Web403/403 PASS; both TypeScript/build
+  and lint exit0; design token synchronization and diff-check PASS. Web retains
+  existing exhaustive-deps warning in GroupTranslationWorkspace and build dynamic
+  import warning in projectRepository; unrelated files were preserved.
+  Tests cover HTTP504, local and pre-dispatch timeouts, durable failed/uncertain
+  attempts across restart, duplicates/concurrency, save-ack recovery, sanitization,
+  revision guards and GET-only UI recovery. Persistence/provider tests are mocks;
+  no new real MongoDB integration or real provider execution was performed.
+- Mobile counterpart reviewed through the existing Web/Mobile parity contract;
+  its attempt feedback capability remains separate/PARTIAL and was not modified.
+  Web runtime visual QA and real translation end-to-end remain NOT VERIFIED.
+  No live MongoDB writes, attempts, AI/TTS calls, narration/Result changes, .env
+  edits, explicit runtime restart, commit or push. Existing unrelated changes kept.
+  Any future real AI test needs separate approval. This step does not authorize
+  replaying the current UNCERTAIN attempt, even with a changed timeout/model.
+## S30.4 — Customer AUDIO generation disabled button (2026-10-25): PARTIAL
+
+- Read-only project `6addbb022c02bfbe89cce9bd` (test3): AUDIO source, Project
+  COMPLETED/progress100; transcript READY revision1; approved English translation
+  READY revision1, GROUPS_V1; narration READY revision1, speed1, audio/mpeg142892
+  bytes and file exists at recorded size. TTS job COMPLETED at08:19:27.754Z;
+  no queued/processing job, no video Result. Attempt DRAFT/SAVING, not UNCERTAIN.
+- Confirmed cause: GenerateWorkspace's disabled expression included !canMutate;
+  current Backend workflow is RESULT/COMPLETED, so revisiting GENERATE is read-only.
+  processingService nevertheless unconditionally constructed WAITING with the
+  media stage pending. A checked checkbox could not override !canMutate. This was
+  stale/local UI state mapping, not failed TTS or missing MP3.
+- Backend contract remains unchanged: AUDIO's CURRENT READY narration is its
+  result, with protected narration audio endpoint; only VIDEO needs a separate
+  /process job and MP4 Result. TTS progress100 alone is insufficient. Verified
+  workflow/artifact/language evidence is now mapped to COMPLETED on initialization
+  and manual Xem ket qua navigation; no processing POST or artificial audio job.
+- Added generationReadiness guard, shared by actual Generate UI and processing
+  session. Missing artifact, processing/UNKNOWN/mismatched workflow or language
+  remain blocked with a specific explanation; VIDEO retains workflow+confirmation
+  guards and synchronous duplicate-click prevention. Service rechecks fresh
+  context before dispatch, never locally invents AUDIO completion, and disables
+  API automatic refresh/resubmit for the video mutation. Generation context now
+  reloads Backend project instead of reusing the pre-TTS cached workflow.
+- Changed only Web pages/GeneratePage.tsx, features/processing/{generationService,
+  processingService,generationReadiness}.ts, tests/audio-generation.test.mjs,
+  tests/workflow-deep-link-guards.test.mjs and this entry. No Backend production
+  source, Mobile, Admin, API, workflow state or database record changed this step.
+- Tests: new8/8 actual workspace/service/mock tests PASS. Web full run410 PASS/
+  1 FAIL exposed an outdated exact-source assertion for the disabled expression;
+  updated it to require all three guards (mutation, checkbox, readiness), not to
+  accept an arbitrary expression. Final full Web run411/411 PASS and affected
+  UI/guard suites14/14 PASS. Backend
+  AUDIO-terminal/Result-provenance/workflow/attempt regressions37/37 PASS. Both
+  TypeScript, lint and build exit0. Existing Web exhaustive-deps and dynamic-import
+  warnings remain unrelated. Web/Mobile token checks and Mobile counterpart
+  workflow/result mock regressions19/19 PASS; Mobile source not modified and its
+  separate generation implementation has not been migrated in this scope.
+- Real Customer browser refresh, Xem ket qua navigation, playback and download
+  of this existing MP3 remain MANUAL PENDING. No browser session used, no AI/TTS,
+  audio/video processing, job/claim/reservation, MongoDB writes, attempt reset,
+  config change, commit or push. Completion here is code/mock validation only;
+  runtime end-to-end acceptance remains PARTIAL until manual review.
+## S30.4 — Reused-video translation investigation (2026-10-25): PARTIAL
+
+- Read-only comparison: A `6addad0fd70ccfecdc62b77c` and B
+  `6addb6e3e12594669c2bd4d3` contain the identical1,716,601-byte source video,
+  SHA256 `d39c7908450f711331b00971365cbb4128185ff9d02c45db732e01dfb6421de2`.
+  Same owner verified internally; both attempts' owner/project bindings match.
+  Both transcripts READY revision1 with41 segments; fullText, ordered segment
+  texts and complete sequence/text/timestamp hashes match. Transcript/segment IDs
+  differ, so sourceSnapshot digests correctly differ. Both rebuilt snapshots match
+  their own attempt sourceRevision and yield4 groups; renaming is not an input.
+- A is COMPLETED with an approved READY GROUPS_V1 translation containing4 groups;
+  its durable attempt remains DRAFT/SAVING. B is TRANSCRIBED, has no English
+  translation or durable draft, and remains UNCERTAIN/GENERATION_DISPATCHING with
+  numeric504 from15:00–15:02 local. Native durable keys differ (`b6cc9c...` versus
+  `5541b7...`), as do configuration bindings. No request/response correlation ID
+  exists in either historical record. No changes were made to these records.
+- Actual translation collections: translations (group output embedded),
+  translationattempts and legacy translationsegments; no TranslationBatch or
+  separate GroupTranslation collection/model exists in this application. Neither
+  project has legacy TranslationSegment rows; no invented batch status reported.
+- Durable key is digest([CUSTOMER_TRANSLATION_V1, ownerId, projectId, target,
+  sourceRevision]); RAM single-flight cache key also includes ownerId/projectId/
+  target/sourceRevision. Source revision hashes the complete transcript snapshot,
+  including transcript/segment IDs and revision, not filename/video SHA/name.
+  Provider receives fullText, language codes, group IDs and group source text,
+  not the uploaded video or project name. No cross-project video-hash cache or
+  deduplication found. Existing per-owner/global capacity/quota are intentional
+  shared limits, not shared attempt claims; no such rejection explains B's504.
+- New mock regressions execute actual GroupTranslationService, GroupDraftStore
+  and CustomerAttemptStore native-key/CAS code with all storage/provider replaced:
+  same video, same transcript with different media, same filename/different bytes,
+  same hash/different projects, independent draft/claim, same-project idempotency,
+  completed A versus new B, and an identical source fingerprint across A/B/C.
+  A/C drafts survive B504; restarting the attempt store cannot resend B or mutate
+  its failed claim. Test fixture uses real native key computation, not a substitute
+  JSON key. All HTTP and MongoDB connections are forbidden or mocked in tests.
+- Confirmed installed SDK behavior via mocked SDK fetch: timeout120000ms becomes
+  X-Server-Timeout:120 in the outbound request. One metadata and one generation
+  request maximum;504 maps to timeout and never retries. This establishes a server
+  deadline mechanism, but without historical response/log correlation it cannot
+  prove which upstream component produced B's504 or why execution exceeded it.
+  No evidence ties504 to repeated video; transient load or other upstream causes
+  remain unproven. No speculative cache/key/timeout/provider production fix made.
+- Files added/updated in this step only: backend/tests/reused-media-translation.test.ts
+  and this progress entry. Existing S30.3 timeout diagnostics and unrelated S30.4
+  AUDIO/Web changes preserved; no FFmpeg/Result/Mobile/Admin changes.
+- Validation: Backend combined100/100 PASS, then affected reused-media suite6/6
+  PASS after adding the SDK deadline test (101 distinct cases in total); Web
+  411/411 PASS; Backend/Web TypeScript, ESLint exit0, build and diff-check PASS.
+  Existing Web exhaustive-deps and dynamic-import warnings remain unchanged.
+- Real repeated-video acceptance is NOT RUN. With separate approval, use a new
+  eligible owned project and existing translation UI once, then inspect persisted
+  draft and diagnostics. Do not reset/retry B or reuse its UNCERTAIN claim. Actual
+  provider outcome for a future attempt is not guaranteed by mock tests. No real
+  AI/TTS calls, database writes, attempts/jobs, config changes, commit or push.

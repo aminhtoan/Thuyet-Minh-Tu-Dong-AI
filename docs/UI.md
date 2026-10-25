@@ -1,5 +1,146 @@
 # UI Specification
 
+## S29.4G.1 — Fix Mobile Account hidden-route redirect (2026-10-24)
+
+- Confirmed root cause in installed Expo58: TabsClient maps `href: null` to
+  `hidden: true`; useVisibleTabsWithRedirect replaces a focused hidden route with
+  the first visible tab. Account was declared with `href: null`, so `/account`
+  could not remain active. Before fix Pixel7 avatar click left Dashboard visible;
+  source-backed regression reproduces the SDK redirect itself, not a guessed API
+  or auth failure. No matching ReactNativeJS route/TypeError/re-render/network
+  exception was found in the bounded log sample; this does not attest all logs.
+- Fix: Account is declared navigable without href:null in `(tabs)/_layout.tsx`.
+  CustomerBottomNavigation still renders exactly dashboard/projects/create/library
+  and never Account. URL `/account`, existing AccountScreen, back/history and auth
+  guards retained; no duplicate route or new auth system. Legacy settings/history
+  declarations remain unchanged and are not the avatar destination.
+- Independent robustness defect: profile GET previously had no deadline. Added
+ 15s deadline and AbortController to useCurrentUser/authService.me. Success,
+  failure and timeout end loading; timeout has safe retry copy. Superseded/blurred
+  requests are aborted, and late responses cannot replace current-session data.
+- Logout keeps existing revocation/SecureStore/cache cleanup and duplicate lock.
+  Revocation now has15s abort timeout, without retry; local cleanup still runs in
+  finally. Account explicitly replaces with `/login` once local status is guest,
+  including failed server revocation with successful local cleanup. Storage-clear
+  failure retains the existing error instead of navigating as authenticated.
+- Pixel7 LIVE VERIFIED: existing Customer session, Dashboard avatar T→Account
+  visible; loading ended, actual name/email and logout button visible; Back→
+  Dashboard. No live logout/login or data mutation was performed. Exact360/393dp,
+  device logout/login/re-auth remain MANUAL PENDING; no claim of complete acceptance.
+- Automated: Mobile206/206 PASS,0 skipped; actual installed SDK hidden redirect,
+  fixed navigability, profile success/error/timeout/late response, logout timeout,
+  session cleanup/login B and four-tab invariants included. TypeScript/ESLint,
+  Metro Android/Hermes, token/Museum sync and diff-check PASS.
+- Changed this step: tab layout, useCurrentUser, authService, AccountScreen and
+  Header/navigation/Dashboard regression tests plus UI/PROGRESS docs. MobileHeader
+  target was already correct and required no further route rewrite. Prior Web,
+  Result and other uncommitted work preserved. No Web/Backend/Public Museum/API
+  contract/AI changes, Gemini/TTS/render/job dispatch, attempt reset, commit/push.
+
+## S29.4F — Customer Mobile Header navigation (2026-10-24, PARTIAL acceptance)
+
+- Actual Web audit: Sidebar brand currently links `/dashboard`; Dashboard Topbar
+  brand is a noninteractive span. Avatar uses authenticated `/auth/me`, account
+  menu `/settings`, confirmation/logout. Per explicit S29.4F user decision, Mobile
+  brand intentionally goes to Public Museum `/`, not the current Web brand target.
+  Web source remains unchanged. Mobile index.tsx renders MuseumHomeScreen; Account
+  is protected `/account` with `/settings` compatibility alias.
+- MobileHeader icon/text now share a48dp accessible home link. Existing visual
+  tokens/layout retained. Avatar48dp uses current `/auth/me` CUSTOMER initial,
+  generic U only while identity is unavailable; no invented name/email. It opens
+  `/account` for authenticated users, `/login` for guests and is disabled while
+  auth restores. Navigation uses existing routes, ignores repeated presses and
+  no-op current-route clicks; focus restores the lock. Existing back retained.
+- Header/Account reuse useCurrentUser: authenticated GET on focus, explicit error/
+  reload, session-revision identity and request sequence checks. Old account data
+  is hidden after logout/login; late or superseded profile requests cannot replace
+  the current user. No new auth provider, token format, API or route was introduced.
+- Account retains current identity card and logout confirmation. Synchronous lock
+  prevents duplicate confirmation/logout. Logout reuses existing authService and
+  SecureStore clear; Stack.Protected owns guest redirect to `/`. A device-session
+  clear failure is surfaced instead of leaving a permanent success/busy state.
+- Project cache is cleared on logout (including failed server logout) and before
+  successful new login stores session. Cache epochs prevent pending reads/writes
+  from restoring previous account data; old refresh completion cannot release a
+  newer refresh lock. No server project mutation or workflow behavior changed.
+- Validation: Mobile203/203 PASS including8 new Header/Account/auth/cache tests;
+  focused tests rerun after final hook dependency fix. TypeScript, ESLint (no
+  warnings), Android Metro/Hermes, token and Museum sync, diff-check PASS. Actual
+  session/authService logic tested with isolated SecureStore/fetch mocks, including
+  logout offline, protected guards and login A→logout→login B; no live account used.
+- Visual QA Pixel7/360/393dp: NOT VERIFIED. Returned emulator capture was not a
+  reliable view of the mobile app, so no coordinate input or live logout was sent.
+  Header geometry is regression-tested but still needs device acceptance. Prior
+  library/Result work, four Customer tabs and Public Museum UI are preserved.
+- No Web/Backend/MongoDB/config/AI/UNCERTAIN changes; no Gemini/TTS/render, real
+  logout/login, commit or push. No next step started.
+
+## S29.4D — Customer Mobile Result Screen Web Parity (2026-10-24, PARTIAL)
+
+### Actual Web audit
+
+| Area | Web source/contract | Mobile change |
+|---|---|---|
+| Route | `/projects/:projectId/result?language=...`, ResultPage.tsx | Same protected project route, existing four tabs unchanged |
+| Access | workflowRouteGuard.ts RESULT: RESULT step, trusted target, COMPLETED workflow and appropriate artifact | resultAccess.ts mirrors this RESULT subset; fresh owned project GET before artifact APIs |
+| Language | languages.ts has vi/en/ja/ko labels, but RESULT normalizes valid2–3letter language/optional subtag; Intl name fallback | Removed four-item membership check only from RESULT; no translation/TTS catalog change |
+| Data | GET project, results, narrations; newest exact-language video, otherwise narration | Same selector and API client; no fallback to English or source language |
+| Layout | Heading, six steps, metadata/status, processing summary, preview/download, project/library links | Stacked shared-token cards, wrapping metadata and buttons |
+| Media | Authenticated blob preview, browser audio/video controls, explicit download | Authenticated native streaming; video controls/contain/fullscreen; audio play/pause, seek, duration, volume |
+| Missing result | Read-only unavailable state, no generation CTA | Removed old processing CTA; safe recovery links only |
+
+Web RESULT guard does not separately use progress or infer access from project
+status; workflow and artifact evidence are authoritative. It also does not add
+library-only target source/result-source constraints. Native tests compare the
+RESULT subset directly to Web instead of silently changing workflow semantics.
+No transcript/translation editor, KPI or new AI/share action is added.
+
+### Implemented
+
+- useResult now reads the current authenticated project directly (not a stale
+  repository entry), validates project identity, guard and language before any
+  results/narrations GET.401/403/missing evidence fail closed. Requested language
+  remains optional; confirmed normalized workflow target is required. Result
+  language, project and protected artifact path must match before mounting player.
+- URLs come from existing Backend DTO contract:
+  `/api/projects/:projectId/results/:id/file` or
+  `/api/projects/:projectId/narrations/:id/audio`. Absolute/external, mismatched
+  project/artifact or query-bearing URLs cannot receive credentials. Header/token
+  remains in memory and is never logged or rendered.
+- No eager full-file download/cache just to open metadata. Expo58 audio/video
+  hooks stream with authenticated headers; no autoplay. Native video retains
+  aspect16:9 and contain; audio exposes accessible bounded seek and volume.
+  Safe loading/playback-error messages do not expose native response details.
+- Blur cancels pending project reads, suppresses late metadata/source and unmounts
+  players even when Stack keeps the screen mounted. Session/project/language
+  identity changes hide old source immediately. Expo hooks own player release;
+  status subscriptions are removed on unmount.
+- Manual download retains native save/export sheet as the Android equivalent of
+  browser download, no additional share button. It blocks duplicate presses,
+  rejects session changes before presenting the sheet and cleans temporary files.
+  Existing one-time401 refresh on protected file GET remains; no AI retry exists.
+- Header back uses current navigation history; explicit footer goes to projects
+  and `/library`, never legacy `/history`. Blocked page offers project recovery;
+  result navigation never starts generation/TTS/render.
+
+### Validation and acceptance
+
+- Automated: Mobile195/195 and Web400/400 PASS, including15 RESULT tests covering
+  actual Web guard/language parity,401/403, wrong identity/language/path, missing
+  artifact, late session/blur results, native controls/loading/error, manual save
+  locking and cache cleanup. Library/navigation/Dashboard/My Projects regressions
+  included. TypeScript/ESLint and Android Metro/Hermes PASS. Token/Museum sync PASS.
+- Visual/media acceptance: MANUAL PENDING. No completed real artifact was opened
+  or created in this step. Pixel7 360/393dp, actual codecs/authenticated range
+  playback, seek/pause/resume/fullscreen, save destination/filename, gesture area,
+  screen-reader/large-text layout still need an eligible owned product. Bundle and
+  mocked players do not prove real-device playback. Web lint/typecheck/build also
+  PASS (existing mixed-import advisory). Native save/export differs
+  from browser download and cannot promise automatic external-storage save.
+- Scope: Mobile result files/tests and UI/PROGRESS docs only. Prior library/auth/
+  navigation work preserved. No Web/Backend/Public Museum/auth API/catalog/config
+  change, MongoDB writes, AI call, UNCERTAIN reset/retry, commit or push.
+
 ## S29.4 — Customer Mobile My Projects (2026-10-24, PARTIAL)
 
 ### Actual Web reference and pre-edit audit

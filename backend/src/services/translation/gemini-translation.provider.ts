@@ -1,12 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import type { TranslationProvider, TranslationProviderInput, TranslationProviderResult } from './translation-provider.interface.js';
-import { gemini400Diagnostic, type ProviderDiagnostic } from './provider-failure.js';
+import { gemini400Diagnostic, type ProviderDiagnostic, type TransportDiagnostic } from './provider-failure.js';
 
 export const GEMINI_TRANSLATION_MODEL = 'gemini-3.8-flash';
 export const GEMINI_TRANSLATION_ERRORS = ['TRANSLATION_NOT_CONFIGURED', 'TRANSLATION_INVALID_KEY', 'TRANSLATION_MODEL_UNAVAILABLE', 'TRANSLATION_QUOTA_EXCEEDED', 'TRANSLATION_TIMEOUT', 'TRANSLATION_NETWORK_ERROR', 'TRANSLATION_INVALID_RESPONSE', 'TRANSLATION_MAPPING_FAILED', 'TRANSLATION_PROVIDER_ERROR'] as const;
 export class GeminiTranslationError extends Error {
-  constructor(public readonly code: typeof GEMINI_TRANSLATION_ERRORS[number], public readonly httpStatus?: number, public readonly diagnostic?: ProviderDiagnostic) { super(code); }
+  constructor(public readonly code: typeof GEMINI_TRANSLATION_ERRORS[number], public readonly httpStatus?: number, public readonly diagnostic?: ProviderDiagnostic, public readonly transportDiagnostic?: TransportDiagnostic) { super(code); }
 }
 // Fail closed: an ordered, nonempty 1:1 response cannot prove many-to-many
 // semantic alignment of a word-level transcript (e.g. "Tiểu học", "tọa lạc").
@@ -42,10 +42,16 @@ export function mapGeminiTranslation(text: string | undefined, input: Translatio
   if (parsed.data.segments.length !== input.segments.length || parsed.data.segments.some((segment, position) => segment.index !== input.segments[position]?.index || segment.sourceSegmentId !== input.segments[position]?.sourceSegmentId) || new Set(parsed.data.segments.map(segment => segment.sourceSegmentId)).size !== input.segments.length) throw new GeminiTranslationError('TRANSLATION_MAPPING_FAILED');
   return { sourceLanguage: input.sourceLanguage, targetLanguage: input.targetLanguage, segments: parsed.data.segments.map(({ index, text }) => ({ index, text })) };
 }
-export const mapGeminiTranslationError = (error: unknown): GeminiTranslationError => {
+export const mapGeminiTranslationError = (error: unknown, transportDiagnostic?: TransportDiagnostic): GeminiTranslationError => {
+  if (transportDiagnostic) {
+    if (transportDiagnostic.origin === 'LOCAL_ABORT') return new GeminiTranslationError('TRANSLATION_TIMEOUT', undefined, undefined, transportDiagnostic);
+    const mapped = mapGeminiTranslationError(error);
+    return new GeminiTranslationError(mapped.code, mapped.httpStatus, mapped.diagnostic, transportDiagnostic);
+  }
   if (error instanceof GeminiTranslationError) return error;
   const value = error as { status?: number; code?: number; name?: string; message?: string } | null;
   const status = typeof value?.status === 'number' ? value.status : typeof value?.code === 'number' ? value.code : undefined;
+  if (status === 408 || status === 504) return new GeminiTranslationError('TRANSLATION_TIMEOUT', status);
   if (value?.name === 'AbortError' || value?.name === 'TimeoutError') return new GeminiTranslationError('TRANSLATION_TIMEOUT');
   if (status === 401 || (status === 400 && value?.message?.includes('API_KEY_INVALID'))) return new GeminiTranslationError('TRANSLATION_INVALID_KEY', status, gemini400Diagnostic(error, status));
   if (status === 403 || status === 404) return new GeminiTranslationError('TRANSLATION_MODEL_UNAVAILABLE', status);

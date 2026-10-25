@@ -44,7 +44,7 @@ test('SDK58 preserves secure storage, native multipart upload and playback APIs'
   assert.match(upload, /FileSystem.createUploadTask/);
   assert.match(upload, /FileSystemUploadType.MULTIPART/);
   assert.match(upload, /cancelAsync/);
-  const result = await read('src/screens/ResultScreen.tsx');
+  const result = await read('src/features/results/ResultPlayer.tsx');
   assert.match(result, /useVideoPlayer/); assert.match(result, /useAudioPlayer/);
   assert.match(result, /nativeControls/);
 });

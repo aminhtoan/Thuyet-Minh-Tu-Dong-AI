@@ -209,7 +209,7 @@ export class GroupTranslationService {
         const messages: Record<string, string> = { TRANSLATION_NOT_CONFIGURED: 'Dịch vụ dịch chưa được cấu hình.', TRANSLATION_INVALID_KEY: 'Khóa dịch vụ dịch không hợp lệ.', TRANSLATION_MODEL_UNAVAILABLE: 'Model dịch không khả dụng.', TRANSLATION_QUOTA_EXCEEDED: 'Dịch vụ dịch đã hết hạn mức.', TRANSLATION_TIMEOUT: 'Dịch vụ dịch phản hồi quá lâu.', TRANSLATION_NETWORK_ERROR: 'Không kết nối được dịch vụ dịch.', TRANSLATION_MAPPING_FAILED: 'Không thể ánh xạ các cụm dịch.', TRANSLATION_INVALID_RESPONSE: 'Dịch vụ dịch trả về dữ liệu không hợp lệ.' };
         const httpStatus = error instanceof GeminiTranslationError ? error.httpStatus : undefined;
         const diagnostic = error instanceof GeminiTranslationError ? error.diagnostic : undefined;
-        throw new TranslationProviderFailure(code === 'TRANSLATION_NOT_CONFIGURED' ? 503 : 502, code, providerFailureMessage(httpStatus, diagnostic) ?? (messages[code] ?? 'Không thể xem trước bản dịch.') + ' Không tự động gọi lại AI.', httpStatus, diagnostic);
+        throw new TranslationProviderFailure(code === 'TRANSLATION_NOT_CONFIGURED' ? 503 : 502, code, providerFailureMessage(httpStatus, diagnostic) ?? (messages[code] ?? 'Không thể xem trước bản dịch.') + ' Không tự động gọi lại AI.', httpStatus, diagnostic, error instanceof GeminiTranslationError ? error.transportDiagnostic : undefined);
       }
     }, this.admission ? { ownerId, controller: this.admission } : undefined);
     const current = await Transcript.findOne({ _id: draft.transcriptId, projectId }).select('_id revision');

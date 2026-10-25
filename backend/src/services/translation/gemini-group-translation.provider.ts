@@ -9,6 +9,7 @@ import { assertSimpleInput, simpleTranslationInstructions } from './gemini-simpl
 import { customerTranslationModel } from '../../config/translation-model.js';
 import { customerDispatch, customerResponse } from './customer-execution.js';
 import { AppError } from '../../utils/app-error.js';
+import type { TransportDiagnostic } from './provider-failure.js';
 export type GroupProviderInput = { fullText: string; sourceLanguage: string; targetLanguage: string; groups: { groupId: string; sourceText: string }[] };
 export interface GroupProvider { translate(input: GroupProviderInput, verifySource?: () => Promise<void>): Promise<{ groupId: string; translatedText: string }[]> }
 export interface GroupTransport {
@@ -60,6 +61,9 @@ export class GeminiGroupTranslationProvider implements GroupProvider {
     if (!key) throw new GeminiTranslationError('TRANSLATION_NOT_CONFIGURED');
     if (!/^gemini-[a-z0-9.-]+$/.test(model) || /transcribe|tts|live|image/i.test(model)) throw new GeminiTranslationError('TRANSLATION_MODEL_UNAVAILABLE');
     const signal = AbortSignal.timeout(120_000);
+    let transportDiagnostic: TransportDiagnostic | undefined;
+    let activeOperation: 'METADATA' | 'GENERATION' = 'METADATA';
+    let operationStarted = Date.now();
     try {
       let transport = this.transport;
       if (!transport) {
@@ -74,8 +78,25 @@ export class GeminiGroupTranslationProvider implements GroupProvider {
             if (simple && ['responseJsonSchema', 'responseSchema', 'responseMimeType', 'thinkingConfig'].some(field => field in (body.generationConfig ?? {}))) throw new GeminiTranslationError('TRANSLATION_NOT_CONFIGURED');
             if (body.generationConfig?.maxOutputTokens !== 8192 || (thinking === 'MEDIUM' ? body.generationConfig?.thinkingConfig?.thinkingLevel !== 'MEDIUM' : body.generationConfig?.thinkingConfig !== undefined)) throw new GeminiTranslationError('TRANSLATION_NOT_CONFIGURED');
           }
-          await customerDispatch(method === 'POST' ? 'GENERATION' : 'METADATA');
-          return bounded(url, { ...init, redirect: 'error' });
+          // Do not spend a dispatch fence if the shared, bounded deadline expired
+          // during source verification/metadata. No timeout extension or retry.
+          signal.throwIfAborted(); init?.signal?.throwIfAborted();
+          const operation = method === 'POST' ? 'GENERATION' : 'METADATA';
+          await customerDispatch(operation);
+          const started = Date.now();
+          try {
+            signal.throwIfAborted(); init?.signal?.throwIfAborted();
+            const response = await bounded(url, { ...init, redirect: 'error' });
+            const candidate = response.headers.get('x-goog-request-id') ?? response.headers.get('x-request-id');
+            // Opaque correlation only. Never retain arbitrary headers or bodies.
+            const requestId = candidate && candidate !== key && !/^(?:eyJ|sk-|AIza)/.test(candidate) && /^[a-zA-Z0-9._:-]{1,128}$/.test(candidate) ? candidate : undefined;
+            transportDiagnostic = { origin: 'HTTP_RESPONSE', operation, elapsedMs: Date.now() - started, ...(requestId ? { requestId } : {}) };
+            return response;
+          } catch (error) {
+            const localAbort = signal.aborted || init?.signal?.aborted || error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name);
+            transportDiagnostic = { origin: localAbort ? 'LOCAL_ABORT' : 'NETWORK', operation, elapsedMs: Date.now() - started };
+            throw error;
+          }
         };
         const ai = new GoogleGenAI({ apiKey: key, httpOptions: { apiVersion: 'v1beta', timeout: 120_000, retryOptions: { attempts: 1 }, fetch: once } });
         transport = {
@@ -91,16 +112,27 @@ export class GeminiGroupTranslationProvider implements GroupProvider {
         };
       }
       await verifySource?.();
+      signal.throwIfAborted();
       if (this.transport) await customerDispatch('METADATA');
       const metadata = await transport.metadata(model, signal);
       await customerResponse('METADATA');
       if (!metadata.supportedActions?.includes('generateContent')) throw new GeminiTranslationError('TRANSLATION_MODEL_UNAVAILABLE');
+      activeOperation = 'GENERATION'; operationStarted = Date.now();
       await verifySource?.();
+      signal.throwIfAborted();
       if (this.transport) await customerDispatch('GENERATION');
       const response = await transport.generate(model, input, signal);
       await customerResponse('GENERATION');
       if (response.finishReason !== 'STOP') throw new GeminiTranslationError('TRANSLATION_INVALID_RESPONSE');
       return mapGroupResponse(response.text, input);
-    } catch (error) { if (error instanceof AppError) throw error; throw mapGeminiTranslationError(error); }
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      // A deadline expiring between SDK calls must not inherit successful
+      // metadata HTTP evidence as the cause of a generation timeout.
+      if (signal.aborted && !(error && typeof error === 'object' && 'status' in error && typeof error.status === 'number' && error.status >= 400)) {
+        transportDiagnostic = { origin: 'LOCAL_ABORT', operation: activeOperation, elapsedMs: Date.now() - operationStarted };
+      }
+      throw mapGeminiTranslationError(error, transportDiagnostic);
+    }
   }
 }

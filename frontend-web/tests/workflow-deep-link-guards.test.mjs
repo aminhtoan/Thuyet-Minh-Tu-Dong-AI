@@ -55,7 +55,7 @@ test('workflow pages guard before mutation and preserve catalog/TTS capability s
   assert.match(files[0], /canGenerate = canMutate/);
   assert.match(files[1], /disabled=\{!canMutate/);
   assert.match(files[2], /disabled=\{!canMutate \|\| !editor\.canSave\}/);
-  assert.match(files[3], /disabled=\{!canMutate \|\| !confirmed\}/);
+  assert.match(files[3], /disabled=\{!canMutate \|\| !confirmed \|\| !readiness\?\.canStart\}/);
   assert.doesNotMatch(files[4], /isLanguageCode/);
   const voiceService = await readFile(new URL('../src/features/voice/voiceService.ts', import.meta.url), 'utf8');
   assert.match(voiceService, /\/voices\?language=/);
