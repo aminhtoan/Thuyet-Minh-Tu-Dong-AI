@@ -272,3 +272,141 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Language Switcher Tabs */
+.result-language-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-end: 20px;
+  padding: 12px 16px;
+  background: var(--surface-subtle, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 12px;
+}
+
+.result-language-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.result-language-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  background: #ffffff;
+  color: var(--text-secondary, #475569);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.result-language-tab:hover {
+  background: var(--surface-hover, #f1f5f9);
+  color: var(--text-primary, #0f172a);
+}
+
+.result-language-tab--active {
+  background: var(--primary, #6366f1);
+  color: #ffffff;
+  border-color: var(--primary, #6366f1);
+  font-weight: 600;
+}
+
+.result-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success, #10b981);
+  display: inline-block;
+  margin-inline-start: 4px;
+}
+
+.result-language-tab--active .result-tab-dot {
+  background: #ffffff;
+}
+
+.result-add-language-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Add Language Modal */
+.add-language-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.add-language-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.add-language-modal-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+}
+
+.add-language-modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-block-end: 8px;
+  color: var(--text-primary, #0f172a);
+}
+
+.add-language-modal-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.5;
+  margin-block-end: 16px;
+}
+
+.add-language-modal-body {
+  margin-block: 16px;
+}
+
+.add-language-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-block-end: 8px;
+  color: var(--text-primary, #334155);
+}
+
+.add-language-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.9375rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  color: var(--text-primary, #0f172a);
+}
+
+.add-language-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-block-start: 24px;
+}
+

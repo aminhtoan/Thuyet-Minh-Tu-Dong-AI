@@ -4,6 +4,9 @@ import { Media } from '../models/Media.js';
 import { Narration } from '../models/Narration.js';
 import { Result } from '../models/Result.js';
 import { Project, type ProjectDocument } from '../models/Project.js';
+import { Transcript } from '../models/Transcript.js';
+import { TranscriptSegment } from '../models/TranscriptSegment.js';
+import { Translation } from '../models/Translation.js';
 import type { ProjectStatus } from '../constants/project.constants.js';
 import { AppError } from '../utils/app-error.js';
 import { safeDeleteStoredFile } from '../utils/file.js';
@@ -72,8 +75,186 @@ export const remove = async (id: string, userId: string) => {
   const narrations = await Narration.find({ projectId: project._id }).select('audioPath');
   const results = await Result.find({ projectId: project._id }).select('videoPath');
   await Promise.all([Media.deleteMany({ projectId: project._id }), Narration.deleteMany({ projectId: project._id }), Result.deleteMany({ projectId: project._id }), Project.deleteOne({ _id: project._id })]);
-  if (media) await safeDeleteStoredFile(media.storagePath);
+  if (media) {
+    const otherMediaCount = await Media.countDocuments({ storagePath: media.storagePath, projectId: { $ne: project._id } });
+    if (otherMediaCount === 0) await safeDeleteStoredFile(media.storagePath);
+  }
   await Promise.all(narrations.filter((item) => item.audioPath).map((item) => safeDeleteStoredFile(item.audioPath)));
   await Promise.all(results.filter((item) => item.videoPath).map((item) => safeDeleteStoredFile(item.videoPath)));
   void log(userId, 'PROJECT_DELETED', project._id, 'Dự án đã được xóa.');
+};
+
+export const branchLanguage = async (sourceProjectId: string, userId: string, targetLanguage: string) => {
+  const sourceProject = await owned(sourceProjectId, userId);
+  const media = await Media.findOne({ projectId: sourceProject._id });
+  if (!media) throw new AppError(400, 'MEDIA_NOT_FOUND', 'Dự án nguồn chưa có tệp phương tiện.');
+  const transcript = await Transcript.findOne({ projectId: sourceProject._id });
+  if (!transcript) throw new AppError(400, 'TRANSCRIPT_NOT_FOUND', 'Dự án nguồn chưa có bản bóc băng.');
+  const segments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 });
+
+  const languageLabels: Record<string, string> = { en: 'Tiếng Anh', ja: 'Tiếng Nhật', fr: 'Tiếng Pháp', ko: 'Tiếng Hàn', zh: 'Tiếng Trung', vi: 'Tiếng Việt' };
+  const targetLabel = languageLabels[targetLanguage] || targetLanguage.toUpperCase();
+  const cleanName = sourceProject.name.replace(/\s*\([^)]*\)$/, '');
+  const newName = `${cleanName} (${targetLabel})`;
+
+  const newProject = await Project.create({
+    name: newName,
+    description: sourceProject.description,
+    sourceLanguage: sourceProject.sourceLanguage,
+    userId,
+    status: 'TRANSCRIBED',
+    progress: 40,
+  });
+
+  await Media.create({
+    projectId: newProject._id,
+    originalName: media.originalName,
+    fileName: media.fileName,
+    mediaType: media.mediaType,
+    mimeType: media.mimeType,
+    fileSize: media.fileSize,
+    duration: media.duration,
+    storagePath: media.storagePath,
+  });
+
+  const newTranscript = await Transcript.create({
+    projectId: newProject._id,
+    languageCode: transcript.languageCode,
+    fullText: transcript.fullText,
+    status: 'READY',
+    revision: 1,
+  });
+
+  if (segments.length) {
+    await TranscriptSegment.insertMany(segments.map((s) => ({
+      transcriptId: newTranscript._id,
+      sequence: s.sequence,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      text: s.text,
+    })));
+  }
+
+  void log(userId, 'PROJECT_BRANCHED', newProject._id, `Đã tạo phiên bản ${targetLabel} từ dự án ${sourceProject.name}.`);
+  const [serialized] = await serializeWithWorkflow([newProject]);
+  return { project: serialized, targetLanguage };
+};
+
+export const getLanguageVariants = async (projectId: string, userId: string, currentLanguage?: string) => {
+  const currentProject = await owned(projectId, userId);
+  const media = await Media.findOne({ projectId: currentProject._id });
+  let projectIds: Types.ObjectId[] = [currentProject._id];
+  if (media) {
+    const relatedMedias = await Media.find({ storagePath: media.storagePath });
+    projectIds = relatedMedias.map((m) => m.projectId as Types.ObjectId);
+  }
+  const relatedProjects = await Project.find({ _id: { $in: projectIds }, userId });
+  const relatedIds = relatedProjects.map((p) => p._id);
+  const [results, narrations, translations] = await Promise.all([
+    Result.find({ projectId: { $in: relatedIds } }),
+    Narration.find({ projectId: { $in: relatedIds } }),
+    Translation.find({ projectId: { $in: relatedIds } }),
+  ]);
+
+  const LANGUAGE_METAS: Record<string, { name: string; flag: string }> = {
+    en: { name: 'Tiếng Anh', flag: '🇬🇧' },
+    ja: { name: 'Tiếng Nhật', flag: '🇯🇵' },
+    fr: { name: 'Tiếng Pháp', flag: '🇫🇷' },
+    ko: { name: 'Tiếng Hàn', flag: '🇰🇷' },
+    zh: { name: 'Tiếng Trung', flag: '🇨🇳' },
+    vi: { name: 'Tiếng Việt', flag: '🇻🇳' },
+  };
+
+  const variantMap = new Map<string, {
+    projectId: string;
+    language: string;
+    name: string;
+    flag: string;
+    hasResult: boolean;
+    status: string;
+    isCurrent: boolean;
+  }>();
+
+  for (const proj of relatedProjects) {
+    const pId = proj._id.toString();
+    const projResults = results.filter((r) => r.projectId.toString() === pId);
+    const projNarrations = narrations.filter((n) => n.projectId.toString() === pId);
+    const projTranslations = translations.filter((t) => t.projectId.toString() === pId);
+
+    for (const r of projResults) {
+      const lang = r.languageCode;
+      if (!variantMap.has(lang) || !variantMap.get(lang)?.hasResult) {
+        const meta = LANGUAGE_METAS[lang] || { name: lang.toUpperCase(), flag: '🌐' };
+        variantMap.set(lang, {
+          projectId: pId,
+          language: lang,
+          name: meta.name,
+          flag: meta.flag,
+          hasResult: true,
+          status: proj.status,
+          isCurrent: pId === projectId && (!currentLanguage || lang === currentLanguage),
+        });
+      }
+    }
+
+    for (const n of projNarrations) {
+      const lang = n.languageCode;
+      if (!variantMap.has(lang)) {
+        const meta = LANGUAGE_METAS[lang] || { name: lang.toUpperCase(), flag: '🌐' };
+        variantMap.set(lang, {
+          projectId: pId,
+          language: lang,
+          name: meta.name,
+          flag: meta.flag,
+          hasResult: true,
+          status: proj.status,
+          isCurrent: pId === projectId && (!currentLanguage || lang === currentLanguage),
+        });
+      }
+    }
+
+    for (const t of projTranslations) {
+      const lang = t.targetLanguage;
+      if (!variantMap.has(lang)) {
+        const meta = LANGUAGE_METAS[lang] || { name: lang.toUpperCase(), flag: '🌐' };
+        variantMap.set(lang, {
+          projectId: pId,
+          language: lang,
+          name: meta.name,
+          flag: meta.flag,
+          hasResult: false,
+          status: proj.status,
+          isCurrent: pId === projectId && (!currentLanguage || lang === currentLanguage),
+        });
+      }
+    }
+
+    for (const [code, meta] of Object.entries(LANGUAGE_METAS)) {
+      if (proj.name.includes(`(${meta.name})`) && !variantMap.has(code)) {
+        variantMap.set(code, {
+          projectId: pId,
+          language: code,
+          name: meta.name,
+          flag: meta.flag,
+          hasResult: false,
+          status: proj.status,
+          isCurrent: pId === projectId && (!currentLanguage || code === currentLanguage),
+        });
+      }
+    }
+  }
+
+  if (variantMap.size === 0) {
+    variantMap.set('en', {
+      projectId: currentProject._id.toString(),
+      language: 'en',
+      name: 'Tiếng Anh',
+      flag: '🇬🇧',
+      hasResult: false,
+      status: currentProject.status,
+      isCurrent: true,
+    });
+  }
+
+  return Array.from(variantMap.values());
 };

@@ -43,6 +43,8 @@ projectRouter.get('/', validate(listProjectsSchema), projectController.list);
 projectRouter.get('/:id', validate(projectIdSchema), projectController.get);
 projectRouter.patch('/:id', validate(updateProjectSchema), projectController.update);
 projectRouter.delete('/:id', validate(projectIdSchema), projectController.remove);
+projectRouter.get('/:id/language-variants', validate(projectIdSchema), requireProjectOwner, projectController.languageVariants);
+projectRouter.post('/:id/branch-language', validate(projectIdSchema), requireProjectOwner, projectController.branchLanguage);
 projectRouter.post('/:id/media', requireProjectOwner, uploadMedia, mediaController.upload);
 projectRouter.get('/:id/media', requireProjectOwner, mediaController.get);
 projectRouter.get('/:id/media/file', requireProjectOwner, streamSourceMedia);

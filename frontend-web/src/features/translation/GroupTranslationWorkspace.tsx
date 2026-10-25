@@ -165,7 +165,7 @@ export function GroupTranslationWorkspace({ project, preferredTarget, canMutate,
       </div>
       {error && <Card className="translation-feedback translation-feedback--error"><div ref={feedbackRef} tabIndex={-1} role="alert"><h2>Không thể hoàn tất thao tác</h2><p>{customerMode ? 'Chưa thể xác nhận kết quả. Hãy kiểm tra trạng thái; không gửi lại yêu cầu dịch.' : error}</p></div>{customerMode && <details className="translation-diagnostics"><summary>Chi tiết chẩn đoán</summary><p>{error}</p></details>}<Button variant="secondary" disabled={Boolean(busy)} onClick={() => setReload(n => n + 1)}>Tải lại dữ liệu (không gọi AI)</Button></Card>}
       <Card className="translation-language-card"><div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{translationLanguageLabel({ code: project.sourceLanguage, name: project.sourceLanguage, nativeName: '' })}</p></div>
-        <div className="translation-language-field"><label htmlFor="group-target">Ngôn ngữ đích</label><select id="group-target" value={target} disabled={!canMutate || Boolean(busy)} onChange={e => changeTarget(e.target.value)}>
+        <div className="translation-language-field"><label htmlFor="group-target">Ngôn ngữ đích</label><select id="group-target" value={target} disabled={Boolean(busy)} onChange={e => changeTarget(e.target.value)}>
           <option value="">Chọn ngôn ngữ cần dịch</option>{languages.map(l => <option key={l.code} value={l.code}>{translationLanguageLabel(l)}</option>)}
         </select></div>
       </Card>
