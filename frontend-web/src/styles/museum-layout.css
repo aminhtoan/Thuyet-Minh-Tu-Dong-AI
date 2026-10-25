@@ -25,7 +25,7 @@
 .museum-public-layout .museum-placeholder h2 { margin-top: 0; font-size: var(--museum-font-size-xl); }
 .museum-public-layout .museum-placeholder p { color: var(--museum-color-muted-text); max-width: 65ch; overflow-wrap: anywhere; }
 .museum-public-layout .museum-footer { border-top: 3px solid var(--museum-color-accent); padding-block: clamp(40px, 5vw, 64px); background: var(--brand-dark); color: var(--museum-color-surface); }
-.museum-public-layout .museum-footer__row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .8fr) minmax(0, .8fr); align-items: start; gap: var(--museum-space-8); }
+.museum-public-layout .museum-footer__row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr) minmax(0, .7fr) minmax(0, 1.1fr); align-items: start; gap: var(--museum-space-8); }
 .museum-public-layout .museum-footer__brand { display: flex; flex-direction: column; gap: 4px; margin: 0; font-size: var(--museum-font-size-md); font-weight: 700; letter-spacing: .04em; }
 .museum-public-layout .museum-footer__brand span { font-size: var(--museum-font-size-sm); letter-spacing: .02em; }
 .museum-public-layout .museum-footer__group-title { margin: 0 0 var(--museum-space-3); color: var(--museum-color-border); font-size: var(--museum-font-size-sm); font-weight: 600; }
@@ -33,6 +33,26 @@
 .museum-public-layout .museum-footer a { display: inline-flex; align-items: center; min-height: 44px; padding-block: var(--museum-space-2); color: var(--museum-color-surface); font-size: var(--museum-font-size-sm); text-decoration: none; text-underline-offset: 5px; }
 .museum-public-layout .museum-footer a:hover { color: var(--museum-color-accent-soft); text-decoration: underline; }
 .museum-public-layout .museum-footer :focus-visible { outline-color: var(--museum-color-surface); }
+.museum-public-layout .museum-footer__mobile-card { display: flex; flex-direction: column; }
+.museum-public-layout .museum-footer__mobile-box { display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--museum-radius-md, 8px); }
+.museum-public-layout .museum-footer__qr-btn { background: transparent; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; border-radius: 6px; transition: transform 0.15s ease; }
+.museum-public-layout .museum-footer__qr-btn:hover { transform: scale(1.06); }
+.museum-public-layout .museum-footer__qr-img { width: 80px; height: 80px; border-radius: 6px; background: #fff; padding: 2px; flex-shrink: 0; display: block; }
+.museum-public-layout .museum-footer__mobile-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.museum-public-layout .museum-footer__mobile-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; color: #38bdf8; letter-spacing: 0.02em; }
+.museum-public-layout .museum-footer__zoom-btn { background: transparent; border: none; padding: 0; text-align: left; font-size: 0.8125rem; font-weight: 600; color: #cbd5e1; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.museum-public-layout .museum-footer__zoom-btn:hover { color: #ffffff; }
+.museum-public-layout .museum-footer__mobile-link { font-size: 0.8125rem; color: var(--museum-color-surface); text-decoration: underline; text-underline-offset: 4px; }
+.museum-public-layout .museum-footer__mobile-link:hover { color: #38bdf8; }
+
+.museum-qr-modal__backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 16px; animation: museumModalFadeIn 0.2s ease-out; }
+.museum-qr-modal__card { position: relative; background: #ffffff; color: #0f172a; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; width: auto; max-width: 90vw; animation: museumModalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.museum-qr-modal__close { position: absolute; top: 8px; right: 8px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: none; background: #f1f5f9; color: #64748b; border-radius: 50%; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; z-index: 2; }
+.museum-qr-modal__close:hover { background: #e2e8f0; color: #0f172a; }
+.museum-qr-modal__img { display: block; border-radius: 12px; max-width: 100%; height: auto; }
+
+@keyframes museumModalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes museumModalScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 .museum-public-layout .museum-footer__notice { max-width: 75ch; margin: var(--museum-space-8) 0 0; padding-top: var(--museum-space-6); border-top: 1px solid var(--museum-color-muted-text); color: var(--museum-color-border); font-size: var(--museum-font-size-sm); line-height: 1.75; }
 .museum-public-layout .museum-footer__row > *,
 .museum-public-layout .museum-header__row > * { min-width: 0; overflow-wrap: anywhere; }
