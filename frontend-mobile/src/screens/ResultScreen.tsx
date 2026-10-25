@@ -35,7 +35,7 @@ export function ResultDownload({ result }: { result: Result }) {
   const lock = useRef(false), active = useRef(true);
   useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   return <View style={styles.card}>
-    {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+    {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     <Button loading={busy} wrapLabel accessibilityLabel="Tải tệp kết quả về thiết bị" onPress={async () => {
       if (lock.current) return;
       lock.current = true; setBusy(true); setError(null);

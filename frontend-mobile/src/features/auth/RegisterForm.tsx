@@ -66,7 +66,7 @@ export function RegisterForm() {
 
   return (
     <View style={styles.form}>
-      {formError && <InlineMessage variant="error" textStyle={styles.feedback}>{formError}</InlineMessage>}
+      {formError ? <InlineMessage variant="error" textStyle={styles.feedback}>{formError}</InlineMessage> : null}
       <Input appearance="auth" inputRef={fullNameRef} label="Họ và tên" placeholder="Nhập họ và tên" autoCapitalize="words" autoComplete="name" textContentType="name" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => emailRef.current?.focus()} value={values.fullName} error={errors.fullName} onChangeText={(value) => updateField('fullName', value)} required />
       <Input appearance="auth" inputRef={emailRef} label="Email" placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => passwordRef.current?.focus()} value={values.email} error={errors.email} onChangeText={(value) => updateField('email', value)} required />
       <PasswordField appearance="auth" inputRef={passwordRef} label="Mật khẩu" placeholder="Tạo mật khẩu" helperText="Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và chữ số." autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => confirmPasswordRef.current?.focus()} value={values.password} error={errors.password} onChangeText={(value) => updateField('password', value)} required />

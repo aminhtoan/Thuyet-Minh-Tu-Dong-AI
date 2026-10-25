@@ -54,7 +54,7 @@ export function DashboardTimeFilter({ mode, anchor, onApply }: { mode: ProjectTi
         {draftMode === 'month' && <Input label="Tháng" accessibilityLabel="Tháng" keyboardType="number-pad" value={month} onChangeText={value => changePeriod('month', value)} />}
         <Input label="Năm" accessibilityLabel="Năm" keyboardType="number-pad" value={year} onChangeText={value => changePeriod('year', value)} />
       </>}
-      {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <Button variant="secondary" wrapLabel onPress={() => { setDraftMode('day'); setDraft(new Date()); }}>Đặt lại</Button>
       <Button wrapLabel onPress={apply}>Áp dụng</Button>
     </View>}

@@ -53,8 +53,8 @@ export function LoginForm() {
 
   return (
     <View style={styles.form}>
-      {registered === '1' && <InlineMessage variant="success" textStyle={styles.feedback}>Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.</InlineMessage>}
-      {formError && <InlineMessage variant="error" textStyle={styles.feedback}>{formError}</InlineMessage>}
+      {registered === '1' ? <InlineMessage variant="success" textStyle={styles.feedback}>Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.</InlineMessage> : null}
+      {formError ? <InlineMessage variant="error" textStyle={styles.feedback}>{formError}</InlineMessage> : null}
       <Input appearance="auth" inputRef={emailRef} label="Email" placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="next" submitBehavior="submit" onSubmitEditing={() => passwordRef.current?.focus()} value={values.email} error={errors.email} onChangeText={(value) => updateField('email', value)} required />
       <PasswordField appearance="auth" inputRef={passwordRef} label="Mật khẩu" placeholder="Nhập mật khẩu" autoCapitalize="none" autoCorrect={false} autoComplete="current-password" textContentType="password" returnKeyType="done" value={values.password} error={errors.password} onChangeText={(value) => updateField('password', value)} onSubmitEditing={handleSubmit} required />
       <Button wrapLabel loading={submitting} onPress={handleSubmit}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</Button>

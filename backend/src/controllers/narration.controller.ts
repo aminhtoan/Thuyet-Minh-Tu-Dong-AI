@@ -12,3 +12,13 @@ export const audio: RequestHandler = async (request, response) => {
   const result = await service.getAudio(request.ownedProjectId ?? '', String(request.params.narrationId ?? ''));
   response.setHeader('Content-Type', result.mimeType); response.setHeader('Content-Length', String(result.audio.byteLength)); response.send(result.audio);
 };
+export const publicAudio: RequestHandler = async (request, response) => {
+  const projectId = String(request.params.projectId ?? '');
+  const narrationId = String(request.params.narrationId ?? '');
+  const result = await service.getAudio(projectId, narrationId);
+  response.setHeader('Content-Type', result.mimeType);
+  response.setHeader('Content-Length', String(result.audio.byteLength));
+  response.setHeader('Accept-Ranges', 'bytes');
+  response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  response.send(result.audio);
+};

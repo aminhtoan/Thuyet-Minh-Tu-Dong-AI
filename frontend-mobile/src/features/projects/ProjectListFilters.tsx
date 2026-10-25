@@ -34,7 +34,7 @@ export function ProjectListFilters({ applied, loading, onApply }: { applied: Fil
       <Choice label="Trạng thái" value={draft.status} options={[['ALL', 'Tất cả trạng thái'], ...Object.entries(projectStatusLabels)]} onChange={status => setDraft({ ...draft, status: status as Filters['status'] })} />
       <Choice label="Sắp xếp" value={draft.sort} options={projectSortOptions} onChange={sort => setDraft({ ...draft, sort })} />
       {draft.period === 'CUSTOM' && <><Input label="Từ ngày" accessibilityLabel="Từ ngày" helperText="YYYY-MM-DD" value={draft.from} onChangeText={from => setDraft({ ...draft, from })} /><Input label="Đến ngày" accessibilityLabel="Đến ngày" helperText="YYYY-MM-DD" value={draft.to} onChangeText={to => setDraft({ ...draft, to })} /></>}
-      {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       {canReset && <><Text style={styles.helper}>Đặt lại chỉ thay đổi lựa chọn đang soạn. Nhấn Tìm kiếm để áp dụng.</Text><Button variant="ghost" wrapLabel onPress={() => { setDraft({ ...defaultProjectListFilters }); setError(''); }}>Đặt lại</Button></>}
     </View>}
   </View>;

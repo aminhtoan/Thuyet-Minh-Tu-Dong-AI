@@ -5,7 +5,7 @@ import test from 'node:test';
 import ts from 'typescript';
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const jsx = (type, props) => ({ type, props });
-const native = { Text: 'Text', View: 'View', Pressable: 'Pressable', StyleSheet: { create: value => value } };
+const native = { Text: 'Text', View: 'View', Pressable: 'Pressable', Platform: { OS: 'ios' }, StyleSheet: { create: value => value } };
 function compileSource(source, imports = {}) {
   const exports = {}, modules = { 'react/jsx-runtime': { jsx, jsxs: jsx }, 'react-native': native, ...imports };
   runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText,

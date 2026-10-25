@@ -5,10 +5,19 @@ import { MuseumContainer } from './MuseumContainer'
 const DEFAULT_MOBILE_URL = 'https://sempiternal-maddison-reservedly.ngrok-free.dev'
 
 export function MuseumFooter() {
+  const [isMounted, setIsMounted] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const mobileUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_MOBILE_APP_URL) || DEFAULT_MOBILE_URL
-  const qrCodeSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=6&data=${encodeURIComponent(mobileUrl)}`
-  const modalQrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(mobileUrl)}`
+  const mobileUrl = isMounted ? DEFAULT_MOBILE_URL : ''
+  const qrCodeSrc = isMounted
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=6&data=${encodeURIComponent(DEFAULT_MOBILE_URL)}`
+    : ''
+  const modalQrSrc = isMounted
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(DEFAULT_MOBILE_URL)}`
+    : ''
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     if (!isModalOpen) return
@@ -51,14 +60,18 @@ export function MuseumFooter() {
                   aria-label="Phóng to mã QR để quét"
                   title="Bấm để phóng to mã QR"
                 >
-                  <img
-                    src={qrCodeSrc}
-                    alt="Mã QR mở ứng dụng di động"
-                    className="museum-footer__qr-img"
-                    width={80}
-                    height={80}
-                    loading="lazy"
-                  />
+                  {isMounted ? (
+                    <img
+                      src={qrCodeSrc}
+                      alt="Mã QR mở ứng dụng di động"
+                      className="museum-footer__qr-img"
+                      width={80}
+                      height={80}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="museum-footer__qr-img" style={{ width: 80, height: 80, display: 'inline-block' }} />
+                  )}
                 </button>
                 <div className="museum-footer__mobile-meta">
                   <span className="museum-footer__mobile-badge">Quét để dùng ngay</span>
@@ -69,14 +82,16 @@ export function MuseumFooter() {
                   >
                     Phóng to mã QR ⤢
                   </button>
-                  <a
-                    href={mobileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="museum-footer__mobile-link"
-                  >
-                    Mở trực tiếp ↗
-                  </a>
+                  {isMounted && mobileUrl && (
+                    <a
+                      href={mobileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="museum-footer__mobile-link"
+                    >
+                      Mở trực tiếp ↗
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

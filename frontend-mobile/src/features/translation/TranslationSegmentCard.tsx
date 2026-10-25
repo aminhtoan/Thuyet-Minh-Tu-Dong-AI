@@ -22,7 +22,7 @@ export function TranslationSegmentCard({ source, translation, error, disabled, o
       value={translation.translatedText} editable={!disabled}
       onChangeText={(text) => onChange(translation.id, text)}
       style={[styles.input, error && styles.invalid]} /> : <Text style={styles.placeholder}>Bản dịch sẽ hiển thị tại đây.</Text>}
-    {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+    {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
   </View>;
 }
 const styles = StyleSheet.create({
