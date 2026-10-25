@@ -11,6 +11,11 @@ const schema = new Schema({
   phase: { type: String, enum: ['PREPARING', 'METADATA_DISPATCHING', 'METADATA_RECEIVED', 'GENERATION_DISPATCHING', 'GENERATION_RECEIVED', 'SAVING'] },
   diagnosticCode: { type: String, maxlength: 80 }, failedAt: Date,
   providerHttpStatus: { type: Number, min: 400, max: 599 },
+  transportDiagnostic: new Schema({
+    origin: { type: String, enum: ['HTTP_RESPONSE', 'LOCAL_ABORT', 'NETWORK'] },
+    operation: { type: String, enum: ['METADATA', 'GENERATION'] }, elapsedMs: Number,
+    requestId: { type: String, maxlength: 128, match: /^[a-zA-Z0-9._:-]+$/ },
+  }, { _id: false }),
   providerDiagnostic: new Schema({
     status: { type: String, enum: PROVIDER_ERROR_STATUSES },
     reasons: { type: [{ type: String, enum: PROVIDER_ERROR_REASONS }], validate: (values: string[]) => values.length <= 4 },

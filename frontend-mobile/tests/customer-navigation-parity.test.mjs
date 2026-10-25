@@ -99,7 +99,7 @@ test('keyboard hides bar without navigation or state reset; listeners cleaned on
 
 test('avatar navigates to existing protected Account; back uses tab history or safe Dashboard fallback', () => {
   const calls = []; let back = true;
-  const Header = compile('components/layout/MobileHeader.tsx', { ...base, 'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' }, 'expo-router': { router: { navigate: path => calls.push(['navigate', path]), canGoBack: () => back, back: () => calls.push(['back']), replace: path => calls.push(['replace', path]) } } }).MobileHeader;
+  const Header = compile('components/layout/MobileHeader.tsx', { ...base, react: { useRef: value => ({ current: value }), useCallback: fn => fn }, '@/features/auth/useCurrentUser': { useCurrentUser: () => ({ user: null, status: 'authenticated' }) }, 'react-native-safe-area-context': { SafeAreaView: 'SafeAreaView' }, 'expo-router': { useFocusEffect: fn => fn(), usePathname: () => '/dashboard', router: { navigate: path => calls.push(['navigate', path]), canGoBack: () => back, back: () => calls.push(['back']), replace: path => calls.push(['replace', path]) } } }).MobileHeader;
   const tree = Header({ title: 'Tài khoản', back: true });
   const avatar = nodes(tree).find(n => n.props.accessibilityLabel === 'Mở tài khoản');
   assert.ok(flatten(avatar.props.style({ pressed: false })).minHeight >= 48);
@@ -120,7 +120,8 @@ test('create tab reuses exactly one real form; /projects/new compatibility redir
   assert.equal(layout.props.backBehavior, 'history'); assert.equal(layout.props.screenOptions.freezeOnBlur, false);
   assert.equal(layout.props.unmountOnBlur, undefined);
   assert.equal(layout.props.children.filter(n => n.props.name === 'create').length, 1);
-  for (const name of ['history', 'settings', 'account']) assert.equal(layout.props.children.find(n => n.props.name === name).props.options.href, null);
+  for (const name of ['history', 'settings']) assert.equal(layout.props.children.find(n => n.props.name === name).props.options.href, null);
+  assert.equal(layout.props.children.find(n => n.props.name === 'account').props.options.href, undefined);
 });
 
 test('create screen keeps entered form values on tab switches and never picks/uploads on mount', () => {
@@ -151,6 +152,6 @@ test('auth guards/session/logout and legacy deep-link routes are preserved, no p
   assert.match(root, /Stack.Screen name="\(tabs\)"/); assert.match(root, /Stack.Screen name="projects\/new"/);
   assert.match(read('screens/AccountScreen.tsx'), /confirmAction\('Đăng xuất\?/);
   assert.match(read('screens/AccountScreen.tsx'), /authService.logout\(\)/);
-  assert.match(read('features/auth/authService.ts'), /finally \{ await session.clear\(\); \}/);
+  assert.match(read('features/auth/authService.ts'), /finally \{ clearTimeout\(timer\); projectRepository.clearSessionCache\(\); await session.clear\(\); \}/);
   for (const file of ['components/layout/CustomerBottomNavigation.tsx', 'app/(tabs)/create.tsx', 'app/projects/new.tsx']) assert.doesNotMatch(read(file), /api\(|Gemini|processingService|translationService|uploadProjectMedia\(/);
 });

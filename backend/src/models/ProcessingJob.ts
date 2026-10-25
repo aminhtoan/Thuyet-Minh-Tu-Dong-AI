@@ -17,6 +17,11 @@ const processingJobSchema = new Schema(
     status: { type: String, enum: PROCESSING_JOB_STATUSES, required: true, default: 'QUEUED', index: true },
     progress: { type: Number, required: true, default: 0, min: 0, max: 100 },
     errorMessage: { type: String, trim: true },
+    // Operator diagnostics only; ordinary Customer/Admin job responses exclude it.
+    diagnostics: { type: new Schema({
+      stage: String, code: String, durationMs: Number, exitCode: Number,
+      signal: String, systemCode: String, errorName: String, stderr: { type: String, maxlength: 2000 },
+    }, { _id: false }), select: false },
     startedAt: { type: Date },
     completedAt: { type: Date },
   },

@@ -1,44 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
+import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Spinner } from '@/components/common/Spinner';
 import { MobileScreen } from '@/components/layout/MobileScreen';
-import { authService, type AuthUser } from '@/features/auth/authService';
+import { authService } from '@/features/auth/authService';
+import { useCurrentUser } from '@/features/auth/useCurrentUser';
 import { confirmAction } from '@/lib/confirm';
 import { confirmationMessages } from '@/localization/confirmationMessages.mjs';
 import { colors, spacing, typography } from '@/theme/tokens';
+import { session } from '@/lib/api';
 
 export function AccountScreen() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const { user, error, loading, reload: retryLoad } = useCurrentUser();
   const [loggingOut, setLoggingOut] = useState(false);
-  const [loadAttempt, setLoadAttempt] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    void authService.me()
-      .then(({ user: nextUser }) => { if (active) setUser(nextUser); })
-      .catch(() => { if (active) setError('Không thể tải thông tin tài khoản.'); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [loadAttempt]);
-
-  function retryLoad() {
-    setError('');
-    setLoading(true);
-    setLoadAttempt((attempt) => attempt + 1);
-  }
+  const [logoutError, setLogoutError] = useState('');
+  const logoutLock = useRef(false);
 
   async function logout() {
-    if (loggingOut || !(await confirmAction('Đăng xuất?', confirmationMessages.logout))) return;
+    if (logoutLock.current) return;
+    logoutLock.current = true;
+    if (!(await confirmAction('Đăng xuất?', confirmationMessages.logout))) { logoutLock.current = false; return; }
     setLoggingOut(true);
+    setLogoutError('');
     try {
       await authService.logout();
+      if (session.getAuthStatus() === 'unauthenticated') router.replace('/login');
     } catch {
       // authService always clears the local session; Stack.Protected owns navigation.
+      if (session.getAuthStatus() === 'authenticated') {
+        setLogoutError('Chưa thể xóa phiên đăng nhập trên thiết bị. Vui lòng thử lại.');
+        setLoggingOut(false);
+        logoutLock.current = false;
+      } else if (session.getAuthStatus() === 'unauthenticated') router.replace('/login');
     }
   }
 
@@ -63,6 +59,7 @@ export function AccountScreen() {
             <Text style={styles.description}>Đăng xuất sẽ thu hồi refresh token trên máy chủ khi có kết nối và xóa phiên an toàn trên thiết bị.</Text>
           </View>
           <Button variant="danger" loading={loggingOut} onPress={() => void logout()}>{loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}</Button>
+          {logoutError && <Text accessibilityRole="alert" style={styles.description}>{logoutError}</Text>}
         </View>
       </Card>
     </MobileScreen>

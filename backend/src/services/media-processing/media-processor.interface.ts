@@ -6,6 +6,8 @@ export interface MediaProbeResult {
   hasAudio: boolean;
   width?: number;
   height?: number;
+  videoCodec?: string;
+  audioCodec?: string;
 }
 
 export interface ComposeNarrationInput {

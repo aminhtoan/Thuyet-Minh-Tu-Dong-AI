@@ -3,6 +3,9 @@ import { randomBytes } from 'node:crypto';
 import test from 'node:test';
 import mongoose, { Types } from 'mongoose';
 process.env.NODE_ENV = 'test';
+// This suite exercises the legacy service, independently of development .env.
+process.env.CUSTOMER_TRANSLATION_ENABLED = 'false';
+delete process.env.CONTROLLED_PROVIDER_MODE;
 process.env.MONGODB_URI = 'mongodb://127.0.0.1:1/translation_mock_only';
 process.env.JWT_ACCESS_SECRET = randomBytes(48).toString('hex'); process.env.JWT_REFRESH_SECRET = randomBytes(48).toString('hex');
 process.env.JWT_ACCESS_EXPIRES_IN = '15m'; process.env.JWT_REFRESH_EXPIRES_IN = '7d';
@@ -64,7 +67,16 @@ test('real JWT/ownership routes + translation service, all persistence mocked', 
     return { status: response.status, body: await response.json() as any };
   };
   try {
-    await t.test('unauthenticated/other user/blocked/ADMIN rejected without provider', async () => { assert.equal((await call('POST', null)).status, 401); assert.equal((await call('POST', otherToken)).status, 404); user.status = 'BLOCKED'; assert.equal((await call()).status, 403); user.status = 'ACTIVE'; user.role = 'ADMIN'; assert.equal((await call()).status, 403); user.role = 'CUSTOMER'; assert.equal(generated, 0); });
+    await t.test('unauthenticated/other user/blocked/ADMIN rejected without provider', async () => {
+      assert.equal((await call('POST', null)).status, 401); assert.equal((await call('POST', otherToken)).status, 404);
+      try {
+        user.status = 'BLOCKED'; assert.equal((await call()).status, 403); user.status = 'ACTIVE'; user.role = 'ADMIN';
+        // No owned project is returned for ADMIN's owner-free lookup. The real
+        // ownership middleware correctly returns PROJECT_NOT_FOUND, not 403.
+        const denied = await call(); assert.equal(denied.status, 404); assert.equal(denied.body.error.code, 'PROJECT_NOT_FOUND');
+        assert.equal(generated, 0); assert.equal(writes, 0); assert.equal(jobs, 0);
+      } finally { user.status = 'ACTIVE'; user.role = 'CUSTOMER'; }
+    });
     await t.test('missing transcript and invalid/unsupported/same target rejected', async () => { missing = true; assert.equal((await call()).status, 404); missing = false; assert.equal((await call('POST', token, { targetLanguage: 'vi' })).status, 400); assert.equal((await call('POST', token, { targetLanguage: 'not valid' })).status, 400); assert.equal((await call('POST', token, { targetLanguage: 'xx' })).body.error.code, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED'); assert.equal(generated, 0); });
     await t.test('unverified word, mixed and phrase sources are blocked before job/write/provider', async () => {
       const before = JSON.stringify(sources), oldProvider = process.env.TRANSLATION_PROVIDER;

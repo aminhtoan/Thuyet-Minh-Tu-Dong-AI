@@ -13,6 +13,7 @@ import { Transcript } from '../models/Transcript.js';
 import { AppError } from '../utils/app-error.js';
 import { assertInsideUploadRoot, resolveStoredFile, safeDeleteStoredFile, uploadRoot } from '../utils/file.js';
 import { getMediaProcessor } from './media-processing/media-processing.service.js';
+import { processingFailure, type ProcessingStage } from './media-processing/processing-diagnostics.js';
 import { isRevision, narrationProvenance, resultProvenance, revisionFenceOperation, translationProvenance } from './artifact-provenance.service.js';
 
 const duplicateKey = (error: unknown) => Boolean(error && typeof error === 'object' && 'code' in error && (error as { code?: unknown }).code === 11000);
@@ -87,30 +88,34 @@ export const process = async (projectId: string, userId: string, narrationId: st
     sourceNarrationId: narration._id, sourceNarrationRevision: narration.revision,
     status: 'PROCESSING', progress: 0, startedAt: new Date() }); }
   catch (error) { if (duplicateKey(error)) throw new AppError(409, 'VIDEO_PROCESSING_ALREADY_RUNNING', 'Kết quả này đang được xử lý.'); throw error; }
-  await Project.updateOne({ _id: projectId }, { status: 'PROCESSING_VIDEO', progress: 0 }); void log(userId, project.status === 'FAILED' ? 'VIDEO_PROCESSING_RETRIED' : 'VIDEO_PROCESSING_STARTED', project._id, narration._id);
-  const directory = resolve(uploadRoot, 'projects', projectId, 'results'); assertInsideUploadRoot(directory); await mkdir(directory, { recursive: true });
+  const directory = resolve(uploadRoot, 'projects', projectId, 'results'); assertInsideUploadRoot(directory);
   const id = randomUUID(); const tempPath = resolve(directory, `.tmp-${id}.mp4`); const finalPath = resolve(directory, `result-${id}.mp4`); assertInsideUploadRoot(tempPath); assertInsideUploadRoot(finalPath); let storedPath: string | undefined;
+  const started = Date.now(); let stage: ProcessingStage = 'PREPARE_OUTPUT'; let committed = false;
   try {
+    await Project.updateOne({ _id: projectId }, { status: 'PROCESSING_VIDEO', progress: 0 });
+    void log(userId, project.status === 'FAILED' ? 'VIDEO_PROCESSING_RETRIED' : 'VIDEO_PROCESSING_STARTED', project._id, narration._id);
+    await mkdir(directory, { recursive: true });
+    stage = 'RENDER';
     const processed = await getMediaProcessor().composeNarration({ sourceVideoPath: sourcePath, narrationAudioPath: narrationPath, outputPath: tempPath });
+    stage = 'VALIDATE_OUTPUT';
     const info = await stat(tempPath); if (!processed.hasVideo || !processed.hasAudio || processed.mimeType !== 'video/mp4' || processed.duration <= 0 || info.size <= 0) throw new Error('MEDIA_PROCESSING_INVALID_OUTPUT');
+    stage = 'PERSIST_RESULT';
     await rename(tempPath, finalPath); storedPath = relative(uploadRoot, finalPath).replaceAll('\\', '/'); const session = await mongoose.startSession(); let resultId = '';
     try { await session.withTransaction(async () => {
-      const [currentNarration, currentTranslation, currentTranscript] = await Promise.all([
-        Narration.findOne({ _id: narration._id, projectId, status: 'READY' }).session(session),
-        Translation.findOne({ _id: narration.translationId, projectId, status: 'READY' }).session(session),
-        Transcript.findOne({ _id: translation.transcriptId, projectId }).session(session),
-      ]);
+      // A session must not start/execute transaction operations concurrently.
+      // Parallel initial reads reproduce MongoDB117 on a replica set.
+      const currentNarration = await Narration.findOne({ _id: narration._id, projectId, status: 'READY' }).session(session);
+      const currentTranslation = await Translation.findOne({ _id: narration.translationId, projectId, status: 'READY' }).session(session);
+      const currentTranscript = await Transcript.findOne({ _id: translation.transcriptId, projectId }).session(session);
       const currentTranslationState = currentTranslation ? translationProvenance(currentTranslation, currentTranscript) : 'UNKNOWN';
       if (!currentNarration || !currentTranslation || !currentTranscript || currentNarration.revision !== narration.revision ||
         narrationProvenance(currentNarration, currentTranslation, currentTranslationState) !== 'CURRENT') throw new Error('MEDIA_PROCESSING_SOURCE_CHANGED');
       const transcriptFence = revisionFenceOperation(currentTranscript._id, currentTranscript.revision);
       const translationFence = revisionFenceOperation(currentTranslation._id, currentTranslation.revision);
       const narrationFence = revisionFenceOperation(currentNarration._id, currentNarration.revision);
-      const [fencedTranscript, fencedTranslation, fencedNarration] = await Promise.all([
-        Transcript.updateOne(transcriptFence.filter, transcriptFence.update, { session }),
-        Translation.updateOne(translationFence.filter, translationFence.update, { session }),
-        Narration.updateOne(narrationFence.filter, narrationFence.update, { session }),
-      ]);
+      const fencedTranscript = await Transcript.updateOne(transcriptFence.filter, transcriptFence.update, { session });
+      const fencedTranslation = await Translation.updateOne(translationFence.filter, translationFence.update, { session });
+      const fencedNarration = await Narration.updateOne(narrationFence.filter, narrationFence.update, { session });
       if (fencedTranscript.matchedCount !== 1 || fencedTranslation.matchedCount !== 1 || fencedNarration.matchedCount !== 1) throw new Error('MEDIA_PROCESSING_SOURCE_CHANGED');
       const [result] = await Result.create([{ projectId, narrationId: narration._id, sourceNarrationRevision: narration.revision,
         languageCode: narration.languageCode, videoPath: storedPath, mimeType: processed.mimeType, fileSize: info.size,
@@ -122,12 +127,20 @@ export const process = async (projectId: string, userId: string, narrationId: st
       );
       if (completed.matchedCount !== 1) throw new Error('MEDIA_PROCESSING_SOURCE_CHANGED');
       await Project.updateOne({ _id: projectId }, { status: 'COMPLETED', progress: 100 }, { session });
-    }); } finally { await session.endSession(); }
+    }); committed = true; } finally { await session.endSession(); }
+    stage = 'FINALIZE_RESULT';
     void log(userId, 'VIDEO_PROCESSING_COMPLETED', project._id, narration._id); return { project: { id: projectId, status: 'COMPLETED' }, result: await getResult(projectId, resultId), idempotent: false };
   } catch (error) {
-    try { await unlink(tempPath); } catch { /* no partial temp */ } if (storedPath) await safeDeleteStoredFile(storedPath);
-    const code = error instanceof Error && ['FFMPEG_NOT_AVAILABLE', 'MEDIA_PROCESSING_TIMEOUT', 'MEDIA_PROCESSING_INVALID_OUTPUT'].includes(error.message) ? error.message : 'MEDIA_PROCESSING_FAILED';
-    await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]); void log(userId, 'VIDEO_PROCESSING_FAILED', project._id, narration._id);
-    throw new AppError(code === 'FFMPEG_NOT_AVAILABLE' ? 503 : 502, code, code === 'FFMPEG_NOT_AVAILABLE' ? 'FFmpeg hoặc FFprobe chưa khả dụng.' : 'Không thể xử lý video.');
+    const diagnostics = processingFailure(error, stage, Date.now() - started); const code = diagnostics.code;
+    console.error(JSON.stringify({ event: committed ? 'VIDEO_RESULT_CONFIRMATION_FAILED' : 'VIDEO_PROCESSING_FAILED', projectId, jobId: job._id.toString(), ...diagnostics }));
+    // A failed confirmation/read after a committed transaction must never delete
+    // its valid artifact or rewrite the completed job as FAILED.
+    if (committed) throw new AppError(502, 'RESULT_CONFIRMATION_UNAVAILABLE', 'Video đã được lưu nhưng chưa xác nhận được kết quả. Vui lòng kiểm tra trạng thái.');
+    try { await unlink(tempPath); } catch { /* no partial temp */ }
+    if (storedPath) { try { await safeDeleteStoredFile(storedPath); } catch { console.error(JSON.stringify({ event: 'VIDEO_PROCESSING_CLEANUP_FAILED', projectId, jobId: job._id.toString() })); } }
+    await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, diagnostics, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]); void log(userId, 'VIDEO_PROCESSING_FAILED', project._id, narration._id);
+    const failure = new AppError(code === 'FFMPEG_NOT_AVAILABLE' ? 503 : 502, code, code === 'FFMPEG_NOT_AVAILABLE' ? 'FFmpeg hoặc FFprobe chưa khả dụng.' : 'Không thể xử lý video.');
+    Object.defineProperty(failure, 'cause', { value: error, enumerable: false });
+    throw failure;
   }
 };

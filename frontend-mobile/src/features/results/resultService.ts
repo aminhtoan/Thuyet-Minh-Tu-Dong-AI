@@ -5,6 +5,7 @@ import { api, refreshSession, session } from '../../lib/api';
 import { projectRepository } from '../projects/projectRepository';
 import type { LanguageCode } from '../projects/types';
 import type { HistoryItem, Result } from './types';
+import { protectedResultUrl } from './resultMedia';
 type VideoResultDto = { id: string; targetLanguage: string; mimeType: string; fileSize: number; duration: number; fileUrl: string; createdAt: string };
 type NarrationDto = { id: string; targetLanguage: string; voice: { name: string }; speed: number; mimeType: string; fileSize: number; duration: number | null; audioUrl: string; createdAt: string };
 const newest = <T extends { createdAt: string }>(items: T[]) => [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
@@ -41,14 +42,16 @@ async function downloadProtectedWeb(result: Result, retry = true): Promise<strin
 }
 
 async function downloadProtected(result: Result, retry = true): Promise<string> {
-  if (Platform.OS === 'web' || !FileSystem.cacheDirectory) {
+  if (Platform?.OS === 'web' || !FileSystem.cacheDirectory) {
     return downloadProtectedWeb(result, retry);
   }
+  const url = protectedResultUrl(env.apiBaseUrl, result);
   const token = (await session.get())?.accessToken;
   if (!token) throw new Error('Phiên đăng nhập đã hết hạn.');
-  const destination = `${FileSystem.cacheDirectory}narration-${result.id}.${result.artifactType === 'VIDEO' ? 'mp4' : 'mp3'}`;
+  if (!FileSystem.cacheDirectory) throw new Error('Thiết bị không cung cấp thư mục tạm.');
+  const destination = `${FileSystem.cacheDirectory}narration-${encodeURIComponent(result.id)}-${Date.now()}.${result.artifactType === 'VIDEO' ? 'mp4' : 'mp3'}`;
   try {
-    const response = await FileSystem.downloadAsync(buildAudioUrl(result.filePath), destination, { headers: { Authorization: `Bearer ${token}` } });
+    const response = await FileSystem.downloadAsync(url, destination, { headers: { Authorization: `Bearer ${token}` } });
     if (response.status === 401 && retry) {
       await FileSystem.deleteAsync(destination, { idempotent: true });
       if (await refreshSession()) return downloadProtected(result, false);

@@ -23,7 +23,7 @@ test('legacy Settings renders Account while account/history remain secondary rou
     readFile(new URL('../src/screens/SettingsScreen.tsx', import.meta.url), 'utf8'),
   ]);
   assert.match(tabs, /name="settings" options=\{\{ href: null/);
-  assert.match(tabs, /name="account" options=\{\{ href: null/);
+  assert.match(tabs, /name="account" options=\{\{ title: navigationLabels.account/);
   assert.match(tabs, /name="history" options=\{\{ href: null/);
   assert.match(settings, /<AccountScreen \/>/);
 });

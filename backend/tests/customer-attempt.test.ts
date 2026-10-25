@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { CustomerAttemptStore } from '../src/services/translation/customer-attempt.js';
 import { GroupDraftStore, type GroupDraft } from '../src/services/translation/group-draft-store.js';
 import { customerDispatch, customerResponse } from '../src/services/translation/customer-execution.js';
+import { TranslationProviderFailure } from '../src/services/translation/provider-failure.js';
 // Small explicit test profile. Production defaults are tested independently.
 process.env.CUSTOMER_TRANSLATION_DAILY_USER_LIMIT = '3';
 process.env.CUSTOMER_TRANSLATION_DAILY_GLOBAL_LIMIT = '20';
@@ -22,6 +23,30 @@ function fixture(patch = {}) {
   };
   return { rows, repo: repo as any, quotaCount: () => quotas };
 }
+
+for (const afterDispatch of [false, true]) test(`timeout ${afterDispatch ? 'after' : 'before'} dispatch is durable and never rearms after restart`, async t => {
+  t.mock.method(console, 'error', () => {});
+  const f = fixture(); let calls = 0;
+  const work = async () => {
+    if (afterDispatch) { await metadata(); await customerDispatch('GENERATION'); calls++; }
+    throw new TranslationProviderFailure(502, 'TRANSLATION_TIMEOUT', 'Safe timeout', afterDispatch ? 504 : undefined);
+  };
+  await assert.rejects(new CustomerAttemptStore(f.repo).execute(s, 'bound', work));
+  const row = [...f.rows.values()][0];
+  assert.equal(row.state, afterDispatch ? 'UNCERTAIN' : 'FAILED_PRE_DISPATCH');
+  assert.equal(row.diagnosticCode, 'TRANSLATION_TIMEOUT'); assert.equal(row.draftJson, undefined);
+  await assert.rejects(new CustomerAttemptStore(f.repo).execute(s, 'bound', work));
+  assert.equal(calls, afterDispatch ? 1 : 0);
+});
+
+test('lost save acknowledgement recovers only the already persisted validated bytes, not provider execution', async () => {
+  const f = fixture(); let calls = 0, saves = 0; const finish = f.repo.finish;
+  f.repo.finish = async (...args: Parameters<typeof finish>) => { saves++; await finish(...args); throw Error('lost acknowledgement'); };
+  const work = async () => { await metadata(); await customerDispatch('GENERATION'); calls++; await customerResponse('GENERATION'); return draft(); };
+  const saved = await new CustomerAttemptStore(f.repo).execute(s, 'bound', work);
+  assert.equal((await new CustomerAttemptStore(f.repo).execute(s, 'bound', work)).draftId, saved.draftId);
+  assert.equal(calls, 1); assert.equal(saves, 1);
+});
 test('16 concurrent duplicates, new client keys and process restart dispatch only once and return persisted same draft', async () => {
   const f = fixture(); let calls = 0;
   const work = async () => { await metadata(); calls++; await new Promise(resolve => setTimeout(resolve, 10)); return draft(); };

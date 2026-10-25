@@ -1,6 +1,7 @@
 // Server-derived state only. Reload is GET-only; never authorize resubmission.
 export function customerAttemptMessage(attempt) {
   if (['UNCERTAIN', 'FAILED_RESPONSE'].includes(attempt?.status)) {
+    if ([408, 504].includes(attempt.providerHttpStatus)) return `Đường gọi dịch trả HTTP ${attempt.providerHttpStatus} do hết thời gian chờ. Chưa xác minh được kết quả; không gửi lại để tránh xử lý trùng. Chỉ kiểm tra trạng thái hoặc liên hệ hỗ trợ.`;
     if (attempt.providerHttpStatus === 400) return 'Gemini từ chối yêu cầu (HTTP 400). Cần hỗ trợ kiểm tra tham số API, quyền truy cập và billing; chưa xác định nguyên nhân cụ thể. Không nhấn Dịch lại hoặc chuyển model. Chỉ tải lại dữ liệu.';
     if (attempt.providerHttpStatus === 503) return 'Gemini tạm thời không khả dụng (HTTP 503). Hãy kiểm tra trạng thái dịch vụ và liên hệ hỗ trợ kiểm tra lần gửi này. Không nhấn Dịch lại hoặc chuyển model. Chỉ tải lại dữ liệu.';
   }

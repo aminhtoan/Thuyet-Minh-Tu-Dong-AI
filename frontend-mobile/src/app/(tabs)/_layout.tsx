@@ -13,7 +13,9 @@ export default function TabLayout() {
       <Tabs.Screen name="library" options={{ title: libraryNavigationLabel }} />
       <Tabs.Screen name="history" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
-      <Tabs.Screen name="account" options={{ href: null, header: () => <MobileHeader title={navigationLabels.account} back /> }} />
+      {/* SDK58 redirects hidden routes. Custom bar excludes Account itself;
+          keep this secondary screen reachable in the navigator. */}
+      <Tabs.Screen name="account" options={{ title: navigationLabels.account, header: () => <MobileHeader title={navigationLabels.account} back /> }} />
     </Tabs>
   );
 }

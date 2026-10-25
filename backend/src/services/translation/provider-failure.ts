@@ -1,5 +1,11 @@
 import { AppError } from '../../utils/app-error.js';
 
+export type TransportDiagnostic = Readonly<{
+  origin: 'HTTP_RESPONSE' | 'LOCAL_ABORT' | 'NETWORK';
+  operation: 'METADATA' | 'GENERATION'; elapsedMs: number;
+  requestId?: string;
+}>;
+
 export const PROVIDER_ERROR_STATUSES = ['UNSPECIFIED', 'INVALID_ARGUMENT', 'FAILED_PRECONDITION', 'OUT_OF_RANGE', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'RESOURCE_EXHAUSTED'] as const;
 export const PROVIDER_ERROR_REASONS = ['API_KEY_INVALID', 'API_KEY_EXPIRED', 'API_KEY_SERVICE_BLOCKED', 'SERVICE_DISABLED', 'BILLING_DISABLED', 'BILLING_NOT_ACTIVE', 'MODEL_NOT_FOUND', 'LOCATION_POLICY_VIOLATED', 'ACCESS_TOKEN_SCOPE_INSUFFICIENT', 'CREDENTIALS_MISSING', 'QUOTA_EXCEEDED', 'RATE_LIMIT_EXCEEDED'] as const;
 export const PROVIDER_ERROR_PARAMETERS = ['generationConfig.responseJsonSchema', 'generationConfig.responseSchema', 'generationConfig.responseMimeType', 'generationConfig.responseFormat', 'generationConfig.thinkingConfig.thinkingLevel', 'generationConfig.thinkingConfig.thinkingBudget', 'generationConfig.maxOutputTokens', 'generationConfig.candidateCount', 'contents', 'systemInstruction', 'model'] as const;
@@ -42,12 +48,13 @@ export function gemini400Diagnostic(error: unknown, httpStatus?: number): Provid
 // content or credentials. Preserve only the numeric HTTP evidence we used to drop.
 export class TranslationProviderFailure extends AppError {
   readonly providerHttpStatus: number | null;
-  constructor(status: number, code: string, message: string, providerHttpStatus?: number, public readonly providerDiagnostic?: ProviderDiagnostic) {
+  constructor(status: number, code: string, message: string, providerHttpStatus?: number, public readonly providerDiagnostic?: ProviderDiagnostic, public readonly transportDiagnostic?: TransportDiagnostic) {
     super(status, code, message);
     this.providerHttpStatus = Number.isInteger(providerHttpStatus) && providerHttpStatus! >= 400 && providerHttpStatus! <= 599 ? providerHttpStatus! : null;
   }
 }
 export function providerFailureMessage(status?: number | null, diagnostic?: ProviderDiagnostic): string | undefined {
+  if (status === 408 || status === 504) return `Đường gọi dịch trả HTTP ${status} do hết thời gian chờ. Chưa xác minh được kết quả xử lý. Giữ nguyên yêu cầu; không tự gửi lại hoặc chuyển model.`;
   if (status === 400) {
     const billing = diagnostic?.status === 'FAILED_PRECONDITION' || diagnostic?.reasons.some(reason => reason === 'BILLING_DISABLED' || reason === 'BILLING_NOT_ACTIVE');
     return 'Gemini từ chối yêu cầu (HTTP 400). ' + (billing ? 'Cần kiểm tra điều kiện API, khu vực và billing của dự án Google AI Studio.' : 'Cần kiểm tra tham số request, API version, quyền API và billing trong Google AI Studio; chưa xác định nguyên nhân cụ thể.') + ' Giữ nguyên lần gửi này; không tự gửi lại hoặc chuyển model.';

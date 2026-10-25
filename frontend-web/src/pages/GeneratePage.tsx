@@ -16,6 +16,7 @@ import { useProject } from '../features/projects/useProjects';
 import { languageNames } from '../features/projects/projectUtils';
 import type { LanguageCode, Project } from '../features/projects/types';
 import { ProcessingStage } from '../features/processing/ProcessingStage';
+import { generationReadiness } from '../features/processing/generationReadiness';
 import { getSimulatedProjectStatus } from '../features/processing/processingUtils';
 import { useProcessing } from '../features/processing/useProcessing';
 import { formatSpeed } from '../features/voice/voiceUtils';
@@ -46,6 +47,7 @@ function GenerateWorkspace({ project, language, canMutate, notice }: { project: 
   const [confirmed, setConfirmed] = useState(true);
   const navigate = useNavigate();
   const { context, snapshot, busy } = processing;
+  const readiness = context ? generationReadiness(context) : null;
   const target = context?.config.languageCode ?? language;
   function edit(destination: 'voice' | 'translation') {
     if (busy) return;
@@ -86,13 +88,14 @@ function GenerateWorkspace({ project, language, canMutate, notice }: { project: 
         <p className="processing-note">Dự án video sẽ được ghép với âm thanh thuyết minh bằng FFmpeg. Dự án âm thanh dùng trực tiếp tệp giọng đọc đã tạo.</p>
         {snapshot.status === 'WAITING' && <>
           <label className="generation-confirmation"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />Tôi đã kiểm tra ngôn ngữ, giọng đọc và tốc độ đọc.</label>
-          <Button loading={busy} disabled={!canMutate || !confirmed} onClick={processing.start}>{project.mediaType === 'VIDEO' ? 'Tạo video' : 'Tạo âm thanh'}</Button>
+          <Button loading={busy} disabled={!canMutate || !confirmed || !readiness?.canStart} aria-describedby="generation-start-reason" onClick={processing.start}>{project.mediaType === 'VIDEO' ? 'Tạo video' : 'Tạo âm thanh'}</Button>
+          <p id="generation-start-reason" className="processing-note" role="status">{readiness?.reason ?? (!canMutate ? notice : !confirmed ? 'Hãy xác nhận ngôn ngữ, giọng đọc và tốc độ đọc trước khi tạo.' : 'Cấu hình đã sẵn sàng.')}</p>
         </>}
       </Card>
       <Card className="processing-panel">
         <div className="processing-panel__heading"><h2>{snapshot.status === 'COMPLETED' ? 'Xử lý hoàn tất' : snapshot.status === 'FAILED' ? 'Xử lý thất bại' : snapshot.status === 'CANCELLED' ? 'Đã hủy xử lý' : 'Quy trình xử lý'}</h2>
           <Badge variant={snapshot.status === 'COMPLETED' ? 'success' : snapshot.status === 'FAILED' ? 'error' : 'info'}>{processingStatusLabels[snapshot.status]}</Badge></div>
-        <p className="processing-note">Trạng thái dự án: {getDisplayStatus(getSimulatedProjectStatus(snapshot, project.mediaType ?? 'AUDIO'))}</p>
+        <p className="processing-note">Trạng thái dự án: {getDisplayStatus(snapshot.status === 'WAITING' ? context.project.status : getSimulatedProjectStatus(snapshot, project.mediaType ?? 'AUDIO'))}</p>
         <ProgressBar value={snapshot.progress} label="Tiến độ xử lý tổng thể" />
         <p className="processing-message" role="status">{snapshot.message}</p>
         <ol className="processing-stages" aria-label="Các giai đoạn xử lý">{snapshot.stages.map((stage) => <ProcessingStage key={stage.id} stage={stage} />)}</ol>

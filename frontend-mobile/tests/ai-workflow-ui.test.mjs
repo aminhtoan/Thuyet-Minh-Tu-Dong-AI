@@ -16,11 +16,12 @@ test('mobile technical statuses use the shared Vietnamese dictionaries', () => {
   assert.match(stage, /processingStatusLabels\[stage\.status\]/);
 });
 
-test('mobile result uses protected cache playback and native sharing feedback', () => {
+test('mobile result streams protected media and downloads only on manual native save', () => {
   assert.match(screens.Result, /localUri/);
   assert.match(screens.Result, /Sharing\.shareAsync/);
   assert.match(screens.Result, /Sharing\.isAvailableAsync/);
-  assert.match(screens.Result, /Không thể mở bảng chia sẻ/);
+  assert.match(screens.Result, /Không thể tải hoặc lưu tệp kết quả/);
+  assert.match(screens.Result, /<ResultPlayer/);
   assert.doesNotMatch(screens.Result, /accessToken|Authorization/);
 });
 

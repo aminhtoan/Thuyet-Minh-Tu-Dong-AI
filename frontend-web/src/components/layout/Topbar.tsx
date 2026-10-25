@@ -82,9 +82,10 @@ export function Topbar({ menuButtonRef, title, onMenuClick, sidebarOpen }: Topba
       {isNewProjectPage && <Link className="button button--secondary button--md topbar__create-back" to="/projects"><Icon name="arrow" width="16" />Về danh sách dự án</Link>}
     </div>
     <div className="topbar__account-region"><div className="topbar-profile" ref={profileRootRef}>
-      <button ref={profileButtonRef} className="topbar-profile__trigger" type="button" aria-label={`Mở menu tài khoản của ${identity.name}`} aria-haspopup="menu" aria-expanded={profileOpen} aria-controls={profileId} onClick={() => profileOpen ? setProfileOpen(false) : openProfile()} onKeyDown={(event) => { if (!profileOpen && (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openProfile(); } }}>
-        <span className="topbar-profile__avatar" aria-hidden="true">{identity.initial}</span><span className="topbar-profile__copy"><strong title={identity.name}>{identity.name}</strong><small>Người dùng</small></span><Icon className={`topbar-profile__chevron${profileOpen ? ' topbar-profile__chevron--open' : ''}`} name="chevronDown" width="16" />
-      </button>
+      <div className="topbar-profile__trigger">
+        <Link className="topbar-profile__account-link" to="/settings" aria-label={`Mở tài khoản của ${identity.name}`} onClick={() => setProfileOpen(false)}><span className="topbar-profile__avatar" aria-hidden="true">{identity.initial}</span><span className="topbar-profile__copy"><strong title={identity.name}>{identity.name}</strong><small>Người dùng</small></span></Link>
+        <button ref={profileButtonRef} className="topbar-profile__menu-trigger" type="button" aria-label={`Mở menu tài khoản của ${identity.name}`} aria-haspopup="menu" aria-expanded={profileOpen} aria-controls={profileId} onClick={() => profileOpen ? setProfileOpen(false) : openProfile()} onKeyDown={(event) => { if (!profileOpen && (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openProfile(); } }}><Icon className={`topbar-profile__chevron${profileOpen ? ' topbar-profile__chevron--open' : ''}`} name="chevronDown" width="16" /></button>
+      </div>
       {profileOpen && <div id={profileId} className="topbar-profile__menu" role="menu" aria-label="Menu tài khoản" onKeyDown={handleMenuKeyDown}>
         <div className="topbar-profile__summary"><span className="topbar-profile__avatar" aria-hidden="true">{identity.initial}</span><span><strong title={identity.name}>{identity.name}</strong>{identity.email && <small title={identity.email}>{identity.email}</small>}</span></div>
         <div className="topbar-profile__divider" />

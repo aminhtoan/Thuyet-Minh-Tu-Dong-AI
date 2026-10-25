@@ -2,6 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { customerAttemptMessage } from '../src/features/translation/customerAttemptPresentation.mjs';
+
+test('HTTP 504/408 remains an uncertain timeout, never permission to retry', () => {
+  for (const providerHttpStatus of [408, 504]) {
+    const message = customerAttemptMessage({ status: 'UNCERTAIN', providerHttpStatus });
+    assert.match(message, new RegExp(`HTTP ${providerHttpStatus}`));
+    assert.match(message, /hết thời gian chờ/); assert.match(message, /không gửi lại/);
+    assert.doesNotMatch(customerAttemptMessage({ status: 'DRAFT_SAVED', providerHttpStatus }), /HTTP/);
+  }
+});
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 test('normal Customer uses existing same-origin API/session, explicit normal POST and no refresh retry', async () => {
   const code = await read('src/features/translation/groupTranslationService.ts');

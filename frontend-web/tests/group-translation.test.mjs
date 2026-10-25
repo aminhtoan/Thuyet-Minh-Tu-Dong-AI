@@ -202,7 +202,7 @@ test('durable draft, approved translation and legacy saved state have distinct l
 });
 
 test('safety warning stays visible while provider details are collapsed; GET only recovery', async () => {
-  for (const providerHttpStatus of [400, 503]) {
+  for (const providerHttpStatus of [400, 503, 504]) {
     const h = harness({ customerMode: true, customerState: async () => ({ draft: null, attempt: { status: 'UNCERTAIN', providerHttpStatus, phase: 'GENERATION_DISPATCHING', diagnosticCode: 'TRANSLATION_PROVIDER_ERROR' } }) });
     await h.settle();
     const warning = h.find(v => v.type === 'p' && v.props.role === 'alert');
