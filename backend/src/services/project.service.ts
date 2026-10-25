@@ -312,7 +312,11 @@ export const getPublicAudioGuides = async () => {
 
     const baseTitle = normalizeTitle(proj.name) || proj.name;
     const media = mediaMap.get(proj._id.toString());
-    const groupKey = baseTitle.toLowerCase();
+    const groupKey = media?.storagePath
+      ? `media:${media.storagePath}`
+      : media?.originalName && media?.fileSize
+        ? `file:${media.originalName}:${media.fileSize}`
+        : `title:${baseTitle.toLowerCase()}`;
 
     const langCode = n.languageCode;
     const meta = LANGUAGE_METAS[langCode] || { name: langCode.toUpperCase(), flag: '🌐' };
@@ -328,7 +332,7 @@ export const getPublicAudioGuides = async () => {
 
     if (!guideMap.has(groupKey)) {
       guideMap.set(groupKey, {
-        key: baseTitle.toLowerCase(),
+        key: groupKey,
         title: baseTitle,
         description: proj.description || 'Bản thu thuyết minh AI hoàn chỉnh.',
         mediaType: media?.mediaType || 'AUDIO',
