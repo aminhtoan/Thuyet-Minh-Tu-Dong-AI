@@ -10,6 +10,7 @@ import { User, type UserDocument } from '../models/User.js';
 import { Voice } from '../models/Voice.js';
 import { ListenEvent } from '../models/ListenEvent.js';
 import { VisitQR } from '../models/VisitQR.js';
+import { Visitor } from '../models/Visitor.js';
 import type { ProcessingJobStatus, ProcessingJobType } from '../constants/processing-job.constants.js';
 import type { MediaType, ProjectStatus } from '../constants/project.constants.js';
 import type { UserStatus } from '../constants/user.constants.js';
@@ -240,7 +241,7 @@ export const listVisitQr = async (input: VisitQrInput) => {
     listenFilter.createdAt = { $gte: from };
   }
 
-  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps, totalListens, webListens, mobileListens, visitorAgg] = await Promise.all([
+  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps, totalListens, webListens, mobileListens, visitorAgg, visitorDocs] = await Promise.all([
     VisitQR.find(filter).sort({ createdAt: -1 }).skip((input.page - 1) * input.limit).limit(input.limit),
     VisitQR.countDocuments(filter),
     VisitQR.countDocuments({ createdAt: { $gte: today } }),
@@ -271,7 +272,22 @@ export const listVisitQr = async (input: VisitQrInput) => {
       { $sort: { totalListens: -1, lastListenedAt: -1 } },
       { $limit: 100 },
     ]),
+    Visitor.find({}).sort({ lastVisitAt: -1 }).limit(100),
   ]);
+
+  const visitors = visitorDocs.map((v) => ({
+    id: v._id.toString(),
+    visitorCode: v.visitorCode,
+    ipAddress: v.ipAddress,
+    deviceType: v.deviceType,
+    os: v.os,
+    browser: v.browser,
+    totalScans: v.totalScans,
+    totalListens: v.totalListens,
+    languages: v.languages,
+    firstVisitAt: v.firstVisitAt.toISOString(),
+    lastVisitAt: v.lastVisitAt.toISOString(),
+  }));
 
   const topVisitors = visitorAgg.map((v) => {
     const ip = v._id.ipAddress !== 'unknown' ? v._id.ipAddress : null;
@@ -307,6 +323,7 @@ export const listVisitQr = async (input: VisitQrInput) => {
       createdAt: v.createdAt,
     })),
     topVisitors,
+    visitors,
     summary: {
       totalListens,
       listenStats: {

@@ -41,6 +41,10 @@ export function AdminVisitQrPage() {
   const [visitorPage, setVisitorPage] = useState(1);
   const [visitorPageSize, setVisitorPageSize] = useState(5);
 
+  const [profileSearch, setProfileSearch] = useState('');
+  const [profilePage, setProfilePage] = useState(1);
+  const [profilePageSize, setProfilePageSize] = useState(5);
+
   const { data, loading, error, retry } = useAdminVisitQr({
     search,
     source,
@@ -68,6 +72,25 @@ export function AdminVisitQrPage() {
     const start = (visitorPage - 1) * visitorPageSize;
     return filteredVisitors.slice(start, start + visitorPageSize);
   }, [filteredVisitors, visitorPage, visitorPageSize]);
+
+  const filteredProfiles = useMemo(() => {
+    const list = data?.visitors || [];
+    if (!profileSearch.trim()) return list;
+    const q = profileSearch.trim().toLowerCase();
+    return list.filter(
+      (v) =>
+        v.visitorCode.toLowerCase().includes(q) ||
+        (v.ipAddress && v.ipAddress.toLowerCase().includes(q)) ||
+        (v.os && v.os.toLowerCase().includes(q)) ||
+        (v.browser && v.browser.toLowerCase().includes(q)),
+    );
+  }, [data?.visitors, profileSearch]);
+
+  const totalProfilePages = Math.max(1, Math.ceil(filteredProfiles.length / profilePageSize));
+  const paginatedProfiles = useMemo(() => {
+    const start = (profilePage - 1) * profilePageSize;
+    return filteredProfiles.slice(start, start + profilePageSize);
+  }, [filteredProfiles, profilePage, profilePageSize]);
 
   const isFiltered = Boolean(
     search.trim() ||
@@ -586,6 +609,202 @@ export function AdminVisitQrPage() {
                       variant="secondary"
                       disabled={visitorPage >= totalVisitorPages}
                       onClick={() => setVisitorPage((p) => p + 1)}
+                    >
+                      Trang sau
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
+
+          {/* Bảng danh sách hồ sơ khách tham quan (Visitors Entity) */}
+          <Card className="visit-qr-card visitor-frequency-card">
+            <div className="visitor-frequency-header">
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Icon name="users" style={{ color: 'var(--primary)', width: '20px', height: '20px' }} />
+                  <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>
+                    Hồ sơ khách tham quan (Bảng Visitor)
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '13px' }}>
+                  Danh sách khách riêng biệt được lưu trữ trong bảng cơ sở dữ liệu riêng, tổng hợp số lần quét QR và nghe audio.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  placeholder="Tìm theo mã hoặc IP..."
+                  value={profileSearch}
+                  onChange={(e) => {
+                    setProfileSearch(e.target.value);
+                    setProfilePage(1);
+                  }}
+                  aria-label="Tìm kiếm hồ sơ khách tham quan"
+                  style={{
+                    minHeight: '32px',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    background: 'var(--surface)',
+                    color: 'var(--text)',
+                    fontSize: '12px',
+                    width: '180px',
+                  }}
+                />
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '4px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  {filteredProfiles.length} khách trong CSDL
+                </span>
+              </div>
+            </div>
+
+            {filteredProfiles.length === 0 ? (
+              <div style={{ padding: '36px 20px', textAlign: 'center' }}>
+                <EmptyState
+                  icon="search"
+                  title="Không tìm thấy khách tham quan"
+                  description="Chưa có dữ liệu hồ sơ khách tham quan nào khớp với từ khóa tìm kiếm."
+                />
+              </div>
+            ) : (
+              <>
+                <div className="visit-qr-table-scroll">
+                  <table className="visit-qr-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Mã khách</th>
+                        <th scope="col">Địa chỉ IP</th>
+                        <th scope="col">Thiết bị &amp; Hệ điều hành</th>
+                        <th scope="col">Lượt quét QR</th>
+                        <th scope="col">Lượt nghe</th>
+                        <th scope="col">Lần đầu ghé thăm</th>
+                        <th scope="col">Hoạt động gần nhất</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedProfiles.map((v) => (
+                        <tr key={v.id}>
+                          <td>
+                            <span className="visit-badge visit-badge--source" style={{ fontWeight: 600 }}>
+                              {v.visitorCode}
+                            </span>
+                          </td>
+                          <td>
+                            <code
+                              style={{
+                                fontFamily: 'monospace',
+                                fontSize: '12px',
+                                background: 'var(--surface-muted, #f1f5f9)',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                color: 'var(--text)',
+                              }}
+                            >
+                              {v.ipAddress || '—'}
+                            </code>
+                          </td>
+                          <td>
+                            <span className="visit-badge visit-badge--device">
+                              {v.deviceType === 'mobile'
+                                ? 'Mobile'
+                                : v.deviceType === 'tablet'
+                                  ? 'Tablet'
+                                  : 'Desktop'}
+                              {v.os ? ` • ${v.os}` : ''}
+                              {v.browser ? ` (${v.browser})` : ''}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 600, color: 'var(--text)' }}>
+                              {v.totalScans}
+                            </span>
+                            <span style={{ fontSize: '12px', color: 'var(--secondary)', marginLeft: '3px' }}>lần</span>
+                          </td>
+                          <td>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '3px 8px',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                color: 'var(--primary)',
+                                borderRadius: '9999px',
+                                fontWeight: 600,
+                                fontSize: '12px',
+                              }}
+                            >
+                              {v.totalListens} lượt
+                            </span>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap', color: 'var(--secondary)', fontSize: '12px' }}>
+                            {formatDate(v.firstVisitAt)}
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap', color: 'var(--text)', fontSize: '12px', fontWeight: 500 }}>
+                            {formatDate(v.lastVisitAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="visit-qr-pagination">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>
+                      Hiển thị trang <strong>{profilePage}</strong> / {totalProfilePages}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--secondary)' }}>Hiển thị:</span>
+                      <select
+                        value={profilePageSize}
+                        onChange={(e) => {
+                          setProfilePageSize(Number(e.target.value));
+                          setProfilePage(1);
+                        }}
+                        aria-label="Số dòng hồ sơ khách mỗi trang"
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--surface)',
+                          color: 'var(--text)',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {[5, 10, 15, 20].map((size) => (
+                          <option key={size} value={size}>
+                            {size} / trang
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <Button
+                      variant="secondary"
+                      disabled={profilePage <= 1}
+                      onClick={() => setProfilePage((p) => Math.max(1, p - 1))}
+                    >
+                      Trang trước
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={profilePage >= totalProfilePages}
+                      onClick={() => setProfilePage((p) => p + 1)}
                     >
                       Trang sau
                     </Button>

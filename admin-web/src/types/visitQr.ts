@@ -56,9 +56,24 @@ export interface VisitQrFilters {
   signal?: AbortSignal;
 }
 
+export interface VisitorProfile {
+  id: string;
+  visitorCode: string;
+  ipAddress: string | null;
+  deviceType: 'mobile' | 'tablet' | 'desktop' | 'unknown' | string;
+  os: string | null;
+  browser: string | null;
+  totalScans: number;
+  totalListens: number;
+  languages?: string[];
+  firstVisitAt: string;
+  lastVisitAt: string;
+}
+
 export interface VisitQrListResult {
   items: VisitQrItem[];
   topVisitors?: VisitorListenStat[];
+  visitors?: VisitorProfile[];
   summary: VisitQrSummary;
   pagination: VisitQrPagination;
 }
