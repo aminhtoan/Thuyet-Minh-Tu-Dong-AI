@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AdminPageHeader } from '../components/layout/AdminPageHeader';
 import { Card } from '../components/common/Card';
 import { StatCard } from '../components/common/StatCard';
@@ -35,6 +35,11 @@ export function AdminVisitQrPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [visitorDays, setVisitorDays] = useState<number | 'ALL'>(30);
+  const [visitorLanguage, setVisitorLanguage] = useState('ALL');
+  const [visitorPage, setVisitorPage] = useState(1);
+  const [visitorPageSize, setVisitorPageSize] = useState(5);
 
   const { data, loading, error, retry } = useAdminVisitQr({
     search,
@@ -43,9 +48,26 @@ export function AdminVisitQrPage() {
     os,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
+    visitorDays: visitorDays === 'ALL' ? undefined : visitorDays,
     page,
-    limit: 15,
+    limit: pageSize,
   });
+
+  const filteredVisitors = useMemo(() => {
+    const list = data?.topVisitors || [];
+    if (visitorLanguage === 'ALL') return list;
+    return list.filter((v) => {
+      const codeMatch = Boolean(v.languageCode && v.languageCode.toLowerCase() === visitorLanguage.toLowerCase());
+      const labelMatch = v.language.toLowerCase().includes(visitorLanguage.toLowerCase());
+      return codeMatch || labelMatch;
+    });
+  }, [data?.topVisitors, visitorLanguage]);
+
+  const totalVisitorPages = Math.max(1, Math.ceil(filteredVisitors.length / visitorPageSize));
+  const paginatedVisitors = useMemo(() => {
+    const start = (visitorPage - 1) * visitorPageSize;
+    return filteredVisitors.slice(start, start + visitorPageSize);
+  }, [filteredVisitors, visitorPage, visitorPageSize]);
 
   const isFiltered = Boolean(
     search.trim() ||
@@ -270,8 +292,6 @@ export function AdminVisitQrPage() {
                         <th>Thiết bị &amp; HĐH</th>
                         <th>Trình duyệt</th>
                         <th>Nguồn quét</th>
-                        <th>Đường dẫn đích</th>
-                        <th>Vị trí / Ghi chú</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -290,11 +310,11 @@ export function AdminVisitQrPage() {
                           <td>
                             <span className="visit-badge visit-badge--device">
                               {item.deviceType === 'mobile'
-                                ? '📱 Mobile'
+                                ? 'Mobile'
                                 : item.deviceType === 'tablet'
-                                  ? '📟 Tablet'
+                                  ? 'Tablet'
                                   : item.deviceType === 'desktop'
-                                    ? '💻 Desktop'
+                                    ? 'Desktop'
                                     : item.deviceType}
                               {item.os ? ` • ${item.os}` : ''}
                             </span>
@@ -307,14 +327,6 @@ export function AdminVisitQrPage() {
                               {item.source}
                             </span>
                           </td>
-                          <td>
-                            <span className="visit-badge--target" title={item.targetPath}>
-                              {item.targetPath}
-                            </span>
-                          </td>
-                          <td style={{ color: 'var(--muted)', fontSize: '12px' }}>
-                            {item.location || '—'}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -322,11 +334,39 @@ export function AdminVisitQrPage() {
                 </div>
 
                 <div className="visit-qr-pagination">
-                  <span>
-                    Hiển thị trang <strong>{data.pagination.page}</strong> /{' '}
-                    {data.pagination.totalPages || 1} (Tổng cộng{' '}
-                    <strong>{data.pagination.total}</strong> lượt quét)
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>
+                      Hiển thị trang <strong>{data.pagination.page}</strong> /{' '}
+                      {data.pagination.totalPages || 1} (Tổng cộng{' '}
+                      <strong>{data.pagination.total}</strong> lượt quét)
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--secondary)' }}>Hiển thị:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(Number(e.target.value));
+                          setPage(1);
+                        }}
+                        aria-label="Số dòng mỗi trang"
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--surface)',
+                          color: 'var(--text)',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {[5, 10, 15, 20, 30].map((size) => (
+                          <option key={size} value={size}>
+                            {size} / trang
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                   <div>
                     <Button
                       variant="secondary"
@@ -339,6 +379,214 @@ export function AdminVisitQrPage() {
                       variant="secondary"
                       disabled={data.pagination.page >= data.pagination.totalPages}
                       onClick={() => setPage((p) => p + 1)}
+                    >
+                      Trang sau
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
+
+          {/* Bảng thống kê tần suất nghe của khách tham quan */}
+          <Card className="visit-qr-card visitor-frequency-card">
+            <div className="visitor-frequency-header">
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Icon name="wave" style={{ color: 'var(--primary)', width: '20px', height: '20px' }} />
+                  <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>
+                    Tần suất nghe của khách tham quan
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: '13px' }}>
+                  Thống kê khách tham quan nghe bao nhiêu lần, sử dụng thiết bị và ngôn ngữ gì.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label
+                    htmlFor="visitor-lang-filter"
+                    style={{ fontSize: '12px', fontWeight: 500, color: 'var(--secondary)', whiteSpace: 'nowrap' }}
+                  >
+                    Ngôn ngữ:
+                  </label>
+                  <select
+                    id="visitor-lang-filter"
+                    value={visitorLanguage}
+                    onChange={(e) => {
+                      setVisitorLanguage(e.target.value);
+                      setVisitorPage(1);
+                    }}
+                    style={{
+                      minHeight: '32px',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--text)',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="ALL">Tất cả ngôn ngữ</option>
+                    <option value="vi">Tiếng Việt (VI)</option>
+                    <option value="en">Tiếng Anh (EN)</option>
+                    <option value="zh">Tiếng Trung (ZH)</option>
+                    <option value="ja">Tiếng Nhật (JA)</option>
+                    <option value="ko">Tiếng Hàn (KO)</option>
+                    <option value="fr">Tiếng Pháp (FR)</option>
+                  </select>
+                </div>
+
+                <div className="visitor-filter-tabs" role="tablist" aria-label="Bộ lọc thời gian">
+                  {[
+                    { label: '7 ngày (1 tuần)', value: 7 },
+                    { label: '14 ngày (2 tuần)', value: 14 },
+                    { label: '30 ngày (1 tháng)', value: 30 },
+                    { label: 'Tất cả thời gian', value: 'ALL' as const },
+                  ].map((tab) => (
+                    <button
+                      key={tab.label}
+                      type="button"
+                      className={`visitor-tab-btn ${visitorDays === tab.value ? 'visitor-tab-btn--active' : ''}`}
+                      onClick={() => {
+                        setVisitorDays(tab.value);
+                        setVisitorPage(1);
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {filteredVisitors.length === 0 ? (
+              <div className="visit-qr-empty" style={{ padding: '36px 20px' }}>
+                <EmptyState
+                  icon="wave"
+                  title="Chưa có lượt nghe nào phù hợp"
+                  description="Không tìm thấy khách tham quan nào khớp với bộ lọc thời gian hoặc ngôn ngữ được chọn."
+                />
+              </div>
+            ) : (
+              <>
+                <div className="visit-qr-table-scroll">
+                  <table className="visit-qr-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Khách tham quan</th>
+                        <th scope="col">Thiết bị &amp; Trình duyệt</th>
+                        <th scope="col">Số lần nghe</th>
+                        <th scope="col">Ngôn ngữ nghe</th>
+                        <th scope="col">Lần nghe gần nhất</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedVisitors.map((v, index) => (
+                        <tr key={v.visitorId + index}>
+                          <td>
+                            <span className="visit-badge visit-badge--source" style={{ fontWeight: 600 }}>
+                              {v.visitorId}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="visit-badge visit-badge--device">
+                              {v.deviceType === 'mobile'
+                                ? 'Mobile'
+                                : v.deviceType === 'tablet'
+                                  ? 'Tablet'
+                                  : 'Desktop'}
+                              {v.os ? ` • ${v.os}` : ''}
+                              {v.browser ? ` (${v.browser})` : ''}
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '4px 10px',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                color: 'var(--primary)',
+                                borderRadius: '9999px',
+                                fontWeight: 700,
+                                fontSize: '13px',
+                              }}
+                            >
+                              {v.totalListens} lượt
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                padding: '4px 9px',
+                                background: 'var(--surface-muted, #f1f5f9)',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {v.language}
+                            </span>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap', color: 'var(--secondary)' }}>
+                            {formatDate(v.lastListenedAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="visit-qr-pagination">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>
+                      Hiển thị trang <strong>{visitorPage}</strong> /{' '}
+                      {totalVisitorPages} (Tổng cộng{' '}
+                      <strong>{filteredVisitors.length}</strong> khách)
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--secondary)' }}>Hiển thị:</span>
+                      <select
+                        value={visitorPageSize}
+                        onChange={(e) => {
+                          setVisitorPageSize(Number(e.target.value));
+                          setVisitorPage(1);
+                        }}
+                        aria-label="Số dòng khách tham quan mỗi trang"
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--surface)',
+                          color: 'var(--text)',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {[5, 10, 15, 20, 30].map((size) => (
+                          <option key={size} value={size}>
+                            {size} / trang
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <Button
+                      variant="secondary"
+                      disabled={visitorPage <= 1}
+                      onClick={() => setVisitorPage((p) => Math.max(1, p - 1))}
+                    >
+                      Trang trước
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={visitorPage >= totalVisitorPages}
+                      onClick={() => setVisitorPage((p) => p + 1)}
                     >
                       Trang sau
                     </Button>

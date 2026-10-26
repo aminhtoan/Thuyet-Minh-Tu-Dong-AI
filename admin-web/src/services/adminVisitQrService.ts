@@ -14,6 +14,7 @@ export const adminVisitQrService = {
     if (filters.os?.trim() && filters.os !== 'ALL') params.set('os', filters.os.trim());
     if (filters.startDate?.trim()) params.set('startDate', filters.startDate.trim());
     if (filters.endDate?.trim()) params.set('endDate', filters.endDate.trim());
+    if (filters.visitorDays !== undefined) params.set('visitorDays', String(filters.visitorDays));
 
     return adminApi<VisitQrListResult>(`/admin/visit-qr?${params}`, { signal: filters.signal });
   },

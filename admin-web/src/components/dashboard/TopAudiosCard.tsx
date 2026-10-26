@@ -1,6 +1,10 @@
 import { Card } from '../common/Card';
 import type { TopAudioItem } from '../../types/dashboard';
 
+function stripLanguageSuffix(title: string): string {
+  return title.replace(/\s*\((?:Tiếng\s+[^)]+|[A-Za-z\s]+)\)\s*$/i, '').trim() || title;
+}
+
 export function TopAudiosCard({ items }: { items?: TopAudioItem[] }) {
   const audios = Array.isArray(items) ? items : [];
 
@@ -19,7 +23,7 @@ export function TopAudiosCard({ items }: { items?: TopAudioItem[] }) {
               <span className="top-audio-rank" aria-hidden="true">{index + 1}</span>
               <div className="top-audio-content">
                 <div className="top-audio-title-row">
-                  <strong className="top-audio-title">{item.title}</strong>
+                  <strong className="top-audio-title">{stripLanguageSuffix(item.title)}</strong>
                   <span className="top-audio-lang-badge" title={item.languageName}>
                     <span aria-hidden="true">{item.flag}</span> {item.languageName || item.languageCode.toUpperCase()}
                   </span>

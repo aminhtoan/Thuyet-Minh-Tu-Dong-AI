@@ -3,7 +3,7 @@ import { adminVisitQrService } from '../services/adminVisitQrService';
 import type { VisitQrFilters, VisitQrListResult } from '../types/visitQr';
 
 export function useAdminVisitQr(filters: VisitQrFilters) {
-  const key = `${filters.page}|${filters.limit}|${filters.search}|${filters.source}|${filters.deviceType}|${filters.os}|${filters.startDate}|${filters.endDate}`;
+  const key = `${filters.page}|${filters.limit}|${filters.search}|${filters.source}|${filters.deviceType}|${filters.os}|${filters.startDate}|${filters.endDate}|${filters.visitorDays}`;
   const [state, setState] = useState<{ key: string; data: VisitQrListResult | null; error: boolean }>({
     key: '',
     data: null,
@@ -23,6 +23,7 @@ export function useAdminVisitQr(filters: VisitQrFilters) {
         os: filters.os,
         startDate: filters.startDate,
         endDate: filters.endDate,
+        visitorDays: filters.visitorDays,
         signal: controller.signal,
       })
       .then((value) => {
@@ -46,6 +47,7 @@ export function useAdminVisitQr(filters: VisitQrFilters) {
     filters.os,
     filters.startDate,
     filters.endDate,
+    filters.visitorDays,
     key,
     request,
   ]);

@@ -31,6 +31,18 @@ export interface VisitQrPagination {
   totalPages: number;
 }
 
+export interface VisitorListenStat {
+  visitorId: string;
+  ipAddress: string | null;
+  deviceType: 'mobile' | 'tablet' | 'desktop' | 'unknown' | string;
+  os: string | null;
+  browser: string | null;
+  totalListens: number;
+  language: string;
+  languageCode?: string;
+  lastListenedAt: string;
+}
+
 export interface VisitQrFilters {
   page?: number;
   limit?: number;
@@ -40,11 +52,14 @@ export interface VisitQrFilters {
   os?: string;
   startDate?: string;
   endDate?: string;
+  visitorDays?: number;
   signal?: AbortSignal;
 }
 
 export interface VisitQrListResult {
   items: VisitQrItem[];
+  topVisitors?: VisitorListenStat[];
   summary: VisitQrSummary;
   pagination: VisitQrPagination;
 }
+

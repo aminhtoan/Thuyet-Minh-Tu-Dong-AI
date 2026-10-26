@@ -116,7 +116,8 @@ export const getListenBreakdown = async (): Promise<ListenBreakdown> => {
       name: dbLangMap.get(langCode) || langCode.toUpperCase(),
       flag: '🌐',
     };
-    const title = projectMap.get(pId) || 'Bản thu thuyết minh';
+    const rawTitle = projectMap.get(pId) || 'Bản thu thuyết minh';
+    const title = rawTitle.replace(/\s*\((?:Tiếng\s+[^)]+|[A-Za-z\s]+)\)\s*$/i, '').trim() || rawTitle;
     return {
       projectId: pId,
       title,

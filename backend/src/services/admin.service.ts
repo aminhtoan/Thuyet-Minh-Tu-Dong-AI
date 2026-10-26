@@ -16,6 +16,7 @@ import type { UserStatus } from '../constants/user.constants.js';
 import { AppError } from '../utils/app-error.js';
 import { env } from '../config/env.js';
 import { availableUserFilter } from './user-availability.js';
+import { parseUserAgent } from '../utils/user-agent.js';
 
 type PageInput = { page: number; limit: number };
 const pagination = (input: PageInput, total: number) => ({ ...input, total, totalPages: Math.ceil(total / input.limit) });
@@ -164,7 +165,50 @@ export const listLogs = async (input: PageInput & { search?: string; role?: 'CUS
 
 export const getSettings = () => ({ editable: false, environment: env.nodeEnv, upload: { maxSizeMb: env.maxUploadSizeMb, supportedMediaTypes: ['video/mp4', 'video/quicktime', 'video/webm', 'audio/mpeg', 'audio/wav', 'audio/mp4'] }, authentication: { accessTokenTtl: env.jwtAccessExpiresIn, refreshTokenTtl: env.jwtRefreshExpiresIn }, processing: { mode: 'synchronous', ffmpegBinarySource: process.env.FFMPEG_PATH?.trim() ? 'configured-path' : 'system-path', ffprobeBinarySource: process.env.FFPROBE_PATH?.trim() ? 'configured-path' : 'system-path', sttProviderConfigured: Boolean(process.env.STT_PROVIDER?.trim()), translationProviderConfigured: Boolean(process.env.TRANSLATION_PROVIDER?.trim()), ttsProviderConfigured: Boolean(process.env.TTS_PROVIDER?.trim()) } });
 
-type VisitQrInput = PageInput & { search?: string; source?: string; os?: string; deviceType?: string; startDate?: string; endDate?: string };
+type VisitQrInput = PageInput & { search?: string; source?: string; os?: string; deviceType?: string; startDate?: string; endDate?: string; visitorDays?: number };
+
+const languageLabels: Record<string, string> = {
+  vi: 'Tiếng Việt',
+  en: 'Tiếng Anh',
+  ja: 'Tiếng Nhật',
+  ko: 'Tiếng Hàn',
+  fr: 'Tiếng Pháp',
+  zh: 'Tiếng Trung',
+};
+
+function getDominantLanguage(langs: (string | null | undefined)[]): { label: string; code: string } {
+  const map: Record<string, number> = {};
+  for (const l of langs) {
+    if (!l) continue;
+    const clean = l.toLowerCase();
+    map[clean] = (map[clean] || 0) + 1;
+  }
+  let max = 0;
+  let dominantCode = '';
+  for (const [k, v] of Object.entries(map)) {
+    if (v > max) {
+      max = v;
+      dominantCode = k;
+    }
+  }
+  if (!dominantCode) return { label: '—', code: '' };
+  const label = languageLabels[dominantCode] || dominantCode.toUpperCase();
+  return {
+    label: `${label} (${dominantCode.toUpperCase()})`,
+    code: dominantCode.toLowerCase(),
+  };
+}
+
+function getVisitorId(ip: string, ua: string): string {
+  const raw = `${ip}_${ua}`;
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash << 5) - hash + raw.charCodeAt(i);
+    hash |= 0;
+  }
+  const hex = Math.abs(hash).toString(16).toUpperCase().padStart(4, '0').slice(0, 4);
+  return `Khách #${hex}`;
+}
 
 export const listVisitQr = async (input: VisitQrInput) => {
   const filter: Record<string, unknown> = {};
@@ -189,7 +233,14 @@ export const listVisitQr = async (input: VisitQrInput) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps, totalListens, webListens, mobileListens] = await Promise.all([
+  const visitorDays = input.visitorDays;
+  const listenFilter: Record<string, unknown> = {};
+  if (visitorDays && visitorDays > 0) {
+    const from = new Date(Date.now() - visitorDays * 24 * 60 * 60 * 1000);
+    listenFilter.createdAt = { $gte: from };
+  }
+
+  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps, totalListens, webListens, mobileListens, visitorAgg] = await Promise.all([
     VisitQR.find(filter).sort({ createdAt: -1 }).skip((input.page - 1) * input.limit).limit(input.limit),
     VisitQR.countDocuments(filter),
     VisitQR.countDocuments({ createdAt: { $gte: today } }),
@@ -199,7 +250,48 @@ export const listVisitQr = async (input: VisitQrInput) => {
     ListenEvent.countDocuments(),
     ListenEvent.countDocuments({ platform: 'web' }),
     ListenEvent.countDocuments({ platform: 'mobile' }),
+    ListenEvent.aggregate<{
+      _id: { ipAddress: string; userAgent: string };
+      totalListens: number;
+      lastListenedAt: Date;
+      languages: (string | null)[];
+    }>([
+      { $match: listenFilter },
+      {
+        $group: {
+          _id: {
+            ipAddress: { $ifNull: ['$ipAddress', 'unknown'] },
+            userAgent: { $ifNull: ['$userAgent', 'unknown'] },
+          },
+          totalListens: { $sum: 1 },
+          lastListenedAt: { $max: '$createdAt' },
+          languages: { $push: '$languageCode' },
+        },
+      },
+      { $sort: { totalListens: -1, lastListenedAt: -1 } },
+      { $limit: 100 },
+    ]),
   ]);
+
+  const topVisitors = visitorAgg.map((v) => {
+    const ip = v._id.ipAddress !== 'unknown' ? v._id.ipAddress : null;
+    const ua = v._id.userAgent !== 'unknown' ? v._id.userAgent : null;
+    const parsed = parseUserAgent(ua);
+    const visitorId = getVisitorId(ip || '0.0.0.0', ua || '');
+    const dominantLang = getDominantLanguage(v.languages);
+
+    return {
+      visitorId,
+      ipAddress: ip,
+      deviceType: parsed.deviceType,
+      os: parsed.os,
+      browser: parsed.browser,
+      totalListens: v.totalListens,
+      language: dominantLang.label,
+      languageCode: dominantLang.code,
+      lastListenedAt: v.lastListenedAt ? v.lastListenedAt.toISOString() : new Date().toISOString(),
+    };
+  });
 
   return {
     items: items.map((v) => ({
@@ -214,6 +306,7 @@ export const listVisitQr = async (input: VisitQrInput) => {
       location: v.location,
       createdAt: v.createdAt,
     })),
+    topVisitors,
     summary: {
       totalListens,
       listenStats: {
