@@ -2,6 +2,7 @@ import { model, Schema, type InferSchemaType } from 'mongoose';
 
 const listenEventSchema = new Schema(
   {
+    visitorId: { type: Schema.Types.ObjectId, ref: 'Visitor', default: null, index: true },
     platform: { type: String, enum: ['web', 'mobile'], required: true, index: true },
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', default: null, index: true },
     narrationId: { type: Schema.Types.ObjectId, ref: 'Narration', default: null },

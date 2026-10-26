@@ -4,6 +4,7 @@ import { ListenEvent } from '../models/ListenEvent.js';
 import { VisitQR } from '../models/VisitQR.js';
 import { parseUserAgent } from '../utils/user-agent.js';
 import { getListenBreakdown } from '../services/analytics.service.js';
+import { findOrCreateVisitor } from '../services/visitor.service.js';
 import { successResponse } from '../utils/api-response.js';
 
 export const trackListen: RequestHandler = async (request, response) => {
@@ -14,11 +15,21 @@ export const trackListen: RequestHandler = async (request, response) => {
     languageCode?: string;
   };
 
-  const userAgent = typeof request.headers['user-agent'] === 'string' ? request.headers['user-agent'].slice(0, 255) : null;
-  const ipAddress = typeof request.ip === 'string' ? request.ip : null;
+  const rawUserAgent = typeof request.headers['user-agent'] === 'string' ? request.headers['user-agent'] : null;
+  const userAgent = rawUserAgent ? rawUserAgent.slice(0, 255) : null;
+  const forwarded = request.headers['x-forwarded-for'];
+  const ipAddress = (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : request.ip) ?? null;
   const userId = request.user?.id ?? null;
 
+  const visitor = await findOrCreateVisitor({
+    ipAddress,
+    userAgent,
+    type: 'listen',
+    languageCode,
+  }).catch(() => null);
+
   const event = await ListenEvent.create({
+    visitorId: visitor?._id ?? null,
     platform,
     projectId: projectId || null,
     narrationId: narrationId && mongoose.isValidObjectId(narrationId) ? narrationId : null,
@@ -74,7 +85,14 @@ export const trackVisitQR: RequestHandler = async (request, response) => {
   const ipAddress = (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : request.ip) ?? null;
   const parsed = parseUserAgent(rawUserAgent);
 
+  const visitor = await findOrCreateVisitor({
+    ipAddress,
+    userAgent,
+    type: 'scan',
+  }).catch(() => null);
+
   const visit = await VisitQR.create({
+    visitorId: visitor?._id ?? null,
     source: (source || 'qr_footer').trim(),
     ipAddress,
     userAgent,
@@ -104,7 +122,14 @@ export const redirectVisitQR: RequestHandler = async (request, response) => {
   const ipAddress = (typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : request.ip) ?? null;
   const parsed = parseUserAgent(rawUserAgent);
 
+  const visitor = await findOrCreateVisitor({
+    ipAddress,
+    userAgent,
+    type: 'scan',
+  }).catch(() => null);
+
   await VisitQR.create({
+    visitorId: visitor?._id ?? null,
     source: source.trim(),
     ipAddress,
     userAgent,

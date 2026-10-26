@@ -545,8 +545,7 @@ export function AdminVisitQrPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span>
                       Hiển thị trang <strong>{visitorPage}</strong> /{' '}
-                      {totalVisitorPages} (Tổng cộng{' '}
-                      <strong>{filteredVisitors.length}</strong> khách)
+                      {totalVisitorPages}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '12px', color: 'var(--secondary)' }}>Hiển thị:</span>

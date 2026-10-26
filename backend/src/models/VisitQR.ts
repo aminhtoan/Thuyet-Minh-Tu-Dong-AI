@@ -2,6 +2,7 @@ import { model, Schema, type InferSchemaType } from 'mongoose';
 
 const visitQRSchema = new Schema(
   {
+    visitorId: { type: Schema.Types.ObjectId, ref: 'Visitor', default: null, index: true },
     source: { type: String, trim: true, default: 'qr_unknown', index: true },
     ipAddress: { type: String, trim: true, default: null, index: true },
     userAgent: { type: String, trim: true, default: null },
