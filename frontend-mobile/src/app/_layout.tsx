@@ -7,6 +7,11 @@ import { colors } from '@/theme/tokens';
 import { AuthBoundary, useAuthStatus } from '@/features/auth/AuthBoundary';
 import { authRouteGuards } from '@/features/auth/authNavigation.mjs';
 
+if (typeof window !== 'undefined') {
+  const win = window as unknown as Record<string, unknown>;
+  if (!win.zaloJSV2) win.zaloJSV2 = {};
+}
+
 function RootNavigator() {
   const status = useAuthStatus();
   const guards = authRouteGuards[status];

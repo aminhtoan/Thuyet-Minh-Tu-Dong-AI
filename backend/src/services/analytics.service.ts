@@ -43,7 +43,9 @@ const LANGUAGE_METAS: Record<string, { name: string; flag: string }> = {
   th: { name: 'Tiếng Thái', flag: '🇹🇭' },
 };
 
+// hàm này dùng để lấy thống kê số lượt nghe dự án 
 export const getListenBreakdown = async (): Promise<ListenBreakdown> => {
+  // lấy tổng số lượt nghe 
   const [totalListens, langAgg, projectAgg, dbLanguages] = await Promise.all([
     ListenEvent.countDocuments(),
     ListenEvent.aggregate<{ _id: string; total: number; web: number; mobile: number }>([

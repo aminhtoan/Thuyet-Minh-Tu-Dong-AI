@@ -3,7 +3,7 @@ import * as controller from '../controllers/admin.controller.js';
 import { authenticate } from '../middleware/authenticate.middleware.js';
 import { authorize } from '../middleware/authorize.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
-import { adminIdSchema, adminJobsSchema, adminLanguagesSchema, adminLogsSchema, adminProjectsSchema, adminUsersSchema, adminUserStatusSchema, adminVoicesSchema } from '../validators/admin.validator.js';
+import { adminIdSchema, adminJobsSchema, adminLanguagesSchema, adminLogsSchema, adminProjectsSchema, adminUsersSchema, adminUserStatusSchema, adminVisitQrSchema, adminVoicesSchema } from '../validators/admin.validator.js';
 
 export const adminRouter = Router();
 adminRouter.use(authenticate, authorize('ADMIN'));
@@ -18,4 +18,6 @@ adminRouter.get('/jobs/:id', validate(adminIdSchema), controller.job);
 adminRouter.get('/languages', validate(adminLanguagesSchema), controller.languages);
 adminRouter.get('/voices', validate(adminVoicesSchema), controller.voices);
 adminRouter.get('/logs', validate(adminLogsSchema), controller.logs);
+adminRouter.get('/visit-qr', validate(adminVisitQrSchema), controller.visitQr);
 adminRouter.get('/settings', controller.settings);
+

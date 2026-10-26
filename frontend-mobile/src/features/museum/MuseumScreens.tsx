@@ -10,6 +10,7 @@ import { libraryProduct } from '../results/libraryPresentation';
 import { resultService } from '../results/resultService';
 import type { Result } from '../results/types';
 import { trackListen } from '../../services/analyticsService';
+import { env } from '../../config/env';
 
 function Intro() {
   return <View style={ms.intro}><MuseumImage path={publicMuseum.images.museumIntro.src} alt={publicMuseum.images.museumIntro.alt} /><View style={ms.introCopy}><Text style={ms.eyebrow}>Lắng nghe quá khứ</Text><Text accessibilityRole="header" style={ms.introHeading}>Gìn giữ ký ức. Kết nối hôm nay.</Text>
@@ -57,8 +58,6 @@ export function MuseumAboutScreen() {
   </MuseumFrame>;
 }
 
-import { env } from '../../config/env';
-
 // ─── Audio guide types ───────────────────────────────────────────────────────
 const LANG_FLAGS: Record<string, string> = {
   vi: '🇻🇳', en: '🇬🇧', fr: '🇫🇷', ja: '🇯🇵',
@@ -91,22 +90,53 @@ function normalizeTitle(name: string) {
 }
 
 // ─── Per-card audio player ────────────────────────────────────────────────────
-function AudioGuideCard({ guide }: { guide: AudioGuide }) {
-  const [languages, setLanguages] = useState<AudioLang[]>(guide.languages);
-  const [activeLang, setActiveLang] = useState<AudioLang>(guide.languages[0]);
+function AudioGuideCard({
+  guide,
+  isPlayingActive,
+  onPlayActive,
+  onPauseActive,
+}: {
+  guide: AudioGuide;
+  isPlayingActive?: boolean;
+  onPlayActive?: () => void;
+  onPauseActive?: () => void;
+}) {
+  const [siblingLanguages, setSiblingLanguages] = useState<AudioLang[] | null>(null);
+  const languages = siblingLanguages ?? guide.languages;
+  const [selectedLangCode, setSelectedLangCode] = useState<string>(guide.languages[0]?.code ?? '');
+  const activeLang = languages.find(l => l.code === selectedLangCode) ?? languages[0];
 
   const getStreamUrl = useCallback((url?: string) => {
     if (!url) return null;
     return url.startsWith('http') ? url : `${env.apiBaseUrl.replace(/\/api\/?$/, '')}${url}`;
   }, []);
 
-  const initialStreamUrl = getStreamUrl(guide.languages[0]?.audioUrl);
-  const [localUri, setLocalUri] = useState<string | null>(initialStreamUrl);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(initialStreamUrl ? 'ready' : 'idle');
+  const [downloadedUris, setDownloadedUris] = useState<Record<string, string>>({});
+  const [loadStatus, setLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+
+  const streamUrl = getStreamUrl(activeLang?.audioUrl);
+  const localUri = downloadedUris[activeLang?.code ?? ''] ?? streamUrl;
+  const status: 'idle' | 'loading' | 'ready' | 'error' = loadStatus === 'loading'
+    ? 'loading'
+    : loadStatus === 'error'
+    ? 'error'
+    : localUri
+    ? 'ready'
+    : 'idle';
 
   const player = useAudioPlayer(localUri ?? '');
   const playerStatus = useAudioPlayerStatus(player);
   const isPlaying = playerStatus.playing;
+
+  const lastTrackedKeyRef = useRef<string | null>(null);
+  const userRequestedPlayRef = useRef(false);
+
+  // If another card becomes active, pause this card
+  useEffect(() => {
+    if (isPlayingActive === false && isPlaying) {
+      player.pause();
+    }
+  }, [isPlayingActive, isPlaying, player]);
 
   // Auto-discover sibling language variants belonging to the same project (shared source media)
   useEffect(() => {
@@ -128,108 +158,100 @@ function AudioGuideCard({ guide }: { guide: AudioGuide }) {
             audioUrl: existing?.audioUrl,
           };
         });
-        setLanguages(mapped);
-        if (!mapped.some(l => l.code === activeLang.code)) {
-          setActiveLang(mapped[0]);
-        }
+        setSiblingLanguages(mapped);
       }).catch(() => { /* use local project group */ });
     }
     return () => { active = false; };
   }, [guide.languages]);
 
-  // Sync guide languages if parent updates
-  useEffect(() => {
-    setLanguages(guide.languages);
-    if (!guide.languages.some(l => l.code === activeLang?.code)) {
-      const first = guide.languages[0];
-      if (first) {
-        setActiveLang(first);
-        const stream = getStreamUrl(first.audioUrl);
-        setLocalUri(stream);
-        setStatus(stream ? 'ready' : 'idle');
-      }
-    }
-  }, [guide.languages, getStreamUrl]);
-
-  // Cleanup on unmount
+  // Cleanup on unmount: pause player and release protected local URI
   useEffect(() => {
     return () => {
+      userRequestedPlayRef.current = false;
+      player.pause();
       if (localUri) void resultService.cleanup(localUri);
     };
-  }, [localUri]);
+  }, [localUri, player]);
 
-  const lastTrackedKeyRef = useRef<string | null>(null);
-
-  // Auto-play as soon as audio file is downloaded and player is ready
-  useEffect(() => {
-    if (status === 'ready' && localUri && !isPlaying) {
-      try {
-        player.play();
-        const trackKey = `${activeLang.projectId}-${activeLang.code}-${localUri}`;
-        if (lastTrackedKeyRef.current !== trackKey) {
-          lastTrackedKeyRef.current = trackKey;
-          void trackListen({
-            platform: 'mobile',
-            projectId: activeLang.projectId,
-            narrationId: activeLang.narrationId,
-            languageCode: activeLang.code,
-          });
-        }
-      } catch {
-        // Autoplay policy fallback
+  const playAudio = useCallback((uri: string) => {
+    try {
+      player.play();
+      onPlayActive?.();
+      const trackKey = `${activeLang.projectId}-${activeLang.code}-${uri}`;
+      if (lastTrackedKeyRef.current !== trackKey) {
+        lastTrackedKeyRef.current = trackKey;
+        void trackListen({
+          platform: 'mobile',
+          projectId: activeLang.projectId,
+          narrationId: activeLang.narrationId,
+          languageCode: activeLang.code,
+        });
       }
+    } catch {
+      // Audio playback failed
     }
-  }, [status, localUri]);
+  }, [player, onPlayActive, activeLang]);
+
+  // Play audio only when explicitly requested by user (never on initial mount)
+  useEffect(() => {
+    if (userRequestedPlayRef.current && status === 'ready' && localUri && !isPlaying) {
+      userRequestedPlayRef.current = false;
+      playAudio(localUri);
+    }
+  }, [status, localUri, isPlaying, playAudio]);
 
   const load = useCallback(async () => {
-    if (status === 'loading') return;
-    setStatus('loading');
+    if (loadStatus === 'loading') return;
+    setLoadStatus('loading');
     try {
       if (activeLang.audioUrl) {
-        const streamUrl = getStreamUrl(activeLang.audioUrl);
-        setLocalUri(streamUrl);
-        setStatus('ready');
-        return;
+        const stream = getStreamUrl(activeLang.audioUrl);
+        if (stream) {
+          setLoadStatus('ready');
+          return;
+        }
       }
       const result: Result | null = await resultService.getByProjectId(activeLang.projectId, activeLang.code as never);
-      if (!result) { setStatus('error'); return; }
+      if (!result) { setLoadStatus('error'); return; }
       const uri = await resultService.downloadProtected(result);
-      setLocalUri(uri);
-      setStatus('ready');
+      if (uri) {
+        setDownloadedUris(prev => ({ ...prev, [activeLang.code]: uri }));
+        setLoadStatus('ready');
+      } else {
+        setLoadStatus('error');
+      }
     } catch {
-      setStatus('error');
+      setLoadStatus('error');
     }
-  }, [activeLang, status, getStreamUrl]);
+  }, [activeLang, loadStatus, getStreamUrl]);
 
   const togglePlay = useCallback(() => {
-    if (status === 'idle' || status === 'error') { void load(); return; }
-    if (status === 'loading') return;
     if (isPlaying) {
       player.pause();
-    } else {
-      player.play();
-      const trackKey = `${activeLang.projectId}-${activeLang.code}-${localUri}`;
-      lastTrackedKeyRef.current = trackKey;
-      void trackListen({
-        platform: 'mobile',
-        projectId: activeLang.projectId,
-        narrationId: activeLang.narrationId,
-        languageCode: activeLang.code,
-      });
+      userRequestedPlayRef.current = false;
+      onPauseActive?.();
+      return;
     }
-  }, [status, isPlaying, player, load, activeLang, localUri]);
+
+    if (status === 'ready' && localUri) {
+      playAudio(localUri);
+      return;
+    }
+
+    // User explicitly pressed play but audio is not yet loaded/ready
+    userRequestedPlayRef.current = true;
+    void load();
+  }, [isPlaying, player, onPauseActive, status, localUri, playAudio, load]);
 
   const handleSelectLang = (lang: AudioLang) => {
-    if (localUri) void resultService.cleanup(localUri);
-    setActiveLang(lang);
-    const stream = getStreamUrl(lang.audioUrl);
-    if (stream) {
-      setLocalUri(stream);
-      setStatus('ready');
-    } else {
-      setLocalUri(null);
-      setStatus('idle');
+    userRequestedPlayRef.current = false;
+    if (isPlaying) {
+      player.pause();
+      onPauseActive?.();
     }
+    if (localUri) void resultService.cleanup(localUri);
+    setSelectedLangCode(lang.code);
+    setLoadStatus('idle');
     lastTrackedKeyRef.current = null;
   };
 
@@ -301,6 +323,7 @@ export function MuseumVideosScreen() {
   const { projects, isLoading: libraryLoading } = useLibrary();
   const [publicGuides, setPublicGuides] = useState<AudioGuide[]>([]);
   const [publicLoading, setPublicLoading] = useState(true);
+  const [activePlayingKey, setActivePlayingKey] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -380,7 +403,15 @@ export function MuseumVideosScreen() {
             <Text style={ms.body}>Đang tải danh sách thuyết minh...</Text>
           </View>
         ) : guides.length > 0 ? (
-          guides.map(guide => <AudioGuideCard key={guide.key} guide={guide} />)
+          guides.map(guide => (
+            <AudioGuideCard
+              key={guide.key}
+              guide={guide}
+              isPlayingActive={activePlayingKey === guide.key}
+              onPlayActive={() => setActivePlayingKey(guide.key)}
+              onPauseActive={() => setActivePlayingKey(curr => (curr === guide.key ? null : curr))}
+            />
+          ))
         ) : (
           <View style={[ms.card, { alignItems: 'center', paddingVertical: 24, gap: 10 }]}>
             <Text style={[ms.body, { textAlign: 'center' }]}>

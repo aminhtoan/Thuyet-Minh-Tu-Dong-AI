@@ -9,6 +9,7 @@ import { Translation } from '../models/Translation.js';
 import { User, type UserDocument } from '../models/User.js';
 import { Voice } from '../models/Voice.js';
 import { ListenEvent } from '../models/ListenEvent.js';
+import { VisitQR } from '../models/VisitQR.js';
 import type { ProcessingJobStatus, ProcessingJobType } from '../constants/processing-job.constants.js';
 import type { MediaType, ProjectStatus } from '../constants/project.constants.js';
 import type { UserStatus } from '../constants/user.constants.js';
@@ -162,3 +163,61 @@ const activityDto = async (log: InstanceType<typeof ActivityLog>) => { const use
 export const listLogs = async (input: PageInput & { search?: string; role?: 'CUSTOMER'|'ADMIN'; entityType?: string; action?: string; days?: number }) => { const filter: Record<string, unknown> = {}; if (input.role) { const users = await User.find({ role: input.role }).select('_id'); filter.userId = { $in: users.map((user) => user._id) }; } if (input.entityType) filter.entityType = input.entityType; if (input.action) filter.action = input.action; if (input.days) filter.createdAt = { $gte: new Date(Date.now() - input.days * 86400000) }; if (input.search) { const regex = new RegExp(escapeRegex(input.search), 'i'); filter.$or = [{ action: regex }, { description: regex }, { entityType: regex }]; } const [items, total] = await Promise.all([ActivityLog.find(filter).sort({ createdAt: -1 }).skip((input.page - 1) * input.limit).limit(input.limit), ActivityLog.countDocuments(filter)]); return { items: await Promise.all(items.map(activityDto)), pagination: pagination(input, total) }; };
 
 export const getSettings = () => ({ editable: false, environment: env.nodeEnv, upload: { maxSizeMb: env.maxUploadSizeMb, supportedMediaTypes: ['video/mp4', 'video/quicktime', 'video/webm', 'audio/mpeg', 'audio/wav', 'audio/mp4'] }, authentication: { accessTokenTtl: env.jwtAccessExpiresIn, refreshTokenTtl: env.jwtRefreshExpiresIn }, processing: { mode: 'synchronous', ffmpegBinarySource: process.env.FFMPEG_PATH?.trim() ? 'configured-path' : 'system-path', ffprobeBinarySource: process.env.FFPROBE_PATH?.trim() ? 'configured-path' : 'system-path', sttProviderConfigured: Boolean(process.env.STT_PROVIDER?.trim()), translationProviderConfigured: Boolean(process.env.TRANSLATION_PROVIDER?.trim()), ttsProviderConfigured: Boolean(process.env.TTS_PROVIDER?.trim()) } });
+
+type VisitQrInput = PageInput & { search?: string; source?: string; os?: string; deviceType?: string; startDate?: string; endDate?: string };
+
+export const listVisitQr = async (input: VisitQrInput) => {
+  const filter: Record<string, unknown> = {};
+  if (input.source) filter.source = input.source;
+  if (input.os) filter.os = input.os;
+  if (input.deviceType) filter.deviceType = input.deviceType;
+  if (input.startDate || input.endDate) {
+    const dateFilter: Record<string, Date> = {};
+    if (input.startDate) dateFilter.$gte = new Date(input.startDate);
+    if (input.endDate) {
+      const end = new Date(input.endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter.$lte = end;
+    }
+    filter.createdAt = dateFilter;
+  }
+  if (input.search) {
+    const regex = new RegExp(escapeRegex(input.search), 'i');
+    filter.$or = [{ ipAddress: regex }, { source: regex }, { os: regex }, { browser: regex }, { userAgent: regex }, { location: regex }];
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps] = await Promise.all([
+    VisitQR.find(filter).sort({ createdAt: -1 }).skip((input.page - 1) * input.limit).limit(input.limit),
+    VisitQR.countDocuments(filter),
+    VisitQR.countDocuments({ createdAt: { $gte: today } }),
+    VisitQR.countDocuments(),
+    VisitQR.distinct('ipAddress', { createdAt: { $gte: today }, ipAddress: { $ne: null } }),
+    VisitQR.distinct('ipAddress', { ipAddress: { $ne: null } }),
+  ]);
+
+  return {
+    items: items.map((v) => ({
+      id: v._id.toString(),
+      source: v.source,
+      ipAddress: v.ipAddress,
+      userAgent: v.userAgent,
+      deviceType: v.deviceType,
+      os: v.os,
+      browser: v.browser,
+      targetPath: v.targetPath,
+      location: v.location,
+      createdAt: v.createdAt,
+    })),
+    summary: {
+      today: todayCount,
+      todayUnique: todayUniqueIps.length,
+      total: allCount,
+      totalUnique: totalUniqueIps.length,
+    },
+    pagination: pagination(input, total),
+  };
+};
+

@@ -15,4 +15,6 @@ export const job: RequestHandler = async (request, response) => response.json(su
 export const languages: RequestHandler = async (request, response) => response.json(successResponse({ languages: await service.listLanguages(query<Parameters<typeof service.listLanguages>[0]>(request)) }));
 export const voices: RequestHandler = async (request, response) => response.json(successResponse({ voices: await service.listVoices(query<Parameters<typeof service.listVoices>[0]>(request)) }));
 export const logs: RequestHandler = async (request, response) => response.json(successResponse(await service.listLogs(query<Parameters<typeof service.listLogs>[0]>(request))));
+export const visitQr: RequestHandler = async (request, response) => response.json(successResponse(await service.listVisitQr(query<Parameters<typeof service.listVisitQr>[0]>(request))));
 export const settings: RequestHandler = (_request, response) => response.json(successResponse({ settings: service.getSettings() }));
+

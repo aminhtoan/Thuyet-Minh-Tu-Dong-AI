@@ -1,0 +1,214 @@
+.visit-qr-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.visit-qr-card {
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 12px);
+}
+
+.visit-qr-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(130px, 1fr)) repeat(2, minmax(130px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.visit-qr-filters label {
+  display: grid;
+  gap: 5px;
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.visit-qr-filters input,
+.visit-qr-filters select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+
+.visit-qr-filters input:focus-visible,
+.visit-qr-filters select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  border-color: var(--primary);
+}
+
+.visit-qr-search {
+  position: relative;
+}
+
+.visit-qr-search svg {
+  position: absolute;
+  left: 11px;
+  bottom: 10px;
+  width: 18px;
+  color: var(--muted);
+}
+
+.visit-qr-search input {
+  padding-left: 38px;
+}
+
+.visit-qr-table-scroll {
+  padding: 0 20px;
+  overflow-x: auto;
+}
+
+.visit-qr-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.visit-qr-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.visit-qr-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.visit-qr-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.visit-qr-table tbody tr:hover {
+  background: var(--surface-muted);
+}
+
+.visit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.visit-badge--source {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.visit-badge--device {
+  background: var(--surface-muted);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.visit-badge--ip {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  color: var(--secondary);
+  background: var(--surface-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.visit-badge--target {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--primary);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.visit-qr-empty {
+  display: grid;
+  justify-items: center;
+  padding: 40px 20px 48px;
+  text-align: center;
+  gap: 14px;
+}
+
+.visit-qr-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--secondary);
+  font-size: 12px;
+}
+
+.visit-qr-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.visit-qr-pagination .button {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+@media (max-width: 1200px) {
+  .visit-qr-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .visit-qr-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .visit-qr-filters .button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 700px) {
+  .visit-qr-stats {
+    grid-template-columns: 1fr;
+  }
+  .visit-qr-filters {
+    grid-template-columns: 1fr;
+  }
+  .visit-qr-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visit-qr-filters input,
+  .visit-qr-filters select {
+    transition: none;
+  }
+}

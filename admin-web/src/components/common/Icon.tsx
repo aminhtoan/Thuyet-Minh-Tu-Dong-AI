@@ -17,6 +17,8 @@ const paths = {
   search: 'm21 21-4.3-4.3M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
   lock: 'M6 10V7a6 6 0 0 1 12 0v3M5 10h14v11H5V10Z',
   userPlus: 'M15 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm11 5v6m-3-3h6',
+  qr: 'M3 3h6v6H3V3Zm12 0h6v6h-6V3ZM3 15h6v6H3v-6Zm14 0v3m0 3h3m-3-3h3m-6-3v6m3-6h.01M6 6h.01M18 6h.01M6 18h.01',
+  refresh: 'M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8m0 0V3m0 5h5m-5 4a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16m0 0v5m0-5h-5',
 } as const;
 export type IconName = keyof typeof paths;
 // Same lightweight inline-SVG approach as Customer; no runtime cross-app import.

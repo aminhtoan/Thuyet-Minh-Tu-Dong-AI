@@ -424,3 +424,11 @@ test('Public theme is isolated from Customer overrides and matches Web brand pal
   for (const role of ['regular', 'semibold', 'bold']) assert.match(theme.museum[role], /^BeVietnamPro-/);
   assert.equal(theme.ms.link.minHeight, 48);
 });
+
+test('Museum audio guides never auto-play on mount and require explicit user play action', () => {
+  const content = read('MuseumScreens.tsx');
+  assert.doesNotMatch(content, /if\s*\(\s*status\s*===\s*'ready'\s*&&\s*localUri\s*&&\s*!isPlaying\s*\)\s*\{\s*try\s*\{\s*player\.play/);
+  assert.match(content, /activePlayingKey/);
+  assert.match(content, /isPlayingActive/);
+});
+

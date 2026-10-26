@@ -133,7 +133,7 @@ test('job summary and limited lists use honest units and labels, including empty
 });
 test('Admin navigation and responsive shell retain existing destinations, guards and no Customer route redirection', () => {
   const { navigation } = compile('components/layout/navigation.ts');
-  assert.deepEqual(Array.from(navigation.flatMap(g => g.items), i => i.to), ['/dashboard', '/users', '/projects', '/jobs', '/languages', '/voices', '/logs', '/settings']);
+  assert.deepEqual(Array.from(navigation.flatMap(g => g.items), i => i.to), ['/dashboard', '/users', '/projects', '/jobs', '/visit-qr', '/languages', '/voices', '/logs', '/settings']);
   const sidebar = read('components/layout/AdminSidebar.tsx'); assert.match(sidebar, /Link to="\/dashboard" className="brand"/); assert.match(sidebar, /Thuyết minh bảo tàng/); assert.match(sidebar, /isActive/);
   assert.doesNotMatch(read('components/layout/AdminAppShell.tsx'), /Dữ liệu minh họa|Backend chưa kết nối/);
   const css = read('styles/dashboard.css'); assert.match(css, /repeat\(4,minmax\(0,1fr\)\)|\.statistics/); assert.match(css, /max-width: 1100px/); assert.match(css, /overflow-x: auto/);

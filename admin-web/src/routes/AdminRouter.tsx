@@ -14,6 +14,7 @@ import { AdminLanguagesPage } from '../pages/AdminLanguagesPage';
 import { AdminVoicesPage } from '../pages/AdminVoicesPage';
 import { AdminLogsPage } from '../pages/AdminLogsPage';
 import { AdminSettingsPage } from '../pages/AdminSettingsPage';
+import { AdminVisitQrPage } from '../pages/AdminVisitQrPage';
 
 export function AdminRouter() {
   return (
@@ -31,6 +32,7 @@ export function AdminRouter() {
               <Route path="/projects/:projectId" element={<AdminProjectDetailPage />} />
               <Route path="/jobs" element={<AdminJobsPage />} />
               <Route path="/jobs/:jobId" element={<AdminJobDetailPage />} />
+              <Route path="/visit-qr" element={<AdminVisitQrPage />} />
               <Route path="/languages" element={<AdminLanguagesPage />} />
               <Route path="/voices" element={<AdminVoicesPage />} />
               <Route path="/logs" element={<AdminLogsPage />} />

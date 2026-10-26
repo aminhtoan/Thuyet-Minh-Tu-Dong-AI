@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MuseumContainer } from './MuseumContainer'
 
-const DEFAULT_MOBILE_URL = 'https://sempiternal-maddison-reservedly.ngrok-free.dev'
+const DEFAULT_MOBILE_URL = 'https://sempiternal-maddison-reservedly.ngrok-free.dev/api/qr/visit?source=footer_web&target=/thuyet-minh'
 
 export function MuseumFooter() {
-  const [isMounted, setIsMounted] = useState(false)
+  const isMounted = typeof window !== 'undefined'
   const [isModalOpen, setIsModalOpen] = useState(false)
   const mobileUrl = isMounted ? DEFAULT_MOBILE_URL : ''
   const qrCodeSrc = isMounted
@@ -14,10 +14,6 @@ export function MuseumFooter() {
   const modalQrSrc = isMounted
     ? `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent(DEFAULT_MOBILE_URL)}`
     : ''
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   useEffect(() => {
     if (!isModalOpen) return
