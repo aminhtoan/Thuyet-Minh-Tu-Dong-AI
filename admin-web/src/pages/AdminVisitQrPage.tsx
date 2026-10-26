@@ -82,7 +82,7 @@ export function AdminVisitQrPage() {
       {loading && !data ? (
         <div style={{ display: 'grid', gap: '16px' }}>
           <div className="visit-qr-stats">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <Card key={i} style={{ minHeight: '120px' }}>
                 <span className="skeleton-block" style={{ width: '60%', height: '14px', marginBottom: '12px' }} />
                 <span className="skeleton-block" style={{ width: '40%', height: '28px' }} />
@@ -107,6 +107,13 @@ export function AdminVisitQrPage() {
       ) : (
         <>
           <div className="visit-qr-stats">
+            <StatCard
+              label="Lượt khách nghe"
+              value={data.summary.totalListens ?? data.summary.listenStats?.total ?? 0}
+              icon="wave"
+              description={`Web: ${data.summary.listenStats?.web ?? 0} · Mobile: ${data.summary.listenStats?.mobile ?? 0}`}
+              tone="primary"
+            />
             <StatCard
               label="Lượt quét hôm nay"
               value={data.summary.today}

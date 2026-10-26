@@ -189,13 +189,16 @@ export const listVisitQr = async (input: VisitQrInput) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps] = await Promise.all([
+  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps, totalListens, webListens, mobileListens] = await Promise.all([
     VisitQR.find(filter).sort({ createdAt: -1 }).skip((input.page - 1) * input.limit).limit(input.limit),
     VisitQR.countDocuments(filter),
     VisitQR.countDocuments({ createdAt: { $gte: today } }),
     VisitQR.countDocuments(),
     VisitQR.distinct('ipAddress', { createdAt: { $gte: today }, ipAddress: { $ne: null } }),
     VisitQR.distinct('ipAddress', { ipAddress: { $ne: null } }),
+    ListenEvent.countDocuments(),
+    ListenEvent.countDocuments({ platform: 'web' }),
+    ListenEvent.countDocuments({ platform: 'mobile' }),
   ]);
 
   return {
@@ -212,6 +215,12 @@ export const listVisitQr = async (input: VisitQrInput) => {
       createdAt: v.createdAt,
     })),
     summary: {
+      totalListens,
+      listenStats: {
+        total: totalListens,
+        web: webListens,
+        mobile: mobileListens,
+      },
       today: todayCount,
       todayUnique: todayUniqueIps.length,
       total: allCount,

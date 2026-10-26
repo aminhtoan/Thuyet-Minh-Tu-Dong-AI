@@ -34,4 +34,5 @@ Thumbs.db
 # Reports & documentation drafts (ignored from git)
 reports/
 bao-cao/
+scratch/
 

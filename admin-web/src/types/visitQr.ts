@@ -12,6 +12,12 @@ export interface VisitQrItem {
 }
 
 export interface VisitQrSummary {
+  totalListens?: number;
+  listenStats?: {
+    total: number;
+    web: number;
+    mobile: number;
+  };
   today: number;
   todayUnique: number;
   total: number;
