@@ -3,6 +3,7 @@ import { ActivityLog } from '../models/ActivityLog.js';
 import { AuthSession } from '../models/AuthSession.js';
 import { Language } from '../models/Language.js';
 import { Media } from '../models/Media.js';
+import { Narration } from '../models/Narration.js';
 import { ProcessingJob } from '../models/ProcessingJob.js';
 import { Project, type ProjectDocument } from '../models/Project.js';
 import { Translation } from '../models/Translation.js';
@@ -31,14 +32,34 @@ const userDto = (user: UserDocument & { _id: Types.ObjectId; createdAt: Date; up
 });
 
 const projectDto = async (project: ProjectDocument & { _id: Types.ObjectId; createdAt: Date; updatedAt: Date }) => {
-  const [owner, media, translations] = await Promise.all([
-    User.findById(project.userId), Media.findOne({ projectId: project._id }), Translation.find({ projectId: project._id, status: 'READY' }).select('targetLanguage'),
+  const [owner, media, translations, narrations] = await Promise.all([
+    User.findById(project.userId),
+    Media.findOne({ projectId: project._id }),
+    Translation.find({ projectId: project._id, status: 'READY' }).select('targetLanguage'),
+    Narration.find({ projectId: project._id, status: 'READY' }).select('isApproved'),
   ]);
-  return { id: project._id.toString(), user: owner ? { id: owner._id.toString(), fullName: owner.fullName, email: owner.email } : null,
-    name: project.name, description: project.description, sourceLanguage: project.sourceLanguage,
-    targetLanguages: [...new Set(translations.map((item) => item.targetLanguage))], status: project.status, progress: project.progress,
+  const totalNarrations = narrations.length;
+  const approvedNarrations = narrations.filter((n) => n.isApproved !== false).length;
+  const narrationApprovalStatus = totalNarrations === 0 ? 'NO_AUDIO' : approvedNarrations === totalNarrations ? 'ALL_APPROVED' : approvedNarrations === 0 ? 'NONE_APPROVED' : 'PARTIAL';
+
+  return {
+    id: project._id.toString(),
+    user: owner ? { id: owner._id.toString(), fullName: owner.fullName, email: owner.email } : null,
+    name: project.name,
+    description: project.description,
+    sourceLanguage: project.sourceLanguage,
+    targetLanguages: [...new Set(translations.map((item) => item.targetLanguage))],
+    status: project.status,
+    progress: project.progress,
     media: media ? { originalName: media.originalName, mediaType: media.mediaType, mimeType: media.mimeType, fileSize: media.fileSize, duration: media.duration ?? null } : null,
-    createdAt: project.createdAt, updatedAt: project.updatedAt };
+    narrationApproval: {
+      total: totalNarrations,
+      approved: approvedNarrations,
+      status: narrationApprovalStatus,
+    },
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  };
 };
 
 const jobDto = async (job: InstanceType<typeof ProcessingJob>) => {
@@ -340,3 +361,69 @@ export const listVisitQr = async (input: VisitQrInput) => {
   };
 };
 
+
+export const getProjectNarrations = async (projectId: string) => {
+  const project = await Project.findById(projectId);
+  if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
+
+  const narrations = await Narration.find({ projectId }).sort({ createdAt: -1 });
+  const voiceIds = [...new Set(narrations.map((n) => n.voiceId))];
+  const voices = await Voice.find({ _id: { $in: voiceIds } });
+  const voiceMap = new Map(voices.map((v) => [v._id.toString(), v]));
+
+  const languages = await Language.find({});
+  const langMap = new Map(languages.map((l) => [l.code.toLowerCase(), l.name]));
+
+  return narrations.map((n) => {
+    const voice = voiceMap.get(n.voiceId.toString());
+    const langName = langMap.get(n.languageCode.toLowerCase()) || languageLabels[n.languageCode.toLowerCase()] || n.languageCode.toUpperCase();
+    return {
+      id: n._id.toString(),
+      projectId: n.projectId.toString(),
+      languageCode: n.languageCode,
+      languageName: langName,
+      voiceName: voice?.name || n.provider || 'AI Voice',
+      voiceGender: voice?.gender || 'UNKNOWN',
+      duration: n.duration ?? 0,
+      fileSize: n.fileSize,
+      speed: n.speed,
+      status: n.status,
+      isApproved: n.isApproved !== false,
+      approvedAt: n.approvedAt ?? null,
+      audioUrl: `/api/projects/public-audio/${n.projectId.toString()}/${n._id.toString()}`,
+      createdAt: n.createdAt,
+    };
+  });
+};
+
+export const toggleNarrationApproval = async (narrationId: string, isApproved: boolean, adminUserId?: string) => {
+  const narration = await Narration.findById(narrationId);
+  if (!narration) throw new AppError(404, 'NARRATION_NOT_FOUND', 'Không tìm thấy bản thuyết minh.');
+
+  narration.isApproved = isApproved;
+  narration.approvedAt = isApproved ? new Date() : undefined;
+  if (adminUserId && mongoose.isValidObjectId(adminUserId)) {
+    narration.approvedBy = new mongoose.Types.ObjectId(adminUserId);
+  } else {
+    narration.approvedBy = undefined;
+  }
+  await narration.save();
+
+  if (adminUserId && mongoose.isValidObjectId(adminUserId)) {
+    await ActivityLog.create({
+      userId: new mongoose.Types.ObjectId(adminUserId),
+      action: isApproved ? 'NARRATION_APPROVED' : 'NARRATION_UNAPPROVED',
+      entityType: 'NARRATION',
+      entityId: narration._id,
+      description: `${isApproved ? 'Duyệt phát hành' : 'Gỡ phát hành'} bản audio ${narration.languageCode.toUpperCase()} cho dự án.`,
+    }).catch(() => {});
+  }
+
+  return {
+    id: narration._id.toString(),
+    projectId: narration.projectId.toString(),
+    languageCode: narration.languageCode,
+    isApproved: narration.isApproved,
+    approvedAt: narration.approvedAt ?? null,
+  };
+};

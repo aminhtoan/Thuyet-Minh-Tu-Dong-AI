@@ -17,6 +17,9 @@ const narrationSchema = new Schema(
     model: { type: String, required: true, trim: true },
     duration: { type: Number, min: 0 },
     status: { type: String, enum: NARRATION_STATUSES, required: true, default: 'READY' },
+    isApproved: { type: Boolean, default: true, index: true },
+    approvedAt: { type: Date },
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },
 );

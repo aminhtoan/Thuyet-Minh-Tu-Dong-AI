@@ -10,6 +10,8 @@ export const user: RequestHandler = async (request, response) => response.json(s
 export const updateUserStatus: RequestHandler = async (request, response) => response.json(successResponse({ user: await service.updateUserStatus(id(request), (request.body as { status: 'ACTIVE'|'BLOCKED' }).status, request.user?.id ?? '') }));
 export const projects: RequestHandler = async (request, response) => response.json(successResponse(await service.listProjects(query<Parameters<typeof service.listProjects>[0]>(request))));
 export const project: RequestHandler = async (request, response) => response.json(successResponse(await service.getProject(id(request))));
+export const projectNarrations: RequestHandler = async (request, response) => response.json(successResponse({ narrations: await service.getProjectNarrations(id(request)) }));
+export const updateNarrationApproval: RequestHandler = async (request, response) => response.json(successResponse({ narration: await service.toggleNarrationApproval(String(request.params.id ?? ''), Boolean((request.body as { isApproved?: boolean }).isApproved), request.user?.id) }));
 export const jobs: RequestHandler = async (request, response) => response.json(successResponse(await service.listJobs(query<Parameters<typeof service.listJobs>[0]>(request))));
 export const job: RequestHandler = async (request, response) => response.json(successResponse({ job: await service.getJob(id(request)) }));
 export const languages: RequestHandler = async (request, response) => response.json(successResponse({ languages: await service.listLanguages(query<Parameters<typeof service.listLanguages>[0]>(request)) }));
@@ -17,4 +19,3 @@ export const voices: RequestHandler = async (request, response) => response.json
 export const logs: RequestHandler = async (request, response) => response.json(successResponse(await service.listLogs(query<Parameters<typeof service.listLogs>[0]>(request))));
 export const visitQr: RequestHandler = async (request, response) => response.json(successResponse(await service.listVisitQr(query<Parameters<typeof service.listVisitQr>[0]>(request))));
 export const settings: RequestHandler = (_request, response) => response.json(successResponse({ settings: service.getSettings() }));
-

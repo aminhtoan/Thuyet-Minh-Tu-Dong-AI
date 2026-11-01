@@ -260,7 +260,7 @@ export const getLanguageVariants = async (projectId: string, userId: string, cur
 };
 
 export const getPublicAudioGuides = async () => {
-  const narrations = await Narration.find({ status: 'READY' }).sort({ createdAt: -1 });
+  const narrations = await Narration.find({ status: 'READY', isApproved: { $ne: false } }).sort({ createdAt: -1 });
   if (narrations.length === 0) return [];
 
   const projectIds = [...new Set(narrations.map((n) => n.projectId))];

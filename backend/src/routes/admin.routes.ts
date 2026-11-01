@@ -13,6 +13,8 @@ adminRouter.get('/users/:id', validate(adminIdSchema), controller.user);
 adminRouter.patch('/users/:id/status', validate(adminUserStatusSchema), controller.updateUserStatus);
 adminRouter.get('/projects', validate(adminProjectsSchema), controller.projects);
 adminRouter.get('/projects/:id', validate(adminIdSchema), controller.project);
+adminRouter.get('/projects/:id/narrations', validate(adminIdSchema), controller.projectNarrations);
+adminRouter.patch('/narrations/:id/approval', validate(adminIdSchema), controller.updateNarrationApproval);
 adminRouter.get('/jobs', validate(adminJobsSchema), controller.jobs);
 adminRouter.get('/jobs/:id', validate(adminIdSchema), controller.job);
 adminRouter.get('/languages', validate(adminLanguagesSchema), controller.languages);
@@ -20,4 +22,3 @@ adminRouter.get('/voices', validate(adminVoicesSchema), controller.voices);
 adminRouter.get('/logs', validate(adminLogsSchema), controller.logs);
 adminRouter.get('/visit-qr', validate(adminVisitQrSchema), controller.visitQr);
 adminRouter.get('/settings', controller.settings);
-

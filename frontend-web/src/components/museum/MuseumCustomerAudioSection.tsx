@@ -81,7 +81,7 @@ export function MuseumCustomerAudioSection() {
         <div
           style={{
             background: '#ffffff',
-            borderRadius: '12px',
+            borderRadius: '16px',
             border: '1px solid #e2e8f0',
             padding: '36px 24px',
             textAlign: 'center',
@@ -103,8 +103,6 @@ export function MuseumCustomerAudioSection() {
           {guides.map((guide) => {
             const isAudio = guide.mediaType === 'AUDIO'
             const activeLangCode = selectedLangs[guide.key] || guide.languages[0]?.code || 'vi'
-            const activeOption =
-              guide.languages.find((l) => l.code === activeLangCode) || guide.languages[0]
 
             return (
               <article
@@ -120,41 +118,41 @@ export function MuseumCustomerAudioSection() {
                   }
                 }}
               >
+                {/* Media area with vibrant gradient, badges, and central play button */}
                 <div className="museum-audio-card__media">
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                      color: '#38bdf8',
-                    }}
-                  >
+                  {/* Top-left pill badge */}
+                  <span className="museum-audio-card__media-badge-top">
                     <svg
                       viewBox="0 0 24 24"
-                      width="44"
-                      height="44"
+                      width="14"
+                      height="14"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
+                      aria-hidden="true"
                     >
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                    </svg>
+                    <span>{isAudio ? 'Âm thanh' : 'Video'}</span>
+                  </span>
+
+                  {/* Centered white circular play button */}
+                  <div className="museum-audio-card__play-btn" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#4f46e5">
+                      <path d="M8 5.14v14l11-7-11-7z" />
                     </svg>
                   </div>
-                  <span className="museum-audio-card__location">
-                    {isAudio ? 'ÂM THANH' : 'VIDEO'}
-                  </span>
-                  <span className="museum-audio-card__duration">
+
+                  {/* Bottom-left languages badge */}
+                  <span className="museum-audio-card__media-badge-bottom">
                     {guide.languages.length} ngôn ngữ
                   </span>
                 </div>
 
+                {/* Content area */}
                 <div className="museum-audio-card__content">
                   <h3 className="museum-audio-card__title">{guide.title}</h3>
                   <p className="museum-audio-card__desc">
@@ -162,45 +160,86 @@ export function MuseumCustomerAudioSection() {
                       `Bản thu AI hoàn chỉnh có sẵn ${guide.languages.length} ngôn ngữ thuyết minh.`}
                   </p>
 
-                  {/* Dropdown language selector on card */}
-                  <div
-                    className="museum-audio-card__lang-select-wrap"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <label htmlFor={`lang-${guide.key}`} className="museum-audio-card__lang-label">
-                      🌐 Chọn ngôn ngữ:
-                    </label>
-                    <select
-                      id={`lang-${guide.key}`}
-                      className="museum-audio-card__dropdown"
-                      value={activeLangCode}
-                      onChange={(e) => {
-                        e.stopPropagation()
-                        const newLang = e.target.value
-                        setSelectedLangs((prev) => ({ ...prev, [guide.key]: newLang }))
-                      }}
+                  {/* Bottom action row: Language Picker + Listen Button */}
+                  <div className="museum-audio-card__action-row">
+                    <div
+                      className="museum-audio-card__lang-picker"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {guide.languages.map((l) => (
-                        <option key={l.code} value={l.code}>
-                          {l.flag} {l.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="#64748b"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="museum-audio-card__globe-icon"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                      </svg>
 
-                  <div className="museum-audio-card__footer">
-                    <span className="museum-audio-card__badge">
-                      {activeOption ? `${activeOption.flag} ${activeOption.name}` : 'Sẵn sàng'}
-                    </span>
+                      <select
+                        id={`lang-${guide.key}`}
+                        className="museum-audio-card__dropdown"
+                        value={activeLangCode}
+                        aria-label={`Chọn ngôn ngữ cho ${guide.title}`}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          const newLang = e.target.value
+                          setSelectedLangs((prev) => ({ ...prev, [guide.key]: newLang }))
+                        }}
+                      >
+                        {guide.languages.map((l) => (
+                          <option key={l.code} value={l.code}>
+                            {l.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="#64748b"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="museum-audio-card__chevron"
+                        aria-hidden="true"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </div>
+
                     <button
                       type="button"
-                      className="museum-audio-card__btn"
+                      className="museum-audio-card__listen-btn"
+                      aria-label={`Nghe thuyết minh: ${guide.title}`}
                       onClick={(e) => {
                         e.stopPropagation()
                         handleOpenAudio(guide, activeLangCode)
                       }}
                     >
-                      Nghe thuyết minh 🎧
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                      </svg>
                     </button>
                   </div>
                 </div>
