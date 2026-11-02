@@ -27,7 +27,7 @@ const parsePositiveNumber = (name: string, value: string | undefined, fallback: 
 const parseOrigins = (value: string | undefined): string[] =>
   (value ?? 'http://localhost:5173,http://localhost:5174')
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
     .filter(Boolean);
 
 const accessSecret = requireValue('JWT_ACCESS_SECRET');

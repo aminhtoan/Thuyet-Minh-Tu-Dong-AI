@@ -29,12 +29,27 @@ function isAllowedDevOrigin(origin: string): boolean {
   return false;
 }
 
+function isAllowedClientOrigin(origin: string): boolean {
+  if (env.corsOrigins.includes('*')) return true;
+  const normalized = origin.replace(/\/+$/, '');
+  if (env.corsOrigins.includes(origin) || env.corsOrigins.includes(normalized)) {
+    return true;
+  }
+  try {
+    const host = new URL(origin).hostname;
+    if (/(?:^|\.)vercel\.app$/i.test(host)) return true;
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 app.use(
   cors({
     origin(origin, callback) {
       if (
         !origin ||
-        env.corsOrigins.includes(origin) ||
+        isAllowedClientOrigin(origin) ||
         (env.nodeEnv === 'development' && isAllowedDevOrigin(origin))
       ) {
         callback(null, true);
