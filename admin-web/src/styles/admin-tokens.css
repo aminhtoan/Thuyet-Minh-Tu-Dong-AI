@@ -1,0 +1,30 @@
+/* Admin scope only: legacy variable names remain compatible with existing pages. */
+.admin-shell {
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-muted: #F1F5F9;
+  --sidebar: #FFFFFF;
+  --text: #0F172A;
+  --secondary: #475569;
+  --muted: #64748B;
+  --border: #E2E8F0;
+  --primary: #5850EC;
+  --primary-hover: #4538CF;
+  --primary-soft: #F0EEFF;
+  --font-admin: 'Be Vietnam Pro', sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius: 12px;
+  --radius-control: 10px;
+  --control-height: 44px;
+  --control-height-compact: 40px;
+  --text-table: 14px;
+  --text-support: 13px;
+  --text-small: 12px;
+  --text-page-title: clamp(28px, 2vw, 30px);
+  --shadow: 0 1px 2px rgb(15 23 42 / 6%);
+}

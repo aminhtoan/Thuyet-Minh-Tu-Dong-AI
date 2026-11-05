@@ -1,7 +1,20 @@
 import type { IconName } from '../common/Icon';
-export const navigation: { group: string; items: { to: string; label: string; icon: IconName }[] }[] = [
+export type NavigationLink = { to: string; label: string; icon: IconName };
+export type NavigationItem = NavigationLink | { id: string; label: string; icon: IconName; children: NavigationLink[] };
+export const navigation: { group: string; items: NavigationItem[] }[] = [
   { group: 'TỔNG QUAN', items: [{ to: '/dashboard', label: 'Bảng điều khiển', icon: 'dashboard' }] },
-  { group: 'QUẢN LÝ', items: [{ to: '/users', label: 'Cán bộ biên tập', icon: 'users' }, { to: '/projects', label: 'Dự án', icon: 'projects' }, { to: '/jobs', label: 'Công việc xử lý', icon: 'jobs' }, { to: '/visit-qr', label: 'Lượt quét QR', icon: 'qr' }] },
-  { group: 'CẤU HÌNH', items: [{ to: '/languages', label: 'Ngôn ngữ', icon: 'languages' }, { to: '/voices', label: 'Giọng đọc', icon: 'voices' }] },
-  { group: 'HỆ THỐNG', items: [{ to: '/logs', label: 'Nhật ký', icon: 'logs' }, { to: '/settings', label: 'Cài đặt', icon: 'settings' }] },
+  { group: 'QUẢN LÝ NỘI DUNG', items: [{ to: '/users', label: 'Quản lý người dùng', icon: 'users' }, { to: '/projects', label: 'Dự án thuyết minh', icon: 'projects' }, { to: '/jobs', label: 'Công việc xử lý', icon: 'jobs' }] },
+  { group: 'KHÁCH THAM QUAN', items: [{ to: '/visit-qr', label: 'Thống kê truy cập', icon: 'qr' }] },
+  { group: 'HỆ THỐNG', items: [
+    { id: 'language-voices', label: 'Ngôn ngữ & Giọng đọc', icon: 'languages', children: [{ to: '/languages', label: 'Ngôn ngữ', icon: 'languages' }, { to: '/voices', label: 'Giọng đọc', icon: 'voices' }] },
+    { to: '/logs', label: 'Nhật ký hệ thống', icon: 'logs' },
+    { to: '/settings', label: 'Cấu hình hệ thống', icon: 'settings' },
+  ] },
 ];
+export const navigationLinks = navigation.flatMap(group => group.items.flatMap(item => 'children' in item ? item.children : [item]));
+export function navigationMatches(link: NavigationLink, pathname: string) {
+  return link.to === pathname || (['/users', '/projects', '/jobs'].includes(link.to) && pathname.startsWith(link.to + '/'));
+}
+export function navigationTitle(pathname: string) {
+  return navigationLinks.find(link => navigationMatches(link, pathname))?.label ?? 'Không tìm thấy trang';
+}

@@ -14,7 +14,7 @@ export function dashboardKpis(stats: AdminDashboardData['stats']) {
     { label: 'Tổng dự án', value: stats.totalProjects, icon: 'projects' as const, description: 'Toàn bộ bản ghi Project trong hệ thống', tone: 'primary' as const },
     { label: 'Dự án đang xử lý', value: stats.processing, icon: 'jobs' as const, description: 'Đang tạo bản ghi, dịch, giọng đọc hoặc video', tone: 'warning' as const },
     { label: 'Dự án thất bại', value: stats.failed, icon: 'alert' as const, description: 'Project có trạng thái FAILED', tone: 'danger' as const },
-    { label: 'Lượt khách nghe', value: totalListens, icon: 'wave' as const, description: listenDesc, tone: 'primary' as const },
+    { label: 'Lượt nghe', value: totalListens, icon: 'wave' as const, description: listenDesc, tone: 'primary' as const },
   ];
 }
 

@@ -1,20 +1,33 @@
+@import './admin-tokens.css';
+@import './admin-foundation.css';
 @font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/semibold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
 @font-face { font-family: 'Be Vietnam Pro'; src: url('/fonts/be-vietnam-pro/bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
 
 /* Shared shell/primitive appearance only. Login is scoped separately. */
-.admin-shell { --background: #F8FAFC; --surface: #FFFFFF; --surface-muted: #F1F5F9; --sidebar: #FFFFFF; --text: #0F172A; --secondary: #475569; --muted: #64748B; --border: #E2E8F0; --primary: #5850EC; --primary-hover: #4538CF; --primary-soft: #F0EEFF; --radius: 12px; --shadow: 0 1px 2px rgb(15 23 42 / 6%); min-height: 100vh; background: var(--background); font-family: 'Be Vietnam Pro', sans-serif; }
+.admin-shell { min-height: 100vh; background: var(--background); font-family: var(--font-admin); }
 .admin-shell .brand { align-items: flex-start; gap: 10px; font-size: 16px; line-height: 1.4; }
 .admin-shell .brand > span { min-width: 0; overflow-wrap: anywhere; }
 .admin-shell .brand small { margin-top: 5px; font-size: 10px; line-height: 1.5; }
 .admin-shell .brand > svg { margin-top: 2px; }
 .admin-shell .nav-link { min-height: 44px; font-size: 13px; }
 .admin-shell .nav-link:hover { background: var(--primary-soft); }
+.admin-shell .nav-group h2 { font-size: 11px; letter-spacing: .06em; }
+.admin-shell .nav-link > span { min-width: 0; overflow-wrap: anywhere; }
+.admin-shell .nav-disclosure__toggle { width: 100%; margin-block: 3px; justify-content: flex-start; text-align: left; font: inherit; font-size: 13px; font-weight: 400; border: 0; border-radius: 8px; padding: 9px 12px; gap: var(--space-2); }
+.admin-shell .nav-disclosure__toggle > span { flex: 1; }
+.admin-shell .nav-disclosure__toggle--active { color: var(--primary); font-weight: 600; background: var(--primary-soft); }
+.admin-shell .nav-disclosure__chevron { width: 16px; height: 16px; transition: transform .15s ease; }
+.admin-shell .nav-disclosure__toggle[aria-expanded="true"] .nav-disclosure__chevron { transform: rotate(180deg); }
+.admin-shell .nav-submenu { margin: var(--space-1) 0 var(--space-2) 20px; padding-left: var(--space-2); border-left: 1px solid var(--border); }
+.admin-shell .nav-submenu[hidden] { display: none; }
+.admin-shell .nav-submenu .nav-link { gap: var(--space-2); padding-inline: var(--space-2); }
+.admin-shell .nav-submenu .nav-link--active::before { left: -9px; }
 .admin-shell :is(a, button, input, summary, [tabindex]):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 .admin-shell .button { min-height: 44px; border-radius: 10px; }
 .admin-shell .page-container { min-width: 0; max-width: 1600px; padding: 24px 28px 40px; }
 .admin-shell .page-header { margin: 4px 0 24px; gap: 20px; }
-.admin-shell .page-header h1 { font-size: clamp(24px, 2vw, 30px); }
+.admin-shell .page-header h1 { font-size: var(--text-page-title); }
 .admin-shell .topbar { min-height: 68px; height: auto; padding-block: 12px; }
 .admin-shell .breadcrumb { min-width: 0; flex-wrap: wrap; gap: 8px; }
 .admin-shell .breadcrumb strong { overflow-wrap: anywhere; }

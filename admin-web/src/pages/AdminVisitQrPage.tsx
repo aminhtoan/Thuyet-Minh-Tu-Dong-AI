@@ -4,6 +4,10 @@ import { Card } from '../components/common/Card';
 import { StatCard } from '../components/common/StatCard';
 import { Button } from '../components/common/Button';
 import { EmptyState } from '../components/common/EmptyState';
+import { ErrorState } from '../components/common/ErrorState';
+import { LoadingState } from '../components/common/LoadingState';
+import { SearchField } from '../components/common/FormFields';
+import type { VisitQrListResult } from '../types/visitQr';
 import { Icon } from '../components/common/Icon';
 import { useAdminVisitQr } from '../hooks/useAdminVisitQr';
 import type { VisitQrItem } from '../types/visitQr';
@@ -31,6 +35,7 @@ export function AdminVisitQrPage() {
   const [search, setSearch] = useState('');
   const [source, setSource] = useState('ALL');
   const [deviceType, setDeviceType] = useState('ALL');
+  const [advancedOpen, setAdvancedOpen] = useState<boolean | null>(null);
   const [os, setOs] = useState('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -45,7 +50,7 @@ export function AdminVisitQrPage() {
   const [profilePage, setProfilePage] = useState(1);
   const [profilePageSize, setProfilePageSize] = useState(5);
 
-  const { data, loading, error, retry } = useAdminVisitQr({
+  const { data: currentData, loading, error, retry } = useAdminVisitQr({
     search,
     source,
     deviceType,
@@ -56,6 +61,10 @@ export function AdminVisitQrPage() {
     page,
     limit: pageSize,
   });
+
+  const [lastData, setLastData] = useState<VisitQrListResult | null>(null);
+  if (currentData && currentData !== lastData) setLastData(currentData);
+  const data = currentData ?? (loading ? lastData : null);
 
   const filteredVisitors = useMemo(() => {
     const list = data?.topVisitors || [];
@@ -101,6 +110,9 @@ export function AdminVisitQrPage() {
       endDate,
   );
 
+  const advancedCount = Number(os !== 'ALL') + Number(Boolean(startDate)) + Number(Boolean(endDate));
+  const advancedExpanded = advancedOpen ?? advancedCount > 0;
+
   const resetFilters = () => {
     setSearch('');
     setSource('ALL');
@@ -112,10 +124,10 @@ export function AdminVisitQrPage() {
   };
 
   return (
-    <>
+    <div className="visit-page">
       <AdminPageHeader
-        title="Lượt quét QR"
-        description="Theo dõi lưu lượng khách tham quan quét mã QR bảo tàng hôm nay và toàn thời gian."
+        title="Thống kê truy cập"
+        description="Theo dõi lượt quét QR, lượt nghe và IP duy nhất của hệ thống."
         action={
           <Button variant="secondary" onClick={retry} disabled={loading}>
             <Icon name="refresh" />
@@ -124,36 +136,9 @@ export function AdminVisitQrPage() {
         }
       />
 
-      {loading && !data ? (
-        <div style={{ display: 'grid', gap: '16px' }}>
-          <div className="visit-qr-stats">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Card key={i} style={{ minHeight: '120px' }}>
-                <span className="skeleton-block" style={{ width: '60%', height: '14px', marginBottom: '12px' }} />
-                <span className="skeleton-block" style={{ width: '40%', height: '28px' }} />
-              </Card>
-            ))}
-          </div>
-          <Card className="visit-qr-card" style={{ padding: '32px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--muted)', fontSize: '13px' }}>Đang tải nhật ký quét mã QR...</p>
-          </Card>
-        </div>
-      ) : error || !data ? (
-        <Card className="customer-state" style={{ padding: '40px 20px', textAlign: 'center' }}>
-          <EmptyState
-            icon="alert"
-            title="Không thể tải dữ liệu quét QR"
-            description="Đã xảy ra lỗi khi kết nối với máy chủ. Vui lòng kiểm tra và thử lại."
-          />
-          <div style={{ marginTop: '16px' }}>
-            <Button onClick={retry}>Thử lại</Button>
-          </div>
-        </Card>
-      ) : (
-        <>
-          <div className="visit-qr-stats">
+      {data ? (          <div className="visit-qr-stats">
             <StatCard
-              label="Lượt khách nghe"
+              label="Lượt nghe"
               value={data.summary.totalListens ?? data.summary.listenStats?.total ?? 0}
               icon="wave"
               description={`Web: ${data.summary.listenStats?.web ?? 0} · Mobile: ${data.summary.listenStats?.mobile ?? 0}`}
@@ -163,47 +148,33 @@ export function AdminVisitQrPage() {
               label="Lượt quét hôm nay"
               value={data.summary.today}
               icon="qr"
-              description="Tổng số lần quét ghi nhận trong ngày"
+              description="Lượt quét trong ngày"
               tone="primary"
             />
             <StatCard
-              label="Khách hôm nay (Unique IP)"
+              label="IP duy nhất hôm nay"
               value={data.summary.todayUnique}
               icon="users"
-              description="Số người dùng duy nhất hôm nay"
+              description="Địa chỉ IP khác nhau"
               tone="primary"
             />
             <StatCard
               label="Tổng lượt quét"
               value={data.summary.total}
               icon="dashboard"
-              description="Lũy kế toàn bộ lượt quét hệ thống"
+              description="Lũy kế toàn hệ thống"
               tone="warning"
             />
             <StatCard
-              label="Tổng khách duy nhất"
+              label="Tổng IP duy nhất"
               value={data.summary.totalUnique}
               icon="users"
-              description="Toàn bộ người dùng theo địa chỉ IP"
+              description="Đếm IP, không đếm người"
               tone="warning"
             />
-          </div>
-
-          <Card className="visit-qr-card">
-            <div className="visit-qr-filters">
-              <div className="visit-qr-search">
-                <Icon name="search" />
-                <input
-                  type="search"
-                  placeholder="Tìm IP, nguồn, trình duyệt, HĐH..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
-                  }}
-                  aria-label="Tìm kiếm lượt quét"
-                />
-              </div>
+          </div>) : loading ? <div className="visit-qr-stats visit-kpi-skeleton" aria-label="Đang tải 5 chỉ số">{[1,2,3,4,5].map(i => <Card key={i}><span aria-hidden="true" className="skeleton-block" /></Card>)}</div> : null}
+      <Card className="visit-qr-card visit-controls">            <div className="visit-qr-filters">
+              <SearchField id="visit-search" label="Tìm kiếm lượt quét" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Tìm IP, nguồn, trình duyệt, HĐH..." />
 
               <label>
                 Nguồn quét
@@ -238,6 +209,8 @@ export function AdminVisitQrPage() {
                 </select>
               </label>
 
+            </div>
+            <div id="visit-advanced-filters" className="visit-advanced-filters" hidden={!advancedExpanded}>
               <label>
                 Hệ điều hành
                 <select
@@ -280,12 +253,54 @@ export function AdminVisitQrPage() {
                 />
               </label>
 
-              {isFiltered && (
+</div><div className="visit-filter-footer"><div className="visit-filter-actions">
+              <Button variant="ghost" aria-expanded={advancedExpanded} aria-controls="visit-advanced-filters" onClick={() => setAdvancedOpen(!advancedExpanded)}>
+                <Icon name="chevronDown" className={advancedExpanded ? 'visit-chevron visit-chevron--open' : 'visit-chevron'} />
+                Bộ lọc nâng cao{advancedCount > 0 && <span className="visit-advanced-count">{advancedCount} đang áp dụng</span>}
+              </Button>              {isFiltered && (
                 <Button variant="secondary" onClick={resetFilters}>
                   Đặt lại
                 </Button>
               )}
-            </div>
+            </div><div className="visit-period"><span id="visit-period-label">Khoảng thời gian thống kê tần suất nghe</span>                <div className="visitor-filter-tabs" role="group" aria-label="Bộ lọc thời gian">
+                  {[
+                    { label: '7 ngày (1 tuần)', value: 7 },
+                    { label: '14 ngày (2 tuần)', value: 14 },
+                    { label: '30 ngày (1 tháng)', value: 30 },
+                    { label: 'Tất cả thời gian', value: 'ALL' as const },
+                  ].map((tab) => (
+                    <button
+                      key={tab.label}
+                      type="button"
+                      aria-pressed={visitorDays === tab.value}
+                      className={`visitor-tab-btn ${visitorDays === tab.value ? 'visitor-tab-btn--active' : ''}`}
+                      onClick={() => {
+                        setVisitorDays(tab.value);
+                        setVisitorPage(1);
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div></div></div></Card>
+      <p className="visit-data-status" role="status">{loading ? (data ? 'Đang tải; đang hiển thị kết quả lần đọc trước.' : 'Đang tải thống kê…') : error ? 'Chưa tải được thống kê.' : 'Số liệu từ API quản trị.'}</p>
+      <LoadingState loading={loading} label="">
+      {loading && !data ? (
+        <div style={{ display: 'grid', gap: '16px' }}>
+          <Card className="visit-qr-card" style={{ padding: '32px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--muted)', fontSize: '13px' }}>Đang tải nhật ký quét mã QR...</p>
+          </Card>
+        </div>
+      ) : error || !data ? (
+        <Card className="customer-state" style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <ErrorState title="Không thể tải dữ liệu quét QR" description="Hãy kiểm tra kết nối và thử lại. Bộ lọc được giữ nguyên." onRetry={retry} />
+        </Card>
+      ) : (
+        <>
+
+
+          <Card className="visit-qr-card">
+
 
             {data.items.length === 0 ? (
               <div className="visit-qr-empty">
@@ -306,8 +321,8 @@ export function AdminVisitQrPage() {
               </div>
             ) : (
               <>
-                <div className="visit-qr-table-scroll">
-                  <table className="visit-qr-table">
+                <div className="visit-qr-table-scroll" tabIndex={0} role="region" aria-label="Nhật ký quét QR">
+                  <table className="visit-qr-table"><caption className="sr-only">Nhật ký quét QR</caption>
                     <thead>
                       <tr>
                         <th>Thời gian</th>
@@ -462,26 +477,7 @@ export function AdminVisitQrPage() {
                   </select>
                 </div>
 
-                <div className="visitor-filter-tabs" role="tablist" aria-label="Bộ lọc thời gian">
-                  {[
-                    { label: '7 ngày (1 tuần)', value: 7 },
-                    { label: '14 ngày (2 tuần)', value: 14 },
-                    { label: '30 ngày (1 tháng)', value: 30 },
-                    { label: 'Tất cả thời gian', value: 'ALL' as const },
-                  ].map((tab) => (
-                    <button
-                      key={tab.label}
-                      type="button"
-                      className={`visitor-tab-btn ${visitorDays === tab.value ? 'visitor-tab-btn--active' : ''}`}
-                      onClick={() => {
-                        setVisitorDays(tab.value);
-                        setVisitorPage(1);
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+
               </div>
             </div>
 
@@ -495,8 +491,8 @@ export function AdminVisitQrPage() {
               </div>
             ) : (
               <>
-                <div className="visit-qr-table-scroll">
-                  <table className="visit-qr-table">
+                <div className="visit-qr-table-scroll" tabIndex={0} role="region" aria-label="Tần suất nghe">
+                  <table className="visit-qr-table"><caption className="sr-only">Tần suất nghe</caption>
                     <thead>
                       <tr>
                         <th scope="col">Khách tham quan</th>
@@ -681,8 +677,8 @@ export function AdminVisitQrPage() {
               </div>
             ) : (
               <>
-                <div className="visit-qr-table-scroll">
-                  <table className="visit-qr-table">
+                <div className="visit-qr-table-scroll" tabIndex={0} role="region" aria-label="Hồ sơ khách tham quan">
+                  <table className="visit-qr-table"><caption className="sr-only">Hồ sơ khách tham quan</caption>
                     <thead>
                       <tr>
                         <th scope="col">Mã khách</th>
@@ -815,6 +811,6 @@ export function AdminVisitQrPage() {
           </Card>
         </>
       )}
-    </>
+    </LoadingState></div>
   );
 }

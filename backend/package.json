@@ -27,6 +27,8 @@
     "test:customer-soft-delete": "node --import tsx --test tests/customer-soft-delete.test.ts",
     "seed:admin": "tsx src/scripts/seed-admin.ts",
     "seed:voices": "tsx src/scripts/seed-voice-catalog.ts",
+    "seed:voices:gemini": "tsx src/scripts/seed-gemini-voice-catalog.ts",
+    "test:gemini-voice-catalog": "node --import tsx --test tests/gemini-voice-catalog.test.ts",
     "seed:languages": "tsx src/scripts/seed-language-catalog.ts",
     "audit:s24-customers": "tsx src/scripts/soft-delete-s24-customers.ts dry-run",
     "test:language-catalog": "node --import tsx --test tests/language-catalog.test.ts"

@@ -1,0 +1,35 @@
+.projects-page { min-width: 0; }
+.projects-page .projects-list-card { padding: 0; overflow: hidden; }
+.projects-filters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(180px, .6fr) minmax(150px, .5fr) auto; gap: var(--space-4); padding: var(--space-6); align-items: end; }
+.projects-result-summary { padding: var(--space-3) var(--space-6); border-block: 1px solid var(--border); color: var(--secondary); font-size: var(--text-support); }
+.projects-table-skeleton { min-height: 360px; padding: var(--space-3) var(--space-6); }
+.projects-table-skeleton .skeleton-block { display: block; height: 48px; margin: var(--space-3) 0; border-radius: 8px; background: var(--surface-muted); animation: none; }
+.projects-page .projects-table :is(th, td) { padding: var(--space-4); vertical-align: middle; }
+.projects-page .projects-table th { font-size: var(--text-small); font-weight: 600; }
+.projects-name { min-width: 200px; max-width: 280px; }
+.projects-owner { min-width: 110px; max-width: 170px; }
+.projects-page .projects-table td small { margin-top: var(--space-1); color: var(--secondary); }
+.projects-page .projects-table td .projects-progress-note { max-width: 160px; }
+.projects-secondary { font-size: var(--text-small); color: var(--secondary); }
+.projects-row-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: var(--space-2); }
+.projects-row-actions .button { font-size: var(--text-small); min-height: var(--control-height-compact); padding: var(--space-2); white-space: nowrap; }
+.projects-page .operation-progress strong { font-size: var(--text-support); font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
+.projects-page .admin-data-table-scroll { padding: var(--space-1); }
+.admin-shell .project-approval-dialog { width: min(760px, calc(100vw - 32px)); padding: 0; border-radius: var(--radius); }
+.project-approval-dialog .narration-modal { width: 100%; max-height: min(88dvh, calc(100dvh - 32px)); border: 0; box-shadow: none; }
+.project-approval-dialog::backdrop { background: rgb(15 23 42 / 55%); }
+.project-approval-dialog .narration-modal__header > div { min-width: 0; }
+.project-approval-dialog :is(.narration-modal__title, .narration-modal__subtitle) { overflow-wrap: anywhere; }
+.project-approval-dialog .narration-modal__close-btn { min-width: 40px; min-height: 40px; flex-shrink: 0; }
+.project-approval-dialog .narration-item__audio-player { min-width: 0; width: 100%; }
+.project-approval-dialog .narration-item__meta-value { white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 1200px) {
+  .projects-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .projects-filters .admin-search-field { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .projects-filters { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
+  .projects-filters .admin-search-field { grid-column: auto; }
+  .projects-result-summary { padding-inline: var(--space-4); }
+  .project-approval-dialog :is(.narration-modal__header, .narration-modal__body, .narration-modal__footer) { padding: var(--space-4); }
+}

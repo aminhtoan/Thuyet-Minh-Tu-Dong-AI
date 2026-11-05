@@ -36,7 +36,7 @@ function nodes(tree, predicate) {
 test('KPI selector separates9 FAILED projects from28 FAILED jobs; no sum from recent lists or attempt data', () => {
   const d = payload(); const cards = metrics.dashboardKpis(d.stats);
   assert.deepEqual(Array.from(cards, c => c.value), [9, 31, 0, 9, 20]);
-  assert.equal(cards[2].label, 'Dự án đang xử lý'); assert.equal(cards[3].label, 'Dự án thất bại'); assert.equal(cards[4].label, 'Lượt khách nghe');
+  assert.equal(cards[2].label, 'Dự án đang xử lý'); assert.equal(cards[3].label, 'Dự án thất bại'); assert.equal(cards[4].label, 'Lượt nghe');
   assert.equal(d.jobSummary.failed, 28); assert.equal(d.jobSummary.completedToday, 15);
   const backend = readFileSync(new URL('../../backend/src/services/admin.service.ts', import.meta.url), 'utf8');
   assert.match(backend, /Project.countDocuments\(\{ status: 'FAILED' \}\)/);
@@ -132,13 +132,15 @@ test('job summary and limited lists use honest units and labels, including empty
   assert.match(read('pages/AdminDashboardPage.tsx'), /không đếm dự án hoặc TranslationAttempt/);
 });
 test('Admin navigation and responsive shell retain existing destinations, guards and no Customer route redirection', () => {
-  const { navigation } = compile('components/layout/navigation.ts');
-  assert.deepEqual(Array.from(navigation.flatMap(g => g.items), i => i.to), ['/dashboard', '/users', '/projects', '/jobs', '/visit-qr', '/languages', '/voices', '/logs', '/settings']);
+  const { navigationLinks } = compile('components/layout/navigation.ts');
+  assert.deepEqual(Array.from(navigationLinks, i => i.to), ['/dashboard', '/users', '/projects', '/jobs', '/visit-qr', '/languages', '/voices', '/logs', '/settings']);
   const sidebar = read('components/layout/AdminSidebar.tsx'); assert.match(sidebar, /Link to="\/dashboard" className="brand"/); assert.match(sidebar, /Thuyết minh bảo tàng/); assert.match(sidebar, /isActive/);
   assert.doesNotMatch(read('components/layout/AdminAppShell.tsx'), /Dữ liệu minh họa|Backend chưa kết nối/);
   const css = read('styles/dashboard.css'); assert.match(css, /repeat\(4,minmax\(0,1fr\)\)|\.statistics/); assert.match(css, /max-width: 1100px/); assert.match(css, /overflow-x: auto/);
   const shell = read('styles/admin-shell.css'); assert.match(shell, /Be Vietnam Pro/); assert.match(shell, /:focus-visible/); assert.match(shell, /prefers-reduced-motion/);
   const { colors } = JSON.parse(readFileSync(new URL('../../design/customer/tokens.json', import.meta.url), 'utf8'));
-  for (const token of ['primary', 'primaryHover', 'background', 'surface', 'textPrimary', 'textSecondary', 'border']) assert.ok(shell.toUpperCase().includes(colors[token].toUpperCase()));
+  const adminTokens = read('styles/admin-tokens.css');
+  assert.match(shell, /@import '\.\/admin-tokens.css'/);
+  for (const token of ['primary', 'primaryHover', 'background', 'surface', 'textPrimary', 'textSecondary', 'border']) assert.ok(adminTokens.toUpperCase().includes(colors[token].toUpperCase()));
 });
 

@@ -24,14 +24,14 @@ function compile(file, dependencies = {}) {
   return exports;
 }
 
-test('navigation includes VisitQR under QUẢN LÝ group with qr icon', () => {
+test('navigation includes visit analytics under visitor group with qr icon', () => {
   const { navigation } = compile('components/layout/navigation.ts');
-  const quanLyGroup = navigation.find((g) => g.group === 'QUẢN LÝ');
+  const quanLyGroup = navigation.find((g) => g.group === 'KHÁCH THAM QUAN');
   assert.ok(quanLyGroup);
   const visitQrItem = quanLyGroup.items.find((item) => item.to === '/visit-qr');
   assert.ok(visitQrItem);
   assert.equal(visitQrItem.icon, 'qr');
-  assert.equal(visitQrItem.label, 'Lượt quét QR');
+  assert.equal(visitQrItem.label, 'Thống kê truy cập');
 });
 
 test('adminVisitQrService queries /admin/visit-qr with formatted params', async () => {

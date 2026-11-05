@@ -5,6 +5,7 @@ import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Icon } from '../common/Icon';
 import { environment } from '../../config/env';
+import { AdminDialog } from '../common/AdminDialog';
 
 interface NarrationApprovalModalProps {
   project: AdminProject | null;
@@ -127,7 +128,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
   const totalCount = narrations.length;
 
   return (
-    <div className="narration-modal__backdrop" role="dialog" aria-modal="true" aria-labelledby="approval-title">
+    <AdminDialog open={Boolean(project)} onClose={onClose} labelledBy="approval-title" className="project-approval-dialog">
       <div className="narration-modal">
         <header className="narration-modal__header">
           <div>
@@ -142,6 +143,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
           </div>
           <button
             type="button"
+            autoFocus
             className="narration-modal__close-btn"
             onClick={onClose}
             aria-label="Đóng cửa sổ"
@@ -152,12 +154,12 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
 
         <section className="narration-modal__body">
           {loading ? (
-            <div className="narration-modal__loading">
+            <div className="narration-modal__loading" role="status">
               <span className="narration-modal__spinner" aria-hidden="true" />
               <p>Đang tải danh sách các bản âm thanh thuyết minh...</p>
             </div>
           ) : error ? (
-            <div className="narration-modal__error">
+            <div className="narration-modal__error" role="alert">
               <Icon name="alert" />
               <p>{error}</p>
               <Button variant="secondary" onClick={() => loadData(project.id)}>Thử lại</Button>
@@ -221,6 +223,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
 
                     <div className="narration-item__player-row">
                       <audio
+                        aria-label={`Nghe bản âm thanh ${n.languageName || lang.label}`}
                         controls
                         preload="none"
                         src={resolveAudioUrl(n.audioUrl)}
@@ -230,6 +233,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
                       </audio>
 
                       <Button
+                        aria-label={`${isItemApproved ? 'Tạm ẩn' : 'Duyệt phát hành'} âm thanh ${n.languageName || lang.label} của dự án ${project.name}`}
                         variant={isItemApproved ? 'secondary' : 'primary'}
                         onClick={() => handleToggle(n.id, isItemApproved)}
                         disabled={isPending}
@@ -246,7 +250,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
                     </div>
 
                     {feedback?.id === n.id && (
-                      <p className={`narration-item__feedback ${feedback.success ? 'narration-item__feedback--ok' : 'narration-item__feedback--err'}`}>
+                      <p role={feedback.success ? 'status' : 'alert'} className={`narration-item__feedback ${feedback.success ? 'narration-item__feedback--ok' : 'narration-item__feedback--err'}`}>
                         {feedback.message}
                       </p>
                     )}
@@ -272,6 +276,6 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
           </div>
         </footer>
       </div>
-    </div>
+    </AdminDialog>
   );
 }

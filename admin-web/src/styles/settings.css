@@ -1,0 +1,13 @@
+.settings-page { min-width: 0; }
+.settings-readonly-note { margin: 0 0 var(--space-6); color: var(--secondary); font-size: var(--text-support); }
+.settings-page .settings-grid { gap: var(--space-6); }
+.settings-page .settings-grid > section { min-width: 0; }
+.settings-page .settings-grid .card { height: 100%; padding: var(--space-6); }
+.settings-page .settings-grid h2 { margin: 0 0 var(--space-4); font-size: 18px; }
+.settings-page dl { display: grid; gap: var(--space-4); margin: 0; }
+.settings-page dl > div { min-width: 0; padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.settings-page dl > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.settings-page dt { font-size: var(--text-support); color: var(--secondary); }
+.settings-page dd { margin: var(--space-1) 0 0; font-size: var(--text-table); font-weight: 500; overflow-wrap: anywhere; white-space: pre-wrap; font-variant-numeric: tabular-nums; }
+.settings-placeholder { min-height: 280px; display: grid; place-items: center; color: var(--secondary); }
+@media (max-width: 700px) { .settings-page .settings-grid .card { padding: var(--space-4); } }

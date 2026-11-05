@@ -26,7 +26,7 @@
   display: grid;
   gap: 5px;
   color: var(--secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -40,7 +40,7 @@
   color: var(--text);
   background: var(--surface);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   transition: border-color 0.15s ease;
 }
 
@@ -76,13 +76,13 @@
   width: 100%;
   min-width: 900px;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .visit-qr-table th {
   padding: 12px 14px;
   text-align: left;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
@@ -112,7 +112,7 @@
   gap: 4px;
   padding: 3px 8px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -139,7 +139,7 @@
 
 .visit-badge--target {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--primary);
   max-width: 180px;
   overflow: hidden;
@@ -270,3 +270,62 @@
     transition: none;
   }
 }
+
+.visit-page { min-width: 0; }
+.visit-page .visit-qr-card { padding: 0; }
+.visit-page .visit-controls { margin-bottom: var(--space-6); }
+.visit-page .visit-qr-filters { grid-template-columns: minmax(240px, 2fr) repeat(2, minmax(150px, 1fr)); padding: var(--space-4); gap: var(--space-3); }
+.visit-page .visit-qr-filters label { font-size: var(--text-small); gap: var(--space-2); }
+.visit-page .visit-qr-filters :is(input, select) { min-height: var(--control-height); border-radius: var(--radius-control); }
+.visit-period { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-small); color: var(--secondary); }
+.visit-page .visitor-filter-tabs { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; }
+.visit-page .visitor-tab-btn { min-height: var(--control-height); }
+.visit-page .visitor-tab-btn--active { background: var(--primary-soft); color: var(--primary-hover); }
+.visit-data-status { font-size: var(--text-support); color: var(--secondary); }
+.visit-page :is(.visitor-frequency-header, .visit-qr-pagination) > div { flex-wrap: wrap; min-width: 0; }
+.visit-page :is(.visitor-frequency-header, .visit-qr-pagination) select { min-height: var(--control-height) !important; max-width: 100%; }
+.visit-page .visit-qr-pagination { flex-wrap: wrap; }
+.visit-page .visit-qr-table-scroll { max-width: 100%; }
+.visit-page .visit-qr-table td { font-size: var(--text-table) !important; padding-block: var(--space-4); }
+.visit-page .visit-qr-table th { text-transform: none; letter-spacing: normal; }
+.visit-page .stat-card strong { font-variant-numeric: tabular-nums; }
+.visit-page .visitor-frequency-header h2 { font-size: 18px !important; }
+@media (max-width: 1024px) { .visit-page .visit-qr-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .visit-page .visit-qr-filters { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
+
+  .visit-page .visit-qr-filters :is(input, select) { font-size: 16px; min-width: 0; }
+}
+
+/* Compact visit analytics layout; all overrides stay within this page. */
+.visit-page .visit-qr-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: var(--space-3); margin-bottom: var(--space-4); }
+.visit-page .visit-qr-stats .stat-card { padding: var(--space-4); min-height: 132px; align-content: start; gap: var(--space-2); }
+.visit-page .stat-card__label { font-size: var(--text-support); font-weight: 600; padding-right: 28px; min-height: 38px; overflow-wrap: anywhere; }
+.visit-page .stat-card__icon { width: 24px; height: 24px; right: var(--space-4); top: var(--space-4); border-radius: 8px; }
+.visit-page .stat-card__icon svg { width: 16px; height: 16px; }
+.visit-page .stat-card strong { font-size: 30px; line-height: 1.15; overflow-wrap: anywhere; }
+.visit-page .stat-card small { font-size: var(--text-small); line-height: 1.5; color: var(--secondary); }
+.visit-kpi-skeleton .card { min-height: 132px; }
+.visit-kpi-skeleton .skeleton-block { display: block; background: var(--surface-muted); border-radius: 8px; height: 80px; }
+.visit-advanced-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); padding: 0 var(--space-4) var(--space-4); }
+.visit-advanced-filters[hidden] { display: none; }
+.visit-filter-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+.visit-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.visit-filter-actions .button { min-height: 40px; padding: var(--space-2); font-size: var(--text-small); }
+.visit-advanced-count { color: var(--primary-hover); background: var(--primary-soft); padding: 2px 6px; border-radius: 6px; }
+.visit-chevron { width: 16px; height: 16px; flex-shrink: 0; }
+.visit-chevron--open { transform: rotate(180deg); }
+.visit-page .visitor-tab-btn { min-height: 40px; padding: 6px 9px; font-size: var(--text-small); }
+.visit-advanced-filters label { display: grid; gap: var(--space-2); font-size: var(--text-small); color: var(--secondary); }
+.visit-advanced-filters :is(input, select) { min-width: 0; width: 100%; min-height: var(--control-height); padding: var(--space-2) var(--space-3); border: 1px solid var(--muted); border-radius: var(--radius-control); color: var(--text); background: var(--surface); font: inherit; font-size: var(--text-table); }
+@media (min-width: 1280px) { .visit-page .visit-qr-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .visit-page .visit-qr-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .visit-advanced-filters { grid-template-columns: minmax(0, 1fr); }
+  .visit-advanced-filters :is(input, select) { font-size: 16px; }
+  .visit-page .stat-card__label { font-size: var(--text-small); }
+  .visit-page .visit-qr-stats .stat-card { padding: var(--space-3); }
+  .visit-page .stat-card__icon { right: var(--space-3); top: var(--space-3); }
+  .visit-page .stat-card strong { font-size: 28px; }
+}
+@media (max-width: 359px) { .visit-page .visit-qr-stats { grid-template-columns: minmax(0, 1fr); } }

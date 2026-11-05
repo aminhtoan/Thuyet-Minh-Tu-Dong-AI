@@ -17,5 +17,41 @@
 .project-summary { margin-bottom: 20px; }.project-summary .card { padding: 17px; }.project-summary .stat-card__icon { top: 15px; right: 14px; width: 30px; height: 30px; }.project-summary .stat-card strong { font-size: 24px; }
 .skeleton-block { display: block; border-radius: 9px; background: linear-gradient(90deg,var(--surface-muted),#e9ebf4,var(--surface-muted)); background-size: 200% 100%; animation: customer-shimmer 1.4s infinite; }.skeleton-stat { height: 132px; }.skeleton-row { height: 48px; margin: 12px 0; }.skeleton-detail { height: 520px; margin-top: 24px; }.customer-detail-loading { padding-top: 1px; }
 @keyframes customer-shimmer { to { background-position: -200% 0; } }
+/* Users list only; detail pages and other Admin lists keep their own layout. */
+.users-page { min-width: 0; }
+.users-page .customer-list-card { padding: 0; }
+.users-page .customer-filters { grid-template-columns: minmax(180px, 1fr) minmax(150px, .55fr) minmax(150px, .5fr) auto; gap: var(--space-4); padding: var(--space-6); }
+.users-page .customer-filters .button { grid-column: auto; justify-self: stretch; }
+.users-page .customer-statistics { gap: var(--space-4); margin-bottom: var(--space-2); }
+.users-page .stat-card__label { font-size: var(--text-support); }
+.users-page .stat-card small { font-size: var(--text-small); }
+.users-page .users-stats-note { min-height: 20px; margin: 0 0 var(--space-6); font-size: var(--text-small); color: var(--secondary); }
+.users-page .users-result-summary { padding: var(--space-3) var(--space-6); color: var(--secondary); font-size: var(--text-support); border-bottom: 1px solid var(--border); }
+.users-page .users-table-skeleton { padding: var(--space-3) var(--space-6); min-height: 360px; }
+.users-page .customer-table { font-size: var(--text-table); }
+.users-page .customer-table :is(th, td) { padding: var(--space-4); vertical-align: middle; }
+.users-page .customer-table th { font-size: var(--text-small); font-weight: 600; }
+.users-page .customer-table .customer-cell { min-width: 170px; align-items: flex-start; }
+.users-page .customer-avatar { font-size: var(--text-small); }
+.users-page .customer-table td:nth-child(2) { min-width: 190px; }
+.users-page .customer-table td:nth-child(4) { font-variant-numeric: tabular-nums; }
+.users-page .row-actions { gap: var(--space-2); flex-wrap: nowrap; }
+.users-page .row-actions .button { font-size: var(--text-small); min-height: var(--control-height-compact); padding: var(--space-2); }
+.users-page .admin-data-table-scroll { padding: var(--space-1); }
+.users-page .admin-dialog h2, .users-page .admin-dialog p { overflow-wrap: anywhere; }
+@media (max-width: 1200px) {
+  .users-page .customer-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .users-page .customer-filters .admin-search-field { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .users-page .customer-filters { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
+  .users-page .customer-filters .admin-search-field { grid-column: auto; }
+  .users-page .users-result-summary { padding-inline: var(--space-4); }
+  .users-page .customer-statistics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .users-page .stat-card { padding: var(--space-4); }
+  .users-page .stat-card__icon { display: none; }
+  .users-page .stat-card__label { padding-right: 0; min-height: 42px; }
+  .users-page .admin-dialog .confirm-dialog__actions { gap: var(--space-3); }
+}
 @media (max-width: 1200px) { .customer-filters { grid-template-columns: minmax(220px,1fr) 170px 150px; }.customer-filters .button { grid-column: 1 / -1; justify-self: start; }.customer-detail-grid { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .customer-filters { grid-template-columns: 1fr; }.customer-filters .button { grid-column: auto; }.pagination { align-items: flex-start; flex-direction: column; }.pagination > div { flex-wrap: wrap; }.detail-header-action { align-items: flex-start; flex-direction: column; }.customer-statistics,.project-summary { grid-template-columns: 1fr 1fr; }.confirm-dialog__actions { flex-direction: column-reverse; }.confirm-dialog__actions .button { width: 100%; } }

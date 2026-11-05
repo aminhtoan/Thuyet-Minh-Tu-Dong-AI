@@ -1,0 +1,29 @@
+.logs-page { min-width: 0; }
+.logs-page .logs-list-card { padding: 0; overflow: hidden; }
+.logs-page .logs-filters { padding: var(--space-6); gap: var(--space-4); grid-template-columns: minmax(180px, 1fr) repeat(3, minmax(130px, .6fr)); }
+.logs-filters > .button { justify-self: start; }
+.logs-result-summary { padding: var(--space-3) var(--space-6); color: var(--secondary); font-size: var(--text-support); border-bottom: 1px solid var(--border); }
+.logs-table-placeholder { min-height: 360px; display: grid; place-items: center; color: var(--secondary); font-size: var(--text-support); }
+.logs-page .logs-table :is(th, td) { padding: var(--space-4); vertical-align: top; }
+.logs-table th { font-size: var(--text-small); }
+.logs-time { min-width: 140px; font-variant-numeric: tabular-nums; }
+.logs-actor { min-width: 150px; max-width: 210px; }
+.logs-entity { min-width: 150px; max-width: 210px; }
+.logs-description { min-width: 220px; max-width: 320px; white-space: pre-wrap; }
+.logs-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.logs-table td .button { white-space: nowrap; font-size: var(--text-support); }
+.logs-page .admin-data-table-scroll { padding: var(--space-1); }
+.admin-shell .logs-detail-dialog { width: min(700px, calc(100vw - 32px)); padding: var(--space-6); }
+.logs-detail-dialog[open] { display: flex; flex-direction: column; gap: var(--space-4); }
+.logs-detail-dialog h2 { margin: 0; font-size: 20px; }
+.logs-detail-content { min-height: 0; overflow: auto; max-height: 60dvh; padding: var(--space-1); font-size: var(--text-table); }
+.logs-detail-content dl { display: grid; gap: var(--space-4); margin: 0; }
+.logs-detail-content dt { color: var(--secondary); font-size: var(--text-support); }
+.logs-detail-content dd { margin: var(--space-1) 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.logs-detail-dialog .confirm-dialog__actions { margin: 0; }
+@media (max-width: 1200px) { .logs-page .logs-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .logs-page .logs-filters { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
+  .logs-result-summary { padding-inline: var(--space-4); }
+  .admin-shell .logs-detail-dialog { padding: var(--space-4); }
+}

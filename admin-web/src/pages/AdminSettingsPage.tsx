@@ -1,2 +1,26 @@
-import{useEffect,useState}from'react';import{AdminPageHeader}from'../components/layout/AdminPageHeader';import{Card}from'../components/common/Card';import{EmptyState}from'../components/common/EmptyState';import{adminSettingsService}from'../services/adminSettingsService';import type{SystemSettings}from'../types/system';
-const yes=(v:boolean)=>v?'Đã cấu hình':'Chưa cấu hình';export function AdminSettingsPage(){const[data,setData]=useState<SystemSettings|null>(null),[error,setError]=useState(false);useEffect(()=>{const c=new AbortController();adminSettingsService.getSettings({signal:c.signal}).then(setData).catch(()=>setError(true));return()=>c.abort()},[]);return <><AdminPageHeader title="Cài đặt hệ thống" description="Cấu hình hiệu lực an toàn từ backend (chỉ đọc)."/>{error?<Card><EmptyState icon="alert" title="Không thể tải cài đặt" description="Vui lòng tải lại trang."/></Card>:!data?<Card>Đang tải...</Card>:<div className="settings-grid"><Card><h2>Môi trường</h2><dl><div><dt>Environment</dt><dd>{data.environment}</dd></div><div><dt>Chế độ xử lý</dt><dd>{data.processing.mode}</dd></div></dl></Card><Card><h2>Tải tệp</h2><dl><div><dt>Dung lượng tối đa</dt><dd>{data.upload.maxSizeMb} MB</dd></div><div><dt>MIME hỗ trợ</dt><dd>{data.upload.supportedMediaTypes.join(' · ')}</dd></div></dl></Card><Card><h2>Xác thực</h2><dl><div><dt>Access token TTL</dt><dd>{data.authentication.accessTokenTtl}</dd></div><div><dt>Refresh token TTL</dt><dd>{data.authentication.refreshTokenTtl}</dd></div></dl></Card><Card><h2>Processing</h2><dl><div><dt>FFmpeg</dt><dd>{data.processing.ffmpegBinarySource}</dd></div><div><dt>FFprobe</dt><dd>{data.processing.ffprobeBinarySource}</dd></div><div><dt>STT provider</dt><dd>{yes(data.processing.sttProviderConfigured)}</dd></div><div><dt>Translation provider</dt><dd>{yes(data.processing.translationProviderConfigured)}</dd></div><div><dt>TTS provider</dt><dd>{yes(data.processing.ttsProviderConfigured)}</dd></div></dl></Card><Card><p className="muted">Backend không cung cấp API cập nhật Settings. Không có secret, URI cơ sở dữ liệu hoặc API key nào được trả về.</p></Card></div>}</>}
+import { AdminPageHeader } from '../components/layout/AdminPageHeader';
+import { Card } from '../components/common/Card';
+import { EmptyState } from '../components/common/EmptyState';
+import { ErrorState } from '../components/common/ErrorState';
+import { LoadingState } from '../components/common/LoadingState';
+import { useAdminSettings } from '../hooks/useAdminSettings';
+import { settingsGroups } from '../utils/settingsPresentation';
+import '../styles/system.css';
+import '../styles/settings.css';
+
+export function AdminSettingsPage() {
+  const { data, loading, error, retry } = useAdminSettings();
+  const groups = settingsGroups(data);
+  return <div className="settings-page">
+    <AdminPageHeader title="Cấu hình hệ thống" description="Cấu hình hiệu lực an toàn từ backend (chỉ đọc)." />
+    <p className="settings-readonly-note">Chỉ xem thông tin. Trang này không hỗ trợ chỉnh sửa cấu hình.</p>
+    <LoadingState loading={loading}>
+      {loading ? <Card className="settings-placeholder"><p>Đang tải cấu hình hệ thống…</p></Card> : error ?
+        <Card><ErrorState title="Không thể tải cấu hình hệ thống" description="Hãy kiểm tra kết nối hoặc phiên đăng nhập và thử lại. Chưa có dữ liệu cấu hình để hiển thị." onRetry={retry} /></Card> :
+        !groups.length ? <Card><EmptyState icon="settings" title="Chưa có dữ liệu cấu hình" description="Request đã hoàn tất nhưng không có trường cấu hình được hỗ trợ để hiển thị." /></Card> :
+          <div className="settings-grid">{groups.map(group => <section key={group.id} aria-labelledby={`settings-${group.id}`}>
+            <Card><h2 id={`settings-${group.id}`}>{group.title}</h2><dl>{group.fields.map(field => <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl></Card>
+          </section>)}</div>}
+    </LoadingState>
+  </div>;
+}

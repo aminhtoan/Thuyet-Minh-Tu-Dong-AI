@@ -1,2 +1,27 @@
-import{useEffect,useState}from'react';import{AdminPageHeader}from'../components/layout/AdminPageHeader';import{Card}from'../components/common/Card';import{EmptyState}from'../components/common/EmptyState';import{Badge}from'../components/common/Badge';import{adminLanguageService}from'../services/adminLanguageService';import type{Language}from'../types/system';
-export function AdminLanguagesPage(){const[data,setData]=useState<Language[]|null>(null),[error,setError]=useState(false),[search,setSearch]=useState('');useEffect(()=>{const c=new AbortController();adminLanguageService.getLanguages({signal:c.signal}).then(setData).catch(()=>setError(true));return()=>c.abort()},[]);const items=(data??[]).filter(x=>`${x.code} ${x.name} ${x.nativeName}`.toLowerCase().includes(search.toLowerCase()));return <><AdminPageHeader title="Ngôn ngữ" description="Danh mục ngôn ngữ từ backend (chỉ đọc)."/><Card className="operation-list-card"><label>Tìm kiếm ngôn ngữ<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Tìm kiếm ngôn ngữ..."/></label>{data===null&&!error?<p>Đang tải...</p>:error?<EmptyState icon="alert" title="Không thể tải danh sách ngôn ngữ" description="Vui lòng tải lại trang."/>:items.length?<div className="table-scroll"><table><thead><tr><th>Ngôn ngữ</th><th>Mã</th><th>Tên quốc tế</th><th>Giọng đọc</th><th>Trạng thái</th></tr></thead><tbody>{items.map(x=><tr key={x.id}><td><strong>{x.nativeName}</strong></td><td>{x.code.toUpperCase()}</td><td>{x.name}</td><td>{x.voiceCount}</td><td><Badge tone={x.isActive?'success':'neutral'}>{x.isActive?'Đang hoạt động':'Đã tắt'}</Badge></td></tr>)}</tbody></table></div>:<EmptyState icon="languages" title="Không có ngôn ngữ phù hợp" description="Catalog hiện trống hoặc không khớp tìm kiếm."/>}<p className="muted">Backend hiện chưa hỗ trợ thêm, sửa hoặc thay đổi trạng thái ngôn ngữ.</p></Card></>}
+import { useState } from 'react';
+import { AdminPageHeader } from '../components/layout/AdminPageHeader';
+import { DataTable } from '../components/common/DataTable';
+import { Badge } from '../components/common/Badge';
+import { CatalogList } from '../components/catalog/CatalogList';
+import { useCatalogResource } from '../hooks/useCatalogResource';
+import { adminLanguageService } from '../services/adminLanguageService';
+
+export function AdminLanguagesPage() {
+  const [search, setSearch] = useState('');
+  const resource = useCatalogResource(adminLanguageService.getLanguages);
+  const data = resource.data ?? [];
+  const items = data.filter(language => `${language.code} ${language.name} ${language.nativeName}`.toLowerCase().includes(search.toLowerCase()));
+  return <div className="catalog-page languages-page">
+    <AdminPageHeader title="Ngôn ngữ" description="Danh mục ngôn ngữ từ backend (chỉ đọc)." />
+    <CatalogList {...resource} search={search} onSearch={setSearch} label="Tìm kiếm ngôn ngữ" count={items.length} total={data.length} noun="ngôn ngữ" icon="languages"
+      notice="Backend hiện chưa hỗ trợ thêm, sửa hoặc thay đổi trạng thái ngôn ngữ.">
+      <DataTable caption="Danh sách ngôn ngữ" className="catalog-table" minWidth={650}>
+        <thead><tr>{['Ngôn ngữ', 'Mã', 'Tên quốc tế', 'Giọng đọc', 'Trạng thái'].map(label => <th scope="col" key={label}>{label}</th>)}</tr></thead>
+        <tbody>{items.map(language => <tr key={language.id}>
+          <td><strong>{language.nativeName}</strong></td><td>{language.code.toUpperCase()}</td><td>{language.name}</td><td>{language.voiceCount}</td>
+          <td><Badge tone={language.isActive ? 'success' : 'neutral'}>{language.isActive ? 'Đang hoạt động' : 'Đã tắt'}</Badge></td>
+        </tr>)}</tbody>
+      </DataTable>
+    </CatalogList>
+  </div>;
+}
