@@ -37,9 +37,9 @@ export async function readDeploymentIdentity() {
   return { status: 'VERIFIED', fingerprint, instanceId, replicaSet: true, primary: true, intendedTargetApproval: approved ? 'APPROVED_BY_USER' : 'MISMATCH', approvedDatabaseMatch: approved };
 }
 
-export async function readDurableProjectConflict(projectId: string, ownerId: string) {
-  const row = await TranslationAttempt.collection.findOne({ projectId, ownerId, targetLanguage: 'en' } as never, { projection: { _id: 1 }, readConcern: { level: 'majority' } });
+export async function readDurableProjectConflict(projectId: string, ownerId: string, targetLanguage = 'en') {
+  const row = await TranslationAttempt.collection.findOne({ projectId, ownerId, targetLanguage } as never, { projection: { _id: 1 }, readConcern: { level: 'majority' } });
   // Covers durable Customer attempts across revisions/processes; says NOTHING
   // about RAM-only ordinary/controlled GROUPS_V1 drafts in other processes.
-  return { status: row ? 'BLOCKED' : 'CLEAR', scope: 'DURABLE_CUSTOMER_ATTEMPTS_ALL_REVISIONS', ramOtherProcesses: 'UNKNOWN' };
+  return { targetLanguage, status: row ? 'BLOCKED' : 'CLEAR', scope: 'DURABLE_CUSTOMER_ATTEMPTS_ALL_REVISIONS', ramOtherProcesses: 'UNKNOWN' };
 }

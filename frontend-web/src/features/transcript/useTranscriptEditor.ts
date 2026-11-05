@@ -54,6 +54,16 @@ export function useTranscriptEditor(projectId: string) {
     requestTranscript()
   }
 
+  function acceptConfirmedTranscript(value: Transcript) {
+    operationRef.current?.abort()
+    setDraft(value)
+    setSaved(copyTranscript(value))
+    setGeneratedBaseline(copyTranscript(value))
+    setStatus('SAVED')
+    setError(null)
+    setFailedAction(null)
+  }
+
   function applySegmentUpdate(update: TranscriptSegmentUpdate) {
     const apply = (value: Transcript | null) => value ? {
       ...value,
@@ -130,5 +140,5 @@ export function useTranscriptEditor(projectId: string) {
     setFailedAction(null)
   }
 
-  return { status, draft, dirty, segmentErrors, hasInvalidSegments, canSave, canReset, error, failedAction, generate, updateSegment, saveTranscript, resetChanges, retryLoad, refreshTranscript: requestTranscript, applySegmentUpdate }
+  return { status, draft, dirty, segmentErrors, hasInvalidSegments, canSave, canReset, error, failedAction, generate, updateSegment, saveTranscript, resetChanges, retryLoad, refreshTranscript: requestTranscript, applySegmentUpdate, acceptConfirmedTranscript }
 }

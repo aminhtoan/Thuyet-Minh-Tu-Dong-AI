@@ -1,7 +1,7 @@
 import { ApiError, api } from '../../lib/api';
 import { mediaDataState, translationDataState } from './projectDataState';
 import type { LanguageCode, MediaType, Project, ProjectPagination, ProjectStatus, ProjectWorkflow } from './types';
-type ProjectDto = { id: string; name: string; description?: string; sourceLanguage: LanguageCode; status: ProjectStatus; progress: number; workflow?: ProjectWorkflow; createdAt: string; updatedAt: string };
+type ProjectDto = Pick<Project, 'sourceLanguage' | 'sourceLanguageMode' | 'sourceLanguageStatus' | 'detectedSourceLanguage'> & { id: string; name: string; description?: string; status: ProjectStatus; progress: number; workflow?: ProjectWorkflow; createdAt: string; updatedAt: string };
 type MediaDto = { originalName: string; mediaType: MediaType; fileSize: number; duration: number | null };
 type TranslationDto = { targetLanguage: LanguageCode; updatedAt: string };
 type State = { projects: readonly Project[]; pagination: ProjectPagination | null; loading: boolean; error: string | null };

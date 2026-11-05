@@ -25,6 +25,7 @@ import { recoverCustomerRead } from './customer-execution.js';
 import { TranslationProviderFailure, providerFailureMessage } from './provider-failure.js';
 import { ProcessingJob } from '../../models/ProcessingJob.js';
 import { assertSourceLanguageConfirmed } from '../source-language-contract.js';
+import { assertCustomerLanguages, assertCustomerTarget } from './customer-languages.js';
 
 function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true' && !controlledScopeActive() && !customerScopeActive()) throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
@@ -94,6 +95,7 @@ export class GroupTranslationService {
     const project = await Project.findOne({ _id: projectId, userId: ownerId }).select('_id status sourceLanguage sourceLanguageMode sourceLanguageStatus').session(session);
     if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
     assertSourceLanguageConfirmed(project);
+    if (customerScopeActive() && !controlledScopeActive()) assertCustomerLanguages(project.sourceLanguage, targetLanguage, customerTranslationMethod());
     if (!['TRANSCRIBED', 'TRANSLATED', 'FAILED'].includes(project.status)) throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép dịch theo cụm.');
     if (project.sourceLanguage === targetLanguage) throw new AppError(400, 'SAME_SOURCE_TARGET_LANGUAGE', 'Ngôn ngữ đích phải khác ngôn ngữ nguồn.');
     if (!await Language.exists({ code: targetLanguage, isActive: true }).session(session)) throw new AppError(400, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED', 'Ngôn ngữ đích chưa được hỗ trợ.');
@@ -121,10 +123,11 @@ export class GroupTranslationService {
   async preview(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {
     if (customerScopeActive() && !controlledScopeActive()) {
       const source = await this.context(projectId, ownerId, body.targetLanguage);
-      if (source.languageCode !== 'vi' || body.targetLanguage !== 'en' || revision(source) !== body.sourceRevision || body.groupingVersion !== GROUPING_VERSION) throw mismatch();
+      assertCustomerLanguages(source.languageCode, body.targetLanguage, customerTranslationMethod());
+      if (revision(source) !== body.sourceRevision || body.groupingVersion !== GROUPING_VERSION) throw mismatch();
       const groups = validatePlan(source, body.groups);
-      if (groups.length > 1000 || await Translation.exists({ projectId, targetLanguage: 'en' }) || await ProcessingJob.exists({ projectId, status: { $in: ['QUEUED', 'PROCESSING'] } })) throw new AppError(409, 'TRANSLATION_CONFLICT', 'Dự án có dữ liệu hoặc tác vụ xung đột.');
-      const input = translationProviderInput(source, 'en', groups);
+      if (groups.length > 1000 || await Translation.exists({ projectId, targetLanguage: body.targetLanguage }) || await ProcessingJob.exists({ projectId, status: { $in: ['QUEUED', 'PROCESSING'] } })) throw new AppError(409, 'TRANSLATION_CONFLICT', 'Dự án có dữ liệu hoặc tác vụ xung đột.');
+      const input = translationProviderInput(source, body.targetLanguage, groups);
       const model = customerTranslationModel().model;
       const method = customerTranslationMethod();
       if (method === 'GEMINI_SIMPLE_V1') {
@@ -134,50 +137,57 @@ export class GroupTranslationService {
       const bindingParts = [source.transcriptRevision, revision(source), digest(input), digest(input.groups.map(g => g.groupId)), model, process.env.CUSTOMER_TRANSLATION_THINKING ?? 'DEFAULT', 8192, 120000, 0];
       // Preserve historical GROUPS_V1 binding bytes. Same attempt key blocks method switching.
       const binding = digest(method === 'GROUPS_V1' ? bindingParts : [...bindingParts, 'gemini', method]);
-      const draft = await customerAttempts.execute({ ownerId, projectId, targetLanguage: 'en', sourceRevision: revision(source) }, binding,
+      const draft = await customerAttempts.execute({ ownerId, projectId, targetLanguage: body.targetLanguage, sourceRevision: revision(source) }, binding,
         () => withCustomerModel(model, () => withCustomerMethod(method, () => this.previewInternal(projectId, ownerId, { ...body, idempotencyKey: 'server-derived' }))));
-      const after = await this.context(projectId, ownerId, 'en');
+      const after = await this.context(projectId, ownerId, body.targetLanguage);
       if (revision(after) !== revision(source)) throw mismatch();
       assertStoredGroups(source, draft.groups);
-      if (draft.outputDigest !== outputDigest(revision(source), 'en', draft.groups) || draft.transcriptRevision !== source.transcriptRevision || draft.transcriptId !== source.transcriptId || draft.sourceLanguage !== source.languageCode || draft.groupingVersion !== GROUPING_VERSION) throw mismatch();
+      if (draft.targetLanguage !== body.targetLanguage || draft.outputDigest !== outputDigest(revision(source), body.targetLanguage, draft.groups) || draft.transcriptRevision !== source.transcriptRevision || draft.transcriptId !== source.transcriptId || draft.sourceLanguage !== source.languageCode || draft.groupingVersion !== GROUPING_VERSION) throw mismatch();
       return this.store.restore(draft);
     }
     const work = () => this.previewInternal(projectId, ownerId, body);
     return this.admission ? this.admission.operation(ownerId, work) : work();
   }
-  async customerGenerate(projectId: string, ownerId: string) {
+  async customerGenerate(projectId: string, ownerId: string, targetLanguage = 'en') {
     if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
+    assertCustomerTarget(targetLanguage);
     if (customerActive.size >= 2 || customerActive.has(ownerId)) throw new AppError(429, 'TRANSLATION_CAPACITY_EXHAUSTED', 'Đang có yêu cầu dịch. Chỉ tải lại dữ liệu, không tự thử lại.');
     customerActive.add(ownerId);
     try { return await withCustomerTranslation(async () => {
-      const plan = await this.plan(projectId, ownerId, 'en');
-      return this.preview(projectId, ownerId, { targetLanguage: 'en', sourceRevision: plan.sourceRevision, groupingVersion: plan.groupingVersion,
+      const plan = await this.plan(projectId, ownerId, targetLanguage);
+      return this.preview(projectId, ownerId, { targetLanguage, sourceRevision: plan.sourceRevision, groupingVersion: plan.groupingVersion,
         groups: plan.groups.map(g => g.sourceSegmentIds), idempotencyKey: 'server-derived' });
     }); } finally { customerActive.delete(ownerId); }
   }
-  async customerDraft(projectId: string, ownerId: string) {
+  private async customerReadSource(projectId: string, ownerId: string, targetLanguage: string) {
+    assertCustomerTarget(targetLanguage);
+    const project = await Project.findOne({ _id: projectId, userId: ownerId }).select('_id sourceLanguage sourceLanguageMode sourceLanguageStatus');
+    if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
+    assertSourceLanguageConfirmed(project);
+    assertCustomerLanguages(project.sourceLanguage, targetLanguage, customerTranslationMethod());
+    const source = await loadSource(projectId);
+    if (source.languageCode !== project.sourceLanguage) throw mismatch();
+    return source;
+  }
+  async customerDraft(projectId: string, ownerId: string, targetLanguage = 'en') {
     if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
     return withCustomerTranslation(async () => {
       // Viewing/recovering a draft/approval receipt must not regress workflow or
       // require mutation permission after the project has advanced.
-      if (!await Project.findOne({ _id: projectId, userId: ownerId }).select('_id')) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
-      const source = await loadSource(projectId);
-      if (source.languageCode !== 'vi') throw mismatch();
-      const draft = await customerAttempts.read({ ownerId, projectId, targetLanguage: 'en', sourceRevision: revision(source) });
+      const source = await this.customerReadSource(projectId, ownerId, targetLanguage);
+      const draft = await customerAttempts.read({ ownerId, projectId, targetLanguage, sourceRevision: revision(source) });
       if (!draft) return null;
       assertStoredGroups(source, draft.groups);
-      if (draft.transcriptRevision !== source.transcriptRevision || draft.transcriptId !== source.transcriptId || draft.sourceLanguage !== source.languageCode || draft.groupingVersion !== GROUPING_VERSION || draft.outputDigest !== outputDigest(revision(source), 'en', draft.groups)) throw mismatch();
+      if (draft.targetLanguage !== targetLanguage || draft.transcriptRevision !== source.transcriptRevision || draft.transcriptId !== source.transcriptId || draft.sourceLanguage !== source.languageCode || draft.groupingVersion !== GROUPING_VERSION || draft.outputDigest !== outputDigest(revision(source), targetLanguage, draft.groups)) throw mismatch();
       return this.store.restore(draft);
     });
   }
-  async customerState(projectId: string, ownerId: string) {
+  async customerState(projectId: string, ownerId: string, targetLanguage = 'en') {
     if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
     return withCustomerTranslation(async () => {
-      if (!await Project.findOne({ _id: projectId, userId: ownerId }).select('_id')) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
-      const source = await loadSource(projectId);
-      if (source.languageCode !== 'vi') throw mismatch();
-      const attempt = await customerAttempts.inspect({ ownerId, projectId, targetLanguage: 'en', sourceRevision: revision(source) });
-      return { draft: attempt?.status === 'DRAFT_SAVED' ? await this.customerDraft(projectId, ownerId) : null, attempt };
+      const source = await this.customerReadSource(projectId, ownerId, targetLanguage);
+      const attempt = await customerAttempts.inspect({ ownerId, projectId, targetLanguage, sourceRevision: revision(source) });
+      return { targetLanguage, draft: attempt?.status === 'DRAFT_SAVED' ? await this.customerDraft(projectId, ownerId, targetLanguage) : null, attempt };
     });
   }
   private async previewInternal(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {

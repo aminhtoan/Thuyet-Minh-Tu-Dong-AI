@@ -3,6 +3,8 @@ export type ProjectStatusFilter = 'ALL' | ProjectStatus
 export type ProjectPagination = { page: number; limit: number; total: number; totalPages: number }
 export type MediaType = 'VIDEO' | 'AUDIO'
 export type LanguageCode = string
+export type SourceLanguageMode = 'AUTO' | 'MANUAL'
+export type SourceLanguageStatus = 'PENDING_DETECTION' | 'NEEDS_CONFIRMATION' | 'CONFIRMED'
 export type DataState = 'LOADING' | 'READY' | 'EMPTY' | 'ERROR' | 'UNKNOWN'
 
 export type ProjectMetadataState = {
@@ -30,7 +32,10 @@ export type Project = {
   id: string
   name: string
   description?: string
-  sourceLanguage: LanguageCode
+  sourceLanguage: LanguageCode | null
+  sourceLanguageMode?: SourceLanguageMode
+  sourceLanguageStatus?: SourceLanguageStatus
+  detectedSourceLanguage?: LanguageCode | null
   targetLanguage?: LanguageCode
   status: ProjectStatus
   progress?: number

@@ -13,7 +13,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { languageDisplayName } from '../features/projects/languages';
 import { resolveWorkflowRouteAccess } from '../features/projects/workflowRouteGuard';
 import { useProject } from '../features/projects/useProjects';
-import { languageNames } from '../features/projects/projectUtils';
+import { sourceLanguageLabel } from '../features/projects/sourceLanguage';
 import type { LanguageCode, Project } from '../features/projects/types';
 import { ProcessingStage } from '../features/processing/ProcessingStage';
 import { generationReadiness } from '../features/processing/generationReadiness';
@@ -75,7 +75,7 @@ function GenerateWorkspace({ project, language, canMutate, notice }: { project: 
       <Card className="generation-summary"><h2>Tóm tắt cấu hình</h2>
         <dl>
           <div><dt>Dự án</dt><dd>{context.project.name}</dd></div>
-          <div><dt>Ngôn ngữ nguồn</dt><dd>{languageNames[context.transcript.languageCode]}</dd></div>
+          <div><dt>Ngôn ngữ nguồn</dt><dd>{sourceLanguageLabel(context.transcript.languageCode)}</dd></div>
           <div><dt>Ngôn ngữ đích</dt><dd>{languageDisplayName(context.translation.targetLanguage)}</dd></div>
           <div><dt>Bản ghi</dt><dd>{context.transcript.segments.length} phân đoạn</dd></div>
           <div><dt>Bản dịch</dt><dd>{'groups' in context.translation ? `${context.translation.groups.length} cụm đã duyệt` : `${context.translation.segments.length} phân đoạn`}</dd></div>

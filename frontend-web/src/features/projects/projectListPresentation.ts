@@ -2,7 +2,8 @@ import type { Project } from './types'
 
 const languageLabels: Record<string, string> = { vi: 'Tiếng Việt', en: 'Tiếng Anh', ja: 'Tiếng Nhật', ko: 'Tiếng Hàn' }
 const displayNames = new Intl.DisplayNames(['vi'], { type: 'language' })
-export function projectListLanguage(code: string) {
+export function projectListLanguage(code: string | null) {
+  if (!code) return 'Chưa xác định'
   const normalized = code.toLowerCase()
   if (languageLabels[normalized]) return languageLabels[normalized]
   try { return displayNames.of(normalized) ?? code.toUpperCase() } catch { return code.toUpperCase() }

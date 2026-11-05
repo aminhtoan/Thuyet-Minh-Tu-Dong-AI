@@ -11,7 +11,8 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { WorkflowSteps } from '../components/common/WorkflowSteps';
 import { ProjectStatusBadge } from '../features/projects/ProjectStatusBadge';
 import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, type UploadStatus } from '../features/projects/mediaUpload';
-import { languages } from '../features/projects/languages';
+import { manualSourceOptions, sourceState } from '../features/projects/sourceLanguage';
+import { SourceLanguageSummary } from '../features/projects/SourceLanguageSummary';
 import { projectAction } from '../features/projects/projectAction';
 import { projectRepository } from '../features/projects/projectRepository';
 import { projectMetadataState } from '../features/projects/projectDataState';
@@ -29,7 +30,7 @@ export function ProjectDetailPage() {
   const { project, isLoading, error } = useProject(projectId);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [sourceLanguage, setSourceLanguage] = useState('vi');
+  const [sourceLanguage, setSourceLanguage] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -53,10 +54,10 @@ export function ProjectDetailPage() {
     if (project) {
       // Populate the editable draft after the async project detail arrives.
       // oxlint-disable-next-line react/set-state-in-effect
-      setName(project.name); setDescription(project.description ?? ''); setSourceLanguage(project.sourceLanguage);
+      setName(project.name); setDescription(project.description ?? ''); setSourceLanguage(project.sourceLanguage ?? '');
       // Keep the UI-only saved baseline aligned with the loaded project.
       // oxlint-disable-next-line react/set-state-in-effect
-      setSavedFields({ name: project.name, description: project.description ?? '', sourceLanguage: project.sourceLanguage });
+      setSavedFields({ name: project.name, description: project.description ?? '', sourceLanguage: project.sourceLanguage ?? '' });
     }
   }, [project]);
   useEffect(() => () => uploadController.current?.abort(), []);
@@ -80,7 +81,7 @@ export function ProjectDetailPage() {
   const uploadBusy = uploadStatus === 'uploading';
   const trimmedName = name.trim();
   const validationError = !trimmedName ? 'Tên dự án là bắt buộc.' : description.trim().length > 1000 ? 'Mô tả không được vượt quá 1000 ký tự.' : null;
-  async function submit(event: FormEvent) { event.preventDefault(); if (!projectId || validationError || saveLock.current || uploadBusy) { if (validationError) setMessage({ kind: 'error', text: validationError }); return; } saveLock.current = true; setSaving(true); setMessage(null); try { await projectRepository.updateProject(projectId, { name: trimmedName, description: description.trim(), sourceLanguage }); setSavedFields({ name, description, sourceLanguage }); setMessage({ kind: 'success', text: 'Đã lưu thay đổi dự án.' }); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể cập nhật dự án.' }); } finally { saveLock.current = false; setSaving(false); } }
+  async function submit(event: FormEvent) { event.preventDefault(); if (!projectId || validationError || saveLock.current || uploadBusy) { if (validationError) setMessage({ kind: 'error', text: validationError }); return; } saveLock.current = true; setSaving(true); setMessage(null); try { await projectRepository.updateProject(projectId, { name: trimmedName, description: description.trim(), ...(sourceLanguage !== (currentProject.sourceLanguage ?? '') ? { sourceLanguage } : {}) }); setSavedFields({ name, description, sourceLanguage }); setMessage({ kind: 'success', text: 'Đã lưu thay đổi dự án.' }); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể cập nhật dự án.' }); } finally { saveLock.current = false; setSaving(false); } }
   async function remove() { if (!projectId || saving || uploadBusy || !window.confirm(`Xóa dự án “${currentProject.name}” và toàn bộ tệp liên quan? Thao tác này không thể hoàn tác.`)) return; setSaving(true); try { await projectRepository.deleteProject(projectId); navigate('/projects', { replace: true }); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể xóa dự án.' }); setSaving(false); } }
   function selectUploadFile(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
@@ -154,7 +155,8 @@ export function ProjectDetailPage() {
         <div className="project-detail-section-heading"><span className="project-detail-section-icon" aria-hidden="true"><Icon name="projects" width="20" /></span><div><h2>Thông tin dự án</h2><p>Cập nhật tên, mô tả và ngôn ngữ của nội dung nguồn.</p></div></div>
         <div className="project-detail-field"><label htmlFor="project-detail-name">Tên dự án <span aria-hidden="true">*</span></label><input id="project-detail-name" value={name} maxLength={150} required aria-invalid={!trimmedName} aria-describedby={!trimmedName ? 'project-name-hint project-name-error' : 'project-name-hint'} onChange={(event) => setName(event.target.value)} disabled={saving || uploadBusy} /><span id="project-name-hint" className="project-detail-field__hint">Bắt buộc · Tối đa 150 ký tự.</span>{!trimmedName && <span id="project-name-error" className="field__message field__message--error">Tên dự án là bắt buộc.</span>}</div>
         <div className="project-detail-field"><label htmlFor="project-detail-description">Mô tả</label><textarea id="project-detail-description" value={description} maxLength={1000} rows={4} aria-describedby="project-description-hint" onChange={(event) => setDescription(event.target.value)} disabled={saving || uploadBusy} /><span id="project-description-hint" className="project-detail-field__hint">Không bắt buộc · {description.length}/1000 ký tự</span></div>
-        <div className="project-detail-field"><label htmlFor="project-detail-language">Ngôn ngữ nguồn</label><select id="project-detail-language" value={sourceLanguage} onChange={(event) => setSourceLanguage(event.target.value)} disabled={saving || uploadBusy}>{languages.map((language) => <option key={language.code} value={language.code}>{language.nativeName}</option>)}</select></div>
+        <SourceLanguageSummary project={project} />
+        <div className="project-detail-field"><label htmlFor="project-detail-language">Ngôn ngữ nguồn</label><select id="project-detail-language" value={sourceLanguage} onChange={event => setSourceLanguage(event.target.value)} disabled={saving || uploadBusy || sourceState(project).mode === 'AUTO' || !['DRAFT', 'UPLOADED', 'FAILED'].includes(project.status) || Boolean(project.workflow && project.workflow.step !== 'UPLOAD')} aria-describedby="project-source-guidance"><option value="" disabled>Chưa xác định</option>{manualSourceOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}{sourceLanguage && !manualSourceOptions.some(option => option.value === sourceLanguage) && <option value={sourceLanguage}>{sourceLanguage.toUpperCase()}</option>}</select><p id="project-source-guidance">{sourceState(project).confirmed ? 'Nguồn đã được lưu. Sau khi có bản ghi, việc đổi nguồn cần quy trình xác minh riêng.' : 'Kiểm tra bản ghi và xác nhận ngôn ngữ trước khi dịch.'}</p>{!sourceState(project).confirmed && <Link className="button button--secondary button--md" to={'/projects/' + project.id + '/transcript'}>Kiểm tra bản ghi và xác nhận nguồn</Link>}</div>
         <p className="project-detail-edit-status" role="status" aria-atomic="true">{saving ? 'Đang lưu thông tin dự án...' : dirty ? 'Có thay đổi chưa lưu. Hãy lưu thông tin trước khi rời trang.' : 'Thông tin dự án đã được lưu.'}</p>
         {message && (message.kind === 'error' || !dirty) && <p className={`project-detail-message project-detail-message--${message.kind}`} role={message.kind === 'error' ? 'alert' : 'status'}>{message.text}</p>}
         <div className="project-detail-actions"><Button type="submit" loading={saving} disabled={saving || uploadBusy || Boolean(validationError)}>Lưu thay đổi</Button>{action.available && action.step !== 'upload' && <Link className="button button--secondary button--md" to={action.path} onClick={event => { if (!confirmLeave()) event.preventDefault() }}>{action.label}</Link>}</div>

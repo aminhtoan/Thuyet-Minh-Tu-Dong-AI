@@ -105,7 +105,7 @@ test('transcript heading is consolidated while workflow and continue guards are 
   assert.doesNotMatch(workspace, /KHÔNG GIAN DỰ ÁN|className="transcript-intro"|Bản ghi được lưu trên máy chủ/);
   assert.match(workspace, /projectStatusLabels\[stage\]/);
   assert.match(workspace, /<WorkflowSteps workflow=\{project.workflow\} projectId=\{project.id\} pageStep="TRANSCRIPT" \/>/);
-  assert.match(workspace, /const canContinue = Boolean\(editor.draft && !editor.hasInvalidSegments && editor.status === 'SAVED'\)/);
+  assert.match(workspace, /const canContinue = Boolean\(sourceConfirmed && editor.draft && !editor.hasInvalidSegments && editor.status === 'SAVED'\)/);
   assert.match(workspace, /<Button variant="primary" disabled=\{!canContinue\} onClick=\{\(\) => navigate\(`\/projects\/\$\{project.id\}\/translation`\)\}>Tiếp tục đến bản dịch/);
   assert.match(workspace, /mediaState === 'READY' \? project.mediaName/);
   assert.match(workspace, /formatFileSize\(project.mediaSize\)/);

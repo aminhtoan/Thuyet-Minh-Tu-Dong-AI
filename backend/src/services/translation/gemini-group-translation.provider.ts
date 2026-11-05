@@ -5,7 +5,7 @@ import { boundedTranslationFetch } from './bounded-fetch.js';
 import { controlledScopeActive } from './controlled-development.js';
 import { customerScopeActive, scopedCustomerModel, scopedCustomerMethod } from './customer-scope.js';
 import { customerTranslationMethod } from '../../config/customer-translation-method.js';
-import { assertSimpleInput, simpleTranslationInstructions } from './gemini-simple-contract.js';
+import { assertSimpleInput, simpleInstructionsFor } from './gemini-simple-contract.js';
 import { customerTranslationModel } from '../../config/translation-model.js';
 import { customerDispatch, customerResponse } from './customer-execution.js';
 import { AppError } from '../../utils/app-error.js';
@@ -103,7 +103,7 @@ export class GeminiGroupTranslationProvider implements GroupProvider {
           metadata: (model, signal) => ai.models.get({ model, config: { abortSignal: signal } }),
           async generate(model, input, signal) {
             const response = await ai.models.generateContent({ model, contents: JSON.stringify(input), config: {
-              systemInstruction: simple ? simpleTranslationInstructions : groupTranslationInstructions,
+              systemInstruction: simple ? simpleInstructionsFor(input.sourceLanguage, input.targetLanguage) : groupTranslationInstructions,
               ...(!simple ? { responseMimeType: 'application/json', responseJsonSchema: geminiGroupResponseJsonSchema } : {}), candidateCount: 1, maxOutputTokens: 8192, abortSignal: signal,
               ...(thinking === 'MEDIUM' ? { thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM } } : {}),
             } });

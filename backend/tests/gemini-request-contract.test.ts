@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { z } from 'zod';
-import { GeminiGroupTranslationProvider, mapGroupResponse, responseSchema } from '../src/services/translation/gemini-group-translation.provider.js';
+import { GeminiGroupTranslationProvider, mapGroupResponse, geminiGroupResponseJsonSchema } from '../src/services/translation/gemini-group-translation.provider.js';
 import { withCustomerTranslation } from '../src/services/translation/customer-scope.js';
 import { gemini400Diagnostic, PROVIDER_ERROR_PARAMETERS, PROVIDER_ERROR_REASONS } from '../src/services/translation/provider-failure.js';
 import { TranslationAttempt } from '../src/models/TranslationAttempt.js';
@@ -11,7 +10,7 @@ const output = { outcome: 'translated', groups: [{ groupId: 'g', translatedText:
 
 for (const thinking of ['DEFAULT', 'MEDIUM']) test(`installed SDK serializes supported JSON request with ${thinking}; no fallback/retry`, async t => {
   const saved = { ...process.env };
-  Object.assign(process.env, { GEMINI_API_KEY: 'synthetic-only', GEMINI_TRANSLATION_MODEL: 'gemini-3.8-flash', TRANSLATION_PROVIDER: 'gemini', CUSTOMER_TRANSLATION_ENABLED: 'true', CUSTOMER_TRANSLATION_THINKING: thinking });
+  Object.assign(process.env, { GEMINI_API_KEY: 'synthetic-only', GEMINI_TRANSLATION_MODEL: 'gemini-3.8-flash', CUSTOMER_TRANSLATION_MODEL_SELECTION: 'PRIMARY', CUSTOMER_TRANSLATION_METHOD: 'GROUPS_V1', TRANSLATION_PROVIDER: 'gemini', CUSTOMER_TRANSLATION_ENABLED: 'true', CUSTOMER_TRANSLATION_THINKING: thinking });
   delete process.env.CONTROLLED_PROVIDER_MODE;
   const calls: string[] = [];
   t.mock.method(globalThis, 'fetch', async (url, init) => {
@@ -25,7 +24,7 @@ for (const thinking of ['DEFAULT', 'MEDIUM']) test(`installed SDK serializes sup
     const body = JSON.parse(String(init.body));
     assert.deepEqual(Object.keys(body).sort(), ['contents', 'generationConfig', 'systemInstruction']);
     assert.deepEqual(body.generationConfig, {
-      candidateCount: 1, maxOutputTokens: 8192, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(responseSchema),
+      candidateCount: 1, maxOutputTokens: 8192, responseMimeType: 'application/json', responseJsonSchema: geminiGroupResponseJsonSchema,
       ...(thinking === 'MEDIUM' ? { thinkingConfig: { thinkingLevel: 'MEDIUM' } } : {}),
     });
     assert.deepEqual(JSON.parse(body.contents[0].parts[0].text), input);

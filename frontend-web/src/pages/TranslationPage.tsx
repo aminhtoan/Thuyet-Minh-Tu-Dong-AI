@@ -22,6 +22,7 @@ import '../styles/translation.css';
 import { GroupTranslationWorkspace } from '../features/translation/GroupTranslationWorkspace';
 import { TranslationSourcePreflight } from '../features/translation/TranslationSourcePreflight';
 import { CustomerSimplePreflight } from '../features/translation/CustomerSimplePreflight';
+import { sourceState } from '../features/projects/sourceLanguage';
 
 export function TranslationPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -36,10 +37,11 @@ export function TranslationPage() {
       <Link to="/projects" className="button button--secondary button--md">Quay lại dự án</Link>
     </Card>
   </>;
+  if (!sourceState(project).confirmed) return <><PageHeader title="Bản dịch" /><Card><h2>Cần xác nhận ngôn ngữ nguồn</h2><p>Hãy đọc bản ghi và xác nhận ngôn ngữ chính trước khi bắt đầu dịch.</p><Link className="button button--primary button--md" to={`/projects/${project.id}/transcript`}>Kiểm tra bản ghi và xác nhận nguồn</Link></Card></>;
   const access = resolveWorkflowRouteAccess(project.workflow, 'TRANSLATION', language);
   if (!access.allowed) return <><PageHeader title="Bản dịch" /><WorkflowRouteRecovery projectId={project.id} access={access} /></>;
   const preferredTarget = language?.trim().toLowerCase() || access.targetLanguage || '';
-  const simplePreflight = <CustomerSimplePreflight key={project.id} projectId={project.id} />;
+  const simplePreflight = <CustomerSimplePreflight key={project.id + preferredTarget} projectId={project.id} targetLanguage={preferredTarget} />;
   if (import.meta.env.VITE_CUSTOMER_TRANSLATION_ENABLED === 'true') return <div className="translation-page"><GroupTranslationWorkspace key={project.id + preferredTarget} project={project} preferredTarget={preferredTarget} canMutate={access.canMutate} notice={access.reason} customerMode />{simplePreflight}</div>;
   return <div className="translation-page"><TranslationSourcePreflight key={project.id + preferredTarget} projectId={project.id}>{_blockGeneration =>
     import.meta.env.VITE_GROUP_TRANSLATION_ENABLED === 'true'
@@ -86,7 +88,7 @@ function TranslationWorkspace({ project, preferredTarget, canMutate, notice, blo
       action={<Button onClick={backToTranscript}>Quay lại bản ghi</Button>} /></Card>}
     {showSource && <div className="translation-workspace">
       <Card className="translation-language-card">
-        <div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{translationLanguageLabel({ code: sourceLanguage, name: languageNames[sourceLanguage] ?? sourceLanguage, nativeName: '' })}</p></div>
+        <div><span className="translation-label">Ngôn ngữ nguồn</span><p className="translation-source-language">{translationLanguageLabel({ code: sourceLanguage ?? '', name: sourceLanguage ? languageNames[sourceLanguage] ?? sourceLanguage : 'Chưa xác định', nativeName: '' })}</p></div>
         <div className="translation-language-field">
           <label htmlFor="target-language">Ngôn ngữ đích</label>
           <select id="target-language" value={editor.targetLanguage ?? ''} disabled={!canMutate || !editor.canChangeTarget}

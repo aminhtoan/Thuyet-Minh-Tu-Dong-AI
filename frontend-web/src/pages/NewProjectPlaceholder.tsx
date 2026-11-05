@@ -7,16 +7,16 @@ import { Input } from '../components/common/Input'
 import { Spinner } from '../components/common/Spinner'
 import { formatFileSize, MAX_MEDIA_FILE_SIZE, validateMediaFile, validateProjectName, type UploadStatus } from '../features/projects/mediaUpload'
 import { uploadProjectMedia } from '../features/projects/uploadService'
-import { sourceLanguageOptions } from '../features/projects/projectUtils'
-import type { LanguageCode } from '../features/projects/types'
+import { manualSourceOptions } from '../features/projects/sourceLanguage'
+import type { LanguageCode, SourceLanguageMode } from '../features/projects/types'
 import '../styles/upload.css'
 
 export function NewProjectPlaceholder() {
   const [projectName, setProjectName] = useState('')
   const [description, setDescription] = useState('')
   const [nameTouched, setNameTouched] = useState(false)
-  const [languageTouched, setLanguageTouched] = useState(false)
-  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode | ''>('')
+  const [sourceLanguageMode, setSourceLanguageMode] = useState<SourceLanguageMode>('AUTO')
+  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('vi')
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<UploadStatus>('idle')
   const [, setProgress] = useState(0)
@@ -30,7 +30,7 @@ export function NewProjectPlaceholder() {
   const validation = validateMediaFile(file && { name: file.name, size: file.size, mimeType: file.type })
   const nameError = validateProjectName(projectName)
   const busy = status === 'validating' || status === 'uploading'
-  const canUpload = !nameError && sourceLanguage && validation.valid && !busy && status !== 'success'
+  const canUpload = !nameError && (sourceLanguageMode === 'AUTO' || Boolean(sourceLanguage)) && validation.valid && !busy && status !== 'success'
 
   useEffect(() => () => {
     controllerRef.current?.abort()
@@ -85,7 +85,6 @@ export function NewProjectPlaceholder() {
   }
   async function startUpload() {
     setNameTouched(true)
-    setLanguageTouched(true)
     const result = validateMediaFile(file && { name: file.name, size: file.size, mimeType: file.type })
     if (nameError || !sourceLanguage || !result.valid || !file || busy) return
     setStatus('validating')
@@ -95,7 +94,7 @@ export function NewProjectPlaceholder() {
     controllerRef.current = controller
     try {
       setStatus('uploading')
-      await uploadProjectMedia({ projectName: projectName.trim(), description: description.trim(), sourceLanguage, file, signal: controller.signal, onProgress: setProgress })
+      await uploadProjectMedia({ projectName: projectName.trim(), description: description.trim(), sourceLanguageMode, ...(sourceLanguageMode === 'MANUAL' ? { sourceLanguage } : {}), file, signal: controller.signal, onProgress: setProgress })
       if (!controller.signal.aborted) setStatus('success')
     } catch (error) {
       if (controller.signal.aborted) setStatus('cancelled')
@@ -110,7 +109,8 @@ export function NewProjectPlaceholder() {
         <div className="upload-section-heading"><span className="upload-step">1</span><div><h2>Thông tin dự án</h2><p>Đặt tên dự án và chọn ngôn ngữ được sử dụng trong phương tiện gốc.</p></div></div>
         <div className="upload-fields">
           <Input label="Tên dự án" required maxLength={100} placeholder="Ví dụ: Giới thiệu sản phẩm" value={projectName} onChange={(event) => setProjectName(event.target.value)} onBlur={() => setNameTouched(true)} error={nameTouched ? nameError ?? undefined : undefined} helperText="Từ 3 đến 100 ký tự. Dấu * là trường bắt buộc." disabled={busy || status === 'success'} />
-          <div className="field"><label className="field__label" htmlFor="source-language">Ngôn ngữ nguồn <span className="field__required" aria-hidden="true">*</span></label><select id="source-language" className="upload-select" value={sourceLanguage} onBlur={() => setLanguageTouched(true)} onChange={(event) => setSourceLanguage(event.target.value as LanguageCode | '')} disabled={busy || status === 'success'} required aria-invalid={languageTouched && !sourceLanguage} aria-describedby="source-language-message"><option value="">Chọn ngôn ngữ</option>{sourceLanguageOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><p id="source-language-message" className={languageTouched && !sourceLanguage ? 'field__message field__message--error' : 'field__message'}>{languageTouched && !sourceLanguage ? 'Vui lòng chọn ngôn ngữ nguồn.' : 'Ngôn ngữ được sử dụng trong phương tiện gốc.'}</p></div>
+          <div className="field"><label className="field__label" htmlFor="source-language-mode">Ngôn ngữ nguồn</label><select id="source-language-mode" className="upload-select" value={sourceLanguageMode} onChange={event => setSourceLanguageMode(event.target.value as SourceLanguageMode)} disabled={busy || status === 'success'} aria-describedby="source-mode-help"><option value="AUTO">Tự động nhận diện (AUTO)</option><option value="MANUAL">Chọn thủ công (MANUAL)</option></select><p id="source-mode-help" className="field__message">{sourceLanguageMode === 'AUTO' ? 'Sau khi tạo bản ghi, bạn cần xác nhận ngôn ngữ chính nếu hệ thống chưa xác định được.' : 'Chọn ngôn ngữ được sử dụng trong phương tiện gốc.'}</p></div>
+          {sourceLanguageMode === 'MANUAL' && <div className="field"><label className="field__label" htmlFor="source-language">Chọn ngôn ngữ nguồn</label><select id="source-language" className="upload-select" value={sourceLanguage} onChange={event => setSourceLanguage(event.target.value)} disabled={busy || status === 'success'} required>{manualSourceOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>}
           <div className="field upload-field--full"><label className="field__label" htmlFor="project-description">Mô tả</label><textarea id="project-description" className="upload-description" maxLength={1000} placeholder="Mô tả ngắn về nội dung dự án" value={description} onChange={(event) => setDescription(event.target.value)} disabled={busy || status === 'success'} /><span className="field__message">Không bắt buộc · {description.length}/1000 ký tự</span></div>
         </div>
       </Card>

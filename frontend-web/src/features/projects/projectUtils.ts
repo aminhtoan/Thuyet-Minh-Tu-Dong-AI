@@ -1,4 +1,5 @@
 import { languages } from './languages';
+import { sourceLanguageLabel, sourceState } from './sourceLanguage';
 import { projectStatusLabels } from '../../localization/statusLabels.mjs'
 import type { LanguageCode, Project, ProjectStatistics, ProjectStatus, ProjectStatusFilter } from './types'
 
@@ -14,7 +15,7 @@ export function getProjectStatusVariant(status: ProjectStatus): 'default' | 'inf
   if (isProcessingStatus(status)) return 'info'
   return 'default'
 }
-export function formatLanguagePair(project: Project): string { return `${languageNames[project.sourceLanguage] ?? project.sourceLanguage.toUpperCase()} → ${project.targetLanguage ? languageNames[project.targetLanguage] ?? project.targetLanguage.toUpperCase() : 'Chưa dịch'}` }
+export function formatLanguagePair(project: Project): string { return `${sourceLanguageLabel(sourceState(project).language)} → ${project.targetLanguage ? languageNames[project.targetLanguage] ?? project.targetLanguage.toUpperCase() : 'Chưa dịch'}` }
 export function formatRelativeDate(value: string): string {
   const elapsed = Math.max(0, Date.now() - new Date(value).getTime())
   const minutes = Math.floor(elapsed / 60_000)

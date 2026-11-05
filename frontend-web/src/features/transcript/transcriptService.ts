@@ -3,9 +3,10 @@ import { projectRepository } from '../projects/projectRepository'
 import type { Transcript, TranscriptSegmentUpdate } from './types'
 import { confirmationMessages } from '../../localization/confirmationMessages.mjs'
 import { requireConfirmation } from '../../utils/confirmationGuard.mjs'
+import type { SourceLanguageStatus } from '../projects/types'
 type Options = { signal?: AbortSignal }
-type TranscriptDto = { id: string; projectId: string; language: string; fullText: string; revision: number | null; segments: Array<{ id?: string; index: number; startTime: number; endTime: number; text: string }>; createdAt: string; updatedAt: string }
-const mapTranscript = (value: TranscriptDto): Transcript => ({ id: value.id, projectId: value.projectId, languageCode: value.language, fullText: value.fullText, revision: value.revision, status: 'SAVED', createdAt: value.createdAt, updatedAt: value.updatedAt, segments: value.segments.map((segment) => ({ id: `${value.id}-${segment.index}`, backendSegmentId: segment.id, sequence: segment.index + 1, startTime: segment.startTime, endTime: segment.endTime, text: segment.text })) })
+type TranscriptDto = { id: string; projectId: string; language: string | null; sourceLanguageStatus?: SourceLanguageStatus; fullText: string; revision: number | null; segments: Array<{ id?: string; index: number; startTime: number; endTime: number; text: string }>; createdAt: string; updatedAt: string }
+const mapTranscript = (value: TranscriptDto): Transcript => ({ id: value.id, projectId: value.projectId, languageCode: value.language ?? null, sourceLanguageStatus: value.sourceLanguageStatus, fullText: value.fullText, revision: value.revision, status: 'SAVED', createdAt: value.createdAt, updatedAt: value.updatedAt, segments: value.segments.map((segment) => ({ id: `${value.id}-${segment.index}`, backendSegmentId: segment.id, sequence: segment.index + 1, startTime: segment.startTime, endTime: segment.endTime, text: segment.text })) })
 
 export const transcriptService = {
   async getTranscript(projectId: string, options: Options = {}): Promise<Transcript | null> {

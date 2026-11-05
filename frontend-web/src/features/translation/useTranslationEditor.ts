@@ -47,7 +47,7 @@ export function useTranslationEditor(projectId: string, preferredTarget: Languag
     try {
       const transcript = await transcriptService.getTranscript(projectId, { signal: controller.signal });
       if (controller.signal.aborted) return;
-      if (!transcript?.segments.length || transcript.status !== 'SAVED') {
+      if (!transcript?.segments.length || transcript.status !== 'SAVED' || !transcript.languageCode || transcript.sourceLanguageStatus === 'NEEDS_CONFIRMATION') {
         dispatch({ ...initialState, status: 'NOT_STARTED', languageStatus: 'EMPTY' });
         return;
       }

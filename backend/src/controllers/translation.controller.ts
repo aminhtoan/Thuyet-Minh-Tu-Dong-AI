@@ -7,6 +7,7 @@ import type { GroupAdmission } from '../services/translation/group-admission.js'
 import { groupResponseHandler } from '../services/translation/group-response.js';
 import { AppError } from '../utils/app-error.js';
 import { withCustomerTranslation } from '../services/translation/customer-scope.js';
+import { assertCustomerTarget } from '../services/translation/customer-languages.js';
 const normalGroups = <T>(work: () => Promise<T>) => process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE ? withCustomerTranslation(work) : work();
 
 export const start: RequestHandler = async (request, response) => {
@@ -18,8 +19,8 @@ export const start: RequestHandler = async (request, response) => {
     return;
   }
   if (body.format === 'GROUPS_V1' || (process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE)) {
-    if (body.targetLanguage !== 'en') throw new AppError(400, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED', 'Luồng Customer hiện hỗ trợ dịch tiếng Anh.');
-    response.json(successResponse({ draft: await groupTranslationService.customerGenerate(request.ownedProjectId!, request.user!.id) }));
+    assertCustomerTarget(targetLanguage);
+    response.json(successResponse({ draft: await groupTranslationService.customerGenerate(request.ownedProjectId!, request.user!.id, targetLanguage) }));
     return;
   }
   response.json(successResponse(await service.translate(request.ownedProjectId ?? '', request.user?.id ?? '', body.targetLanguage)));
@@ -38,13 +39,20 @@ export const preview: RequestHandler = async (req, res) => {
   const draft = await normalGroups(() => groupTranslationService.preview(req.ownedProjectId ?? '', req.user!.id, req.body));
   res.json(successResponse({ draft }));
 };
-export const customerDraft: RequestHandler = async (req, res) => res.json(successResponse(await groupTranslationService.customerState(req.ownedProjectId!, req.user!.id)));
+export const customerDraft: RequestHandler = async (req, res) => res.json(successResponse(await groupTranslationService.customerState(req.ownedProjectId!, req.user!.id, String(req.params.targetLanguage ?? 'en'))));
+const requireCustomerDraft = async (req: Parameters<RequestHandler>[0]) => {
+  // Old English URLs remain readable. New clients explicitly bind the selected
+  // target in the query, independently checked against the durable draft ID.
+  const target = String(req.query.targetLanguage ?? 'en');
+  const draft = await groupTranslationService.customerDraft(req.ownedProjectId!, req.user!.id, target);
+  if (!draft || draft.draftId !== String(req.params.draftId)) throw new AppError(409, 'TRANSLATION_ATTEMPT_MISMATCH', 'Bản nháp không khớp ngôn ngữ hoặc yêu cầu đang chọn.');
+};
 export const draft: RequestHandler = async (req, res) => res.json(successResponse({ draft: await normalGroups(async () => {
-  if (process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE) await groupTranslationService.customerDraft(req.ownedProjectId!, req.user!.id);
+  if (process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE) await requireCustomerDraft(req);
   return groupTranslationService.draft(req.ownedProjectId ?? '', req.user!.id, String(req.params.draftId));
 }) }));
 export const approve: RequestHandler = async (req, res) => res.json(successResponse(await normalGroups(async () => {
-  if (process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE) await groupTranslationService.customerDraft(req.ownedProjectId!, req.user!.id);
+  if (process.env.CUSTOMER_TRANSLATION_ENABLED === 'true' && !process.env.CONTROLLED_PROVIDER_MODE) await requireCustomerDraft(req);
   return groupTranslationService.approve(req.ownedProjectId ?? '', req.user!.id, String(req.params.draftId), req.body);
 })));
 

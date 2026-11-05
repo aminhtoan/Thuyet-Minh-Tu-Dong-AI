@@ -11,7 +11,7 @@ const { candidateGroups, revision } = await import('../src/services/translation/
 const { translationProviderInput } = await import('../src/services/translation/gemini-simple-contract.js');
 const source = { transcriptId: 'a'.repeat(24), transcriptRevision: 1, languageCode: 'vi', fullText: 'Xin chào "Việt Nam".\n', segments: [{ id: 'b'.repeat(24), sequence: 1, text: 'Xin chào "Việt Nam".', startTime: 0, endTime: 1 }] };
 const project = '1'.repeat(24), owner = '2'.repeat(24);
-const deps = (patch = {}) => ({ owns: async () => true, load: async () => source, attempt: async () => null, english: async () => false, jobs: async () => false, drafts: () => ({ count: 0, visibility: 'PROCESS_LOCAL_ONLY', globalAbsence: 'UNKNOWN' }), ...patch }) as any;
+const deps = (patch = {}) => ({ owns: async () => true, project: async () => ({ status: 'TRANSCRIBED', sourceLanguage: 'vi' }), load: async () => source, attempt: async () => null, translation: async () => false, jobs: async () => false, drafts: () => ({ count: 0, visibility: 'PROCESS_LOCAL_ONLY', globalAbsence: 'UNKNOWN' }), ...patch }) as any;
 
 test('eligible source uses canonical planner/input UTF-8 bytes, never READY with unverified quota/deployment', async t => {
   t.mock.method(globalThis, 'fetch', () => { throw Error('NO_PROVIDER'); });
@@ -45,7 +45,7 @@ test('SIMPLE boundaries and full input accounting, not just source text length',
 });
 
 test('uncertain attempt, saved translation, active job and local draft independently block', async () => {
-  for (const patch of [{ attempt: async () => ({ status: 'UNCERTAIN' }) }, { english: async () => true }, { jobs: async () => true }, { drafts: () => ({ count: 1, visibility: 'PROCESS_LOCAL_ONLY', globalAbsence: 'UNKNOWN' }) }]) {
+  for (const patch of [{ attempt: async () => ({ status: 'UNCERTAIN' }) }, { translation: async () => true }, { jobs: async () => true }, { drafts: () => ({ count: 1, visibility: 'PROCESS_LOCAL_ONLY', globalAbsence: 'UNKNOWN' }) }]) {
     const result = await customerSimplePreflight(project, owner, deps(patch));
     assert.equal(result.status, 'BLOCKED'); assert.ok(result.reasonCodes.includes('TRANSLATION_CONFLICT'));
     assert.equal(result.drafts.globalAbsence, 'UNKNOWN');
@@ -101,7 +101,7 @@ test('READY only for verified enabled SIMPLE durable path; real conflicts BLOCKE
     for (const patch of [{ quota: async () => null }, { deployment: async () => null }, { durableConflicts: async () => null }]) {
       assert.equal((await customerSimplePreflight(project, owner, deps({ ...evidence, ...patch }))).status, 'UNKNOWN');
     }
-    for (const patch of [{ attempt: async () => ({ status: 'UNCERTAIN' }) }, { english: async () => true }, { jobs: async () => true }, { quota: async () => ({ status: 'VERIFIED', available: false }) }, { deployment: async () => ({ status: 'VERIFIED', intendedTargetApproval: 'MISMATCH', approvedDatabaseMatch: false }) }, { drafts: () => ({ count: 1 }) }]) {
+    for (const patch of [{ attempt: async () => ({ status: 'UNCERTAIN' }) }, { translation: async () => true }, { jobs: async () => true }, { quota: async () => ({ status: 'VERIFIED', available: false }) }, { deployment: async () => ({ status: 'VERIFIED', intendedTargetApproval: 'MISMATCH', approvedDatabaseMatch: false }) }, { drafts: () => ({ count: 1 }) }]) {
       assert.equal((await customerSimplePreflight(project, owner, deps({ ...evidence, ...patch }))).status, 'BLOCKED');
     }
   } finally { process.env = old; }

@@ -310,8 +310,8 @@ test('SIMPLE preflight exposes SOURCE_LANGUAGE_UNCONFIRMED and performs no attem
   const previous = process.env.NODE_ENV; process.env.NODE_ENV = 'development';
   const forbidden = async () => { throw new Error('MUST_NOT_RUN'); };
   try {
-    const result = await customerSimplePreflight(projectId, ownerId, { owns: async () => true, load: loadSource,
-      attempt: forbidden, english: async () => false, jobs: async () => false, drafts: forbidden, quota: forbidden, deployment: forbidden, durableConflicts: forbidden } as any);
+    const result = await customerSimplePreflight(projectId, ownerId, { owns: async () => true, project: async () => ({ status: 'TRANSCRIBED', sourceLanguage: null, sourceLanguageMode: 'AUTO', sourceLanguageStatus: 'NEEDS_CONFIRMATION' }), load: loadSource,
+      attempt: forbidden, translation: async () => false, jobs: async () => false, drafts: forbidden, quota: forbidden, deployment: forbidden, durableConflicts: forbidden } as any);
     assert.equal(result.status, 'BLOCKED'); assert.ok(result.reasonCodes.includes('SOURCE_LANGUAGE_UNCONFIRMED'));
   } finally { process.env.NODE_ENV = previous; }
 });

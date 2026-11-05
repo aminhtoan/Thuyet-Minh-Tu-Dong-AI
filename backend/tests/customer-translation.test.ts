@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { once } from 'node:events';
 import express from 'express';
 import mongoose, { Types } from 'mongoose';
-process.env.NODE_ENV = 'test'; process.env.CUSTOMER_TRANSLATION_ENABLED = 'true'; process.env.GROUP_TRANSLATION_ENABLED = 'false';
+process.env.NODE_ENV = 'test'; process.env.CUSTOMER_TRANSLATION_ENABLED = 'true'; process.env.GROUP_TRANSLATION_ENABLED = 'false'; process.env.CUSTOMER_TRANSLATION_METHOD = 'GROUPS_V1';
 delete process.env.CONTROLLED_PROVIDER_MODE;
 process.env.MONGODB_URI = 'mongodb://127.0.0.1:1/mock-only';
 process.env.JWT_ACCESS_SECRET = randomBytes(48).toString('hex'); process.env.JWT_REFRESH_SECRET = randomBytes(48).toString('hex');
@@ -43,7 +43,7 @@ test('normal service authorizes dynamically, derives plan, durable replay/restar
   const service = new GroupTranslationService(provider, new GroupDraftStore());
   await assert.rejects(service.customerGenerate(project, admin)); assert.equal(calls, 0);
   running = true; await assert.rejects(service.customerGenerate(project, owner)); running = false; assert.equal(calls, 0);
-  headerText = 'x'.repeat(98305); await assert.rejects(service.customerGenerate(project, owner)); headerText = 'Synthetic source only.'; assert.equal(calls, 0);
+  headerText = 'x'.repeat(2 * 1024 * 1024 + 1); await assert.rejects(service.customerGenerate(project, owner)); headerText = 'Synthetic source only.'; assert.equal(calls, 0);
   const first = await service.customerGenerate(project, owner); assert.equal(first.state, 'DRAFT'); assert.equal(calls, 1);
   const restarted = new GroupTranslationService(provider, new GroupDraftStore());
   assert.equal((await restarted.customerGenerate(project, owner)).draftId, first.draftId); assert.equal(calls, 1);

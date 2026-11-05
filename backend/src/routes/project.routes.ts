@@ -12,7 +12,7 @@ import { requireProjectOwner } from '../middleware/project-owner.middleware.js';
 import { uploadMedia } from '../middleware/upload.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { createProjectSchema, listProjectsSchema, projectIdSchema, updateProjectSchema, confirmSourceLanguageSchema } from '../validators/project.validator.js';
-import { startTranslationSchema, targetTranslationSchema, previewTranslationSchema, draftTranslationSchema, approveTranslationSchema } from '../validators/translation.validator.js';
+import { startTranslationSchema, targetTranslationSchema, previewTranslationSchema, draftTranslationSchema, approveTranslationSchema, simplePreflightSchema, customerDraftSchema } from '../validators/translation.validator.js';
 import { narrationIdSchema, startNarrationSchema } from '../validators/narration.validator.js';
 import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
 import { updateTranscriptSegmentSchema } from '../validators/transcription.validator.js';
@@ -33,8 +33,8 @@ projectRouter.get('/:id/translations/simple-preflight', (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   if (process.env.NODE_ENV !== 'development') return next(new AppError(404, 'DIAGNOSTIC_NOT_AVAILABLE', 'Không tìm thấy kiểm tra.'));
   next();
-}, requireProjectOwner, async (req, res) => {
-  res.json(successResponse(await customerSimplePreflight(req.ownedProjectId!, req.user!.id)));
+}, validate(simplePreflightSchema), requireProjectOwner, async (req, res) => {
+  res.json(successResponse(await customerSimplePreflight(req.ownedProjectId!, req.user!.id, undefined, String(req.query.targetLanguage ?? 'en'))));
 });
 projectRouter.get('/:id/translations/read-only-diagnostic', (req, res, next) => {
   res.set('Cache-Control', 'no-store');
@@ -60,7 +60,7 @@ projectRouter.get('/:id/transcript', requireProjectOwner, transcriptionControlle
 projectRouter.patch('/:id/transcript/segments/:segmentId', validate(updateTranscriptSegmentSchema), requireProjectOwner, transcriptionController.updateSegment);
 projectRouter.post('/:id/translations', validate(startTranslationSchema), requireProjectOwner, translationController.start);
 projectRouter.get('/:id/translations', requireProjectOwner, translationController.list);
-projectRouter.get('/:id/translations/customer-draft/en', requireProjectOwner, translationController.customerDraft);
+projectRouter.get('/:id/translations/customer-draft/:targetLanguage', validate(customerDraftSchema), requireProjectOwner, translationController.customerDraft);
 projectRouter.get('/:id/translations/plan/:targetLanguage', validate(targetTranslationSchema), requireProjectOwner, groups.plan);
 projectRouter.post('/:id/translations/preview', validate(previewTranslationSchema), requireProjectOwner, groups.preview);
 projectRouter.get('/:id/translations/drafts/:draftId', validate(draftTranslationSchema), requireProjectOwner, groups.draft);

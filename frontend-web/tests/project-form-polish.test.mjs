@@ -14,6 +14,7 @@ function compile(path, dependencies, globals = {}) {
   return exports
 }
 const media = compile('features/projects/mediaUpload.ts', {})
+const sourceLanguage = compile('features/projects/sourceLanguage.ts', {})
 function find(tree, predicate) {
   if (Array.isArray(tree)) return tree.map(node => find(node, predicate)).find(Boolean)
   if (!tree || typeof tree !== 'object') return undefined
@@ -42,6 +43,8 @@ function harness(page, { failSave = false, upload = async () => {}, mediaState =
     '../components/common/WorkflowSteps': { WorkflowSteps: 'workflow-test' }, '../features/projects/ProjectStatusBadge': { ProjectStatusBadge: 'badge-test' },
     '../features/projects/mediaUpload': media, '../features/projects/languages': { languages: [{ code: 'vi', nativeName: 'Tiếng Việt' }] },
     '../features/projects/projectUtils': { sourceLanguageOptions: [{ value: 'vi', label: 'Tiếng Việt' }] },
+    '../features/projects/sourceLanguage': sourceLanguage,
+    '../features/projects/SourceLanguageSummary': { SourceLanguageSummary: 'source-summary-test' },
     '../features/projects/projectAction': { projectAction: () => ({ available: false, reason: 'Test only' }) },
     '../features/projects/projectDataState': { projectMetadataState: () => ({ media: mediaState }) },
     '../features/transcript/SourceMediaPlayer': { SourceMediaPlayer: 'source-player-test' },
@@ -110,7 +113,7 @@ test('new-project success keeps the existing list destination and clarifies the 
   const h = harness('NewProjectPlaceholder')
   let tree = h.render()
   find(tree, n => n.type === 'input-test').props.onChange({ target: { value: 'Dự án kiểm thử' } })
-  tree = h.render(); find(tree, n => n.props?.id === 'source-language').props.onChange({ target: { value: 'vi' } })
+  tree = h.render(); assert.equal(find(tree, n => n.props?.id === 'source-language-mode').props.value, 'AUTO')
   tree = h.render(); find(tree, n => n.props?.id === 'media-file').props.onChange({ target: { files: [{ name: 'test.mp4', size: 1024, type: 'video/mp4' }], value: '' } })
   tree = h.render()
   const start = find(tree, n => n.type === 'button-test' && text(n).includes('Tạo dự án'))

@@ -16,7 +16,7 @@ test('normal Customer uses existing same-origin API/session, explicit normal POS
   const code = await read('src/features/translation/groupTranslationService.ts');
   const body = code.slice(code.indexOf('async customerGenerate'), code.indexOf('async customerDraft'));
   assert.match(body, /\/projects\/\$\{projectId\}\/translations/);
-  assert.match(body, /targetLanguage: 'en', format: 'GROUPS_V1'/);
+  assert.match(body, /targetLanguage, format: 'GROUPS_V1'/);
   assert.match(body, /}, false\)/);
   assert.doesNotMatch(body, /permit|18083|controlled|localStorage|sessionStorage|refresh|retry/);
 });
@@ -43,7 +43,7 @@ test('400/503 server evidence gives distinct actionable feedback without authori
 test('reload status is authenticated GET only with no refresh; persisted attempt prevents generating after refresh', async () => {
   const api = await read('src/features/translation/groupTranslationService.ts');
   const getter = api.slice(api.indexOf('async customerState'), api.indexOf('async saved'));
-  assert.match(getter, /customer-draft\/en/); assert.match(getter, /}, false\)/); assert.doesNotMatch(getter, /POST|preview|approve/);
+  assert.match(getter, /customer-draft\/\$\{encodeURIComponent\(targetLanguage\)\}/); assert.match(getter, /}, false\)/); assert.doesNotMatch(getter, /POST|preview|approve/);
   const ui = await read('src/features/translation/GroupTranslationWorkspace.tsx');
   assert.match(ui, /if \(state.attempt\) return/); assert.match(ui, /submitted \|\| attempt/);
   assert.match(ui, /Kiểm tra trạng thái/);
@@ -59,9 +59,9 @@ test('Customer branch does not require diagnostic service or per-project setup a
 test('manual Customer click only, double submit/error latch, durable GET recovery and separate manual approval', async () => {
   const code = await read('src/features/translation/GroupTranslationWorkspace.tsx');
   assert.match(code, /customerMode && \(submitted \|\|/); assert.match(code, /if \(customerMode\) setSubmitted\(true\)/);
-  assert.match(code, /customerMode \? await groupTranslationService.customerGenerate\(project.id\)/);
-  assert.match(code, /await groupTranslationService.customerState\(project.id, controller.signal\)/);
-  assert.match(code, /customerMode \? 'Dịch tiếng Anh'/);
+  assert.match(code, /customerMode \? await groupTranslationService.customerGenerate\(project.id, target\)/);
+  assert.match(code, /await groupTranslationService.customerState\(project.id, controller.signal, effectiveTarget\)/);
+  assert.match(code, /customerTargetLabel\(target\)/);
   assert.match(code, /if \(!canMutate \|\| !draft \|\| !reviewed/);
   assert.match(code, /Chỉ tải lại dữ liệu; không tự gửi lại yêu cầu AI/);
   const effect = code.slice(code.indexOf('useEffect(() => {\n    const controller'), code.indexOf('function changeTarget'));

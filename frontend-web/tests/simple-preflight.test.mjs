@@ -72,3 +72,15 @@ test('READY is accepted only with full evidence; UNKNOWN is not rewritten CLEAR;
   for (const patch of [{ quota: 'NOT VERIFIED' }, { attempt: 'BLOCKED' }, { simpleLimits: 'FAIL' }, { crossProcess: { status: 'UNKNOWN' } }, { runtime: { ...value.runtime, deploymentEvidence: { intendedTargetApproval: 'MISMATCH' } } }]) assert.equal(simplePreflightView({ ...value, ...patch }).status, 'BLOCKED');
   assert.equal(simplePreflightView({ ...good, status: 'UNKNOWN' }).status, 'UNKNOWN');
 });
+
+test('multilingual preflight binds the selected target and does not reuse English evidence for other targets', () => {
+  for (const target of ['en', 'ja', 'ko', 'zh']) {
+    const view = simplePreflightView({ ...good, targetLanguage: target, sourceLanguage: 'vi', persistedTranslation: 'CLEAR', persistedEnglish: target === 'en' ? 'CLEAR' : 'NOT_APPLICABLE' }, undefined, target);
+    assert.equal(Object.fromEntries(view.rows)['Ngôn ngữ đích'], target);
+    assert.equal(Object.fromEntries(view.rows)['Bản dịch đích đã lưu'], 'CLEAR');
+    const mismatch = simplePreflightView({ ...good, targetLanguage: target }, undefined, target === 'en' ? 'ja' : 'en');
+    assert.equal(mismatch.status, 'BLOCKED'); assert.match(mismatch.message, /không khớp ngôn ngữ/);
+  }
+  const missing = simplePreflightView({ ...good, targetLanguage: 'ja' }, undefined, 'ja');
+  assert.equal(Object.fromEntries(missing.rows)['Bản dịch đích đã lưu'], 'NOT VERIFIED');
+});

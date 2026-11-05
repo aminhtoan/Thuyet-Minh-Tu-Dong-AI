@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { customerAttemptMessage } from '../src/features/translation/customerAttemptPresentation.mjs';
+import { customerTargetChoices, customerTargetLabel } from '../src/features/translation/customerLanguages.mjs';
 const source = await readFile(new URL('../src/features/translation/GroupTranslationWorkspace.tsx', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 const groups = [{ groupId: 'a', sequence: 1, sourceSegmentIds: ['s1'], sourceText: 'Trường Tiểu học', translatedText: '', startTime: .8, endTime: 2 }, { groupId: 'b', sequence: 2, sourceSegmentIds: ['s2'], sourceText: 'ở tỉnh Vĩnh Long.', translatedText: '', startTime: 2, endTime: 3 }];
@@ -11,21 +12,21 @@ const plan = { projectId: 'project', sourceLanguage: 'vi', targetLanguage: 'en',
 const draft = { ...plan, state: 'DRAFT', alignmentFormat: 'GROUPS_V1', draftId: 'draft-id', outputDigest: 'digest', expiresAt: '2099-01-01T00:00:00Z', groups: groups.map(g => ({ ...g, translatedText: 'English text for ' + g.groupId })) };
 const saved = { ...draft, state: 'APPROVED', id: 'saved', fullText: 'English text', review: { method: 'MANUAL_V1' } };
 const flush = async () => { for (let i = 0; i < 25; i++) await Promise.resolve(); };
-function harness({ target = 'en', initialDraft = false, stored = null, restored = draft, confirm = true, catalog = [{ code: 'en', name: 'Tiếng Anh' }], preview = async () => draft, approve = async () => saved, customerMode = false, customerState = async () => ({ draft: null, attempt: null }), canMutate = true, transcript = { segments: [], languageCode: 'vi' } } = {}) {
+function harness({ target = 'en', initialDraft = false, stored = null, restored = draft, confirm = true, catalog = [{ code: 'en', name: 'Tiếng Anh' }], preview = async () => draft, approve = async () => saved, customerMode = false, customerState = async () => ({ draft: null, attempt: null }), canMutate = true, transcript = { segments: [], languageCode: 'vi' }, sourceLanguage = 'vi', planLoad = async () => structuredClone(plan), savedLoad = async () => stored } = {}) {
   const slots = [], refs = [], effects = []; let cursor = 0, refCursor = 0, effectCursor = 0, params = new URLSearchParams(initialDraft ? 'draft=draft-id' : ''), requests = 0, approvals = 0, restores = 0, fetches = 0, confirmCalls = 0;
   const jsx = (type, props) => ({ type, props });
-  const confirmations = [], focused = [];
+  const confirmations = [], focused = [], traffic = [];
   const react = {
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === 'function' ? value(slots[i]) : value; }]; },
     useRef(initial) { return refs[refCursor++] ??= { current: initial }; },
     useEffect(action, deps) { const i = effectCursor++, old = effects[i]; if (!old || deps.some((v, j) => v !== old.deps[j])) { old?.cleanup?.(); effects[i] = { deps, action }; } },
   };
   const service = {
-    async saved() { fetches++; return stored; }, async plan() { return structuredClone(plan); },
+    async saved(...args) { fetches++; traffic.push(['saved', args[1]]); return savedLoad(...args); }, async plan(...args) { traffic.push(['plan', args[1]]); return planLoad(...args); },
     async draft() { restores++; return structuredClone(restored); },
-    async customerState() { fetches++; return customerState(); },
-    async customerGenerate(...args) { requests++; return preview(...args); },
-    async preview(...args) { requests++; return preview(...args); }, async approve(...args) { approvals++; return approve(...args); },
+    async customerState(...args) { fetches++; traffic.push(['state', args[2]]); return { targetLanguage: args[2], ...await customerState(...args) }; },
+    async customerGenerate(...args) { requests++; traffic.push(['generate', args[1]]); return preview(...args); },
+    async preview(...args) { requests++; return preview(...args); }, async approve(...args) { approvals++; traffic.push(['approve', args[1].targetLanguage]); return approve(...args); },
   };
   const exports = {};
   runInNewContext(compiled, { exports, Error, Date, URLSearchParams, AbortController, crypto: { randomUUID: () => 'request-key' }, window: { confirm(text) { confirmCalls++; confirmations.push(text); return confirm; } }, require: name => {
@@ -39,6 +40,7 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
     if (name.includes('transcriptService')) return { transcriptService: { async getTranscript() { return transcript; } } };
     if (name.includes('transcriptPresentation')) return { formatPreciseTimestamp: s => '00:00.' + s };
     if (name.includes('translationLanguages')) return { translationTargetChoices: (list, source) => list.filter(l => l.code !== source), translationLanguageLabel: l => l.name };
+    if (name.includes('customerLanguages')) return { customerTargetChoices, customerTargetLabel };
     if (name.includes('translationPresentation')) return { buildTranslationPresentation: () => ({ rows: [] }), mapTranslationSegments: () => [] };
     const component = name.split('/').at(-1); return { [component]: component };
   } });
@@ -46,7 +48,7 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
   return {
     render() {
       cursor = 0; refCursor = 0; effectCursor = 0;
-      tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage: 'vi' }, preferredTarget: target, canMutate, notice: null, customerMode });
+      tree = exports.GroupTranslationWorkspace({ project: { id: 'project', name: 'Dự án thật', sourceLanguage, targetLanguage: 'en' }, preferredTarget: target, canMutate, notice: null, customerMode });
       // Minimal DOM-ref simulation for post-action focus, not a browser layout test.
       function attach(node) {
         if (!node || typeof node !== 'object') return;
@@ -61,11 +63,111 @@ function harness({ target = 'en', initialDraft = false, stored = null, restored 
     find(predicate) { function walk(value) { if (!value || typeof value !== 'object') return null; if (predicate(value)) return value; for (const child of [value.props?.children].flat(Infinity)) { const match = walk(child); if (match) return match; } return null; } return walk(tree); },
     text() { function walk(value) { if (typeof value === 'string') return value; if (!value || typeof value !== 'object') return ''; return [value.props?.children].flat(Infinity).map(walk).join(' '); } return walk(tree); },
     counts: () => ({ requests, approvals, restores, fetches, confirmCalls }),
-    confirmations, focused,
+    confirmations, focused, traffic,
     unmount() { effects.forEach(e => e.cleanup?.()); },
   };
 }
 const button = (h, label) => h.find(v => v.type === 'Button' && v.props.children === label);
+
+const multilingualCatalog = ['vi', 'en', 'ja', 'ko', 'zh', 'fr'].map(code => ({ code, name: code }));
+const localizedDraft = (target, translatedText = `TEXT_${target}`) => ({ ...draft, targetLanguage: target, groups: draft.groups.map(group => ({ ...group, translatedText })) });
+
+for (const target of ['en', 'ja', 'ko', 'zh']) test(`Customer ${target}: selector, explicit request, review and approval stay target-bound`, async () => {
+  const h = harness({ target, customerMode: true, catalog: multilingualCatalog,
+    planLoad: async (_id, selected) => ({ ...plan, targetLanguage: selected }),
+    preview: async (_id, selected) => localizedDraft(selected),
+    approve: async (_id, selected) => ({ ...saved, targetLanguage: selected.targetLanguage, groups: selected.groups }),
+  });
+  await h.settle();
+  const options = h.find(node => node.type === 'select').props.children[1].map(option => option.props.value);
+  assert.deepEqual(options, ['en', 'ja', 'ko', 'zh']);
+  assert.equal(h.counts().requests, 0);
+  h.find(node => node.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+  await button(h, `Dịch ${customerTargetLabel(target)}`).props.onClick(); h.render();
+  assert.match(h.text(), new RegExp(`TEXT_${target}`));
+  assert.equal(button(h, 'Duyệt và lưu bản dịch').props.disabled, true);
+  h.find(node => node.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+  await button(h, 'Duyệt và lưu bản dịch').props.onClick(); h.render();
+  assert.equal(h.counts().requests, 1); assert.equal(h.counts().approvals, 1);
+  assert.deepEqual(h.traffic.filter(([kind]) => ['generate', 'approve'].includes(kind)), [['generate', target], ['approve', target]]);
+  assert.ok(h.traffic.filter(([kind]) => ['saved', 'state', 'plan'].includes(kind)).every(([, selected]) => selected === target));
+  h.unmount();
+});
+
+test('Customer selector excludes the confirmed source and unsupported targets; Chinese is explicitly simplified', async () => {
+  const h = harness({ sourceLanguage: 'en', target: 'ja', customerMode: true, catalog: multilingualCatalog,
+    transcript: { languageCode: 'en', segments: [] }, planLoad: async () => ({ ...plan, sourceLanguage: 'en', targetLanguage: 'ja' }),
+  });
+  await h.settle();
+  assert.deepEqual(h.find(node => node.type === 'select').props.children[1].map(option => option.props.value), ['ja', 'ko', 'zh']);
+  assert.match(h.text(), /Tiếng Trung \(giản thể\)/); assert.equal(h.counts().requests, 0); h.unmount();
+});
+
+test('changing target during GET hides previous draft immediately and ignores its late response', async () => {
+  let release; const gate = new Promise(done => { release = done; });
+  const h = harness({ customerMode: true, catalog: multilingualCatalog,
+    savedLoad: async (_id, target) => target === 'en' ? gate : null,
+    customerState: async (_id, _signal, target) => ({ targetLanguage: target, attempt: { status: 'DRAFT_SAVED' }, draft: localizedDraft(target, 'NEW_JA_ONLY') }),
+  });
+  await h.settle();
+  const selector = h.find(node => node.type === 'select'); assert.equal(selector.props.disabled, false);
+  selector.props.onChange({ target: { value: 'ja' } });
+  release({ ...saved, groups: saved.groups.map(group => ({ ...group, translatedText: 'OLD_EN_FORBIDDEN' })) });
+  await flush(); await h.settle();
+  assert.doesNotMatch(h.text(), /OLD_EN_FORBIDDEN/); assert.match(h.text(), /NEW_JA_ONLY/);
+  assert.equal(h.find(node => node.type === 'select').props.value, 'ja'); assert.equal(h.counts().requests, 0); h.unmount();
+});
+
+test('target change clears the old draft/review; mutation in progress locks target and double submit', async () => {
+  const h = harness({ customerMode: true, catalog: multilingualCatalog, customerState: async (_id, _signal, target) => ({ targetLanguage: target, draft: localizedDraft(target, `DRAFT_${target}`), attempt: { status: 'DRAFT_SAVED' } }) });
+  await h.settle(); assert.match(h.text(), /DRAFT_en/);
+  h.find(node => node.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+  h.find(node => node.type === 'select').props.onChange({ target: { value: 'ko' } }); h.render();
+  assert.doesNotMatch(h.text(), /DRAFT_en/);
+  await h.settle(); assert.match(h.text(), /DRAFT_ko/); assert.equal(button(h, 'Duyệt và lưu bản dịch').props.disabled, true); h.unmount();
+
+  let finish;
+  const running = harness({ customerMode: true, catalog: multilingualCatalog, preview: async () => new Promise(done => { finish = done; }) });
+  await running.settle(); running.find(node => node.type === 'input').props.onChange({ target: { checked: true } }); running.render();
+  const send = button(running, 'Dịch tiếng Anh').props.onClick;
+  const a = send(), b = send(); running.render();
+  const selector = running.find(node => node.type === 'select'); assert.equal(selector.props.disabled, true);
+  selector.props.onChange({ target: { value: 'ja' } }); running.render();
+  assert.equal(running.find(node => node.type === 'select').props.value, 'en');
+  finish(draft); await Promise.all([a, b]); running.render(); assert.equal(running.counts().requests, 1); running.unmount();
+});
+
+test('mismatched saved/draft/plan/generation responses stay errors and never become an approved target', async () => {
+  for (const scenario of ['saved', 'attempt', 'missing-target', 'draft', 'plan', 'generation']) {
+    const h = harness({ target: 'ja', customerMode: true, catalog: multilingualCatalog,
+      savedLoad: async () => scenario === 'saved' ? saved : null,
+      customerState: async () => ({ targetLanguage: scenario === 'attempt' ? 'en' : scenario === 'missing-target' ? undefined : 'ja', draft: scenario === 'draft' ? draft : null, attempt: null }),
+      planLoad: async () => ({ ...plan, targetLanguage: scenario === 'plan' ? 'en' : 'ja' }),
+      preview: async () => draft,
+    });
+    await h.settle();
+    if (scenario === 'generation') {
+      h.find(node => node.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+      await button(h, 'Dịch tiếng Nhật').props.onClick(); h.render();
+    }
+    assert.match(h.text(), /Không thể hoàn tất thao tác/); assert.equal(button(h, 'Duyệt và lưu bản dịch'), null);
+    assert.equal(h.counts().approvals, 0); h.unmount();
+  }
+});
+
+test('mismatched approval response does not display a saved translation or enable Voice', async () => {
+  const h = harness({ target: 'ja', customerMode: true, catalog: multilingualCatalog,
+    customerState: async () => ({ targetLanguage: 'ja', attempt: { status: 'DRAFT_SAVED' }, draft: localizedDraft('ja') }),
+    approve: async () => saved,
+  });
+  await h.settle();
+  h.find(node => node.type === 'input').props.onChange({ target: { checked: true } }); h.render();
+  await button(h, 'Duyệt và lưu bản dịch').props.onClick(); h.render();
+  assert.match(h.text(), /Kết quả phê duyệt không khớp ngôn ngữ/);
+  assert.doesNotMatch(h.text(), /Bản dịch đã được duyệt/);
+  assert.equal(h.find(node => node.type === 'a' && String(node.props.to).includes('/voice')), null);
+  assert.equal(h.counts().approvals, 1); assert.equal(h.counts().requests, 0); h.unmount();
+});
 
 test('final review: one header/project/workflow and one compact attempt status at every settled state', async () => {
   function all(tree, predicate) {
@@ -197,7 +299,7 @@ test('durable draft, approved translation and legacy saved state have distinct l
   h.unmount();
   const approved = harness({ stored: saved }); await approved.settle();
   assert.match(approved.text(), /Bản dịch đã được duyệt/); approved.unmount();
-  const old = harness({ stored: { id: 'old', alignmentFormat: 'SEGMENTS_V1', segments: [] } }); await old.settle();
+  const old = harness({ stored: { id: 'old', projectId: 'project', targetLanguage: 'en', alignmentFormat: 'SEGMENTS_V1', segments: [] } }); await old.settle();
   assert.match(old.text(), /định dạng phân đoạn cũ/); assert.doesNotMatch(old.text(), /Bản dịch đã được duyệt/); old.unmount();
 });
 
@@ -268,6 +370,28 @@ test('actual group API client sends memberships/digest only; GET uses format neg
   await service.saved('project', 'en'); assert.match(requests[0].path, /format=groups-v1/);
   await service.preview('project', plan, groups, 'key'); assert.deepEqual(requests[1].body.groups, [['s1'], ['s2']]); assert.equal(requests[1].body.groups[0].sourceText, undefined);
   await service.approve('project', draft); assert.deepEqual(requests[2].body, { outputDigest: 'digest', reviewed: true });
+});
+
+test('actual Customer API client encodes the selected target in generate/state/draft/approval requests', async () => {
+  const content = await readFile(new URL('../src/features/translation/groupTranslationService.ts', import.meta.url), 'utf8');
+  const js = ts.transpileModule(content, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+  const requests = [], exports = {};
+  runInNewContext(js, { exports, AbortSignal, require: () => ({ ApiError: class extends Error {}, async api(path, options) { requests.push({ path, method: options?.method ?? 'GET', body: options?.body ? JSON.parse(options.body) : null }); return { draft, translation: saved, plan }; } }) });
+  const service = exports.groupTranslationService;
+  for (const target of ['en', 'ja', 'ko', 'zh']) {
+    requests.length = 0;
+    await service.customerGenerate('project', target);
+    await service.customerState('project', undefined, target);
+    await service.customerDraft('project', undefined, target);
+    await service.draft('project', 'draft-id', undefined, target);
+    await service.approve('project', localizedDraft(target));
+    assert.equal(requests[0].body.targetLanguage, target);
+    assert.equal(requests[1].path, `/projects/project/translations/customer-draft/${target}`);
+    assert.equal(requests[2].path, requests[1].path);
+    assert.ok(requests[3].path.endsWith(`?targetLanguage=${target}`)); assert.ok(requests[4].path.endsWith(`?targetLanguage=${target}`));
+    assert.deepEqual(requests[4].body, { outputDigest: 'digest', reviewed: true });
+    assert.deepEqual(requests.map(request => request.method), ['POST', 'GET', 'GET', 'GET', 'POST']);
+  }
 });
 test('feature flag remains explicit OFF, legacy branch intact and TTS consumes groups without fake segments', async () => {
   const page = await readFile(new URL('../src/pages/TranslationPage.tsx', import.meta.url), 'utf8');

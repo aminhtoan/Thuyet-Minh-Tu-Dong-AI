@@ -1,4 +1,4 @@
-import type { LanguageCode } from '../projects/types'
+import type { LanguageCode, SourceLanguageStatus } from '../projects/types'
 
 export type TranscriptStatus = 'LOADING' | 'NOT_STARTED' | 'GENERATING' | 'READY' | 'SAVING' | 'SAVED' | 'FAILED'
 export type TranscriptSegment = {
@@ -12,7 +12,8 @@ export type TranscriptSegment = {
 export type Transcript = {
   id: string
   projectId: string
-  languageCode: LanguageCode
+  languageCode: LanguageCode | null
+  sourceLanguageStatus?: SourceLanguageStatus
   fullText: string
   revision: number | null
   status: 'READY' | 'SAVED'
