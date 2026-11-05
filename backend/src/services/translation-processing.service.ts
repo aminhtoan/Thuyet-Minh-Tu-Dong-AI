@@ -8,6 +8,7 @@ import { TranscriptSegment } from '../models/TranscriptSegment.js';
 import { Translation } from '../models/Translation.js';
 import { TranslationSegment } from '../models/TranslationSegment.js';
 import { AppError } from '../utils/app-error.js';
+import { assertSourceLanguageConfirmed } from './source-language-contract.js';
 import { env } from '../config/env.js';
 import { getTranslationProvider } from './translation/translation.service.js';
 import { OpenAiTranslationError } from './translation/openai-translation.provider.js';
@@ -82,11 +83,14 @@ function requireLegacyAlignmentCapability(): void {
 export const translate = async (projectId: string, userId: string, targetLanguage: string) => {
   const project = await Project.findOne({ _id: projectId, userId });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
+  assertSourceLanguageConfirmed(project);
   if (project.sourceLanguage === targetLanguage) throw new AppError(400, 'SAME_SOURCE_TARGET_LANGUAGE', 'Ngôn ngữ đích phải khác ngôn ngữ nguồn.');
   if (!await Language.exists({ code: targetLanguage, isActive: true })) throw new AppError(400, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED', 'Ngôn ngữ đích chưa được hệ thống hỗ trợ.');
   const transcript = await Transcript.findOne({ projectId });
   if (transcript && !isRevision(transcript.revision)) throw new AppError(409, 'TRANSCRIPT_REVISION_UNAVAILABLE', 'Transcript revision is unavailable for safe artifact creation.');
   if (!transcript) throw new AppError(404, 'TRANSCRIPT_NOT_FOUND', 'Không tìm thấy bản ghi.');
+  if (!transcript.languageCode || transcript.sourceLanguageStatus === 'NEEDS_CONFIRMATION') throw new AppError(409, 'SOURCE_LANGUAGE_UNCONFIRMED', 'Vui lòng xác nhận ngôn ngữ nguồn trước khi dịch.');
+  const sourceLanguage = transcript.languageCode;
   const sourceSegments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 });
   if (!transcript.fullText.trim() || !sourceSegments.length || sourceSegments.some((segment) => !segment.text.trim())) throw new AppError(409, 'TRANSCRIPT_NOT_FOUND', 'Bản ghi không có nội dung có thể dịch.');
   const existing = await Translation.findOne({ transcriptId: transcript._id, targetLanguage, status: 'READY' });
@@ -120,7 +124,7 @@ export const translate = async (projectId: string, userId: string, targetLanguag
   void writeLog(userId, claimed.status === 'FAILED' ? 'TRANSLATION_RETRIED' : 'TRANSLATION_STARTED', claimed._id, targetLanguage);
   try {
     const providerInput = sourceSegments.map((segment) => ({ index: segment.sequence - 1, text: segment.text, sourceSegmentId: segment._id.toString(), startTime: segment.startTime, endTime: segment.endTime }));
-    const result = await getTranslationProvider().translate({ fullText: transcript.fullText, sourceLanguage: transcript.languageCode, targetLanguage, segments: providerInput });
+    const result = await getTranslationProvider().translate({ fullText: transcript.fullText, sourceLanguage, targetLanguage, segments: providerInput });
     if (result.sourceLanguage !== transcript.languageCode || result.targetLanguage !== targetLanguage) throw new Error('TRANSLATION_INVALID_RESPONSE');
     const translated = validateResult(providerInput, result.segments);
     const session = await mongoose.startSession();
@@ -137,7 +141,7 @@ export const translate = async (projectId: string, userId: string, targetLanguag
         const current = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 }).session(session);
         if (current.length !== sourceSegments.length || current.some((segment, index) => segment._id.toString() !== sourceSegments[index]?._id.toString() || segment.text !== sourceSegments[index]?.text || segment.startTime !== sourceSegments[index]?.startTime || segment.endTime !== sourceSegments[index]?.endTime)) throw new Error('TRANSLATION_MAPPING_FAILED');
         const translationRevision = nextRevision(existingFormat?.revision);
-        const values = { projectId, transcriptId: transcript._id, sourceLanguage: transcript.languageCode, targetLanguage,
+        const values = { projectId, transcriptId: transcript._id, sourceLanguage, targetLanguage,
           fullText: translated.map((segment) => segment.text).join(' '), status: 'READY' as const, alignmentFormat: 'SEGMENTS_V1' as const,
           revision: translationRevision, sourceTranscriptRevision: transcript.revision };
         const translation = existingFormat

@@ -7,9 +7,11 @@ process.env.MONGODB_URI = 'mongodb://127.0.0.1:1/group_translation_mock_only';
 process.env.JWT_ACCESS_SECRET = randomBytes(48).toString('hex'); process.env.JWT_REFRESH_SECRET = randomBytes(48).toString('hex');
 process.env.JWT_ACCESS_EXPIRES_IN = '15m'; process.env.JWT_REFRESH_EXPIRES_IN = '7d';
 process.env.GROUP_TRANSLATION_ENABLED = 'true';
+process.env.CUSTOMER_TRANSLATION_ENABLED = 'false';
 const { candidateGroups, validatePlan, revision, outputDigest, assertStoredGroups, digest } = await import('../src/services/translation/group-plan.js');
 const { GroupDraftStore } = await import('../src/services/translation/group-draft-store.js');
 const { GroupTranslationService, groupTranslationService, assertApprovedCurrent } = await import('../src/services/translation/group-translation.service.js');
+const { SOURCE_SEGMENT_LIMIT } = await import('../src/services/translation/bounded-source.js');
 const { mapGroupResponse, GeminiGroupTranslationProvider } = await import('../src/services/translation/gemini-group-translation.provider.js');
 const { previewTranslationSchema, approveTranslationSchema } = await import('../src/validators/translation.validator.js');
 const { Project } = await import('../src/models/Project.js');
@@ -18,6 +20,7 @@ const { TranscriptSegment } = await import('../src/models/TranscriptSegment.js')
 const { Translation } = await import('../src/models/Translation.js');
 const { TranslationSegment } = await import('../src/models/TranslationSegment.js');
 const { Language } = await import('../src/models/Language.js');
+const { Voice } = await import('../src/models/Voice.js');
 const { User } = await import('../src/models/User.js');
 const { generate } = await import('../src/services/narration.service.js');
 const { getTranslation, translate } = await import('../src/services/translation-processing.service.js');
@@ -114,7 +117,7 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
   let persisted: any = null, writes = 0, generations = 0;
   const query = (value: any) => ({ sort() { return this; }, select() { return this; }, session() { return this; }, then(resolve: any, reject: any) { return Promise.resolve(value).then(resolve, reject); } });
   t.mock.method(mongoose, 'connect', () => { assert.fail('Database connection forbidden'); });
-  t.mock.method(Project, 'findOne', (filter: any) => query(filter._id === projectId && filter.userId === owner ? project : null));
+  t.mock.method(Project, 'findOne', (filter: any) => query(filter._id === projectId && (!filter.userId || filter.userId === owner) ? project : null));
   t.mock.method(Project, 'findOneAndUpdate', () => query(project));
   t.mock.method(Transcript, 'findOne', () => query({ _id: new Types.ObjectId(s.transcriptId), languageCode: s.languageCode, fullText: s.fullText, status: 'READY', revision: 1 }));
   t.mock.method(Transcript, 'updateOne', async (filter: any) => ({ matchedCount: filter.revision === 1 ? 1 : 0 }));
@@ -122,10 +125,15 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
   t.mock.method(Transcript, 'aggregate', () => ({ session: () => Promise.resolve([{ _id: new Types.ObjectId(s.transcriptId), languageCode: s.languageCode, fullText: s.fullText, status: 'READY', revision: s.transcriptRevision }]) }));
   t.mock.method(TranscriptSegment, 'aggregate', (pipeline: any[]) => ({ session: () => ({ cursor: (options: any) => {
     assert.equal(options.batchSize, 1);
-    assert.ok(pipeline.some(stage => stage.$limit === 10001));
+    assert.ok(pipeline.some(stage => stage.$limit === SOURCE_SEGMENT_LIMIT + 1));
     return { async *[Symbol.asyncIterator]() { for (const segment of s.segments) yield { ...segment, _id: new Types.ObjectId(segment.id) }; }, async close() {} };
   } }) }));
   t.mock.method(Language, 'exists', (f: any) => query(f.code === 'en' ? { _id: 'lang' } : null));
+  // Voice validation now precedes translation validation. Keep this provenance
+  // regression entirely mocked instead of reaching an unconnected collection.
+  const languageId = new Types.ObjectId();
+  t.mock.method(Language, 'findOne', () => query({ _id: languageId, code: 'en', isActive: true }));
+  t.mock.method(Voice, 'findOne', () => query({ _id: new Types.ObjectId(), languageId, provider: 'gemini', providerVoiceId: 'Kore', isActive: true }));
   t.mock.method(Translation, 'findOne', () => query(persisted)); t.mock.method(Translation, 'exists', () => query(persisted ? { _id: persisted._id } : null));
   t.mock.method(Translation, 'create', async (rows: any[]) => { writes++; persisted = new Translation(rows[0]); await persisted.validate(); return [persisted]; });
   t.mock.method(TranslationSegment, 'find', () => query(s.segments.map(v => ({ transcriptSegmentId: new Types.ObjectId(v.id), translatedText: 'Legacy text' }))));
@@ -202,13 +210,17 @@ test('service and real JWT routes with mock persistence only: preview/approve/le
     return { status: res.status, body: await res.json() as any };
   };
   try {
-    await t.test('all new routes authenticate and reject cross owner, blocked user and ADMIN', async () => {
+    await t.test('all new routes authenticate and reject cross owner, blocked user and unowned ADMIN', async () => {
       for (const [path, payload] of [['plan/en', undefined], ['preview', body], [`drafts/${draft.draftId}`, undefined], [`drafts/${draft.draftId}/approve`, { outputDigest: draft.outputDigest, reviewed: true }]] as const) {
         assert.equal((await call(path, undefined, payload)).status, 401);
         assert.equal((await call(path, 'invalid-token', payload)).status, 401);
         assert.equal((await call(path, signAccessToken(other, 'CUSTOMER'), payload)).status, 404);
         user.status = 'BLOCKED'; assert.equal((await call(path, token, payload)).status, 403); user.status = 'ACTIVE';
-        user.role = 'ADMIN'; assert.equal((await call(path, token, payload)).status, 403); user.role = 'CUSTOMER';
+        user.role = 'ADMIN';
+        // Project ownership returns 404; a draft scoped to another owner is
+        // deliberately indistinguishable from an expired/missing draft (410).
+        assert.ok([404, 410].includes((await call(path, signAccessToken(other, 'ADMIN'), payload)).status));
+        user.role = 'CUSTOMER';
         deletedUser = true; assert.equal((await call(path, token, payload)).status, 401); deletedUser = false;
       }
     });

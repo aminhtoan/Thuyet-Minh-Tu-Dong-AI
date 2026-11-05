@@ -13,6 +13,7 @@ import { OpenAiSttError } from './stt/openai-stt.provider.js';
 import { GeminiSttError } from './stt/gemini-stt.provider.js';
 import { env } from '../config/env.js';
 import { isRevision, nextRevision } from './artifact-provenance.service.js';
+import { resolveTranscribedLanguage, sourceLanguageState } from './source-language-contract.js';
 
 export const rebuildTranscriptFullText = (segments: readonly { sequence: number; text: string }[], editedSegmentId: string, editedText: string, ids: readonly string[]) => {
   if (segments.length === 0 || segments.length !== ids.length) throw new AppError(409, 'TRANSCRIPT_SEGMENTS_INCONSISTENT', 'Các phân đoạn bản ghi không nhất quán.');
@@ -33,7 +34,8 @@ const serialize = async (projectId: string) => {
   const transcript = await Transcript.findOne({ projectId });
   if (!transcript) throw new AppError(404, 'TRANSCRIPT_NOT_FOUND', 'Không tìm thấy bản ghi.');
   const segments = await TranscriptSegment.find({ transcriptId: transcript._id }).sort({ sequence: 1 });
-  return { id: transcript._id.toString(), projectId, language: transcript.languageCode, fullText: transcript.fullText, revision: transcript.revision ?? null,
+  return { id: transcript._id.toString(), projectId, language: transcript.languageCode ?? null,
+    sourceLanguageStatus: transcript.sourceLanguageStatus ?? (transcript.languageCode ? 'CONFIRMED' : 'NEEDS_CONFIRMATION'), fullText: transcript.fullText, revision: transcript.revision ?? null,
     segments: segments.map((s) => ({ id: s._id.toString(), index: s.sequence - 1, startTime: s.startTime, endTime: s.endTime, text: s.text })),
     createdAt: transcript.createdAt, updatedAt: transcript.updatedAt };
 };
@@ -116,8 +118,11 @@ export const transcribe = async (projectId: string, userId: string) => {
   const job = await ProcessingJob.create({ projectId, type: 'TRANSCRIPTION', status: 'PROCESSING', progress: 0, startedAt: new Date() });
   void log(userId, project.status === 'FAILED' ? 'TRANSCRIPTION_RETRIED' : 'TRANSCRIPTION_STARTED', project._id);
   try {
-    const result = await getSttProvider().transcribe({ filePath, mimeType: media.mimeType, language: project.sourceLanguage });
+    const mode = sourceLanguageState(project).sourceLanguageMode;
+    const result = await getSttProvider().transcribe({ filePath, mimeType: media.mimeType, sourceLanguageMode: mode,
+      ...(mode === 'MANUAL' && project.sourceLanguage ? { language: project.sourceLanguage } : {}) });
     if (!result.text.trim() || !result.segments.length) throw new Error('STT_INVALID_RESPONSE');
+    const source = resolveTranscribedLanguage(project, result.languageDetection);
     const session = await mongoose.startSession();
     try {
       await session.withTransaction(async () => {
@@ -126,19 +131,19 @@ export const transcribe = async (projectId: string, userId: string) => {
         const transcript = currentTranscript
           ? await Transcript.findOneAndUpdate(
             { _id: currentTranscript._id, ...(currentTranscript.revision === undefined ? { revision: { $exists: false } } : { revision: currentTranscript.revision }) },
-            { $set: { languageCode: project.sourceLanguage, fullText: result.text.trim(), status: 'READY', revision } },
+            { $set: { languageCode: source.sourceLanguage, sourceLanguageStatus: source.sourceLanguageStatus, fullText: result.text.trim(), status: 'READY', revision } },
             { returnDocument: 'after', session },
           )
-          : (await Transcript.create([{ projectId, languageCode: project.sourceLanguage, fullText: result.text.trim(), status: 'READY', revision }], { session }))[0];
+          : (await Transcript.create([{ projectId, languageCode: source.sourceLanguage, sourceLanguageStatus: source.sourceLanguageStatus, fullText: result.text.trim(), status: 'READY', revision }], { session }))[0];
         if (!transcript) throw new Error('TRANSCRIPT_REVISION_CONFLICT');
         await TranscriptSegment.deleteMany({ transcriptId: transcript._id }, { session });
         await TranscriptSegment.insertMany(result.segments.map((s, index) => ({ transcriptId: transcript._id, sequence: index + 1, startTime: s.start, endTime: s.end, text: s.text.trim() })), { session });
         await ProcessingJob.updateOne({ _id: job._id }, { status: 'COMPLETED', progress: 100, completedAt: new Date() }, { session });
-        await Project.updateOne({ _id: projectId }, { status: 'TRANSCRIBED', progress: 100 }, { session });
+        await Project.updateOne({ _id: projectId }, { status: 'TRANSCRIBED', progress: 100, ...source }, { session });
       });
     } finally { await session.endSession(); }
     void log(userId, 'TRANSCRIPTION_COMPLETED', project._id);
-    return { project: { id: projectId, status: 'TRANSCRIBED' }, transcript: { ...(await serialize(projectId)), segmentCount: result.segments.length } };
+    return { project: { id: projectId, status: 'TRANSCRIBED', ...source }, transcript: { ...(await serialize(projectId)), segmentCount: result.segments.length } };
   } catch (error) {
     if (env.nodeEnv === 'development' && error instanceof OpenAiSttError) {
       console.error('STT provider diagnostic:', error.diagnostics);

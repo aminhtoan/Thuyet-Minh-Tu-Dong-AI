@@ -24,6 +24,7 @@ import { customerAttempts } from './customer-attempt.js';
 import { recoverCustomerRead } from './customer-execution.js';
 import { TranslationProviderFailure, providerFailureMessage } from './provider-failure.js';
 import { ProcessingJob } from '../../models/ProcessingJob.js';
+import { assertSourceLanguageConfirmed } from '../source-language-contract.js';
 
 function enabled() { if (process.env.GROUP_TRANSLATION_ENABLED !== 'true' && !controlledScopeActive() && !customerScopeActive()) throw new AppError(503, 'GROUP_TRANSLATION_DISABLED', 'Dịch theo cụm chưa được bật trên máy chủ.'); }
 const mismatch = () => new AppError(409, 'SOURCE_REVISION_MISMATCH', 'Bản ghi nguồn đã thay đổi. Vui lòng tải lại kế hoạch; bản nháp không được lưu.');
@@ -34,10 +35,11 @@ export async function loadSource(projectId: string, session: ClientSession | nul
   const byteLimit = admission?.policy.sourceBytes ?? SOURCE_BYTE_LIMIT;
   const [transcript] = await Transcript.aggregate([
     { $match: { projectId: new mongoose.Types.ObjectId(projectId) } }, { $limit: 1 },
-    { $project: { _id: 1, revision: { $cond: [{ $isNumber: '$revision' }, '$revision', null] }, status: boundedTextProjection('status', 20), languageCode: boundedTextProjection('languageCode', 20), fullText: boundedTextProjection('fullText', byteLimit) } },
+    { $project: { _id: 1, revision: { $cond: [{ $isNumber: '$revision' }, '$revision', null] }, status: boundedTextProjection('status', 20), sourceLanguageStatus: boundedTextProjection('sourceLanguageStatus', 24), languageCode: boundedTextProjection('languageCode', 20), fullText: boundedTextProjection('fullText', byteLimit) } },
   ]).session(session);
   if (!transcript || !['READY', 'SAVED'].includes(transcript.status)) throw new AppError(409, 'TRANSCRIPT_NOT_FOUND', 'Chưa có bản ghi hợp lệ để dịch.');
   if (!isRevision(transcript.revision)) throw new AppError(409, 'TRANSCRIPT_REVISION_UNAVAILABLE', 'Transcript revision is unavailable for safe artifact creation.');
+  assertSourceLanguageConfirmed({ sourceLanguage: transcript.languageCode, sourceLanguageStatus: transcript.sourceLanguageStatus });
   if (typeof transcript.fullText !== 'string' || typeof transcript.languageCode !== 'string') throw sourceTooLarge();
   const cursor = TranscriptSegment.aggregate([
     { $match: { transcriptId: transcript._id } }, { $sort: { sequence: 1 } }, { $limit: SOURCE_SEGMENT_LIMIT + 1 },
@@ -89,8 +91,9 @@ export class GroupTranslationService {
   constructor(private readonly provider: GroupProvider = new GeminiGroupTranslationProvider(), private readonly store: GroupDraftStore = groupDraftStore, private readonly admission?: GroupAdmission) {}
   private async authorizedProject(projectId: string, ownerId: string, targetLanguage: string, session: ClientSession | null = null) {
     if (process.env.NODE_ENV === 'development' && this.admission) assertControlledRequest(projectId, ownerId, targetLanguage);
-    const project = await Project.findOne({ _id: projectId, userId: ownerId }).select('_id status sourceLanguage').session(session);
+    const project = await Project.findOne({ _id: projectId, userId: ownerId }).select('_id status sourceLanguage sourceLanguageMode sourceLanguageStatus').session(session);
     if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
+    assertSourceLanguageConfirmed(project);
     if (!['TRANSCRIBED', 'TRANSLATED', 'FAILED'].includes(project.status)) throw new AppError(409, 'INVALID_PROJECT_STATE', 'Trạng thái dự án không cho phép dịch theo cụm.');
     if (project.sourceLanguage === targetLanguage) throw new AppError(400, 'SAME_SOURCE_TARGET_LANGUAGE', 'Ngôn ngữ đích phải khác ngôn ngữ nguồn.');
     if (!await Language.exists({ code: targetLanguage, isActive: true }).session(session)) throw new AppError(400, 'TRANSLATION_LANGUAGE_NOT_SUPPORTED', 'Ngôn ngữ đích chưa được hỗ trợ.');

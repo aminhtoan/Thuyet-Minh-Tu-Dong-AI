@@ -46,6 +46,7 @@ const createHttpError = async (response: Response): Promise<OpenAiSttError> => {
 
 export class OpenAiSttProvider implements SttProvider {
   public async transcribe(input: SttInput): Promise<SttResult> {
+    if (input.sourceLanguageMode === 'AUTO' || !input.language) throw new Error('STT_NOT_CONFIGURED');
     const apiKey = process.env.OPENAI_API_KEY?.trim();
     if (!apiKey) throw new Error('STT_NOT_CONFIGURED');
     if ((await stat(input.filePath)).size > MAX_PROVIDER_BYTES) throw new Error('STT_FILE_TOO_LARGE');

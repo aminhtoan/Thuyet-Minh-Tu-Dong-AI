@@ -1,5 +1,11 @@
 # Project Progress
 
+## S32 — Current progress entrypoint
+
+For S32 Multilingual, use [the scoped progress ledger](../.agents/skills/multilang-progress/PROGRESS.md)
+and [project skill](../.agents/skills/multilang-progress/SKILL.md). This file retains the wider project history;
+S32 phase status, decisions and handoffs are maintained in that skill folder to avoid duplicate ledgers.
+
 ## S30 — Listen Analytics: Detailed MP3 & Language Breakdown (2026-10-25): FULL
 
 - Backend Aggregation: Added `getListenBreakdown()` in [backend/src/services/analytics.service.ts](file:///o:/multilingual-ai-narration/backend/src/services/analytics.service.ts) aggregating Top 5 MP3 narrations (`topAudios`) and Top 5 languages (`topLanguages`) via MongoDB aggregation pipelines (`$group`, `$sort`, `$limit`) with localized names and country flags.

@@ -11,19 +11,26 @@ import type { ProjectStatus } from '../constants/project.constants.js';
 import { AppError } from '../utils/app-error.js';
 import { safeDeleteStoredFile } from '../utils/file.js';
 import { resolveProjectWorkflows } from './project-workflow.service.js';
+import { assertSourceLanguageConfirmed, sourceLanguageState, type SourceLanguageMode } from './source-language-contract.js';
+import { updateProjectSource } from './source-language.service.js';
 
-interface ProjectInput { name: string; description?: string; sourceLanguage: string }
+interface ProjectInput { name: string; description?: string; sourceLanguage?: string | null; sourceLanguageMode?: SourceLanguageMode }
 interface ListInput { search?: string; status?: ProjectStatus; page: number; limit: number }
 
 const serialize = (project: ProjectDocument & { _id: Types.ObjectId; createdAt: Date; updatedAt: Date }) => ({
   id: project._id.toString(), name: project.name, description: project.description,
-  sourceLanguage: project.sourceLanguage, status: project.status, progress: project.progress,
+  ...sourceLanguageState(project), status: project.status, progress: project.progress,
   createdAt: project.createdAt, updatedAt: project.updatedAt,
 });
 
 const serializeWithWorkflow = async (projects: Array<ProjectDocument & { _id: Types.ObjectId; createdAt: Date; updatedAt: Date }>) => {
   const workflows = await resolveProjectWorkflows(projects.map((project) => ({ id: project._id.toString(), status: project.status })));
-  return projects.map((project) => ({ ...serialize(project), workflow: workflows.get(project._id.toString()) }));
+  return projects.map((project) => {
+    const workflow = workflows.get(project._id.toString());
+    const unresolved = sourceLanguageState(project).sourceLanguageStatus !== 'CONFIRMED';
+    return { ...serialize(project), workflow: unresolved && workflow?.step === 'TRANSLATION'
+      ? { ...workflow, state: 'BLOCKED' as const, canResume: false } : workflow };
+  });
 };
 
 const log = async (userId: string, action: string, entityId: Types.ObjectId, description: string) => {
@@ -37,7 +44,11 @@ const owned = async (id: string, userId: string) => {
 };
 
 export const create = async (userId: string, input: ProjectInput) => {
-  const project = await Project.create({ ...input, description: input.description ?? '', userId, status: 'DRAFT', progress: 0 });
+  const mode = input.sourceLanguageMode ?? (input.sourceLanguage ? 'MANUAL' : 'AUTO');
+  const project = await Project.create({ ...input, sourceLanguageMode: mode,
+    sourceLanguage: mode === 'AUTO' ? null : input.sourceLanguage,
+    sourceLanguageStatus: mode === 'AUTO' ? 'PENDING_DETECTION' : 'CONFIRMED',
+    description: input.description ?? '', userId, status: 'DRAFT', progress: 0 });
   void log(userId, 'PROJECT_CREATED', project._id, 'Dự án đã được tạo.');
   return serialize(project);
 };
@@ -63,7 +74,9 @@ export const get = async (id: string, userId: string) => {
 };
 
 export const update = async (id: string, userId: string, input: Partial<ProjectInput>) => {
-  const project = await Project.findOneAndUpdate({ _id: id, userId }, { $set: input }, { returnDocument: 'after', runValidators: true });
+  const project = input.sourceLanguage !== undefined || input.sourceLanguageMode !== undefined
+    ? await updateProjectSource(id, userId, input)
+    : await Project.findOneAndUpdate({ _id: id, userId }, { $set: input }, { returnDocument: 'after', runValidators: true });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
   void log(userId, 'PROJECT_UPDATED', project._id, 'Dự án đã được cập nhật.');
   return serialize(project);
@@ -86,6 +99,7 @@ export const remove = async (id: string, userId: string) => {
 
 export const branchLanguage = async (sourceProjectId: string, userId: string, targetLanguage: string) => {
   const sourceProject = await owned(sourceProjectId, userId);
+  assertSourceLanguageConfirmed(sourceProject);
   const media = await Media.findOne({ projectId: sourceProject._id });
   if (!media) throw new AppError(400, 'MEDIA_NOT_FOUND', 'Dự án nguồn chưa có tệp phương tiện.');
   const transcript = await Transcript.findOne({ projectId: sourceProject._id });
@@ -100,7 +114,7 @@ export const branchLanguage = async (sourceProjectId: string, userId: string, ta
   const newProject = await Project.create({
     name: newName,
     description: sourceProject.description,
-    sourceLanguage: sourceProject.sourceLanguage,
+    ...sourceLanguageState(sourceProject),
     userId,
     status: 'TRANSCRIBED',
     progress: 40,

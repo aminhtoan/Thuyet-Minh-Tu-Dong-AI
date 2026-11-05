@@ -16,7 +16,7 @@ import '../styles/system.css';
 import '../styles/logs.css';
 
 const categoryLabels: Record<LogCategory, string> = { AUTH: 'Xác thực', USER: 'Người dùng', PROJECT: 'Dự án', MEDIA: 'Phương tiện', TRANSCRIPT: 'Bản ghi', TRANSLATION: 'Dịch thuật', VOICE: 'Giọng đọc', PROCESSING: 'Xử lý', ADMIN: 'Quản trị', SYSTEM: 'Hệ thống' };
-const roleLabels: Record<LogRole, string> = { CUSTOMER: 'Khách hàng', ADMIN: 'Quản trị viên', SYSTEM: 'Hệ thống' };
+const roleLabels: Record<ActivityLog['userRole'], string> = { CUSTOMER: 'Khách hàng', ADMIN: 'Quản trị viên', UNKNOWN: 'Không xác định' };
 const preview = (value: string, max: number) => value.length > max ? `${value.slice(0, max)}…` : value;
 
 export function AdminLogsPage() {
@@ -38,7 +38,7 @@ export function AdminLogsPage() {
           <option value="ALL">Tất cả</option>{Object.entries(categoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </FilterSelect>
         <FilterSelect label="Vai trò" value={role} onChange={e => { setRole(e.target.value as LogRole | 'ALL'); setPage(1); }}>
-          <option value="ALL">Tất cả</option>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          <option value="ALL">Tất cả</option>{(['CUSTOMER', 'ADMIN'] as const).map(value => <option key={value} value={value}>{roleLabels[value]}</option>)}
         </FilterSelect>
         <FilterSelect label="Thời gian" value={days} onChange={e => { setDays(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)); setPage(1); }}>
           <option value="ALL">Tất cả thời gian</option><option value="1">Hôm nay</option><option value="7">7 ngày qua</option><option value="30">30 ngày qua</option>

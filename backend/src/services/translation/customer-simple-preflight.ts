@@ -93,7 +93,7 @@ export async function customerSimplePreflight(projectId: string, ownerId: string
       reasonCodes: [...blocked, ...unknown],
     };
   } catch (error) {
-    const safe = ['TRANSCRIPT_NOT_FOUND', 'TRANSCRIPT_REVISION_UNAVAILABLE', 'SOURCE_REVISION_MISMATCH', 'TRANSLATION_DRAFT_TOO_LARGE'];
+    const safe = ['SOURCE_LANGUAGE_UNCONFIRMED', 'TRANSCRIPT_NOT_FOUND', 'TRANSCRIPT_REVISION_UNAVAILABLE', 'SOURCE_REVISION_MISMATCH', 'TRANSLATION_DRAFT_TOO_LARGE'];
     return { ...base, reasonCodes: [...base.reasonCodes, error instanceof AppError && safe.includes(error.code) ? error.code : 'PREFLIGHT_UNAVAILABLE'] };
   }
 }

@@ -9,6 +9,10 @@ import { FfmpegMediaProcessor } from '../media-processing/ffmpeg-media-processor
 import type { SttInput, SttProvider, SttResult } from './stt-provider.interface.js';
 
 export const GEMINI_STT_MODEL = 'gemini-3.5-transcribe';
+export const geminiTranscriptionConfig = (language?: string) => ({
+  ...(language ? { language_codes: [language] } : {}),
+  mode: { type: 'verbatim' as const, timestamp_granularities: ['word'] as ['word'] },
+});
 export const GEMINI_STT_ERRORS = ['STT_NOT_CONFIGURED', 'STT_INVALID_KEY', 'STT_MODEL_UNAVAILABLE', 'STT_QUOTA_EXCEEDED', 'STT_INVALID_FILE', 'STT_FILE_TOO_LARGE', 'STT_TIMEOUT', 'STT_INVALID_RESPONSE', 'STT_NO_SPEECH', 'STT_PROVIDER_ERROR'] as const;
 // Internal diagnostics contain fixed metadata and, in development only, bounded numeric timestamp evidence.
 export const GEMINI_STT_DIAGNOSTIC_CODES = ['RESPONSE_SCHEMA_INVALID', 'INTERACTION_NOT_COMPLETED', 'SOURCE_DURATION_INVALID', 'TRANSCRIPT_EMPTY', 'WORD_ANNOTATIONS_MISSING', 'WORD_SCHEMA_INVALID', 'TIMESTAMP_MISSING', 'TIMESTAMP_FORMAT_INVALID', 'TIMESTAMP_NON_FINITE', 'TIMESTAMP_OVERLAP_OR_ORDER', 'TIMESTAMP_INTERVAL_INVALID', 'TIMESTAMP_BEYOND_DURATION'] as const;
@@ -65,7 +69,7 @@ export interface GeminiTransport {
   upload(file: string, mime: string, signal: AbortSignal): Promise<{ name?: string; uri?: string; state?: string }>;
   getFile(name: string, signal: AbortSignal): Promise<{ name?: string; uri?: string; state?: string }>;
   deleteFile(name: string): Promise<void>;
-  transcribe(model: string, uri: string, mime: string, language: string, signal: AbortSignal): Promise<unknown>;
+  transcribe(model: string, uri: string, mime: string, language: string | undefined, signal: AbortSignal): Promise<unknown>;
 }
 const sdkTransport = (key: string): GeminiTransport => {
   const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 120_000, retryOptions: { attempts: 1 } } });
@@ -77,7 +81,7 @@ const sdkTransport = (key: string): GeminiTransport => {
     transcribe: (model, uri, mime, language, signal) => ai.interactions.create({
       model, store: false,
       input: [{ type: 'audio', uri, mime_type: mime }],
-      generation_config: { transcription_config: { language_codes: [language], mode: { type: 'verbatim', timestamp_granularities: ['word'] } } },
+      generation_config: { transcription_config: geminiTranscriptionConfig(language) },
     }, { signal, timeout: 120_000, maxRetries: 0 }),
   };
 };
@@ -93,7 +97,7 @@ const offset = (value: string, wordIndex: number, field: 'start_offset' | 'end_o
   if (!Number.isFinite(result)) return invalidResponse('TIMESTAMP_NON_FINITE', { wordIndex, field });
   return result;
 };
-export const mapGeminiTranscript = (value: unknown, duration: number, language: string): SttResult => {
+export const mapGeminiTranscript = (value: unknown, duration: number, language?: string): SttResult => {
   if (typeof value === 'object' && value !== null && 'status' in value && typeof value.status === 'string' && value.status !== 'completed') {
     return invalidResponse('INTERACTION_NOT_COMPLETED');
   }
@@ -204,8 +208,9 @@ export class GeminiSttProvider implements SttProvider {
         remote = await client.getFile(uploadedName, signal);
       }
       if (!remote.uri || !uploadedName || remote.state !== 'ACTIVE') throw new GeminiSttError('STT_INVALID_FILE');
-      const language = ({ vi: 'vi-VN', en: 'en-US', ja: 'ja-JP', ko: 'ko-KR' } as Record<string, string>)[input.language] ?? input.language;
-      return mapGeminiTranscript(await client.transcribe(model, remote.uri, mime, language, signal), source.duration, input.language);
+      const hint = input.sourceLanguageMode === 'AUTO' ? undefined : input.language;
+      const language = hint ? ({ vi: 'vi-VN', en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'cmn-Hans-CN' } as Record<string, string>)[hint] ?? hint : undefined;
+      return mapGeminiTranscript(await client.transcribe(model, remote.uri, mime, language, signal), source.duration, hint);
     } catch (error) { throw mapError(error); }
     finally {
       if (uploadedName) { try { await client.deleteFile(uploadedName); } catch { /* Remote Files expire; do not log URLs, headers or provider payload. */ } }

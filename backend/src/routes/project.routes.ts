@@ -11,7 +11,7 @@ import { authorize } from '../middleware/authorize.middleware.js';
 import { requireProjectOwner } from '../middleware/project-owner.middleware.js';
 import { uploadMedia } from '../middleware/upload.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
-import { createProjectSchema, listProjectsSchema, projectIdSchema, updateProjectSchema } from '../validators/project.validator.js';
+import { createProjectSchema, listProjectsSchema, projectIdSchema, updateProjectSchema, confirmSourceLanguageSchema } from '../validators/project.validator.js';
 import { startTranslationSchema, targetTranslationSchema, previewTranslationSchema, draftTranslationSchema, approveTranslationSchema } from '../validators/translation.validator.js';
 import { narrationIdSchema, startNarrationSchema } from '../validators/narration.validator.js';
 import { processMediaSchema, resultIdSchema } from '../validators/result.validator.js';
@@ -47,6 +47,7 @@ projectRouter.post('/', validate(createProjectSchema), projectController.create)
 projectRouter.get('/', validate(listProjectsSchema), projectController.list);
 projectRouter.get('/:id', validate(projectIdSchema), projectController.get);
 projectRouter.patch('/:id', validate(updateProjectSchema), projectController.update);
+projectRouter.post('/:id/source-language/confirm', validate(confirmSourceLanguageSchema), requireProjectOwner, projectController.confirmSourceLanguage);
 projectRouter.delete('/:id', validate(projectIdSchema), projectController.remove);
 projectRouter.get('/:id/language-variants', validate(projectIdSchema), requireProjectOwner, projectController.languageVariants);
 projectRouter.post('/:id/branch-language', validate(projectIdSchema), requireProjectOwner, projectController.branchLanguage);
