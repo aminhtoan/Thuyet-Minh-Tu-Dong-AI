@@ -1,10 +1,17 @@
 import { Language } from '../models/Language.js';
 import { Voice } from '../models/Voice.js';
 
+const isTestFixture = (lang: { code: string; name?: string }) =>
+  lang.code.startsWith('xx-') ||
+  /^[a-z]{2}-[a-f0-9]{6,8}$/i.test(lang.code) ||
+  /^s2[0-9]\s/i.test(lang.name || '') ||
+  /^test\s/i.test(lang.name || '');
+
 export const listActiveVoices = async (languageCode?: string) => {
   const languageFilter: Record<string, unknown> = { isActive: true };
   if (languageCode) languageFilter.code = languageCode;
-  const languages = await Language.find(languageFilter).sort({ code: 1 });
+  const rawLanguages = await Language.find(languageFilter).sort({ code: 1 });
+  const languages = rawLanguages.filter((l) => !isTestFixture(l));
   const languageIds = languages.map((language) => language._id);
   const configuredProvider = process.env.TTS_PROVIDER?.trim().toLowerCase();
   const voiceFilter: Record<string, unknown> = { languageId: { $in: languageIds }, isActive: true };

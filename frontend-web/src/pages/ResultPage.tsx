@@ -111,7 +111,8 @@ function ResultWorkspace({ project, language }: { project: Project; language?: s
           open={addLanguageModalOpen}
           projectId={project.id}
           projectName={project.name}
-          existingLanguages={variants.map((v) => v.language)}
+          sourceLanguage={project.sourceLanguage}
+          existingLanguages={[...(project.sourceLanguage ? [project.sourceLanguage] : []), ...variants.map((v) => v.language)]}
           onClose={() => setAddLanguageModalOpen(false)}
         />
       </>
@@ -226,7 +227,8 @@ function ResultWorkspace({ project, language }: { project: Project; language?: s
         open={addLanguageModalOpen}
         projectId={project.id}
         projectName={project.name}
-        existingLanguages={variants.map((v) => v.language)}
+        sourceLanguage={project.sourceLanguage}
+        existingLanguages={[...(project.sourceLanguage ? [project.sourceLanguage] : []), ...variants.map((v) => v.language)]}
         onClose={() => setAddLanguageModalOpen(false)}
       />
     </>

@@ -49,7 +49,10 @@ export class GeminiTtsProvider implements TtsProvider {
     } catch (error) {
       const timedOut = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
       if (timedOut) throw new Error('TTS_TIMEOUT');
-      throw new Error('TTS_PROVIDER_ERROR');
+      console.error('Gemini TTS provider error:', error);
+      const err = new Error('TTS_PROVIDER_ERROR');
+      if (error instanceof Error) err.message = `${err.message}: ${error.message}`;
+      throw err;
     }
 
     if (!interaction.output_audio?.data) {

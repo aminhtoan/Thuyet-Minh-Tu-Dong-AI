@@ -198,7 +198,7 @@ export const generate = async (projectId: string, userId: string, targetLanguage
     // Create narration record
     const [narration] = await Narration.create([{ projectId, translationId: translation._id, voiceId: voice._id, languageCode: targetLanguage, speed,
       revision: 1, sourceTranslationRevision: translation.revision,
-      audioPath: storedPath, mimeType: result.mimeType, fileSize: result.audio.byteLength, provider: result.provider, model: result.model ?? process.env.TTS_MODEL ?? 'unknown', status: 'READY' }]);
+      audioPath: storedPath, mimeType: result.mimeType, fileSize: result.audio.byteLength, provider: result.provider, model: result.model ?? process.env.TTS_MODEL ?? 'unknown', status: 'READY', isApproved: false }]);
     if (!narration) throw new Error('TTS_INVALID_RESPONSE');
     const narrationId = narration._id.toString();
 

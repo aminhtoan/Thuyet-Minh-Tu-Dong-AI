@@ -127,7 +127,7 @@ export function AdminVisitQrPage() {
     <div className="visit-page">
       <AdminPageHeader
         title="Thống kê truy cập"
-        description="Theo dõi lượt quét QR, lượt nghe và IP duy nhất của hệ thống."
+        description="Theo dõi lượt quét QR, lượt nghe và khách hàng của hệ thống."
         action={
           <Button variant="secondary" onClick={retry} disabled={loading}>
             <Icon name="refresh" />
@@ -152,10 +152,10 @@ export function AdminVisitQrPage() {
               tone="primary"
             />
             <StatCard
-              label="IP duy nhất hôm nay"
-              value={data.summary.todayUnique}
+              label="Số lượng khách hàng"
+              value={data.summary.totalVisitors ?? data.visitors?.length ?? 0}
               icon="users"
-              description="Địa chỉ IP khác nhau"
+              description="Khách hàng từ bảng visitor"
               tone="primary"
             />
             <StatCard

@@ -1,32 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/common/Card';
 import { projectRepository } from './projectRepository';
+import { voiceService } from '../voice/voiceService';
 import type { LanguageCode } from './types';
 
-const SUPPORTED_LANGUAGES: Array<{ code: LanguageCode; name: string; flag: string }> = [
-  { code: 'ja', name: 'Tiếng Nhật', flag: '🇯🇵' },
-  { code: 'en', name: 'Tiếng Anh', flag: '🇬🇧' },
-  { code: 'fr', name: 'Tiếng Pháp', flag: '🇫🇷' },
-  { code: 'ko', name: 'Tiếng Hàn', flag: '🇰🇷' },
-  { code: 'zh', name: 'Tiếng Trung', flag: '🇨🇳' },
-];
+type LangEntry = { code: string; name: string; nativeName: string };
+
+// Flag emoji helper from BCP-47 region codes
+function flagEmoji(code: string): string {
+  const upper = code.slice(0, 2).toUpperCase();
+  const flags: Record<string, string> = {
+    VI: '🇻🇳', EN: '🇬🇧', JA: '🇯🇵', KO: '🇰🇷', ZH: '🇨🇳',
+    FR: '🇫🇷', DE: '🇩🇪', ES: '🇪🇸', IT: '🇮🇹', PT: '🇵🇹',
+    RU: '🇷🇺', NL: '🇳🇱', PL: '🇵🇱', TH: '🇹🇭', ID: '🇮🇩',
+    MS: '🇲🇾', HI: '🇮🇳', AR: '🇸🇦', TR: '🇹🇷',
+  };
+  return flags[upper] ?? '🌐';
+}
 
 export interface AddLanguageModalProps {
   projectId: string;
   projectName: string;
+  sourceLanguage?: string | null;
   existingLanguages?: string[];
   open: boolean;
   onClose: () => void;
 }
 
-export function AddLanguageModal({ projectId, projectName, existingLanguages = [], open, onClose }: AddLanguageModalProps) {
+export function AddLanguageModal({ projectId, projectName, sourceLanguage, existingLanguages = [], open, onClose }: AddLanguageModalProps) {
   const navigate = useNavigate();
-  const availableChoices = SUPPORTED_LANGUAGES.filter(l => !existingLanguages.includes(l.code));
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(availableChoices[0]?.code ?? 'ja');
+  const [catalogLanguages, setCatalogLanguages] = useState<LangEntry[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    setCatalogLoading(true);
+    voiceService.getLanguages({ signal: controller.signal })
+      .then((langs) => {
+        if (controller.signal.aborted) return;
+        setCatalogLanguages(langs);
+        setCatalogLoading(false);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setCatalogLoading(false);
+        setError(err instanceof Error ? err.message : 'Không thể tải danh sách ngôn ngữ.');
+      });
+    return () => controller.abort();
+  }, [open]);
+
+  const availableChoices = catalogLanguages.filter((l) => {
+    const code = (l.code || '').toLowerCase().trim();
+    const name = (l.name || '').trim();
+    if (code.startsWith('xx-') || /^[a-z]{2}-[a-f0-9]{6,8}$/i.test(code) || /^s2[0-9]\s/i.test(name) || /^test\s/i.test(name)) {
+      return false;
+    }
+    return (!sourceLanguage || code !== sourceLanguage.toLowerCase())
+      && !existingLanguages.map(e => e.toLowerCase()).includes(code);
+  });
+
+  // Auto-select first available when list changes
+  useEffect(() => {
+    if (availableChoices.length > 0 && !availableChoices.some((c) => c.code === selectedLanguage)) {
+      setSelectedLanguage(availableChoices[0]!.code);
+    }
+  }, [availableChoices, selectedLanguage]);
 
   if (!open) return null;
 
@@ -35,7 +82,7 @@ export function AddLanguageModal({ projectId, projectName, existingLanguages = [
     setBusy(true);
     setError(null);
     try {
-      const { project: branched } = await projectRepository.branchLanguage(projectId, selectedLanguage);
+      const { project: branched } = await projectRepository.branchLanguage(projectId, selectedLanguage as LanguageCode);
       onClose();
       navigate(`/projects/${branched.id}/translation?language=${selectedLanguage}`);
     } catch (err) {
@@ -51,7 +98,7 @@ export function AddLanguageModal({ projectId, projectName, existingLanguages = [
         <div className="add-language-modal-header">
           <h2 id="add-lang-title">Thêm ngôn ngữ thuyết minh mới</h2>
           <p className="add-language-modal-desc">
-            Tạo thêm bản thuyết minh bằng ngôn ngữ khác cho hiện vật <strong>"{projectName}"</strong>. 
+            Tạo thêm bản thuyết minh bằng ngôn ngữ khác cho hiện vật <strong>"{projectName}"</strong>.{' '}
             Toàn bộ tệp âm thanh và bản ghi gốc được kế thừa tự động.
           </p>
         </div>
@@ -62,20 +109,24 @@ export function AddLanguageModal({ projectId, projectName, existingLanguages = [
           <label htmlFor="add-language-select" className="add-language-label">
             Chọn ngôn ngữ bạn muốn bổ sung:
           </label>
-          <select
-            id="add-language-select"
-            className="add-language-select"
-            value={selectedLanguage}
-            disabled={busy || !availableChoices.length}
-            onChange={(e) => setSelectedLanguage(e.target.value as LanguageCode)}
-          >
-            {availableChoices.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.flag} {lang.name} ({lang.code.toUpperCase()})
-              </option>
-            ))}
-          </select>
-          {!availableChoices.length && (
+          {catalogLoading ? (
+            <p className="translation-note">Đang tải danh sách ngôn ngữ…</p>
+          ) : (
+            <select
+              id="add-language-select"
+              className="add-language-select"
+              value={selectedLanguage}
+              disabled={busy || !availableChoices.length}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+            >
+              {availableChoices.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {flagEmoji(lang.code)} {lang.name} · {lang.nativeName} ({lang.code.toUpperCase()})
+                </option>
+              ))}
+            </select>
+          )}
+          {!catalogLoading && !availableChoices.length && (
             <p className="translation-note">Hiện vật này đã có đủ tất cả các ngôn ngữ được hỗ trợ.</p>
           )}
         </div>
@@ -87,7 +138,7 @@ export function AddLanguageModal({ projectId, projectName, existingLanguages = [
           <Button
             variant="primary"
             loading={busy}
-            disabled={busy || !availableChoices.length}
+            disabled={busy || !availableChoices.length || catalogLoading}
             onClick={() => void handleConfirm()}
           >
             Bắt đầu dịch ngôn ngữ này

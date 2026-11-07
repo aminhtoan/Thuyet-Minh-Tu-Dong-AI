@@ -13,6 +13,7 @@ import { safeDeleteStoredFile } from '../utils/file.js';
 import { resolveProjectWorkflows } from './project-workflow.service.js';
 import { assertSourceLanguageConfirmed, sourceLanguageState, type SourceLanguageMode } from './source-language-contract.js';
 import { updateProjectSource } from './source-language.service.js';
+import { assertCustomerTarget } from './translation/customer-languages.js';
 
 interface ProjectInput { name: string; description?: string; sourceLanguage?: string | null; sourceLanguageMode?: SourceLanguageMode }
 interface ListInput { search?: string; status?: ProjectStatus; page: number; limit: number }
@@ -100,6 +101,10 @@ export const remove = async (id: string, userId: string) => {
 export const branchLanguage = async (sourceProjectId: string, userId: string, targetLanguage: string) => {
   const sourceProject = await owned(sourceProjectId, userId);
   assertSourceLanguageConfirmed(sourceProject);
+  if (targetLanguage === sourceProject.sourceLanguage) {
+    throw new AppError(400, 'CANNOT_BRANCH_TO_SOURCE_LANGUAGE', 'Ngôn ngữ đích phải khác ngôn ngữ nguồn của dự án.');
+  }
+  assertCustomerTarget(targetLanguage);
   const media = await Media.findOne({ projectId: sourceProject._id });
   if (!media) throw new AppError(400, 'MEDIA_NOT_FOUND', 'Dự án nguồn chưa có tệp phương tiện.');
   const transcript = await Transcript.findOne({ projectId: sourceProject._id });
@@ -274,7 +279,7 @@ export const getLanguageVariants = async (projectId: string, userId: string, cur
 };
 
 export const getPublicAudioGuides = async () => {
-  const narrations = await Narration.find({ status: 'READY', isApproved: { $ne: false } }).sort({ createdAt: -1 });
+  const narrations = await Narration.find({ status: 'READY', isApproved: true }).sort({ createdAt: -1 });
   if (narrations.length === 0) return [];
 
   const projectIds = [...new Set(narrations.map((n) => n.projectId))];

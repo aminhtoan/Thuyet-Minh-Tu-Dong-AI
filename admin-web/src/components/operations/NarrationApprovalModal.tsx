@@ -55,6 +55,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; success: boolean; message: string } | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('ALL');
   const [, startTransition] = useTransition();
 
   const loadData = async (projId: string) => {
@@ -126,6 +127,10 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
 
   const approvedCount = narrations.filter((n) => n.isApproved).length;
   const totalCount = narrations.length;
+  const availableLanguages = Array.from(new Set(narrations.map((n) => n.languageCode.toLowerCase())));
+  const displayedNarrations = selectedLanguage === 'ALL'
+    ? narrations
+    : narrations.filter((n) => n.languageCode.toLowerCase() === selectedLanguage);
 
   return (
     <AdminDialog open={Boolean(project)} onClose={onClose} labelledBy="approval-title" className="project-approval-dialog">
@@ -152,6 +157,42 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
           </button>
         </header>
 
+        {!loading && availableLanguages.length > 1 && (
+          <div className="narration-modal__lang-tabs" role="tablist" aria-label="Ngôn ngữ thuyết minh">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedLanguage === 'ALL'}
+              className={`narration-modal__lang-tab ${selectedLanguage === 'ALL' ? 'narration-modal__lang-tab--active' : ''}`}
+              onClick={() => setSelectedLanguage('ALL')}
+            >
+              <span>🌐 Tất cả</span>
+              <span className="narration-modal__lang-tab-count">({narrations.length})</span>
+            </button>
+            {availableLanguages.map((code) => {
+              const lang = getLanguageBadge(code);
+              const items = narrations.filter((n) => n.languageCode.toLowerCase() === code);
+              const allApproved = items.length > 0 && items.every((n) => n.isApproved);
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedLanguage === code}
+                  className={`narration-modal__lang-tab ${selectedLanguage === code ? 'narration-modal__lang-tab--active' : ''}`}
+                  onClick={() => setSelectedLanguage(code)}
+                >
+                  <span role="img" aria-label={lang.label}>{lang.flag}</span>
+                  <span>{items[0]?.languageName || lang.label} ({code.toUpperCase()})</span>
+                  <span className={`narration-modal__lang-pill ${allApproved ? 'narration-modal__lang-pill--approved' : 'narration-modal__lang-pill--pending'}`}>
+                    {allApproved ? '✓ Đã duyệt' : '⏸ Chưa duyệt'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <section className="narration-modal__body">
           {loading ? (
             <div className="narration-modal__loading" role="status">
@@ -172,7 +213,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
             </div>
           ) : (
             <div className="narration-modal__list">
-              {narrations.map((n) => {
+              {displayedNarrations.map((n) => {
                 const lang = getLanguageBadge(n.languageCode);
                 const isPending = updatingId === n.id;
                 const isItemApproved = n.isApproved;

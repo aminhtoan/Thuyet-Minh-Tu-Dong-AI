@@ -68,7 +68,7 @@ function workspace(c, confirmed, canMutate) {
     '../features/processing/useProcessing': { useProcessing: () => ({ context: c, snapshot: h.session.getStatus(), busy: false, loadStatus: 'READY', start: h.session.start }) },
     '../features/projects/languages': { languageDisplayName: v => v }, '../features/projects/projectUtils': { languageNames: { vi: 'Tiếng Việt' } },
     '../features/voice/voiceUtils': { formatSpeed: () => '1.0x' }, '../utils/displayLabels': { getDisplayStatus: v => v }, '../localization/statusLabels.mjs': { processingStatusLabels: {} },
-    '../styles/processing.css': {}, '../features/projects/workflowRouteGuard': guard, '../features/projects/useProjects': {},
+    '../styles/processing.css': {}, '../features/projects/workflowRouteGuard': guard, '../features/projects/useProjects': {}, '../features/projects/sourceLanguage': { sourceLanguageLabel: v => v },
   };
   for (const name of ['Badge', 'Button', 'Card', 'EmptyState', 'ErrorState', 'ProgressBar', 'Spinner', 'WorkflowSteps']) deps[`../components/common/${name}`] = { [name]: name };
   deps['../components/common/WorkflowRouteGuard'] = { WorkflowReadOnlyNotice: 'Notice', WorkflowRouteRecovery: 'Recovery' };

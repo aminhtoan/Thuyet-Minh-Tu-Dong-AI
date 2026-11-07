@@ -20,6 +20,7 @@ export interface VisitQrSummary {
   };
   today: number;
   todayUnique: number;
+  totalVisitors?: number;
   total: number;
   totalUnique: number;
 }

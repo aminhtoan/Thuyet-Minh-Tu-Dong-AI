@@ -39,7 +39,7 @@ const projectDto = async (project: ProjectDocument & { _id: Types.ObjectId; crea
     Narration.find({ projectId: project._id, status: 'READY' }).select('isApproved'),
   ]);
   const totalNarrations = narrations.length;
-  const approvedNarrations = narrations.filter((n) => n.isApproved !== false).length;
+  const approvedNarrations = narrations.filter((n) => n.isApproved === true).length;
   const narrationApprovalStatus = totalNarrations === 0 ? 'NO_AUDIO' : approvedNarrations === totalNarrations ? 'ALL_APPROVED' : approvedNarrations === 0 ? 'NONE_APPROVED' : 'PARTIAL';
 
   return {
@@ -262,7 +262,7 @@ export const listVisitQr = async (input: VisitQrInput) => {
     listenFilter.createdAt = { $gte: from };
   }
 
-  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps, totalListens, webListens, mobileListens, visitorAgg, visitorDocs] = await Promise.all([
+  const [items, total, todayCount, allCount, todayUniqueIps, totalUniqueIps, totalListens, webListens, mobileListens, visitorAgg, visitorDocs, totalVisitorsCount] = await Promise.all([
     VisitQR.find(filter).sort({ createdAt: -1 }).skip((input.page - 1) * input.limit).limit(input.limit),
     VisitQR.countDocuments(filter),
     VisitQR.countDocuments({ createdAt: { $gte: today } }),
@@ -294,6 +294,7 @@ export const listVisitQr = async (input: VisitQrInput) => {
       { $limit: 100 },
     ]),
     Visitor.find({}).sort({ lastVisitAt: -1 }).limit(100),
+    Visitor.countDocuments(),
   ]);
 
   const visitors = visitorDocs.map((v) => ({
@@ -354,6 +355,7 @@ export const listVisitQr = async (input: VisitQrInput) => {
       },
       today: todayCount,
       todayUnique: todayUniqueIps.length,
+      totalVisitors: totalVisitorsCount,
       total: allCount,
       totalUnique: totalUniqueIps.length,
     },
@@ -366,7 +368,14 @@ export const getProjectNarrations = async (projectId: string) => {
   const project = await Project.findById(projectId);
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
 
-  const narrations = await Narration.find({ projectId }).sort({ createdAt: -1 });
+  const media = await Media.findOne({ projectId: project._id });
+  let projectIds: mongoose.Types.ObjectId[] = [project._id as mongoose.Types.ObjectId];
+  if (media?.storagePath) {
+    const relatedMedias = await Media.find({ storagePath: media.storagePath });
+    projectIds = [...new Set(relatedMedias.map((m) => m.projectId as mongoose.Types.ObjectId))];
+  }
+
+  const narrations = await Narration.find({ projectId: { $in: projectIds } }).sort({ createdAt: -1 });
   const voiceIds = [...new Set(narrations.map((n) => n.voiceId))];
   const voices = await Voice.find({ _id: { $in: voiceIds } });
   const voiceMap = new Map(voices.map((v) => [v._id.toString(), v]));
@@ -388,7 +397,7 @@ export const getProjectNarrations = async (projectId: string) => {
       fileSize: n.fileSize,
       speed: n.speed,
       status: n.status,
-      isApproved: n.isApproved !== false,
+      isApproved: n.isApproved === true,
       approvedAt: n.approvedAt ?? null,
       audioUrl: `/api/projects/public-audio/${n.projectId.toString()}/${n._id.toString()}`,
       createdAt: n.createdAt,
@@ -408,6 +417,9 @@ export const toggleNarrationApproval = async (narrationId: string, isApproved: b
     narration.approvedBy = undefined;
   }
   await narration.save();
+
+  // Touch project updatedAt so it bubbles to the top of the admin list (sorted by updatedAt desc)
+  await Project.findByIdAndUpdate(narration.projectId, { $currentDate: { updatedAt: true } }, { timestamps: false });
 
   if (adminUserId && mongoose.isValidObjectId(adminUserId)) {
     await ActivityLog.create({

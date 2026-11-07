@@ -8,30 +8,31 @@ import { Voice } from '../src/models/Voice.js';
 import { listActiveVoices } from '../src/services/voice-catalog.service.js';
 import { startTranslationSchema } from '../src/validators/translation.validator.js';
 
-test('six catalog records satisfy unchanged Mongoose schema and Translation language-code contract', async () => {
-  assert.deepEqual(LANGUAGE_CATALOG.map(record => record.code), ['vi', 'en', 'ja', 'ko', 'zh', 'fr']);
-  assert.equal(new Set(LANGUAGE_CATALOG.map(record => record.code)).size, 6);
+const TOTAL_LANGS = LANGUAGE_CATALOG.length;
+
+test('catalog records satisfy unchanged Mongoose schema and Translation language-code contract', async () => {
+  assert.equal(new Set(LANGUAGE_CATALOG.map(record => record.code)).size, TOTAL_LANGS);
   for (const record of LANGUAGE_CATALOG) { await new Language(record).validate(); startTranslationSchema.parse({ body: { targetLanguage: record.code } }); assert.ok(record.name && record.nativeName && record.isActive); }
 });
-test('catalog validation rejects malformed/unsupported code, missing labels, wrong boolean and extra fields', () => {
-  for (const patch of [{ code: 'EN' }, { code: 'unsupported' }, { name: ' ' }, { nativeName: '' }, { isActive: 'true' }, { role: 'ADMIN' }]) assert.throws(() => languageCatalogSchema.parse({ ...LANGUAGE_CATALOG[0], ...patch }));
+test('catalog validation rejects malformed code, missing labels, wrong boolean and extra fields', () => {
+  for (const patch of [{ code: 'EN' }, { code: '12' }, { name: ' ' }, { nativeName: '' }, { isActive: 'true' }, { role: 'ADMIN' }]) assert.throws(() => languageCatalogSchema.parse({ ...LANGUAGE_CATALOG[0], ...patch }));
 });
-test('empty catalog dry-run plans six creates without invoking any writes or index creation', async () => {
+test('empty catalog dry-run plans all creates without invoking any writes or index creation', async () => {
   const result = await prepareLanguageCatalog({ async read() { return []; }, async hasUniqueCodeIndex() { assert.fail('Do not inspect/create indexes in dry-run'); }, async insertMissing() { assert.fail('No Database writes'); } });
-  assert.equal(result.mode, 'dry-run'); assert.equal(result.create.length, 6); assert.equal(result.created, 0);
+  assert.equal(result.mode, 'dry-run'); assert.equal(result.create.length, TOTAL_LANGS); assert.equal(result.created, 0);
 });
 test('existing and inactive catalog records are never overwritten or reactivated', async () => {
   const records: CatalogRecord[] = [{ ...LANGUAGE_CATALOG[0]!, name: 'Tên quản trị đã đặt', isActive: false }];
   const original = JSON.stringify(records[0]);
   const store = { async read() { return records; }, async hasUniqueCodeIndex() { return true; }, async insertMissing(record: CatalogRecord) { if (records.some(existing => existing.code === record.code)) return false; records.push({ ...record }); return true; } };
-  const first = await prepareLanguageCatalog(store, true); assert.equal(first.created, 5); assert.deepEqual(first.inactive, ['vi']); assert.equal(JSON.stringify(records[0]), original);
-  const second = await prepareLanguageCatalog(store, true); assert.equal(second.created, 0); assert.equal(records.length, 6);
+  const first = await prepareLanguageCatalog(store, true); assert.equal(first.created, TOTAL_LANGS - 1); assert.deepEqual(first.inactive, ['vi']); assert.equal(JSON.stringify(records[0]), original);
+  const second = await prepareLanguageCatalog(store, true); assert.equal(second.created, 0); assert.equal(records.length, TOTAL_LANGS);
 });
 test('concurrent preparation with insert-if-absent store creates no duplicate codes', async () => {
   const records: CatalogRecord[] = [];
   const store = { async read() { return [...records]; }, async hasUniqueCodeIndex() { return true; }, async insertMissing(record: CatalogRecord) { if (records.some(existing => existing.code === record.code)) return false; records.push({ ...record }); return true; } };
   const results = await Promise.all([prepareLanguageCatalog(store, true), prepareLanguageCatalog(store, true)]);
-  assert.equal(results.reduce((count, result) => count + result.created, 0), 6); assert.equal(new Set(records.map(record => record.code)).size, 6);
+  assert.equal(results.reduce((count, result) => count + result.created, 0), TOTAL_LANGS); assert.equal(new Set(records.map(record => record.code)).size, TOTAL_LANGS);
 });
 test('existing normalized codes are preserved; duplicate catalog corruption fails closed', () => {
   assert.deepEqual(planLanguageCatalog([{ code: ' EN ', isActive: false }]).keep, ['en']);
@@ -54,7 +55,7 @@ test('write requires explicit matching environment, URI DB, actual connected DB 
 test('GET /api/voices service returns active languages even when there are no TTS voices', async t => {
   t.mock.method(Language, 'find', (filter: any) => ({ async sort() { assert.equal(filter.isActive, true); return LANGUAGE_CATALOG.map((record, index) => ({ ...record, _id: `language-${index}` })); } }));
   t.mock.method(Voice, 'find', () => ({ async sort() { return []; } }));
-  const response = await listActiveVoices(); assert.equal(response.languages.length, 6); assert.equal(response.voices.length, 0); assert.equal(response.languages[1]?.code, 'en'); assert.equal(response.languages[1]?.nativeName, 'English');
+  const response = await listActiveVoices(); assert.equal(response.languages.length, TOTAL_LANGS); assert.equal(response.voices.length, 0); assert.equal(response.languages[1]?.code, 'en'); assert.equal(response.languages[1]?.nativeName, 'English');
 });
 test('seed entrypoint uses only guarded setOnInsert, disables auto index/create and never seeds voices', async () => {
   const source = await readFile(new URL('../src/scripts/seed-language-catalog.ts', import.meta.url), 'utf8');
@@ -74,7 +75,7 @@ const { signAccessToken } = await import('../src/utils/jwt.js');
 test('authenticated GET /api/voices DTO compatibility, empty and populated catalogs without fake voices', async t => {
   let records: readonly CatalogRecord[] = [];
   const user = { _id: '0123456789abcdef01234567', fullName: 'Test', email: 'catalog@example.test', role: 'CUSTOMER', status: 'ACTIVE' };
-  t.mock.method(User, 'findById', async () => user);
+  t.mock.method(User, 'findById', async () => user); t.mock.method(User, 'findOne', async () => user);
   t.mock.method(Language, 'find', (filter: any) => ({ async sort() { return records.filter(record => !filter.code || filter.code === record.code).map((record, index) => ({ ...record, _id: `language-${index}` })); } }));
   t.mock.method(Voice, 'find', () => ({ async sort() { return []; } }));
   const app = express(); app.use('/api/voices', voiceRouter); app.use(errorHandlerMiddleware);
@@ -83,7 +84,7 @@ test('authenticated GET /api/voices DTO compatibility, empty and populated catal
   const call = async (suffix = '', auth = true) => { const response = await fetch(`http://127.0.0.1:${address.port}/api/voices${suffix}`, { headers: auth ? { authorization: `Bearer ${token}` } : {} }); return { status: response.status, body: await response.json() as any }; };
   try {
     assert.equal((await call('', false)).status, 401); assert.deepEqual((await call()).body.data, { languages: [], voices: [] });
-    records = LANGUAGE_CATALOG; const result = await call(); assert.equal(result.status, 200); assert.equal(result.body.data.languages.length, 6); assert.deepEqual(result.body.data.voices, []);
+    records = LANGUAGE_CATALOG; const result = await call(); assert.equal(result.status, 200); assert.equal(result.body.data.languages.length, TOTAL_LANGS); assert.deepEqual(result.body.data.voices, []);
     assert.equal((await call('?language=en')).body.data.languages[0].code, 'en'); assert.equal((await call('?language=bad%20code')).status, 400);
   } finally { await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); }
 });

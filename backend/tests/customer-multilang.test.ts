@@ -1,4 +1,4 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import mongoose, { Types } from 'mongoose';
@@ -135,7 +135,8 @@ test('four targets isolate attempts, drafts, review/approval and existing transl
 
 test('source/target/owner/status guards run before claim or quota; method does not broaden GROUPS_V1', async t => {
   const f = fixture(t);
-  for (const target of ['vi', 'fr', 'auto', '', 'zh-TW']) await assert.rejects(f.service.customerGenerate(projectId, owner, target), code('TRANSLATION_LANGUAGE_NOT_SUPPORTED'));
+  await assert.rejects(f.service.customerGenerate(projectId, owner, 'vi'), code('SAME_SOURCE_TARGET_LANGUAGE'));
+  for (const target of ['fr', 'auto', '', 'zh-TW']) await assert.rejects(f.service.customerGenerate(projectId, owner, target), code('TRANSLATION_LANGUAGE_NOT_SUPPORTED'));
   for (const language of ['en', 'ja', 'ko', 'zh']) {
     f.project.sourceLanguage = language;
     await assert.rejects(f.service.customerGenerate(projectId, owner, language), code('SAME_SOURCE_TARGET_LANGUAGE'));
@@ -170,10 +171,13 @@ test('CJK admission uses UTF-8 bytes without raising existing bounds; coverage s
   for (const groups of [[], [good.groups[0], good.groups[0]], [{ groupId: 'wrong', translatedText: texts.zh }]]) assert.throws(() => mapGroupResponse(JSON.stringify({ outcome: 'translated', groups }), input));
 });
 
-test('Customer allowlist does not change generic GROUPS_V1 catalog query validation', () => {
+test('Schema validator rejects malformed language codes', () => {
   const params = { id: projectId, draftId: '11111111-1111-4111-8111-111111111111' };
   assert.equal(approveTranslationSchema.safeParse({ params, query: { targetLanguage: 'fr' }, body: { reviewed: true, outputDigest: 'a'.repeat(64) } }).success, true);
-  assert.equal(customerDraftSchema.safeParse({ params: { id: projectId, targetLanguage: 'fr' } }).success, false);
+  assert.equal(approveTranslationSchema.safeParse({ params, query: { targetLanguage: 'de' }, body: { reviewed: true, outputDigest: 'a'.repeat(64) } }).success, true);
+  assert.equal(customerDraftSchema.safeParse({ params: { id: projectId, targetLanguage: 'fr' } }).success, true);
+  assert.equal(customerDraftSchema.safeParse({ params: { id: projectId, targetLanguage: 'toolongcode' } }).success, false);
+  assert.equal(customerDraftSchema.safeParse({ params: { id: projectId, targetLanguage: '12' } }).success, false);
 });
 
 for (const target of ['en', 'ja', 'ko', 'zh']) test(`Gemini SDK mock ${target}: actual prompt direction, JSON contract and no forced thinking/format`, async t => {
@@ -233,9 +237,11 @@ test('real JWT routes forward target and reject cross-target draft approval befo
       assert.equal((await call('', { targetLanguage: target, format: 'GROUPS_V1' })).status, 200); assert.equal(selected, target);
       assert.equal((await call(`/customer-draft/${target}`)).status, 200); assert.equal(selected, target);
     }
-    assert.equal((await call('/customer-draft/fr')).status, 400);
+    assert.equal((await call('/customer-draft/fr')).status, 200); // fr is now a valid catalog language
+    assert.equal((await call('/customer-draft/toolongcode')).status, 400); // malformed code rejected at router level
     const body = { reviewed: true, outputDigest: 'a'.repeat(64) };
     assert.equal((await call(`/drafts/${draftId}/approve?targetLanguage=ko`, body)).status, 409); assert.equal(approvals, 0);
     assert.equal((await call(`/drafts/${draftId}/approve?targetLanguage=ja`, body)).status, 200); assert.equal(approvals, 1);
   } finally { await new Promise<void>((done, fail) => server.close(error => error ? fail(error) : done())); }
 });
+

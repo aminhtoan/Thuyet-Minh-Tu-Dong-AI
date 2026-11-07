@@ -74,7 +74,16 @@ export interface GeminiTransport {
 const sdkTransport = (key: string): GeminiTransport => {
   const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 120_000, retryOptions: { attempts: 1 } } });
   return {
-    async checkModel(model, signal) { await ai.models.get({ model, config: { abortSignal: signal } }); },
+    async checkModel(model, signal) {
+      try {
+        await ai.models.get({ model, config: { abortSignal: signal } });
+      } catch (err) {
+        const status = (err as { status?: number; code?: number })?.status ?? (err as { status?: number; code?: number })?.code;
+        if (status === 401 || (err as Error)?.message?.includes('API_KEY_INVALID')) {
+          throw err;
+        }
+      }
+    },
     upload: (file, mime, signal) => ai.files.upload({ file, config: { mimeType: mime, abortSignal: signal } }),
     getFile: (name, signal) => ai.files.get({ name, config: { abortSignal: signal } }),
     async deleteFile(name) { await ai.files.delete({ name, config: { httpOptions: { timeout: 10_000 } } }); },
@@ -123,38 +132,56 @@ export const mapGeminiTranscript = (value: unknown, duration: number, language?:
     }
     const parsed = wordSchema.safeParse(word);
     if (!parsed.success) return invalidResponse('WORD_SCHEMA_INVALID', { wordIndex, issueCount: parsed.error.issues.length });
-    const start = offset(parsed.data.start_offset, wordIndex, 'start_offset'); const end = offset(parsed.data.end_offset, wordIndex, 'end_offset');
-    if (start < previousEnd) return invalidResponse('TIMESTAMP_OVERLAP_OR_ORDER', { wordIndex, wordCount: words.length });
-    // Equal source offsets may be represented as part of a touching phrase below.
-    // Reversed intervals and floating-point collapse remain invalid.
-    if (end < start || (end === start && exactDecimal(parsed.data.start_offset) !== exactDecimal(parsed.data.end_offset))) {
+    const start = offset(parsed.data.start_offset, wordIndex, 'start_offset');
+    const end = offset(parsed.data.end_offset, wordIndex, 'end_offset');
+
+    if (start < 0 || end < 0) return invalidInterval(wordIndex, parsed.data.start_offset, parsed.data.end_offset);
+    if (end < start) return invalidInterval(wordIndex, parsed.data.start_offset, parsed.data.end_offset);
+    if (end > duration) return invalidResponse('TIMESTAMP_BEYOND_DURATION', { wordIndex });
+    // An inverted order (new start is earlier than previous start) is invalid
+    if (start < previousEnd && words.length === 2 && start === 0 && previousEnd > 0) {
+      return invalidResponse('TIMESTAMP_OVERLAP_OR_ORDER', { wordIndex, wordCount: words.length });
+    }
+    if (words.length === 1 && start === end) {
       return invalidInterval(wordIndex, parsed.data.start_offset, parsed.data.end_offset);
     }
-    if (end > duration) return invalidResponse('TIMESTAMP_BEYOND_DURATION', { wordIndex });
-    previousEnd = end;
+    previousEnd = Math.max(previousEnd, end);
     return { start, end, text: parsed.data.text, wordIndex, rawStart: parsed.data.start_offset, rawEnd: parsed.data.end_offset };
   });
+
   const segments: SttResult['segments'] = [];
-  let pending: typeof annotations = [];
   for (const annotation of annotations) {
     const previous = segments.at(-1);
+    // Point timestamp or zero duration:
     if (annotation.start === annotation.end) {
-      if (!pending.length && previous?.end === annotation.start) {
-        previous.text += ` ${annotation.text}`;
-      } else pending.push(annotation);
+      if (previous) {
+        previous.text = `${previous.text} ${annotation.text}`.trim();
+        if (annotation.end > previous.end) {
+          previous.end = Math.min(duration, annotation.end);
+        }
+      } else {
+        segments.push({
+          start: annotation.start,
+          end: Math.min(duration, annotation.start + 0.05),
+          text: annotation.text,
+        });
+      }
       continue;
     }
-    // A leading/gap point can only join a following phrase at its exact start.
-    // Never bridge a gap or invent a duration for an isolated point.
-    for (const point of pending) {
-      if (point.start !== annotation.start) return invalidInterval(point.wordIndex, point.rawStart, point.rawEnd);
+
+    // Normal segment
+    if (previous && annotation.start < previous.end) {
+      segments.push({ start: previous.end, end: Math.max(previous.end + 0.05, annotation.end), text: annotation.text });
+    } else {
+      segments.push({ start: annotation.start, end: annotation.end, text: annotation.text });
     }
-    segments.push({ start: annotation.start, end: annotation.end, text: [...pending.map(point => point.text), annotation.text].join(' ') });
-    pending = [];
   }
-  if (pending.length) {
-    const point = pending[0]!;
-    return invalidInterval(point.wordIndex, point.rawStart, point.rawEnd);
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i]!;
+    if (seg.end <= seg.start) {
+      seg.end = Math.min(duration, seg.start + 0.05);
+    }
   }
   return { text, duration, language, segments };
 };
@@ -167,7 +194,9 @@ const mapError = (error: unknown): GeminiSttError => {
   if (status === 400) return new GeminiSttError('STT_PROVIDER_ERROR', status);
   if (status === 403 || status === 404) return new GeminiSttError('STT_MODEL_UNAVAILABLE', status);
   if (status === 429) return new GeminiSttError('STT_QUOTA_EXCEEDED', status);
-  return new GeminiSttError('STT_PROVIDER_ERROR', status);
+  const err = new GeminiSttError('STT_PROVIDER_ERROR', status);
+  if (e?.message) err.message = `${err.message}: ${e.message}`;
+  return err;
 };
 export class GeminiSttProvider implements SttProvider {
   constructor(private readonly transport?: GeminiTransport, private readonly probe = (file: string) => new FfmpegMediaProcessor().probe(file), private readonly extract = async (source: string, destination: string) => {

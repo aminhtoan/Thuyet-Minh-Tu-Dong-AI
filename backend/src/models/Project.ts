@@ -1,6 +1,6 @@
 import { model, Schema, type InferSchemaType } from 'mongoose';
 import { PROJECT_STATUSES } from '../constants/project.constants.js';
-import { SOURCE_LANGUAGE_MODES, SOURCE_LANGUAGE_STATUSES } from '../services/source-language-contract.js';
+import { SOURCE_LANGUAGES, SOURCE_LANGUAGE_MODES, SOURCE_LANGUAGE_STATUSES } from '../services/source-language-contract.js';
 
 const projectSchema = new Schema(
   {
@@ -11,7 +11,7 @@ const projectSchema = new Schema(
     sourceLanguageMode: { type: String, enum: SOURCE_LANGUAGE_MODES },
     sourceLanguage: { type: String, trim: true, lowercase: true,
       required: function (this: { get: (field: string) => unknown }) { return this.get('sourceLanguageMode') !== 'AUTO' || this.get('sourceLanguageStatus') === 'CONFIRMED'; } },
-    detectedSourceLanguage: { type: String, enum: ['vi', 'en', 'ja', 'ko', 'zh', null] },
+    detectedSourceLanguage: { type: String, enum: [...SOURCE_LANGUAGES, null] },
     sourceLanguageStatus: { type: String, enum: SOURCE_LANGUAGE_STATUSES },
     status: { type: String, enum: PROJECT_STATUSES, required: true, default: 'DRAFT', index: true },
     progress: { type: Number, required: true, default: 0, min: 0, max: 100 },

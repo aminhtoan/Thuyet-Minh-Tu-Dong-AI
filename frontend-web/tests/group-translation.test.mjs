@@ -80,7 +80,7 @@ for (const target of ['en', 'ja', 'ko', 'zh']) test(`Customer ${target}: selecto
   });
   await h.settle();
   const options = h.find(node => node.type === 'select').props.children[1].map(option => option.props.value);
-  assert.deepEqual(options, ['en', 'ja', 'ko', 'zh']);
+  assert.deepEqual(options, ['en', 'ja', 'ko', 'zh', 'fr']);
   assert.equal(h.counts().requests, 0);
   h.find(node => node.type === 'input').props.onChange({ target: { checked: true } }); h.render();
   await button(h, `Dịch ${customerTargetLabel(target)}`).props.onClick(); h.render();
@@ -99,7 +99,7 @@ test('Customer selector excludes the confirmed source and unsupported targets; C
     transcript: { languageCode: 'en', segments: [] }, planLoad: async () => ({ ...plan, sourceLanguage: 'en', targetLanguage: 'ja' }),
   });
   await h.settle();
-  assert.deepEqual(h.find(node => node.type === 'select').props.children[1].map(option => option.props.value), ['ja', 'ko', 'zh']);
+  assert.deepEqual(h.find(node => node.type === 'select').props.children[1].map(option => option.props.value), ['vi', 'ja', 'ko', 'zh', 'fr']);
   assert.match(h.text(), /Tiếng Trung \(giản thể\)/); assert.equal(h.counts().requests, 0); h.unmount();
 });
 
