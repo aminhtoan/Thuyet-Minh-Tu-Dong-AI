@@ -1,0 +1,30 @@
+name: Staging preparation only
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full main commit SHA to inspect (not deploy)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: staging-preparation
+  cancel-in-progress: false
+jobs:
+  offline-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version-file: .nvmrc
+      - run: node --test scripts/staging-prep.test.mjs
+      - name: Inspect preparation and candidate ancestry; no deployment
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: node scripts/check-staging-prep.mjs --sha "$CANDIDATE_SHA"

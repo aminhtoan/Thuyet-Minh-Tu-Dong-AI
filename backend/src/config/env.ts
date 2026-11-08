@@ -1,6 +1,10 @@
 import dotenv from 'dotenv';
+import { stagingConfig } from './staging.js';
 
-dotenv.config({ quiet: true });
+// A staging process receives its reviewed environment externally, never from
+// the developer's implicit .env file.
+if (process.env.APP_ENV !== 'staging') dotenv.config({ quiet: true });
+export const staging = stagingConfig(process.env);
 
 const requireValue = (name: string): string => {
   const value = process.env[name]?.trim();

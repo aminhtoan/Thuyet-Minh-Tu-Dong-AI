@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AdminPageHeader } from '../components/layout/AdminPageHeader';
 import { Card } from '../components/common/Card';
@@ -7,23 +7,49 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { OperationProgress, OperationSkeleton } from '../components/operations/OperationsCommon';
 import { useJob } from '../hooks/useOperations';
+import { loadJobAudio } from '../services/adminJobAudio';
 
 export function AdminJobDetailPage() {
   const { jobId = '' } = useParams();
   const { data: j, loading, error, retry } = useJob(jobId);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [playingJob, setPlayingJob] = useState<string | null>(null);
+  const isPlaying = playingJob === jobId;
+  const setIsPlaying = (playing: boolean) => setPlayingJob(playing ? jobId : null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const blobRef = useRef<string | null>(null);
+  const [audioError, setAudioError] = useState('');
+  useEffect(() => () => {
+    requestRef.current?.abort();
+    requestRef.current = null;
+    if (blobRef.current) URL.revokeObjectURL(blobRef.current);
+    blobRef.current = null;
+  }, [jobId]);
 
-  const toggleAudio = () => {
-    if (!audioRef.current) return;
+  const toggleAudio = async () => {
+    if (!audioRef.current || requestRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+      const controller = new AbortController();
+      requestRef.current = controller;
+      setAudioError('');
+      try {
+        if (!blobRef.current) {
+          const blob = await loadJobAudio(jobId, controller.signal);
+          if (controller.signal.aborted || !audioRef.current) return;
+          blobRef.current = URL.createObjectURL(blob);
+          audioRef.current.src = blobRef.current;
+        }
+        if (controller.signal.aborted) return;
+        await audioRef.current.play();
+        if (!controller.signal.aborted) setIsPlaying(true);
+      } catch {
+        if (!controller.signal.aborted) setAudioError('Không thể phát audio của công việc này.');
+      } finally {
+        if (requestRef.current === controller) requestRef.current = null;
+      }
     }
   };
 
@@ -77,7 +103,7 @@ export function AdminJobDetailPage() {
                 </button>
                 <audio
                   ref={audioRef}
-                  src="http://localhost:5173/output_narration.mp3"
+                  preload="none"
                   onEnded={() => setIsPlaying(false)}
                   onPause={() => setIsPlaying(false)}
                   onPlay={() => setIsPlaying(true)}
@@ -89,6 +115,7 @@ export function AdminJobDetailPage() {
           </div>
         }
       />
+      {audioError && <p role="alert">{audioError}</p>}
 
       <div className="operation-detail-grid">
         <Card>

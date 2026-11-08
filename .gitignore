@@ -12,6 +12,7 @@ infra/mongodb-demo/secrets/
 .env
 .env.*
 !.env.example
+!.env.staging.example
 
 # Expo
 .expo/
