@@ -1,6 +1,6 @@
 import type { Server } from 'node:http';
-import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { app } from './app.js';
+import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { env } from './config/env.js';
 
 let server: Server | undefined;

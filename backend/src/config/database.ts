@@ -1,16 +1,7 @@
 import mongoose from 'mongoose';
-import { staging } from './env.js';
-
-// server imports this module before app/models, so initialization cannot queue
-// automatic collection/index creation before staging policy is installed.
-if (staging) {
-  mongoose.set('autoCreate', false);
-  mongoose.set('autoIndex', false);
-}
 
 export const connectDatabase = async (uri: string): Promise<void> => {
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 5_000,
-    ...(staging ? { dbName: staging.database, autoCreate: false, autoIndex: false } : {}) });
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 5_000 });
 };
 
 export const disconnectDatabase = async (): Promise<void> => {

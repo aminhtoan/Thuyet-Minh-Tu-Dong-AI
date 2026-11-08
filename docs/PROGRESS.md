@@ -1,27 +1,5 @@
 # Project Progress
 
-## S38.2 — CD Staging preparation (2026-11-08)
-
-- Branch chore/cd-staging-prep from verified origin/main6689944 (merge PR #4,
-  both parents verified, CI V1 exists, same tree as c039fc4); clean before work.
-  Old CI branch and ignored .env/media preserved.
-- Prepared pinned Node22.23.3 multi-stage/non-root Docker, fail-fast APP_ENV=staging
-  config, explicit DB namespace/acknowledgements, no-auto-DDL startup, exact CORS,
-  dedicated persistent media path, HTTPS-only staging frontend build inputs and
-  inert workflow_dispatch validation workflow. CI V1 unchanged, no deploy job.
-- Owner additionally authorized Admin job audio read API: JWT/ADMIN-protected,
-  unique source/voice/revision/time-bound artifact, current provenance check,
-  no writes/backfill; replaces localhost demo with authenticated Blob playback.
-- Backend/Web/Admin lint/typecheck/build PASS on Node22.23.3 with synthetic
-  staging URLs; Backend CI88/88, new policy5/5+audio2/2, Web selected455/455,
-  Admin36/36, prep4/4 and network guard checks PASS. Existing media exclusion
-  retained. Docker build NOT RUN; requires dependency/image network access.
-- READY OFFLINE only. Hosting, separate DB user/grants/index provisioning,
-  persistent volume/backups, secrets, exact-main-SHA CI gate and manual deployment
-  approval still required; infrastructure isolation/rollback NOT VERIFIED.
-- Handoff: infra/staging/README.md and manifest.json. No real Atlas/AI calls,
-  media/.env changes, dependency install, commit/push/PR/deploy or S38.3 execution.
-
 ## S37.4C — Backend CI GROUP_TRANSLATION_DISABLED (2026-11-08)
 
 - Branch ci/first-run, baseline22e6ca5. Run #2: Backend87/88, other three apps

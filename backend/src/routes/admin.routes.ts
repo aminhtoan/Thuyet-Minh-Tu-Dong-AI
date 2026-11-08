@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import * as controller from '../controllers/admin.controller.js';
-import { adminJobAudio } from '../controllers/admin-job-audio.controller.js';
 import { authenticate } from '../middleware/authenticate.middleware.js';
 import { authorize } from '../middleware/authorize.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -18,7 +17,6 @@ adminRouter.get('/projects/:id/narrations', validate(adminIdSchema), controller.
 adminRouter.patch('/narrations/:id/approval', validate(adminIdSchema), controller.updateNarrationApproval);
 adminRouter.get('/jobs', validate(adminJobsSchema), controller.jobs);
 adminRouter.get('/jobs/:id', validate(adminIdSchema), controller.job);
-adminRouter.get('/jobs/:id/audio', validate(adminIdSchema), adminJobAudio);
 adminRouter.get('/languages', validate(adminLanguagesSchema), controller.languages);
 adminRouter.get('/voices', validate(adminVoicesSchema), controller.voices);
 adminRouter.get('/logs', validate(adminLogsSchema), controller.logs);

@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import { env, staging } from './config/env.js';
+import { env } from './config/env.js';
 import { errorHandlerMiddleware } from './middleware/error-handler.middleware.js';
 import { notFoundMiddleware } from './middleware/not-found.middleware.js';
 import { apiRouter } from './routes/index.js';
@@ -30,7 +30,6 @@ function isAllowedDevOrigin(origin: string): boolean {
 }
 
 function isAllowedClientOrigin(origin: string): boolean {
-  if (staging) return staging.origins.includes(origin.replace(/\/+$/, ''));
   if (env.corsOrigins.includes('*')) return true;
   const normalized = origin.replace(/\/+$/, '');
   if (env.corsOrigins.includes(origin) || env.corsOrigins.includes(normalized)) {
