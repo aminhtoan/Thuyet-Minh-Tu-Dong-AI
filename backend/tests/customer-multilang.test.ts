@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import mongoose, { Types } from 'mongoose';
 Object.assign(process.env, { NODE_ENV: 'test', MONGODB_URI: 'mongodb://127.0.0.1:1/multilang_mock_only',
   JWT_ACCESS_SECRET: randomBytes(48).toString('hex'), JWT_REFRESH_SECRET: randomBytes(48).toString('hex'),
-  JWT_ACCESS_EXPIRES_IN: '15m', JWT_REFRESH_EXPIRES_IN: '1d', CUSTOMER_TRANSLATION_ENABLED: 'true',
+  JWT_ACCESS_EXPIRES_IN: '15m', JWT_REFRESH_EXPIRES_IN: '1d', CUSTOMER_TRANSLATION_ENABLED: 'true', GROUP_TRANSLATION_ENABLED: 'false',
   CUSTOMER_TRANSLATION_METHOD: 'GEMINI_SIMPLE_V1', CUSTOMER_TRANSLATION_THINKING: 'DEFAULT', TRANSLATION_PROVIDER: 'gemini',
   CUSTOMER_TRANSLATION_DAILY_USER_LIMIT: '20', CUSTOMER_TRANSLATION_DAILY_GLOBAL_LIMIT: '200', GEMINI_API_KEY: 'synthetic-only' });
 delete process.env.CONTROLLED_PROVIDER_MODE;
@@ -129,7 +129,11 @@ test('four targets isolate attempts, drafts, review/approval and existing transl
   assert.equal(f.project.status, 'COMPLETED');
   assert.equal((await f.service.customerDraft(projectId, owner, 'en'))?.targetLanguage, 'en');
   const en = drafts[0]!;
-  const receipt = await f.service.approve(projectId, owner, en.draftId, { reviewed: true, outputDigest: en.outputDigest });
+  // Customer approval requires the same scope as the controller; a developer's
+  // .env must not enable the legacy group path and hide a missing scope here.
+  await assert.rejects(f.service.approve(projectId, owner, en.draftId, { reviewed: true, outputDigest: en.outputDigest }), code('GROUP_TRANSLATION_DISABLED'));
+  assert.equal(f.counts().writes, 4);
+  const receipt = await withCustomerTranslation(() => f.service.approve(projectId, owner, en.draftId, { reviewed: true, outputDigest: en.outputDigest }));
   assert.equal(receipt.translation.targetLanguage, 'en'); assert.equal(f.project.status, 'COMPLETED'); assert.equal(f.counts().writes, 4);
 });
 

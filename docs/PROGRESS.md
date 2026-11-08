@@ -1,5 +1,20 @@
 # Project Progress
 
+## S37.4C — Backend CI GROUP_TRANSLATION_DISABLED (2026-11-08)
+
+- Branch ci/first-run, baseline22e6ca5. Run #2: Backend87/88, other three apps
+  PASS per user. Locally reproduced exact failure with legacy group flag false.
+- Root cause: final test approval lacked Customer AsyncLocalStorage scope;
+  local dotenv-loaded GROUP_TRANSLATION_ENABLED=true hid the missing scope.
+  Pin legacy flag false in test setup, wrap final approval consistently with
+  controller, and assert unscoped approval remains denied with no extra write.
+- Only backend/tests/customer-multilang.test.ts and progress/CI documentation
+  changed. Production guard, workflow, runner and other apps unchanged.
+- Node22.23.3: four-file mock runner88/88 PASS with inherited flag false/true;
+  isolated multilingual file without .env27/27 PASS; Backend lint/typecheck/build
+  PASS. Existing network guard active. READY for run #3; hosted result pending.
+- No Atlas access, real Gemini, .env edits, commit/push/merge or deployment.
+
 ## Current context — S37.4A / CI V1 (2026-11-08)
 
 - User explicitly abandoned S34/S35 testing. Do not resume, restore or integrate

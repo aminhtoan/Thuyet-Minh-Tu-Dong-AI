@@ -1,5 +1,41 @@
 # CI V1 (S37.2)
 
+## S37.4C — Customer approval scope repair (2026-11-08)
+
+Branch `ci/first-run`, baseline `22e6ca5`. Run #2 reported Backend 87/88 PASS;
+Customer Web/Admin/Mobile passed. The supplied job URL returned 404 here:
+https://github.com/vuvantai14/multilingual-ai-narration/actions/runs/24242240760/job/128613723971
+
+Verified cause: `customer-multilang.test.ts` called its final idempotent
+`approve()` outside `withCustomerTranslation`, unlike earlier approval calls
+and the production controller's `normalGroups` wrapper. `enabled()` correctly
+rejects an unscoped call unless `GROUP_TRANSLATION_ENABLED=true`. Local
+`config/env.ts` uses `dotenv.config()`; the local non-secret feature flag was
+true, masking the missing scope. CI has no `.env` and does not set that flag.
+This is an ambient-configuration dependency, not a Linux parser difference.
+Forcing the flag false reproduced the exact failure locally: 87 PASS/1 FAIL,
+`GROUP_TRANSLATION_DISABLED` in the reported test.
+
+The test now pins the legacy group flag false before dynamic application
+imports, preventing dotenv from filling it from local configuration, and wraps
+the final approval in the same Customer scope used elsewhere. A negative
+assertion verifies unscoped approval is still denied without an extra write.
+Production source, workflow, runner and all other apps remain unchanged.
+
+Validation with Node 22.23.3 and the existing test network guard:
+
+- Four-file CI runner: 88/88 PASS with inherited flag false and 88/88 PASS
+  with inherited flag true; no skips.
+- Customer multilingual file alone, absent inherited flag and working directory
+  without `.env`: 27/27 PASS. Node's default file/process isolation and sequential
+  top-level tests prevent other test files from supplying the missing scope;
+  the isolated result confirms no preceding-file dependency.
+- Backend lint, typecheck and build PASS. Existing dependencies retained;
+  no fresh Linux/GitHub execution is claimed.
+
+READY for CI run #3 after user-approved commit/push. No Atlas access, real
+Gemini calls, `.env` edits, commit, push, merge or deployment performed.
+
 ## S37.4A repair (2026-11-08)
 
 Current branch: `ci/first-run`, baseline `e0d1a35`. This section supersedes the
