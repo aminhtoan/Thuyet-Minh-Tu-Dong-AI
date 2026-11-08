@@ -10,10 +10,13 @@ const uploadCss = await readFile(new URL('../src/styles/upload.css', import.meta
 const detailCss = await readFile(new URL('../src/styles/project-detail.css', import.meta.url), 'utf8');
 const topbarSource = await readFile(new URL('../src/components/layout/Topbar.tsx', import.meta.url), 'utf8');
 
-test('create project validates required fields and sends supported description', () => {
-  assert.match(createSource, /Vui lòng chọn ngôn ngữ nguồn/);
+test('create project supports AUTO/MANUAL source selection and sends supported description', () => {
+  assert.match(createSource, /useState<SourceLanguageMode>\('AUTO'\)/);
+  assert.match(createSource, /sourceLanguageMode === 'MANUAL' && <div/);
+  assert.match(createSource, /id="source-language"[^\r\n]*? required>\{manualSourceOptions\.map/);
   assert.match(createSource, /htmlFor="project-description">Mô tả/);
-  assert.match(uploadSource, /JSON\.stringify\(\{ name: projectName, description, sourceLanguage \}\)/);
+  assert.match(uploadSource, /const source = createSourcePayload\(/);
+  assert.match(uploadSource, /JSON\.stringify\(\{ name: projectName, description, \.\.\.source \}\)/);
 });
 
 test('web upload uses an honest indeterminate state and keeps cancellation', () => {

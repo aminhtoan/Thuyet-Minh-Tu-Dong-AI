@@ -1,5 +1,40 @@
 # CI V1 (S37.2)
 
+## S37.4A repair (2026-11-08)
+
+Current branch: `ci/first-run`, baseline `e0d1a35`. This section supersedes the
+historical failure/readiness notes below. S34/S35 has been abandoned; its runtime
+state and approvals are not prerequisites for this CI task.
+
+The first Actions run is
+https://github.com/vuvantai14/multilingual-ai-narration/actions/runs/24241122537.
+Its logs returned 404 to this environment; failures were reproduced locally.
+
+- Backend translation response normalization now narrows unknown JSON instead
+  of using five explicit `any` types; normalization behavior is retained.
+- STT timestamp parsing now rejects overlaps for every annotation count and
+  joins zero-duration words only at exact adjacent positive source boundaries.
+  It preserves source timestamps rather than inserting 50 ms or extending them
+  across gaps. Existing diagnostics and mapping tests define this contract.
+- Customer Web assertions now follow the existing AUTO/MANUAL upload contract.
+  The homepage reflow assertion excludes only the two audio-card preview rules
+  that intentionally clamp text; it still checks homepage/shared shell rules.
+  No Customer Web application code or styles changed.
+- Admin/Mobile, workflow, network guard, test allowlist and the existing single
+  missing-video exclusion remain unchanged. No additional tests were excluded.
+
+Validation uses portable Node 22.23.3, existing dependencies and the CI network
+guard for tests. Backend lint/typecheck/build PASS; CI allowlist 88/88 PASS;
+additional `gemini-stt.test.ts` regression 33/33 PASS, including synthetic local
+FFmpeg media with mocked provider. Network guard self-test PASS. Customer Web
+lint/typecheck/build PASS (five existing lint warnings and existing bundle/import
+warnings). Customer Web selected suite: 455/455 PASS; the existing single
+missing-video exclusion still applies, so this is not a full-suite PASS.
+
+No clean `npm ci` or GitHub-hosted Linux rerun is claimed. No shared Atlas access,
+real provider calls, Admin/Mobile edits, commit, push, merge or deployment.
+Push requires user approval after reviewing this local change.
+
 ## Scope and execution
 
 Workflow: `.github/workflows/ci.yml`. It runs on pull requests targeting `main`,

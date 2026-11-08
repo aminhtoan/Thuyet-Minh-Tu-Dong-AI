@@ -1,5 +1,22 @@
 # Project Progress
 
+## Current context — S37.4A / CI V1 (2026-11-08)
+
+- User explicitly abandoned S34/S35 testing. Do not resume, restore or integrate
+  that source, or use its old approvals/expiry/progress to guide current work.
+- Project restored to collaborator main e10cae0, followed by Admin/Mobile fixes
+  in c9c2050. Current work is CI V1 on ci/first-run at e0d1a35.
+- First GitHub run: https://github.com/vuvantai14/multilingual-ai-narration/actions/runs/24241122537
+  Backend/Customer Web failed; Admin/Mobile passed. Preserve Admin/Mobile.
+- S37.4A fixes Backend typing/parser failures and outdated Customer Web test
+  assertions. See .github/ci/README.md for validation and test scope.
+- Local Node22.23.3: Backend/Web lint, typecheck and build PASS; Backend CI
+  allowlist88/88, additional mocked STT33/33, Web selected suite455/455 and
+  network guard self-test PASS. Existing one missing-video exclusion retained;
+  no additional skips. Web has five existing lint warnings and bundle warnings.
+- Shared MongoDB Atlas and real Gemini calls are out of scope. No commit,
+  push or merge without explicit user approval. GitHub-hosted rerun pending.
+
 ## Mobile — Nullable source-language crash fix (2026-11-08)
 
 - Reproduced ProjectCard `toUpperCase` and My Projects `toLowerCase` crashes
