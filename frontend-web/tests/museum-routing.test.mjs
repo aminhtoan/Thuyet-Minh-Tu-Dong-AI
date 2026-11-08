@@ -369,7 +369,10 @@ test('homepage polish preserves scoped blue surfaces, long-text reflow and publi
   const sharedLayout = layout.split('/* Shared compact shell:')[0]
   assert.ok(sharedLayout.lastIndexOf('@media (max-width: 479px)') > sharedLayout.lastIndexOf('@media (max-width: 767px)'))
   assert.match(layout, /museum-footer__row > \*,[\s\S]*?min-width: 0; overflow-wrap: anywhere/)
-  assert.doesNotMatch(home + layout, /text-overflow: ellipsis|line-clamp|overflow-x: hidden/)
+  // Audio listing cards deliberately clamp their previews; they are not homepage
+  // or shared navigation text. Keep the reflow check on the remaining rules.
+  const shellLayout = layout.replace(/\.museum-audio-card__(?:title|desc)\s*\{[^}]*\}/g, '')
+  assert.doesNotMatch(home + shellLayout, /text-overflow: ellipsis|line-clamp|overflow-x: hidden/)
   const header = read('components/museum/MuseumHeader.tsx')
   assert.match(header, /dialog\.showModal\(\)/)
   assert.match(header, /trigger\?\.focus\(\)/)

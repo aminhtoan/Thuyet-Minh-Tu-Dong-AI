@@ -1,5 +1,37 @@
 # Project Progress
 
+## S37.4C — Backend CI GROUP_TRANSLATION_DISABLED (2026-11-08)
+
+- Branch ci/first-run, baseline22e6ca5. Run #2: Backend87/88, other three apps
+  PASS per user. Locally reproduced exact failure with legacy group flag false.
+- Root cause: final test approval lacked Customer AsyncLocalStorage scope;
+  local dotenv-loaded GROUP_TRANSLATION_ENABLED=true hid the missing scope.
+  Pin legacy flag false in test setup, wrap final approval consistently with
+  controller, and assert unscoped approval remains denied with no extra write.
+- Only backend/tests/customer-multilang.test.ts and progress/CI documentation
+  changed. Production guard, workflow, runner and other apps unchanged.
+- Node22.23.3: four-file mock runner88/88 PASS with inherited flag false/true;
+  isolated multilingual file without .env27/27 PASS; Backend lint/typecheck/build
+  PASS. Existing network guard active. READY for run #3; hosted result pending.
+- No Atlas access, real Gemini, .env edits, commit/push/merge or deployment.
+
+## Current context — S37.4A / CI V1 (2026-11-08)
+
+- User explicitly abandoned S34/S35 testing. Do not resume, restore or integrate
+  that source, or use its old approvals/expiry/progress to guide current work.
+- Project restored to collaborator main e10cae0, followed by Admin/Mobile fixes
+  in c9c2050. Current work is CI V1 on ci/first-run at e0d1a35.
+- First GitHub run: https://github.com/vuvantai14/multilingual-ai-narration/actions/runs/24241122537
+  Backend/Customer Web failed; Admin/Mobile passed. Preserve Admin/Mobile.
+- S37.4A fixes Backend typing/parser failures and outdated Customer Web test
+  assertions. See .github/ci/README.md for validation and test scope.
+- Local Node22.23.3: Backend/Web lint, typecheck and build PASS; Backend CI
+  allowlist88/88, additional mocked STT33/33, Web selected suite455/455 and
+  network guard self-test PASS. Existing one missing-video exclusion retained;
+  no additional skips. Web has five existing lint warnings and bundle warnings.
+- Shared MongoDB Atlas and real Gemini calls are out of scope. No commit,
+  push or merge without explicit user approval. GitHub-hosted rerun pending.
+
 ## Mobile — Nullable source-language crash fix (2026-11-08)
 
 - Reproduced ProjectCard `toUpperCase` and My Projects `toLowerCase` crashes

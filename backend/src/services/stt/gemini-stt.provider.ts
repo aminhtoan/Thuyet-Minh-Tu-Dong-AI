@@ -138,8 +138,7 @@ export const mapGeminiTranscript = (value: unknown, duration: number, language?:
     if (start < 0 || end < 0) return invalidInterval(wordIndex, parsed.data.start_offset, parsed.data.end_offset);
     if (end < start) return invalidInterval(wordIndex, parsed.data.start_offset, parsed.data.end_offset);
     if (end > duration) return invalidResponse('TIMESTAMP_BEYOND_DURATION', { wordIndex });
-    // An inverted order (new start is earlier than previous start) is invalid
-    if (start < previousEnd && words.length === 2 && start === 0 && previousEnd > 0) {
+    if (start < previousEnd) {
       return invalidResponse('TIMESTAMP_OVERLAP_OR_ORDER', { wordIndex, wordCount: words.length });
     }
     if (words.length === 1 && start === end) {
@@ -150,39 +149,28 @@ export const mapGeminiTranscript = (value: unknown, duration: number, language?:
   });
 
   const segments: SttResult['segments'] = [];
+  let pending: (typeof annotations)[number] | undefined;
   for (const annotation of annotations) {
     const previous = segments.at(-1);
-    // Point timestamp or zero duration:
+    // A point can only share an exact source boundary with a positive interval.
+    // Never manufacture duration or move a provider timestamp to resolve it.
+    if (pending && annotation.start !== pending.start) {
+      return invalidInterval(pending.wordIndex, pending.rawStart, pending.rawEnd);
+    }
     if (annotation.start === annotation.end) {
-      if (previous) {
+      if (previous && previous.end === annotation.start) {
         previous.text = `${previous.text} ${annotation.text}`.trim();
-        if (annotation.end > previous.end) {
-          previous.end = Math.min(duration, annotation.end);
-        }
+      } else if (pending) {
+        pending = { ...pending, text: `${pending.text} ${annotation.text}`.trim() };
       } else {
-        segments.push({
-          start: annotation.start,
-          end: Math.min(duration, annotation.start + 0.05),
-          text: annotation.text,
-        });
+        pending = annotation;
       }
       continue;
     }
-
-    // Normal segment
-    if (previous && annotation.start < previous.end) {
-      segments.push({ start: previous.end, end: Math.max(previous.end + 0.05, annotation.end), text: annotation.text });
-    } else {
-      segments.push({ start: annotation.start, end: annotation.end, text: annotation.text });
-    }
+    segments.push({ start: annotation.start, end: annotation.end, text: pending ? `${pending.text} ${annotation.text}`.trim() : annotation.text });
+    pending = undefined;
   }
-
-  for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i]!;
-    if (seg.end <= seg.start) {
-      seg.end = Math.min(duration, seg.start + 0.05);
-    }
-  }
+  if (pending) return invalidInterval(pending.wordIndex, pending.rawStart, pending.rawEnd);
   return { text, duration, language, segments };
 };
 const mapError = (error: unknown): GeminiSttError => {

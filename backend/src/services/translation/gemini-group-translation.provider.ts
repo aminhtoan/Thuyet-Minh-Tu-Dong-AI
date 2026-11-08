@@ -60,12 +60,14 @@ export function mapGroupResponse(text: string | undefined, input: GroupProviderI
     }
   } catch { throw new GeminiTranslationError('TRANSLATION_INVALID_RESPONSE'); }
 
-  if (value && typeof value === 'object' && 'groups' in value && Array.isArray((value as any).groups) && (value as any).groups.length > 0) {
-    const outcome = String((value as any).outcome || '').toLowerCase();
+  if (value && typeof value === 'object' && 'groups' in value && Array.isArray(value.groups) && value.groups.length > 0) {
+    const response = value as Record<string, unknown> & { groups: unknown[] };
+    const outcome = String(response.outcome || '').toLowerCase();
     if (outcome && outcome !== 'unable_to_align' && outcome !== 'translated') {
-      (value as any).outcome = 'translated';
+      response.outcome = 'translated';
     }
-    for (const g of (value as any).groups) {
+    for (const group of response.groups) {
+      const g = group as Record<string, unknown> | null;
       if (g && typeof g === 'object') {
         if (typeof g.groupId === 'string') g.groupId = g.groupId.trim();
         if (typeof g.translatedText === 'string') g.translatedText = g.translatedText.trim();
