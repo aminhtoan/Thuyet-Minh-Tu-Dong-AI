@@ -31,14 +31,14 @@ export function ProjectDetailScreen({ projectId }: { projectId: string }) {
   const { project, isLoading, error } = useProject(projectId);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [sourceLanguage, setSourceLanguage] = useState('vi');
+  const [sourceLanguage, setSourceLanguage] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
   const saveLock = useRef({ current: false });
   const validation = validateProjectEdit({ name, description, sourceLanguage }, languages.map((language) => language.code));
   // Đồng bộ form khi tải xong hoặc chuyển sang một dự án khác trong cùng route.
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (project) { setName(project.name); setDescription(project.description ?? ''); setSourceLanguage(project.sourceLanguage); } }, [project]);
+  useEffect(() => { if (project) { setName(project.name); setDescription(project.description ?? ''); setSourceLanguage(project.sourceLanguage ?? ''); } }, [project]);
   async function save() { if (!project || !validation.valid) { if (!validation.valid) setMessage({ kind: 'error', text: validation.error }); return; } await runProjectSaveOnce(saveLock.current, async () => { setSaving(true); setMessage(null); try { await projectRepository.updateProject(project.id, validation.value); setMessage({ kind: 'success', text: 'Đã lưu thay đổi dự án.' }); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể cập nhật dự án.' }); } finally { setSaving(false); } }); }
   function remove() { if (!project || saving) return; Alert.alert('Xóa dự án?', 'Dự án và dữ liệu liên quan sẽ bị xóa vĩnh viễn.', [{ text: 'Hủy', style: 'cancel' }, { text: 'Xóa', style: 'destructive', onPress: () => void deleteConfirmed() }]); }
   async function deleteConfirmed() { if (!project) return; setSaving(true); try { await projectRepository.deleteProject(project.id); router.replace('/projects'); } catch (reason) { setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Không thể xóa dự án.' }); setSaving(false); } }

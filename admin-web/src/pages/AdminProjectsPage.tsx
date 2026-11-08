@@ -16,6 +16,7 @@ import { NarrationApprovalModal } from '../components/operations/NarrationApprov
 import { useProjects } from '../hooks/useOperations';
 import type { AdminProject, MediaType } from '../types/operations';
 import type { ProjectStatus } from '../types/domain';
+import { formatLanguagePair } from '../utils/operationsFormat';
 import '../styles/operations.css';
 import '../styles/projects.css';
 
@@ -67,7 +68,7 @@ export function AdminProjectsPage() {
                 return <tr key={p.id}>
                   <td className="projects-name"><strong>{p.name}</strong><small>{p.id}</small></td>
                   <td className="projects-owner">{p.customerName}</td>
-                  <td>{p.sourceLanguage.toUpperCase()} → {p.targetLanguages.map(x => x.toUpperCase()).join(', ') || '—'}</td>
+                  <td>{formatLanguagePair(p.sourceLanguage, p.targetLanguages)}</td>
                   <td>{p.mediaType === 'VIDEO' ? 'Video' : p.mediaType === 'AUDIO' ? 'Âm thanh' : 'Chưa tải lên'}</td>
                   <td><StatusBadge status={p.status} /></td>
                   <td><OperationProgress value={p.progress} label={`Tiến độ ${p.name}`} />{p.progress === 100 && !isCompleted && <small className="projects-progress-note">Trạng thái chưa phải Hoàn thành</small>}</td>

@@ -21,7 +21,8 @@ export function resultAccess(workflow: ProjectWorkflow | undefined, requested: s
   if (workflow.state !== 'COMPLETED' || !ready) return denied('Tệp kết quả chưa được máy chủ xác nhận sẵn sàng.');
   return { allowed: true, targetLanguage: confirmed, reason: null };
 }
-export function resultLanguageName(value: string): string {
+export function resultLanguageName(value: string | null | undefined): string {
+  if (typeof value !== 'string' || !value.trim()) return 'Chưa xác định';
   const names: Record<string, string> = { vi: 'Tiếng Việt', en: 'English', ja: '日本語', ko: '한국어' };
   try { const name = new Intl.DisplayNames(['vi'], { type: 'language', fallback: 'none' }).of(value); if (name) return name.charAt(0).toUpperCase() + name.slice(1); } catch { /* Same safe fallback as Web. */ }
   return names[value] || value.toUpperCase();

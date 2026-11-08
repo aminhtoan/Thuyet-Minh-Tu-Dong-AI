@@ -12,7 +12,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MobileScreen } from '@/components/layout/MobileScreen';
 import { isLanguageCode } from '@/features/projects/languages';
 import { useProject } from '@/features/projects/useProjects';
-import { languageNames } from '@/features/projects/projectUtils';
+import { formatLanguageName, languageNames } from '@/features/projects/projectUtils';
 import type { LanguageCode, Project } from '@/features/projects/types';
 import { TranslationSegmentCard } from '@/features/translation/TranslationSegmentCard';
 import { useTranslationEditor } from '@/features/translation/useTranslationEditor';
@@ -56,7 +56,7 @@ function TranslationWorkspace({ project, preferredTarget }: { project: Project; 
       title={editor.failedAction === 'save' ? 'Không thể lưu bản dịch' : editor.failedAction === 'load' ? 'Không thể tải bản dịch' : 'Không thể dịch bản ghi'}
       description={editor.error ?? 'Vui lòng thử lại.'} onRetry={editor.retry} /></Card>}
     {sourceVisible && <Card style={styles.languageCard}>
-      <Text style={styles.label}>Ngôn ngữ nguồn</Text><Text style={styles.sourceLanguage}>{languageNames[sourceLanguage]}</Text>
+      <Text style={styles.label}>Ngôn ngữ nguồn</Text><Text style={styles.sourceLanguage}>{formatLanguageName(sourceLanguage)}</Text>
       <Text style={styles.label}>Ngôn ngữ đích</Text>
       <View style={styles.languageOptions} accessibilityRole="radiogroup" accessibilityLabel="Ngôn ngữ đích">
         {editor.targetChoices.map((language) => <Pressable key={language.code}

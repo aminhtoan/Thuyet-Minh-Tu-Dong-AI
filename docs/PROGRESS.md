@@ -1,5 +1,18 @@
 # Project Progress
 
+## Mobile — Nullable source-language crash fix (2026-11-08)
+
+- Reproduced ProjectCard `toUpperCase` and My Projects `toLowerCase` crashes
+  with null AUTO source fixtures. Updated Project/DTO types and guarded source
+  labels across project cards, lists, transcript, translation and result metadata.
+- Added `frontend-mobile/tests/project-source-language.test.mjs`: nullable
+  data, actual ProjectCard labels, Web parity, GET-only repository preservation
+  and result metadata. Mobile focused tests 48/48; related Web tests 24/24 PASS.
+- Mobile/Web typecheck and design checks PASS; Web build PASS. Mobile lint:
+  0 errors, 1 existing warning; Web lint: 0 errors, 5 existing warnings.
+- No environment, Backend, Atlas or AI changes. Existing Admin fixes preserved.
+  No Metro restart or device acceptance performed; reload Android to verify.
+
 ## S32 — Current progress entrypoint
 
 For S32 Multilingual, use [the scoped progress ledger](../.agents/skills/multilang-progress/PROGRESS.md)

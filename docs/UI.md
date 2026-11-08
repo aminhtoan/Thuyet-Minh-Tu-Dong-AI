@@ -1,5 +1,20 @@
 # UI Specification
 
+## Mobile — Nullable source-language rendering (2026-11-08)
+
+- Dashboard ProjectCard and My Projects now show `Chưa xác định` for a null,
+  missing or empty source language, matching the Customer Web source label.
+  Valid language labels, target selection and API data remain unchanged.
+- Transcript, Translation and Result source labels accept the same nullable
+  contract. Project Detail leaves an unknown source unselected instead of
+  displaying a fabricated Vietnamese selection.
+- Dashboard retains its existing `—` target placeholder; My Projects retains
+  Web's metadata-aware untranslated/error labels. Full Mobile AUTO confirmation
+  parity is outside this rendering fix; no API or workflow was added.
+- Offline validation: Mobile 48/48 focused tests; Web 24/24 related tests;
+  both typechecks/design checks PASS; Web build PASS. Lints completed with
+  existing warnings in unchanged files. Android/iOS runtime NOT VERIFIED.
+
 ## S29.4G.1 — Fix Mobile Account hidden-route redirect (2026-10-24)
 
 - Confirmed root cause in installed Expo58: TabsClient maps `href: null` to

@@ -43,7 +43,7 @@ export function projectListPage(items: readonly Project[], requestedPage: number
 }
 export function projectListLanguagePair(project: Project) {
   const labels: Record<string, string> = { vi: 'Tiếng Việt', en: 'Tiếng Anh', ja: 'Tiếng Nhật', ko: 'Tiếng Hàn' };
-  const display = (code: string) => { const normalized = code.toLowerCase(); if (labels[normalized]) return labels[normalized]; try { return new Intl.DisplayNames(['vi'], { type: 'language' }).of(normalized) ?? code.toUpperCase(); } catch { return code.toUpperCase(); } };
+  const display = (code: string | null | undefined) => { if (typeof code !== 'string' || !code.trim()) return 'Chưa xác định'; const normalized = code.toLowerCase(); if (labels[normalized]) return labels[normalized]; try { return new Intl.DisplayNames(['vi'], { type: 'language' }).of(normalized) ?? code.toUpperCase(); } catch { return code.toUpperCase(); } };
   const state = project.metadataState?.translation;
   const target = project.targetLanguage ? display(project.targetLanguage) : state === undefined || state === 'EMPTY' ? 'Chưa dịch' : state === 'ERROR' ? 'Không tải được bản dịch' : 'Chưa xác định';
   return `${display(project.sourceLanguage)} → ${target}`;

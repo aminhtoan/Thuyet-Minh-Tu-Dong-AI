@@ -1,5 +1,11 @@
 import type { LanguageCode, MediaType } from '../types/operations';
 import type { ProcessingJobType, ProjectStatus } from '../types/domain';
+export function formatLanguageCode(code: string | null | undefined): string {
+  return typeof code === 'string' && code.trim() ? code.trim().toUpperCase() : 'Chưa xác định';
+}
+export function formatLanguagePair(source: string | null | undefined, targets: readonly string[]): string {
+  return `${formatLanguageCode(source)} → ${targets.map(formatLanguageCode).join(', ') || '—'}`;
+}
 export const languageLabels:Record<LanguageCode,string>={vi:'Tiếng Việt',en:'Tiếng Anh',ja:'Tiếng Nhật',ko:'Tiếng Hàn'};
 export const mediaLabels:Record<MediaType,string>={VIDEO:'Video',AUDIO:'Âm thanh'};
 export const jobTypeLabels:Record<ProcessingJobType,string>={TRANSCRIPTION:'Tạo bản ghi',TRANSLATION:'Dịch thuật',TTS:'Tạo giọng đọc',VIDEO_PROCESSING:'Xử lý video'};

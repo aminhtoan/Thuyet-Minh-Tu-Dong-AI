@@ -30,7 +30,7 @@ export interface AdminProject {
   customerEmail: string;
   name: string;
   description: string;
-  sourceLanguage: LanguageCode;
+  sourceLanguage?: LanguageCode | null;
   targetLanguages: LanguageCode[];
   mediaType?: MediaType;
   status: ProjectStatus;

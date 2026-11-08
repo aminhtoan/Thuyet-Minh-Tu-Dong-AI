@@ -1,7 +1,7 @@
 import type { ProjectStatus, ProcessingJobStatus, ProcessingJobType } from './domain';
 export type DashboardProject = {
   id: string; name: string; userId: string; customerName: string;
-  sourceLanguage: string; targetLanguages: string[]; status: ProjectStatus; progress?: number; updatedAt: string;
+  sourceLanguage?: string | null; targetLanguages: string[]; status: ProjectStatus; progress?: number; updatedAt: string;
 };
 export type DashboardJob = {
   id: string; projectId: string; projectName: string; type: ProcessingJobType;

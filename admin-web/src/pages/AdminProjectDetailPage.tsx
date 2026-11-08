@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import { OperationProgress, OperationSkeleton } from '../components/operations/OperationsCommon';
 import { useProject } from '../hooks/useOperations';
+import { formatLanguageCode } from '../utils/operationsFormat';
 
 export function AdminProjectDetailPage() {
   const { projectId = '' } = useParams();
@@ -56,7 +57,7 @@ export function AdminProjectDetailPage() {
             </div>
             <div>
               <dt>Ngôn ngữ nguồn</dt>
-              <dd>{(p.sourceLanguage || '').toUpperCase()}</dd>
+              <dd>{formatLanguageCode(p.sourceLanguage)}</dd>
             </div>
             <div>
               <dt>Ngôn ngữ đích</dt>

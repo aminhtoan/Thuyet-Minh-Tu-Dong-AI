@@ -6,7 +6,7 @@ type P = {
   user: { id: string; fullName: string; email: string } | null;
   name: string;
   description: string;
-  sourceLanguage: string;
+  sourceLanguage?: string | null;
   targetLanguages: string[];
   status: AdminProject['status'];
   progress: number;
