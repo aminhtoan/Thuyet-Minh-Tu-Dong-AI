@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { resolveMediaExecutable } from '../../utils/media-executable.js';
 import { access, constants, mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -188,7 +189,7 @@ const mapError = (error: unknown): GeminiSttError => {
 };
 export class GeminiSttProvider implements SttProvider {
   constructor(private readonly transport?: GeminiTransport, private readonly probe = (file: string) => new FfmpegMediaProcessor().probe(file), private readonly extract = async (source: string, destination: string) => {
-    await promisify(execFile)(process.env.FFMPEG_PATH || 'ffmpeg', ['-nostdin', '-y', '-i', source, '-map', '0:a:0', '-vn', '-c:a', 'pcm_s16le', destination], { timeout: 120_000, windowsHide: true });
+    await promisify(execFile)(await resolveMediaExecutable('ffmpeg', process.env.FFMPEG_PATH), ['-nostdin', '-y', '-i', source, '-map', '0:a:0', '-vn', '-c:a', 'pcm_s16le', destination], { timeout: 120_000, windowsHide: true });
   }) {}
   async transcribe(input: SttInput): Promise<SttResult> {
     const key = process.env.GEMINI_API_KEY?.trim();

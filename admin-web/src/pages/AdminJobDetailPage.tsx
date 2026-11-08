@@ -1,4 +1,3 @@
-import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AdminPageHeader } from '../components/layout/AdminPageHeader';
 import { Card } from '../components/common/Card';
@@ -11,22 +10,6 @@ import { useJob } from '../hooks/useOperations';
 export function AdminJobDetailPage() {
   const { jobId = '' } = useParams();
   const { data: j, loading, error, retry } = useJob(jobId);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const toggleAudio = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
-    }
-  };
-
   if (loading) return <OperationSkeleton />;
   if (error) {
     return (
@@ -54,36 +37,10 @@ export function AdminJobDetailPage() {
         description={j.type}
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isTtsCompleted && (
-              <>
-                <button
-                  type="button"
-                  className="button button--secondary"
-                  onClick={toggleAudio}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    height: '36px',
-                    padding: '6px 14px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                  title="Bấm để phát hoặc dừng âm thanh thuyết minh"
-                >
-                  <span style={{ fontSize: '16px' }}>{isPlaying ? '⏸' : '🔊'}</span>
-                  <span>{isPlaying ? 'Đang phát...' : 'Nghe'}</span>
-                </button>
-                <audio
-                  ref={audioRef}
-                  src="http://localhost:5173/output_narration.mp3"
-                  onEnded={() => setIsPlaying(false)}
-                  onPause={() => setIsPlaying(false)}
-                  onPlay={() => setIsPlaying(true)}
-                  style={{ display: 'none' }}
-                />
-              </>
+            {isTtsCompleted && j.projectId && (
+              <Link className="button button--secondary" to={`/projects/${j.projectId}`}>
+                Xem audio t?i d? ?n
+              </Link>
             )}
             <StatusBadge status={j.status} />
           </div>
@@ -122,31 +79,6 @@ export function AdminJobDetailPage() {
               <dt>Hoàn thành</dt>
               <dd>{j.completedAt ? new Date(j.completedAt).toLocaleString('vi-VN') : '—'}</dd>
             </div>
-            {isTtsCompleted && (
-              <div>
-                <dt>Âm thanh</dt>
-                <dd>
-                  <button
-                    type="button"
-                    onClick={toggleAudio}
-                    style={{
-                      border: 'none',
-                      background: 'none',
-                      color: 'var(--primary)',
-                      cursor: 'pointer',
-                      padding: 0,
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    <span>{isPlaying ? '⏸' : '🔊'}</span>
-                    <span>{isPlaying ? 'Tạm dừng âm thanh' : 'Bấm để nghe file MP3'}</span>
-                  </button>
-                </dd>
-              </div>
-            )}
           </dl>
         </Card>
 

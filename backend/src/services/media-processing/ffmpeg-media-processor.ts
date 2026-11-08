@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { stat } from 'node:fs/promises';
 import type { ComposeNarrationInput, MediaProcessingResult, MediaProcessor, MediaProbeResult } from './media-processor.interface.js';
 import { MediaProcessingError, sanitizeProcessingStderr, type ProcessingStage } from './processing-diagnostics.js';
+import { resolveMediaExecutable } from '../../utils/media-executable.js';
 
 const MAX_STDERR = 16_384;
 const timeoutMs = () => { const value = Number(process.env.FFMPEG_TIMEOUT_MS ?? 300_000); return Number.isFinite(value) && value > 0 ? value : 300_000; };
@@ -16,8 +17,15 @@ export const runMediaCommand = (binary: string, args: string[], stage: Processin
   child.on('close', (code, signal) => { clearTimeout(timer); if (timedOut || code !== 0) reject(new MediaProcessingError({ stage, code: timedOut ? 'MEDIA_PROCESSING_TIMEOUT' : 'MEDIA_PROCESSING_FAILED', exitCode: code, signal, durationMs: Date.now() - started, stderr: sanitizeProcessingStderr(stderr, [binary, ...args.filter(arg => arg.includes('/') || arg.includes('\\'))]) })); else resolve({ stdout, stderr }); });
 });
 
+const verifiedMediaCommand: typeof runMediaCommand = async (binary, args, stage) => {
+  const kind = stage.startsWith('PROBE') ? 'ffprobe' : 'ffmpeg';
+  try { binary = await resolveMediaExecutable(kind, binary); }
+  catch { throw new MediaProcessingError({ stage, code: 'FFMPEG_NOT_AVAILABLE', durationMs: 0, systemCode: kind === 'ffprobe' ? 'FFPROBE_NOT_AVAILABLE' : 'FFMPEG_NOT_AVAILABLE' }); }
+  return runMediaCommand(binary, args, stage);
+};
+
 export class FfmpegMediaProcessor implements MediaProcessor {
-  constructor(private readonly command: typeof runMediaCommand = runMediaCommand) {}
+  constructor(private readonly command: typeof runMediaCommand = verifiedMediaCommand) {}
   public async probe(inputPath: string, stage: ProcessingStage = 'PROBE'): Promise<MediaProbeResult> {
     const { stdout } = await this.command(process.env.FFPROBE_PATH?.trim() || 'ffprobe', ['-v', 'error', '-show_entries', 'format=duration,format_name,size', '-show_entries', 'stream=codec_type,codec_name,width,height', '-of', 'json', inputPath], stage);
     try {
