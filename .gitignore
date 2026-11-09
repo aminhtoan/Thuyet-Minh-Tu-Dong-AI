@@ -5,7 +5,6 @@ node_modules/
 dist/
 build/
 web-build/
-backend/uploads/
 
 # Environment files (examples remain tracked)
 infra/mongodb-demo/secrets/
