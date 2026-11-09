@@ -6,3 +6,5 @@
 !src/**
 !tests/
 !tests/**
+!uploads/
+!uploads/**
