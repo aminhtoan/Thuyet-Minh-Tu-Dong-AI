@@ -1,0 +1,44 @@
+name: Docker CD V1 (synthetic only)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: docker-cd-v1-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  synthetic-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      RUN_ID: gha-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.3'
+      - name: Build, deploy, smoke, frontend rollback and synthetic recovery
+        run: |
+          node --test infra/local-cd/synthetic-v1/guards.test.mjs
+          node infra/local-cd/synthetic-v1/run.mjs run --run-id "$RUN_ID"
+      - name: Cleanup only resources owned by this run
+        if: always()
+        shell: bash
+        run: |
+          state="infra/local-cd/.state/synthetic-v1/$RUN_ID/state.json"
+          if [ -f "$state" ]; then
+            node infra/local-cd/synthetic-v1/run.mjs cleanup --state "$state"
+          fi
+      - name: Export evidence (not source snapshots)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-cd-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            infra/local-cd/.state/synthetic-v1/${{ env.RUN_ID }}/*.json
+            infra/local-cd/.state/synthetic-v1/${{ env.RUN_ID }}/*.log

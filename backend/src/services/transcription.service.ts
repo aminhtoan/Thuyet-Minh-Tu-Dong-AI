@@ -1,3 +1,4 @@
+import { drainRuntime, detached } from '../maintenance/runtime.js';
 import { access } from 'node:fs/promises';
 import mongoose, { type ClientSession, type Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
@@ -52,6 +53,7 @@ const assertEditableProject = async (projectId: string, userId: string, session:
 };
 
 export const updateTranscriptSegment = async (projectId: string, userId: string, segmentId: string, text: string, expectedRevision: number) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const normalizedText = text.trim();
   const session = await mongoose.startSession();
   let result: { transcript: { id: string; revision: number; fullText: string }; segment: { id: string; index: number; startTime: number; endTime: number; text: string } } | undefined;
@@ -92,15 +94,18 @@ export const updateTranscriptSegment = async (projectId: string, userId: string,
     });
   } finally { await session.endSession(); }
   if (!result) throw new AppError(500, 'TRANSCRIPT_UPDATE_FAILED', 'Không thể cập nhật phân đoạn bản ghi.');
-  if (changed) void log(userId, 'TRANSCRIPT_SEGMENT_UPDATED', new mongoose.Types.ObjectId(projectId));
+  if (changed) void detached(() => log(userId, 'TRANSCRIPT_SEGMENT_UPDATED', new mongoose.Types.ObjectId(projectId)));
   return {
     transcript: result.transcript,
     segment: result.segment,
     downstream: { requiresRevalidation: changed, artifactsPreserved: true, regenerationStarted: false },
   };
+
+ });
 };
 
 export const transcribe = async (projectId: string, userId: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const project = await Project.findOneAndUpdate(
     { _id: projectId, userId, status: { $in: ['UPLOADED', 'FAILED', 'TRANSCRIBED'] } },
     { $set: { status: 'TRANSCRIBING', progress: 0 } }, { returnDocument: 'before' },
@@ -116,7 +121,7 @@ export const transcribe = async (projectId: string, userId: string) => {
   const filePath = resolveStoredFile(media.storagePath);
   try { await access(filePath); } catch { await Project.updateOne({ _id: projectId }, { status: project.status }); throw new AppError(409, 'MEDIA_FILE_MISSING', 'Tệp media nguồn không tồn tại.'); }
   const job = await ProcessingJob.create({ projectId, type: 'TRANSCRIPTION', status: 'PROCESSING', progress: 0, startedAt: new Date() });
-  void log(userId, project.status === 'FAILED' ? 'TRANSCRIPTION_RETRIED' : 'TRANSCRIPTION_STARTED', project._id);
+  void detached(() => log(userId, project.status === 'FAILED' ? 'TRANSCRIPTION_RETRIED' : 'TRANSCRIPTION_STARTED', project._id));
   try {
     const mode = sourceLanguageState(project).sourceLanguageMode;
     const result = await getSttProvider().transcribe({ filePath, mimeType: media.mimeType, sourceLanguageMode: mode,
@@ -142,7 +147,7 @@ export const transcribe = async (projectId: string, userId: string) => {
         await Project.updateOne({ _id: projectId }, { status: 'TRANSCRIBED', progress: 100, ...source }, { session });
       });
     } finally { await session.endSession(); }
-    void log(userId, 'TRANSCRIPTION_COMPLETED', project._id);
+    void detached(() => log(userId, 'TRANSCRIPTION_COMPLETED', project._id));
     return { project: { id: projectId, status: 'TRANSCRIBED', ...source }, transcript: { ...(await serialize(projectId)), segmentCount: result.segments.length } };
   } catch (error) {
     if (env.nodeEnv === 'development' && error instanceof OpenAiSttError) {
@@ -155,7 +160,7 @@ export const transcribe = async (projectId: string, userId: string) => {
     }
     const code = error instanceof GeminiSttError ? error.code : error instanceof Error && ['STT_NOT_CONFIGURED', 'STT_FILE_TOO_LARGE', 'STT_TIMEOUT', 'STT_INVALID_RESPONSE'].includes(error.message) ? error.message : 'STT_PROVIDER_ERROR';
     await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]);
-    void log(userId, 'TRANSCRIPTION_FAILED', project._id);
+    void detached(() => log(userId, 'TRANSCRIPTION_FAILED', project._id));
     const status = ['STT_NOT_CONFIGURED', 'STT_INVALID_KEY', 'STT_MODEL_UNAVAILABLE'].includes(code) ? 503 : code === 'STT_FILE_TOO_LARGE' ? 413 : code === 'STT_QUOTA_EXCEEDED' ? 429 : code === 'STT_INVALID_FILE' ? 422 : 502;
     const messages: Record<string, string> = {
       STT_NOT_CONFIGURED: 'Dịch vụ chuyển giọng nói thành văn bản chưa được cấu hình.',
@@ -167,4 +172,6 @@ export const transcribe = async (projectId: string, userId: string) => {
     };
     throw new AppError(status, code, messages[code] ?? 'Không thể chuyển giọng nói thành văn bản.');
   }
+
+ });
 };

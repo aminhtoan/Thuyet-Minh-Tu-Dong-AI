@@ -4,7 +4,20 @@
 !tsconfig.json
 !src/
 !src/**
+<<<<<<< Updated upstream
 !tests/
 !tests/**
 !uploads/
 !uploads/**
+=======
+!staging/
+!staging/runtime-checks.mjs
+!staging/preflight.mjs
+!staging/healthcheck.mjs
+**/.env
+**/.env.*
+**/uploads/**
+**/node_modules/**
+**/*.pem
+**/*.key
+>>>>>>> Stashed changes

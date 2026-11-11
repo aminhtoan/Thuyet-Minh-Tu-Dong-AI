@@ -1,4 +1,5 @@
 import { GeminiTranslationError } from './gemini-translation.provider.js';
+import { detached } from '../../maintenance/runtime.js';
 
 // Conservative transport policy using the existing 128 KiB draft ceiling.
 // This includes the SDK envelope, so it may reject a response before draft validation.
@@ -17,7 +18,7 @@ export function boundedTranslationFetch(fetcher: typeof fetch = globalThis.fetch
           bytes += next.value.byteLength;
           if (bytes > PROVIDER_RESPONSE_BYTE_LIMIT) {
             // Cancel upstream before any over-limit chunk reaches SDK buffering/parsing.
-            void reader.cancel().finally(() => reader.releaseLock()).catch(() => undefined);
+            void detached(() => reader.cancel().finally(() => reader.releaseLock()).catch(() => undefined));
             controller.error(new GeminiTranslationError('TRANSLATION_INVALID_RESPONSE'));
             return;
           }

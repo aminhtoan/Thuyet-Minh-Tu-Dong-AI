@@ -1,0 +1,72 @@
+name: narration-s396-local
+services:
+  mongodb:
+    image: mongo:8.0.17
+    command: [mongod, --replSet, s396rs, --bind_ip_all, --setParameter, diagnosticDataCollectionEnabled=false]
+    volumes:
+      - database:/data/db
+      - ./mongo-init.js:/opt/local-cd/mongo-init.js:ro
+    tmpfs: [/data/configdb]
+    networks: [isolated]
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --file, /opt/local-cd/mongo-init.js]
+      interval: 5s
+      timeout: 5s
+      start_period: 20s
+      retries: 20
+  backend:
+    image: ${LOCALCD_BACKEND_IMAGE:-narration-local-backend:unbuilt}
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: '8080'
+      UPLOAD_DIR: /data/uploads
+      MONGODB_URI: mongodb://mongodb:27017/s396_local_cd?replicaSet=s396rs
+      JWT_ACCESS_SECRET: s396-synthetic-access-local-only-not-a-real-secret
+      JWT_REFRESH_SECRET: s396-synthetic-refresh-local-only-not-a-real-secret
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 1d
+      CORS_ORIGINS: http://127.0.0.1:5180,http://127.0.0.1:5181
+      GEMINI_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      OPENAI_API_KEY: ''
+      CUSTOMER_TRANSLATION_ENABLED: 'false'
+      GROUP_TRANSLATION_ENABLED: 'false'
+    volumes: [media:/data/uploads]
+    networks: [isolated]
+    depends_on:
+      mongodb: {condition: service_healthy}
+    stop_grace_period: 2m
+  customer-web:
+    image: ${LOCALCD_CUSTOMER_IMAGE:-narration-local-customer:unbuilt}
+    ports: ['127.0.0.1:5180:8080']
+    networks: [isolated, frontend]
+    depends_on:
+      backend: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp, /var/cache/nginx, /var/run]
+  admin-web:
+    image: ${LOCALCD_ADMIN_IMAGE:-narration-local-admin:unbuilt}
+    ports: ['127.0.0.1:5181:8080']
+    networks: [isolated, frontend]
+    depends_on:
+      backend: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp, /var/cache/nginx, /var/run]
+networks:
+  isolated:
+    name: narration-s396-isolated
+    internal: true
+  frontend:
+    name: narration-s396-frontend
+    driver: bridge
+    labels:
+      localcd.scope: S396
+      localcd.role: frontend
+volumes:
+  database:
+    name: narration-s396-database
+    external: true
+  media:
+    name: narration-s396-media
+    external: true

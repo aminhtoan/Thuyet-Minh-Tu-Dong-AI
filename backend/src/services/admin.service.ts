@@ -1,3 +1,4 @@
+import { drainRuntime } from '../maintenance/runtime.js';
 import mongoose, { type Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
 import { AuthSession } from '../models/AuthSession.js';
@@ -152,12 +153,15 @@ export const getUser = async (id: string) => {
 };
 
 export const updateUserStatus = async (id: string, status: UserStatus, adminId: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   if (id === adminId) throw new AppError(400, 'ADMIN_SELF_UPDATE_FORBIDDEN', 'Không thể thay đổi trạng thái tài khoản quản trị hiện tại.');
   const user = await User.findOneAndUpdate(availableCustomerFilter({ _id: id }), { $set: { status } }, { returnDocument: 'after', runValidators: true });
   if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'Không tìm thấy khách hàng.');
   if (status === 'BLOCKED') await AuthSession.deleteMany({ userId: user._id });
   try { await ActivityLog.create({ userId: adminId, action: status === 'BLOCKED' ? 'CUSTOMER_BLOCKED' : 'CUSTOMER_UNBLOCKED', entityType: 'User', entityId: user._id, description: status === 'BLOCKED' ? 'Quản trị viên đã khóa tài khoản khách hàng.' : 'Quản trị viên đã mở khóa tài khoản khách hàng.' }); } catch { /* best effort */ }
   return userDto(user);
+
+ });
 };
 
 type ProjectsInput = PageInput & { search?: string; status?: ProjectStatus; language?: string; mediaType?: MediaType };
@@ -406,6 +410,7 @@ export const getProjectNarrations = async (projectId: string) => {
 };
 
 export const toggleNarrationApproval = async (narrationId: string, isApproved: boolean, adminUserId?: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const narration = await Narration.findById(narrationId);
   if (!narration) throw new AppError(404, 'NARRATION_NOT_FOUND', 'Không tìm thấy bản thuyết minh.');
 
@@ -438,4 +443,6 @@ export const toggleNarrationApproval = async (narrationId: string, isApproved: b
     isApproved: narration.isApproved,
     approvedAt: narration.approvedAt ?? null,
   };
+
+ });
 };

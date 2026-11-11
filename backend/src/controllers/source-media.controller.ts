@@ -1,4 +1,4 @@
-import { createReadStream } from 'node:fs';
+import { trackedReadStream } from '../maintenance/resources.js';
 import type { RequestHandler } from 'express';
 import { getSourceMediaFile } from '../services/source-media.service.js';
 import { AppError } from '../utils/app-error.js';
@@ -28,7 +28,7 @@ export const streamSourceMedia: RequestHandler = async (request, response, next)
   response.setHeader('Content-Length', String(parsed ? parsed.end - parsed.start + 1 : file.size));
   if (parsed) response.status(206).setHeader('Content-Range', `bytes ${parsed.start}-${parsed.end}/${file.size}`);
   if (request.method === 'HEAD') { response.end(); return; }
-  const stream = createReadStream(file.path, parsed ?? undefined);
+  const stream = trackedReadStream(file.path, parsed ?? undefined);
   response.on('close', () => stream.destroy());
   stream.on('error', () => { if (response.headersSent) response.destroy(); else { response.removeHeader('Content-Length'); response.removeHeader('Content-Range'); next(new AppError(404, 'MEDIA_FILE_MISSING', 'Không thể đọc tệp phương tiện nguồn.')); } });
   stream.pipe(response);

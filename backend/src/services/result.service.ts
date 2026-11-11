@@ -1,3 +1,4 @@
+import { drainRuntime, detached } from '../maintenance/runtime.js';
 import { randomUUID } from 'node:crypto';
 import { access, mkdir, rename, stat, unlink } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
@@ -64,6 +65,7 @@ export const getResultFile = async (projectId: string, resultId: string) => {
 };
 
 export const process = async (projectId: string, userId: string, narrationId: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const project = await Project.findOne({ _id: projectId, userId }); if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
   const media = await Media.findOne({ projectId }); if (!media) throw new AppError(404, 'MEDIA_NOT_FOUND', 'Không tìm thấy media nguồn.');
   if (media.mediaType !== 'VIDEO') throw new AppError(409, 'VIDEO_SOURCE_REQUIRED', 'Cần video nguồn để tạo kết quả video.');
@@ -93,7 +95,7 @@ export const process = async (projectId: string, userId: string, narrationId: st
   const started = Date.now(); let stage: ProcessingStage = 'PREPARE_OUTPUT'; let committed = false;
   try {
     await Project.updateOne({ _id: projectId }, { status: 'PROCESSING_VIDEO', progress: 0 });
-    void log(userId, project.status === 'FAILED' ? 'VIDEO_PROCESSING_RETRIED' : 'VIDEO_PROCESSING_STARTED', project._id, narration._id);
+    void detached(() => log(userId, project.status === 'FAILED' ? 'VIDEO_PROCESSING_RETRIED' : 'VIDEO_PROCESSING_STARTED', project._id, narration._id));
     await mkdir(directory, { recursive: true });
     stage = 'RENDER';
     const processed = await getMediaProcessor().composeNarration({ sourceVideoPath: sourcePath, narrationAudioPath: narrationPath, outputPath: tempPath });
@@ -129,7 +131,7 @@ export const process = async (projectId: string, userId: string, narrationId: st
       await Project.updateOne({ _id: projectId }, { status: 'COMPLETED', progress: 100 }, { session });
     }); committed = true; } finally { await session.endSession(); }
     stage = 'FINALIZE_RESULT';
-    void log(userId, 'VIDEO_PROCESSING_COMPLETED', project._id, narration._id); return { project: { id: projectId, status: 'COMPLETED' }, result: await getResult(projectId, resultId), idempotent: false };
+    void detached(() => log(userId, 'VIDEO_PROCESSING_COMPLETED', project._id, narration._id)); return { project: { id: projectId, status: 'COMPLETED' }, result: await getResult(projectId, resultId), idempotent: false };
   } catch (error) {
     const diagnostics = processingFailure(error, stage, Date.now() - started); const code = diagnostics.code;
     console.error(JSON.stringify({ event: committed ? 'VIDEO_RESULT_CONFIRMATION_FAILED' : 'VIDEO_PROCESSING_FAILED', projectId, jobId: job._id.toString(), ...diagnostics }));
@@ -138,9 +140,11 @@ export const process = async (projectId: string, userId: string, narrationId: st
     if (committed) throw new AppError(502, 'RESULT_CONFIRMATION_UNAVAILABLE', 'Video đã được lưu nhưng chưa xác nhận được kết quả. Vui lòng kiểm tra trạng thái.');
     try { await unlink(tempPath); } catch { /* no partial temp */ }
     if (storedPath) { try { await safeDeleteStoredFile(storedPath); } catch { console.error(JSON.stringify({ event: 'VIDEO_PROCESSING_CLEANUP_FAILED', projectId, jobId: job._id.toString() })); } }
-    await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, diagnostics, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]); void log(userId, 'VIDEO_PROCESSING_FAILED', project._id, narration._id);
+    await Promise.all([ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: code, diagnostics, completedAt: new Date() }), Project.updateOne({ _id: projectId }, { status: 'FAILED' })]); void detached(() => log(userId, 'VIDEO_PROCESSING_FAILED', project._id, narration._id));
     const failure = new AppError(code === 'FFMPEG_NOT_AVAILABLE' ? 503 : 502, code, code === 'FFMPEG_NOT_AVAILABLE' ? 'FFmpeg hoặc FFprobe chưa khả dụng.' : 'Không thể xử lý video.');
     Object.defineProperty(failure, 'cause', { value: error, enumerable: false });
     throw failure;
   }
+
+ });
 };

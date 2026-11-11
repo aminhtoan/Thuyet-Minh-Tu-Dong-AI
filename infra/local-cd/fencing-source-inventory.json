@@ -1,0 +1,2203 @@
+{
+  "schema": "FENCING_SOURCE_REVIEW_V1",
+  "files": [
+    {
+      "path": "app.ts",
+      "sha256": "895ae95b617db0c1e572cb08c236b5cae9700428533c5dfc3912435bb2f79b60",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "config/customer-translation-method.ts",
+      "sha256": "5f88b6e9c7ace273809dbc3ef85415772ffd5fd5ebc3431dad656bcbc4a735dc",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "config/customer-translation-quota.ts",
+      "sha256": "c8a7616976cf24653a59f6cdfd2f9c591d8b5b7df0381e7090a3111c75fc6cc4",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "config/database.ts",
+      "sha256": "5caf844296dd4713ab01e4733625567df04bf970bae781dd0164974a991b049d",
+      "findings": [
+        {
+          "line": 5,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 10,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.5 scoped owner operation added; reviewed delta does not certify all module/driver effects.",
+      "normalServerReachable": true
+    },
+    {
+      "path": "config/env.ts",
+      "sha256": "3dd593f5bbce6c02959bac6a27f8714f210376647e0053438df1bdba90e36022",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "config/translation-model.ts",
+      "sha256": "ffe60f6e3f4434a9d119a1470ab5e2be455860af01a021c98f1ef1cd4d1e7980",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "constants/processing-job.constants.ts",
+      "sha256": "e4fc08d8bd193ffd3037641de3063d60ec665422f5d2c3f66095087f5d951389",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "constants/project.constants.ts",
+      "sha256": "d15dc8096e3f7ab7b90fcfd43ada7887a2e5eea199dbf80e810a2de23e03ce40",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "constants/user.constants.ts",
+      "sha256": "753def9212df977af5d6d304e51c2566b422526f8b6fb18b5a132c075944e711",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controlled-development/execution-app.ts",
+      "sha256": "f30fcd8c473af3bf6632ed62ef9fb127bfd94fe1b4258e696db7c3c7fd7b98b2",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/execution-binding.ts",
+      "sha256": "d11266bb54d247371f899d10fcdd5489d26f3c6bcf6a090f7b1cc2d5b3e94c2d",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/execution-server.ts",
+      "sha256": "3b3fcde3df97c32b3790ee874907035c75d7e7fefe0ce0d00680268b2b5563b8",
+      "findings": [
+        {
+          "line": 19,
+          "call": "app.listen"
+        },
+        {
+          "line": 30,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 52,
+          "call": "executionApp(fence, service, admission, credentials.corsOrigins, { enabled: process.env.CONTROLLED_WEB_EXECUTION_ENABLE === 'true' }).listen"
+        },
+        {
+          "line": 55,
+          "call": "mongoose.disconnect"
+        },
+        {
+          "line": 59,
+          "call": "process.once"
+        },
+        {
+          "line": 59,
+          "call": "mongoose.disconnect().then"
+        },
+        {
+          "line": 59,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/execution-source.ts",
+      "sha256": "37b646863801b6d2e3df0c7347cf552a3ae9153224e5829d887f9e3e58e930b9",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/execution-status.ts",
+      "sha256": "242a620526e507b3eb3a8452608776ac06ec809f1086cbc67b26c53e004f4fd8",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/read-only-web-app.ts",
+      "sha256": "6e9c9baeeb59d45f9104d239adaa532788158b293c750586d2e86d983ba06c00",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/read-only-web-policy.ts",
+      "sha256": "dca188bdb0830aa86dafb3b06115777cc99a3881ef2312b23300b112bde86696",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/read-only-web-server.ts",
+      "sha256": "b3c0cca1cae68f77c20625f54c90245e36756a8e5a0f28fb0cd5054cf95edeb6",
+      "findings": [
+        {
+          "line": 19,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 31,
+          "call": "readOnlyWebApp(config.corsOrigins).listen"
+        },
+        {
+          "line": 33,
+          "call": "process.once"
+        },
+        {
+          "line": 33,
+          "call": "mongoose.disconnect().then"
+        },
+        {
+          "line": 33,
+          "call": "mongoose.disconnect"
+        },
+        {
+          "line": 37,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/server.ts",
+      "sha256": "746762c2736cfd5565301358f635e3fc5d26c0dcdf361643e22bab62a7c2191e",
+      "findings": [
+        {
+          "line": 15,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 54,
+          "call": "app.listen"
+        },
+        {
+          "line": 56,
+          "call": "process.once"
+        },
+        {
+          "line": 56,
+          "call": "mongoose.disconnect().then"
+        },
+        {
+          "line": 56,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controlled-development/web-execution.ts",
+      "sha256": "6a5b523c1e72c012be1a89720eec6e7d8716239fb1797ca8e7da7d39829252e6",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "controllers/admin.controller.ts",
+      "sha256": "aa1f5af270dfdd1c7319bd3b293dbdf41b8487664cf36ff256539077eceedd27",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/analytics.controller.ts",
+      "sha256": "d0585b3ec991a5b3677639e080a95716a048fdf61f3d64c23acb101a989f11bc",
+      "findings": [
+        {
+          "line": 33,
+          "call": "ListenEvent.create"
+        },
+        {
+          "line": 99,
+          "call": "VisitQR.create"
+        },
+        {
+          "line": 139,
+          "call": "VisitQR.create"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.7 QR redirect entry guard added; source evidence refreshed, not automatic coverage approval",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/auth.controller.ts",
+      "sha256": "16deb5aa573384147e97861036c56d38c7c0bce05c8736aa3ee56205fd00d27d",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/health.controller.ts",
+      "sha256": "664db9bf3c57e66e37bd1a5497228c5936df01728e12a68dfd04c618d078b051",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/media.controller.ts",
+      "sha256": "b58218ce3ee36429372f4ec3105ff3e111336ca49cc3b95d64c674cc65627379",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/narration.controller.ts",
+      "sha256": "5f6d8b9be216668e460f80fd52d70868767ced54b2318b167087df6aea3a1d6a",
+      "findings": [
+        {
+          "line": 41,
+          "call": "response.on"
+        },
+        {
+          "line": 42,
+          "call": "stream.on"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/project.controller.ts",
+      "sha256": "9f6c234dace596a114224b8dcbc848b2b0241bdbe572477202fe44a21d458172",
+      "findings": [
+        {
+          "line": 8,
+          "call": "projectService.create"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/result.controller.ts",
+      "sha256": "98d54b5a28655100d0c27283b8ed9f410e5b360c92f954dee24a999aead1b9dd",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/source-media.controller.ts",
+      "sha256": "6fe9fe762d13935c607440bdcf8b821391bfa2205bd390ac9c54a0ab02407cc0",
+      "findings": [
+        {
+          "line": 32,
+          "call": "response.on"
+        },
+        {
+          "line": 33,
+          "call": "stream.on"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/transcription.controller.ts",
+      "sha256": "fb2153bdcd223d1d02c5c96fcc8275b0d9bbef6aaf302dcecb3e377697d8a64e",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/translation.controller.ts",
+      "sha256": "f851dbf552d459bbd3f90dfe3781f0459afe2d50907a1e3e1c08c101f409d601",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "controllers/voice-catalog.controller.ts",
+      "sha256": "32c35fc0e6bb9e7a0d2a989ba49143c17b53b8896b447586c8c7fa56388679f1",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "maintenance/authorization-loader.ts",
+      "sha256": "2dcf2dc409e6c1cd40cd36a3c1dd255d52d8aa967c3cc16a12e50ecb4d561260",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "C10 authorization integration requires new independent source approval; do not reuse C8 review"
+    },
+    {
+      "path": "maintenance/authorization.ts",
+      "sha256": "5dd2a6bab77249579f1d495b265ae34aa962ec3bf386b06721e603ce2b48d371",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "C10 authorization integration requires new independent source approval; do not reuse C8 review"
+    },
+    {
+      "path": "maintenance/control.ts",
+      "sha256": "ffb40b029de02d7445148af4c171944d7e241605b6cd7cbedf91ac248f8e03fa",
+      "findings": [
+        {
+          "line": 37,
+          "call": "setTimeout"
+        },
+        {
+          "line": 70,
+          "call": "setTimeout"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C10 authorization integration requires new independent source approval; do not reuse C8 review",
+      "normalServerReachable": true
+    },
+    {
+      "path": "maintenance/http.ts",
+      "sha256": "ffe74fc013c7f092db6665f37c8ff37487cf7cfd9e58e3fbb186818e0d9035e6",
+      "findings": [
+        {
+          "line": 12,
+          "call": "res.once"
+        },
+        {
+          "line": 12,
+          "call": "res.once"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "maintenance/resources.ts",
+      "sha256": "717b3ddb25da215229988833e1cc395991e555be20e60ea608e01410dc733474",
+      "findings": [
+        {
+          "line": 6,
+          "call": "createReadStream"
+        },
+        {
+          "line": 7,
+          "call": "response.once"
+        },
+        {
+          "line": 7,
+          "call": "stream.once"
+        }
+      ],
+      "classification": "PROTECTED",
+      "evidence": "C.4 reviewed local wrapper: pre-registration; resource close, scheduled callback completion or cancellation releases. Does not certify arbitrary external entry points.",
+      "normalServerReachable": true
+    },
+    {
+      "path": "maintenance/runtime.ts",
+      "sha256": "e03f959523e21c9d0a63ae970c96fe7cef61e80572d11c129bc2c91df98de3d1",
+      "findings": [
+        {
+          "line": 23,
+          "call": "Promise.resolve().then"
+        },
+        {
+          "line": 23,
+          "call": "setTimeout"
+        },
+        {
+          "line": 109,
+          "call": "create"
+        },
+        {
+          "line": 109,
+          "call": "resource.once"
+        },
+        {
+          "line": 112,
+          "call": "emitter.once"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C10 authorization integration requires new independent source approval; do not reuse C8 review",
+      "normalServerReachable": true
+    },
+    {
+      "path": "maintenance/scheduled.ts",
+      "sha256": "609e1ee21d05aa13d2bce1299c438e8a50ed8b83b752875bdeca49e4339e8eb3",
+      "findings": [
+        {
+          "line": 15,
+          "call": "Promise.resolve(result).then"
+        }
+      ],
+      "classification": "PROTECTED",
+      "evidence": "C.4 reviewed local wrapper: pre-registration; resource close, scheduled callback completion or cancellation releases. Does not certify arbitrary external entry points.",
+      "normalServerReachable": true
+    },
+    {
+      "path": "middleware/authenticate.middleware.ts",
+      "sha256": "a9e633889a486659084b836e941ebfa18c98a67e88b8b5584092eb533a33f58d",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "middleware/authorize.middleware.ts",
+      "sha256": "3b81d0be411a607f7006fc55f5d6fb66942e82ac3aad8fd89b5cef4f8bcbe16d",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "middleware/error-handler.middleware.ts",
+      "sha256": "b497116c409d69929266246230c765b82e4ae18c350c50a109db1ea983c7fb4d",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "middleware/not-found.middleware.ts",
+      "sha256": "53c6cd64aca19047b714bfe058800cb0167e0f9c5681d7b52d9003b5fe9dd33a",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "middleware/project-owner.middleware.ts",
+      "sha256": "badb2fffccac6308c4b4717f5b9ed5e9fa7e4963bfd67c817848115c59454f89",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "middleware/upload.middleware.ts",
+      "sha256": "c6371db2084ad686611370bea8922eff6f7316799d2baff4ac401f7c9f1ae198",
+      "findings": [
+        {
+          "line": 25,
+          "call": "ensureUploadDirectory(request.ownedProjectId ?? '')\r\n      .then"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "middleware/validate.middleware.ts",
+      "sha256": "0364e88864b2d17ae02a8fc1d0b02798d55282bfe0ad81f7a69242c4671fd039",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/ActivityLog.ts",
+      "sha256": "db580325888034f430d40259cf082ed56739eca31a20bf4974c3de28e1f2d2ac",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/AuthSession.ts",
+      "sha256": "5fde95bdc64e4fb610268761b03949788759aaed00c562829d07eb79090d541f",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Language.ts",
+      "sha256": "a51db213778cee9c8c061db05dc3311e59e9b758f3685110425dd8f045854107",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/ListenEvent.ts",
+      "sha256": "6ad092c8aadefe85ba2852cb87a54e55b500749e9770a3a89db4e35c4b44ac7c",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Media.ts",
+      "sha256": "e99d2d21b7ecf265211afa14365043d5c1832cdc303aedad73194eb9e14cd2c3",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Narration.ts",
+      "sha256": "83cea04ef09ff28034352a5289e248903398e027ba7d484a4ab3aaf4f06fa825",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/ProcessingJob.ts",
+      "sha256": "f28a72e1fa8ce1dda1970615c1e346d4e1ed4fb2e187b0fb256900a622da1fc2",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Project.ts",
+      "sha256": "59f161833120cacd977e9418509495495514fbd55f3d4aa6bb751ae77fb23267",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Result.ts",
+      "sha256": "085e2b8114f8bda6782a98ee129e56dc568be886555fdd4aeae9ca55279d16f0",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Transcript.ts",
+      "sha256": "1ae196e5830bd4baf9c795fe8b3be199fb6686d0952de32420663201b05e7716",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/TranscriptSegment.ts",
+      "sha256": "0401ef90b3b435e0c9282beea527c128cc1e7a761ce42b6403a9c9ab74b6c7ca",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Translation.ts",
+      "sha256": "3739db942327e09236ca5411c38f3cb1fca55541e4c6a4b243c823324efb27e1",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/TranslationAttempt.ts",
+      "sha256": "4ddfe8e4631722c634a1577f18a9d87dbb6bef9107f716e7f14cf34fcf37a986",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/TranslationSegment.ts",
+      "sha256": "bbe0b8e35b7467c865eeeee4ea5ffaad980edc31808476cbde2bf5b1b9125eec",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/User.ts",
+      "sha256": "e19fcfc18dd98dc609f1636a4790c629c5446f8131694747f9f6682a3ca219ad",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Visitor.ts",
+      "sha256": "6dda2154f15fbeff5be9b336cc9d6be8a93a463432b80bbb5c45c9e24600f627",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/VisitQR.ts",
+      "sha256": "3275e02ab0d029741f6c0c0362531cbe120405da1942bffe850f9761ec687185",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "models/Voice.ts",
+      "sha256": "a8f48f6c7e3ddc42864fa52edfe50b68da73597981c48025996890009a3b8702",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/admin.routes.ts",
+      "sha256": "ab22a0feae9e0a599031cde78fdc121a7c229e2b91c06d094c6ed6db801a915a",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/analytics.routes.ts",
+      "sha256": "5adf082e814d7a542a708322cee0069a923a4ad46e004b7168c8e8ead7915e06",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/auth.routes.ts",
+      "sha256": "40ac7a5dd5317208c509f8844c8c8587648d17b8fa18cd5d1ce8c4078322b7d4",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/health.routes.ts",
+      "sha256": "32b04b6ae27c8007cab6761121a65fe26937982116d105850d83290536fbe6fc",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/index.ts",
+      "sha256": "211f7ee702733b3f53f62604125982b7f6ef3e8e945ab0f35a59884fb49f7282",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/project.routes.ts",
+      "sha256": "2f8ecb6c174caf8130c6a30134bb099324aa8bf4485037f5908f1a522a010a8f",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/qr.routes.ts",
+      "sha256": "ee150915a7673cd69a76df2cc9d73f9ac975fc75161f2ba31270022df9fbecd0",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "routes/voice.routes.ts",
+      "sha256": "fda640ab1f61b2c5f3cf76ec0f4302f0f7d5ebfa6326d99f166d3e766418f06a",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "scripts/demo-project-data.ts",
+      "sha256": "73c2a65b1876988c9d94d3db9d28fc0a82042248ada1efc676d1f06486d46789",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/diagnose-stt.ts",
+      "sha256": "d8681cc65c841418eb58d795431df03144e78e8172ee219f251d70baa66d63f1",
+      "findings": [
+        {
+          "line": 24,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 51,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/gemini-voice-catalog-data.ts",
+      "sha256": "2ae6dea21f2e796259e6d2ae0ef348071dbc3e3e563e7e5f743094ba3bf8b2cf",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/language-catalog-data.ts",
+      "sha256": "107cfea1a27153ce3cd38aec406f5084fc32c0e97180f8c79dab486e7c22d48f",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/rename-projects.ts",
+      "sha256": "d7e49113f8ccd19be87862a4106fb8ddf06b7db59163c63856df08e324b0b91d",
+      "findings": [
+        {
+          "line": 92,
+          "call": "Project.updateMany"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/seed-admin.ts",
+      "sha256": "08999e678a10894ead53211c7d9cc257cdf78218b3a770bc6431c7880e52136f",
+      "findings": [
+        {
+          "line": 22,
+          "call": "User.create"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/seed-demo-projects.ts",
+      "sha256": "3d9a40e7953cdc484ff8ad2b24594ed662521879ac89d5c2fd14caf1c519b18e",
+      "findings": [
+        {
+          "line": 10,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 29,
+          "call": "Project.deleteMany"
+        },
+        {
+          "line": 40,
+          "call": "run().catch(() => {\r\n  // Do not print driver errors: they can include credentials/hostnames.\r\n  console.error('Thao tác demo bị từ chối hoặc không thành công. Kiểm tra cấu hình, định danh và dữ liệu liên quan; không có cleanup toàn cục.');\r\n  process.exitCode = 1;\r\n}).finally"
+        },
+        {
+          "line": 44,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/seed-gemini-voice-catalog.ts",
+      "sha256": "7cb5b6db8d15baa1b3ba9869083b6aa2ae53b6f4591be1539ae36a376f11575c",
+      "findings": [
+        {
+          "line": 10,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 32,
+          "call": "session.startTransaction"
+        },
+        {
+          "line": 37,
+          "call": "voices.updateOne"
+        },
+        {
+          "line": 41,
+          "call": "session.commitTransaction"
+        },
+        {
+          "line": 49,
+          "call": "run().catch(error => {\r\n  console.error(error instanceof GeminiCatalogError ? error.message : 'GEMINI_CATALOG_FAILED_REVIEW_BEFORE_RETRY');\r\n  process.exitCode = 1;\r\n}).finally"
+        },
+        {
+          "line": 52,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/seed-language-catalog.ts",
+      "sha256": "42e542a64017803cfcf8177482887f63c21f78392c5c880d3321b5ac59a51a13",
+      "findings": [
+        {
+          "line": 16,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 29,
+          "call": "Language.collection.updateOne"
+        },
+        {
+          "line": 42,
+          "call": "run().catch(error => {\r\n  // Never print driver errors, URIs, credentials or raw error messages.\r\n  console.error(error instanceof LanguageCatalogError ? error.message : 'LANGUAGE_CATALOG_OPERATION_FAILED');\r\n  process.exitCode = 1;\r\n}).finally"
+        },
+        {
+          "line": 46,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/seed-mock-pipeline-data.ts",
+      "sha256": "ec00a29d9caf44ada8aac71cd0cc0bc4ee4dd0861100e6d01c173a78ec1e5dc2",
+      "findings": [
+        {
+          "line": 23,
+          "call": "User.create"
+        },
+        {
+          "line": 36,
+          "call": "Language.create"
+        },
+        {
+          "line": 40,
+          "call": "Language.create"
+        },
+        {
+          "line": 45,
+          "call": "Voice.create"
+        },
+        {
+          "line": 59,
+          "call": "Project.create"
+        },
+        {
+          "line": 73,
+          "call": "Media.create"
+        },
+        {
+          "line": 87,
+          "call": "Transcript.create"
+        },
+        {
+          "line": 98,
+          "call": "TranscriptSegment.insertMany"
+        },
+        {
+          "line": 127,
+          "call": "Translation.create"
+        },
+        {
+          "line": 194,
+          "call": "TranslationSegment.insertMany"
+        },
+        {
+          "line": 203,
+          "call": "Narration.create"
+        },
+        {
+          "line": 225,
+          "call": "Result.create"
+        },
+        {
+          "line": 260,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 271,
+          "call": "connectDatabase(env.mongoUri)\r\n    .then(async () => {\r\n      await seedMockPipelineData();\r\n    })\r\n    .catch((err: unknown) => {\r\n      console.error('Lỗi khi seed pipeline data:', err instanceof Error ? err.message : err);\r\n      process.exitCode = 1;\r\n    })\r\n    .finally"
+        },
+        {
+          "line": 271,
+          "call": "connectDatabase(env.mongoUri)\r\n    .then"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/seed-voice-catalog.ts",
+      "sha256": "ac9bf5843a892f5b4a852c3499059c07139f0124f5026ba446a8653ecae1bb6d",
+      "findings": [
+        {
+          "line": 25,
+          "call": "Voice.create"
+        },
+        {
+          "line": 43,
+          "call": "connectDatabase(env.mongoUri).then(async () => { const result = await seedVoiceCatalog(); console.log(`Voice catalog: ${result.status}; created=${result.created}`); }).catch((error: unknown) => { console.error(error instanceof Error ? error.message : 'Không thể seed voice catalog.'); process.exitCode = 1; }).finally"
+        },
+        {
+          "line": 43,
+          "call": "connectDatabase(env.mongoUri).then"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/soft-delete-s24-customers.ts",
+      "sha256": "135a8b6ef32f6499583b834bc168884360eb3bbdad5af96fcf88e3c65443719e",
+      "findings": [
+        {
+          "line": 24,
+          "call": "mongoose.connect"
+        },
+        {
+          "line": 68,
+          "call": "run().catch((error: unknown) => {\r\n    console.error(error instanceof Error ? error.message : 'CUSTOMER_CLEANUP_FAILED');\r\n    process.exitCode = 1;\r\n  }).finally"
+        },
+        {
+          "line": 71,
+          "call": "mongoose.disconnect"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "scripts/sync-visitors.ts",
+      "sha256": "38c98afa85be003fa84729124c2cbc93335f9c56482de1c2e33b9ae5dde837b4",
+      "findings": [
+        {
+          "line": 100,
+          "call": "Visitor.findOneAndUpdate"
+        },
+        {
+          "line": 131,
+          "call": "VisitQR.updateOne"
+        },
+        {
+          "line": 142,
+          "call": "ListenEvent.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "server.ts",
+      "sha256": "74dac75b6245ba1d973fc6b17aa4af4080edb8e035e7a531713a6b53da42e695",
+      "findings": [
+        {
+          "line": 25,
+          "call": "mongoose.disconnect"
+        },
+        {
+          "line": 54,
+          "call": "drainRuntime.track('activeOperations',()=>Promise.all(modelNames.map(name=>mongoose.model(name).init())))\r\n      .then"
+        },
+        {
+          "line": 68,
+          "call": "controlServer!.once"
+        },
+        {
+          "line": 68,
+          "call": "controlServer!.listen"
+        },
+        {
+          "line": 71,
+          "call": "app.listen"
+        },
+        {
+          "line": 81,
+          "call": "process.on"
+        },
+        {
+          "line": 82,
+          "call": "shutdown(signal)\r\n      .then"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C10 authorization integration requires new independent source approval; do not reuse C8 review",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/admin.service.ts",
+      "sha256": "88b6f63eece225d84609e027f908b6f0718f4fe12820e620f2b1900c21910303",
+      "findings": [
+        {
+          "line": 158,
+          "call": "User.findOneAndUpdate"
+        },
+        {
+          "line": 160,
+          "call": "AuthSession.deleteMany"
+        },
+        {
+          "line": 161,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 424,
+          "call": "narration.save"
+        },
+        {
+          "line": 430,
+          "call": "ActivityLog.create"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/analytics.service.ts",
+      "sha256": "aede5a317538a950154328714334eb4a6be6dd4a54c6bb0c274aab7546c358a1",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/artifact-provenance.service.ts",
+      "sha256": "4d2db6412c05105d7b8fde34a27654bfde3e68febf63891a077a9edad23eca2f",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/auth.service.ts",
+      "sha256": "e5fa4c7b43e3d7678458a02fcf001842e0cb7cdbbb97842234992fa507f5b6a4",
+      "findings": [
+        {
+          "line": 42,
+          "call": "User.findOneAndUpdate"
+        },
+        {
+          "line": 64,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 76,
+          "call": "AuthSession.create"
+        },
+        {
+          "line": 94,
+          "call": "User.create"
+        },
+        {
+          "line": 140,
+          "call": "AuthSession.findOneAndUpdate"
+        },
+        {
+          "line": 165,
+          "call": "AuthSession.findOneAndUpdate"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/customer-soft-delete.service.ts",
+      "sha256": "1e5b94a239f87de8ff99928ed93a3bd8616302f53665054fe4b6b7dbe62d4e98",
+      "findings": [
+        {
+          "line": 149,
+          "call": "User.updateOne"
+        },
+        {
+          "line": 155,
+          "call": "ActivityLog.create"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/media-processing/ffmpeg-media-processor.ts",
+      "sha256": "70b18c85c4cad0f32accdefa5d80f7e36976331df9d7696029d145b889194b85",
+      "findings": [
+        {
+          "line": 13,
+          "call": "spawn"
+        },
+        {
+          "line": 14,
+          "call": "setTimeout"
+        },
+        {
+          "line": 15,
+          "call": "child.stdout.on"
+        },
+        {
+          "line": 16,
+          "call": "child.stderr.on"
+        },
+        {
+          "line": 17,
+          "call": "child.on"
+        },
+        {
+          "line": 18,
+          "call": "child.on"
+        }
+      ],
+      "classification": "PROTECTED",
+      "evidence": "C.4 reviewed local wrapper: pre-registration; resource close, scheduled callback completion or cancellation releases. Does not certify arbitrary external entry points.",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/media-processing/media-processing.service.ts",
+      "sha256": "59991b2182563d2a9d50b91686e1619f1450551ccb96d35d2044bce4feefa77c",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/media-processing/media-processor.interface.ts",
+      "sha256": "d61751957b2b4d17cca5aa2e0051b92f83532ee27fad7df088e05b208872ea18",
+      "findings": [],
+      "classification": "NOT_APPLICABLE",
+      "evidence": "Type-only provider/processor contract; hash changes invalidate review.",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/media-processing/processing-diagnostics.ts",
+      "sha256": "81346a1375dfa915bd1265c73107fc8da8568bec3066d7da460bf19991938c0a",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/media.service.ts",
+      "sha256": "10e0a0681212886321ba01bb44b449612d6ab998ea0a8f781688a49226dc7db3",
+      "findings": [
+        {
+          "line": 18,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 28,
+          "call": "Media.findOneAndUpdate"
+        },
+        {
+          "line": 33,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 55,
+          "call": "Project.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/narration.service.ts",
+      "sha256": "3482580bf774e8fbe290a889dd771f8fca020f42ac032c6ffd4afabe14dc1561",
+      "findings": [
+        {
+          "line": 26,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 125,
+          "call": "Project.findOneAndUpdate"
+        },
+        {
+          "line": 164,
+          "call": "ProcessingJob.create"
+        },
+        {
+          "line": 168,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 195,
+          "call": "Transcript.updateOne"
+        },
+        {
+          "line": 196,
+          "call": "Translation.updateOne"
+        },
+        {
+          "line": 201,
+          "call": "Narration.create"
+        },
+        {
+          "line": 208,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 215,
+          "call": "Narration.deleteOne"
+        },
+        {
+          "line": 225,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 243,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 244,
+          "call": "Project.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/project-workflow.service.ts",
+      "sha256": "a6c3c8e75e527b8ce1ef8f0d9e62f5bd0cd647c39a5c0e4b4e8092aeb79144e3",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/project.service.ts",
+      "sha256": "ead084973092dcdfc85d2cbfb144df4bf386d1f0dc81447fd4c5cd5e8e47ec76",
+      "findings": [
+        {
+          "line": 39,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 51,
+          "call": "Project.create"
+        },
+        {
+          "line": 85,
+          "call": "Project.findOneAndUpdate"
+        },
+        {
+          "line": 99,
+          "call": "Media.deleteMany"
+        },
+        {
+          "line": 99,
+          "call": "Narration.deleteMany"
+        },
+        {
+          "line": 99,
+          "call": "Result.deleteMany"
+        },
+        {
+          "line": 99,
+          "call": "Project.deleteOne"
+        },
+        {
+          "line": 130,
+          "call": "Project.create"
+        },
+        {
+          "line": 139,
+          "call": "Media.create"
+        },
+        {
+          "line": 150,
+          "call": "Transcript.create"
+        },
+        {
+          "line": 159,
+          "call": "TranscriptSegment.insertMany"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/result.service.ts",
+      "sha256": "efdce52259ccb6a0e1f4fb3ec024072066d516bccb4024c868d0b3f65679a266",
+      "findings": [
+        {
+          "line": 22,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 89,
+          "call": "ProcessingJob.create"
+        },
+        {
+          "line": 97,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 118,
+          "call": "Transcript.updateOne"
+        },
+        {
+          "line": 119,
+          "call": "Translation.updateOne"
+        },
+        {
+          "line": 120,
+          "call": "Narration.updateOne"
+        },
+        {
+          "line": 122,
+          "call": "Result.create"
+        },
+        {
+          "line": 126,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 131,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 143,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 143,
+          "call": "Project.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/source-language-contract.ts",
+      "sha256": "cefaa6c1f488946d5a2ab1a5302ffc7bfe55ad68da364eb99283252606a81f33",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/source-language.service.ts",
+      "sha256": "634e91f64c78bb7c877df335ec5e1abeb140d22ae4ac1fee93be57fb7af2e985",
+      "findings": [
+        {
+          "line": 46,
+          "call": "Project.findOneAndUpdate"
+        },
+        {
+          "line": 76,
+          "call": "Transcript.updateOne"
+        },
+        {
+          "line": 79,
+          "call": "Project.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.5 scoped owner operation added; reviewed delta does not certify all module/driver effects.",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/source-media.service.ts",
+      "sha256": "62cca4d5985765b3497310c168aed9c7c6db924836f691ff3a111fc34e3d30ba",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/stt/gemini-stt.provider.ts",
+      "sha256": "e7358e045f3c456cb5b7c6f7ae1c48401d092951e4692a8f1d4c174076681071",
+      "findings": [
+        {
+          "line": 91,
+          "call": "ai.interactions.create"
+        },
+        {
+          "line": 225,
+          "call": "setTimeout"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/stt/openai-stt.provider.ts",
+      "sha256": "e56712161f9dea31f614d7a99b353c8b3709c7faa09b2a47e927ae1be7d56c80",
+      "findings": [
+        {
+          "line": 61,
+          "call": "fetch"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/stt/stt-provider.interface.ts",
+      "sha256": "2400b5524e7b5e0ff7505a9267658a016f5d51c5a61d40e72f1398582195bddc",
+      "findings": [],
+      "classification": "NOT_APPLICABLE",
+      "evidence": "Type-only provider/processor contract; hash changes invalidate review.",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/stt/stt.service.ts",
+      "sha256": "a9d5c3dc24bcc59820cec7b8cec96d147611b62245698c8da126c386fe9a3fd4",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "sha256": "fbce88b2434988758f7cea9c41a02d9aaabd3ea0bc540ec854dae5f6a5bda141",
+      "findings": [
+        {
+          "line": 32,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 82,
+          "call": "Transcript.updateOne"
+        },
+        {
+          "line": 87,
+          "call": "TranscriptSegment.updateOne"
+        },
+        {
+          "line": 109,
+          "call": "Project.findOneAndUpdate"
+        },
+        {
+          "line": 120,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 122,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 123,
+          "call": "ProcessingJob.create"
+        },
+        {
+          "line": 137,
+          "call": "Transcript.findOneAndUpdate"
+        },
+        {
+          "line": 142,
+          "call": "Transcript.create"
+        },
+        {
+          "line": 144,
+          "call": "TranscriptSegment.deleteMany"
+        },
+        {
+          "line": 145,
+          "call": "TranscriptSegment.insertMany"
+        },
+        {
+          "line": 146,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 147,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 162,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 162,
+          "call": "Project.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "sha256": "aa5fb3890f307fc781df356dd9cd405e0c84c1f4ce96a7329e4da55237259edb",
+      "findings": [
+        {
+          "line": 25,
+          "call": "ActivityLog.create"
+        },
+        {
+          "line": 112,
+          "call": "ProcessingJob.create"
+        },
+        {
+          "line": 118,
+          "call": "Project.findOneAndUpdate"
+        },
+        {
+          "line": 123,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 139,
+          "call": "Transcript.updateOne"
+        },
+        {
+          "line": 150,
+          "call": "Translation.findOneAndUpdate"
+        },
+        {
+          "line": 155,
+          "call": "Translation.create"
+        },
+        {
+          "line": 158,
+          "call": "TranslationSegment.deleteMany"
+        },
+        {
+          "line": 159,
+          "call": "TranslationSegment.insertMany"
+        },
+        {
+          "line": 160,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 165,
+          "call": "Project.updateOne"
+        },
+        {
+          "line": 175,
+          "call": "ProcessingJob.updateOne"
+        },
+        {
+          "line": 176,
+          "call": "Project.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/bounded-fetch.ts",
+      "sha256": "5805fd76cb73d966fdb3d53dd7219d2fafc354ea02ef8a0fa7369828608b8ea4",
+      "findings": [
+        {
+          "line": 21,
+          "call": "reader.cancel().finally"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/bounded-source.ts",
+      "sha256": "4d0e99a98c78c3fd9751d138a9b166397a644ff91b134b4a876596e0746a4068",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/controlled-development.ts",
+      "sha256": "8659c4f28ac5eb26d35691e5ff5c3899a966f886f870f8455dc2e6b32e921092",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/controlled-gemini.provider.ts",
+      "sha256": "384adcbcf3f9e8116440195aa5f598d3f1bc534f4eada50180c8631c13fe3605",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/translation/controlled-target.ts",
+      "sha256": "a100f3220c50cd4703f54dad000388c7aca31f6c1a8d39a5a2c2f54d2be708ba",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "sha256": "d35a6965ec56ed069fda57d166e2132fe1a32558ab90473615f1bdd66037c3ec",
+      "findings": [
+        {
+          "line": 52,
+          "call": "TranslationAttempt.collection.updateOne"
+        },
+        {
+          "line": 60,
+          "call": "TranslationAttempt.collection.updateOne"
+        },
+        {
+          "line": 70,
+          "call": "TranslationAttempt.updateOne"
+        },
+        {
+          "line": 74,
+          "call": "TranslationAttempt.updateOne"
+        },
+        {
+          "line": 79,
+          "call": "TranslationAttempt.updateOne"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Default repository methods wrapped before invocation, including collection writes and entire transaction promise. Direct model access outside this repository and higher store/SDK paths remain unproven.",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/customer-execution.ts",
+      "sha256": "32d2f34da421aaa635be28e5d7f2e162c881b5d0dff16b4f65012d63087ae197",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/customer-languages.ts",
+      "sha256": "430b7e2b2cec1dde4f66c25896430917e073660dcec7220b37c892b527f11f63",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/customer-scope.ts",
+      "sha256": "652d65f2fcbdb1ecd08fb4bccc639d5a830f21ff7b84eda7959678ecc1d070b1",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/customer-simple-preflight.ts",
+      "sha256": "f1446d29934ccd09f41291743430f0556b63711b12a7dde4acef04e8b455cb8d",
+      "findings": [
+        {
+          "line": 61,
+          "call": "Promise.resolve().then"
+        },
+        {
+          "line": 62,
+          "call": "Promise.resolve().then"
+        },
+        {
+          "line": 63,
+          "call": "Promise.resolve().then"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/gemini-group-translation.provider.ts",
+      "sha256": "0585e0e87917533805f48afcc545c7da603a061945ea810cc095044b75560593",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/gemini-simple-contract.ts",
+      "sha256": "5199e281ee0dc8c56d1523305479b8f748a06e285a9f2c898b3adee05548ba4c",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/gemini-translation.provider.ts",
+      "sha256": "c5375b9f39f57217f6a0fc654a2767b4c35c21d5139c01dfb6c1a818a4582ec1",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/group-admission.ts",
+      "sha256": "815a3f4efec7ebf5ba72de433e8207688475e9b192fd2b7e24ecaba6dd79fcec",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/translation/group-draft-store.ts",
+      "sha256": "266bd716e5a327964cda8c1c2461fd5e324463a7ea1887e1226bd0569fec4958",
+      "findings": [
+        {
+          "line": 12,
+          "call": "setTimeout"
+        },
+        {
+          "line": 40,
+          "call": "Promise.resolve().then(create).then"
+        },
+        {
+          "line": 40,
+          "call": "Promise.resolve().then"
+        },
+        {
+          "line": 48,
+          "call": "promise.then"
+        },
+        {
+          "line": 61,
+          "call": "promise.finally"
+        },
+        {
+          "line": 96,
+          "call": "Promise.resolve().then"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/group-plan.ts",
+      "sha256": "d36b831506e6c808af674716c8ac09d498d4a30ee31350dac30a84fc60020066",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/group-response.ts",
+      "sha256": "b432a5bda8c72965258ac7cb3724ea3568a81def09d464dc9239a56f4179852d",
+      "findings": [
+        {
+          "line": 47,
+          "call": "res.once"
+        },
+        {
+          "line": 47,
+          "call": "res.once"
+        },
+        {
+          "line": 47,
+          "call": "res.once"
+        },
+        {
+          "line": 50,
+          "call": "setTimeout"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/group-source-scope.ts",
+      "sha256": "ec2d0938d747b8391c0a36c9bd5db1c32cf8e7dcab5327bf1b02bb93bb728ceb",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/group-translation.service.ts",
+      "sha256": "8e1222a3f2afdaae91fe016993f674bf6abe06c96700b0051d36c4182ff1d085",
+      "findings": [
+        {
+          "line": 295,
+          "call": "Project.findOneAndUpdate"
+        },
+        {
+          "line": 301,
+          "call": "Transcript.updateOne"
+        },
+        {
+          "line": 309,
+          "call": "Translation.create"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/one-use-permit.ts",
+      "sha256": "a5a5853904fdef309a7602a4d16c59ebdb4470bccd6178a83e2d308714f65100",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/translation/openai-translation.provider.ts",
+      "sha256": "cd703f18a1ecc47475b25752d724b62d7ffbbf4c6e5a1399b0c9e728d4ff32dc",
+      "findings": [
+        {
+          "line": 56,
+          "call": "fetch"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/permit-status.ts",
+      "sha256": "670b1c87bf8c905a8c694c50179f7064484e3236e268f29a70d874cc9989d175",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/translation/preflight-runtime-evidence.ts",
+      "sha256": "fa4088cc6cb6f9d51633f8594ba243603b131e0b4d01f485b27e19c708fe79e8",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/provider-failure.ts",
+      "sha256": "3ad255e3b3c05fd7e81cce95152a1480dee73aaabbc9761ca05ae66cb6a1ab23",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/read-only-diagnostic.ts",
+      "sha256": "c06d7ce31918cb0b1442401c20b90c24cbff0da5e4834677aad662c94b8a0010",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/translation-mapping.ts",
+      "sha256": "a05017da6db7161738f1a9f26850bb34b6f6dad13302bb95a0c569e2c605ecbe",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/translation/translation-provider.interface.ts",
+      "sha256": "0130eab9963a1fa01f022fc1f4e029cf1392029d5a35b9ae9c98641c4c4ca2e6",
+      "findings": [],
+      "classification": "NOT_APPLICABLE",
+      "evidence": "Type-only provider/processor contract; hash changes invalidate review.",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/translation/translation.service.ts",
+      "sha256": "b2a48ee1bf66883df5b813e3488ea9a036ae367e18a571e8ec0b26ce1db32ac5",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/tts/gemini-tts.provider.ts",
+      "sha256": "f6d42ac31df5043525b1226cf2b81909b0c7e5ea9abf2ddf3e96dfb25626dd8c",
+      "findings": [
+        {
+          "line": 41,
+          "call": "client.interactions.create"
+        },
+        {
+          "line": 89,
+          "call": "spawn"
+        },
+        {
+          "line": 92,
+          "call": "setTimeout"
+        },
+        {
+          "line": 94,
+          "call": "ffmpeg.stdout.on"
+        },
+        {
+          "line": 96,
+          "call": "ffmpeg.stdin.on"
+        },
+        {
+          "line": 97,
+          "call": "ffmpeg.on"
+        },
+        {
+          "line": 98,
+          "call": "ffmpeg.on"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/tts/openai-tts.provider.ts",
+      "sha256": "00db45a54417c8bca348e9327b5ceca681f356136d2de0a52e78e7b9177921ab",
+      "findings": [
+        {
+          "line": 43,
+          "call": "fetch"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/tts/tts-provider.interface.ts",
+      "sha256": "2bda5b6d677f09cdb8355d7c01c27ed2d44669215c78e04156e6c16b5f0d8f71",
+      "findings": [],
+      "classification": "NOT_APPLICABLE",
+      "evidence": "Type-only provider/processor contract; hash changes invalidate review.",
+      "normalServerReachable": false
+    },
+    {
+      "path": "services/tts/tts-terminal-state.ts",
+      "sha256": "1789f5880843d2350165b1e2aa9961789556ba2f3c9b21cde343c3e453afb424",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/tts/tts.service.ts",
+      "sha256": "50439c57b3669aaed859371ec1b13af5c7dc830f1c3890f4340d7f06f2443c20",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/user-availability.ts",
+      "sha256": "2b29fed32a80f897ab5c0b912b2e3cf8315101e0308bb66021acf3dac609b41e",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/visitor.service.ts",
+      "sha256": "37b20a8f100010f91931de205c8a2ff5cac7bbd28bc3916dc61d63feb0ad5774",
+      "findings": [
+        {
+          "line": 58,
+          "call": "Visitor.findOneAndUpdate"
+        }
+      ],
+      "classification": "UNKNOWN",
+      "evidence": "C.6 code changed and inventoried; owner-boundary proof remains under review, not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "services/voice-catalog.service.ts",
+      "sha256": "1499130d05607d3019cca137282436bd2c443623d0f2174206143a19d0112d64",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "types/api.types.ts",
+      "sha256": "ae0867d9f2bec437baf658f0fd40506e959ae8cc9596b6579e218c9cf0848e57",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "types/express.d.ts",
+      "sha256": "b5d3ea298437c48f1f67923423d44cc11de9716c96365379025e72264b105b7c",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": false
+    },
+    {
+      "path": "utils/api-response.ts",
+      "sha256": "ac5d00b1a21917f31688cc0531bfeda4c32e3b63da7cc2c6b8554d35c133c048",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "utils/app-error.ts",
+      "sha256": "286f324178cb030770ab91bd79bc6fa341ebaa3954c5d4658c0d85d7ddd84163",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "utils/file.ts",
+      "sha256": "03e7f8716c28d7127cd6cc2585b365b5191e2c4b6bbe748cd329d7183d9bbde6",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "utils/jwt.ts",
+      "sha256": "bdad6940315ca2893f8ff8246659ad0ad0e10fc1491ed77412b73f4c2bd04b05",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "utils/media-executable.ts",
+      "sha256": "a7ad7290fd876b8ec85f29712775490d76af424948f2268485933a71635b1c33",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "utils/password.ts",
+      "sha256": "6432d6255a68a2db24fab9f168b1e7175962de3b775e1222251a0db111fc5baa",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "utils/user-agent.ts",
+      "sha256": "8eaad59dc3f2d67b2a5c8f10b0f7eadc666395e5a79ca85a554665926f4b4107",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/admin.validator.ts",
+      "sha256": "32ada10b61f7a97fa07086bb382d510d0fe03296575d141645976a5f2b01d9df",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/analytics.validator.ts",
+      "sha256": "dd3d908742ccf4ac88598605f648c666e70eb5a1195843081316908a5825edd3",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/auth.validator.ts",
+      "sha256": "59b0c2528295cc0768e078254359b16e3c49a6937ec33bab071e7d83e618a9b0",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/catalog.validator.ts",
+      "sha256": "7675f2a6fb5252956ff136afd9531c40ea94c6d2bdaef54d5cd977deea2cc925",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/narration.validator.ts",
+      "sha256": "4febd2ef1fd4b0a3668d5c0e6a6328607c97b17278b2dc10d2ee76511645a16a",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/project.validator.ts",
+      "sha256": "d11b171d3d099d025fe9295cc2733af55860d8dd73f8c626557d32691c2dfcac",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/result.validator.ts",
+      "sha256": "a086744dfe38fe2a0b66195eb1e7c6f94acfd9b8c8f0703355c72da6f6ae0a9e",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/transcription.validator.ts",
+      "sha256": "f82bf8cc72b56cda691c3a6b03b62cdde5359f0b58a9cae77d069450bb280ffa",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    },
+    {
+      "path": "validators/translation.validator.ts",
+      "sha256": "9da9dd3e33354a9bfec474d01db87f0cbf6ab0b81ea9cfa45041e8f676959aae",
+      "findings": [],
+      "classification": "UNKNOWN",
+      "evidence": "Awaiting entry-point/capability proof; not automatically approved",
+      "normalServerReachable": true
+    }
+  ]
+}

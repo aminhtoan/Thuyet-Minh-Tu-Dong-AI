@@ -1,3 +1,4 @@
+import { drainRuntime, detached } from '../maintenance/runtime.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
@@ -130,6 +131,7 @@ const finalizeIdleAudioProject = async (projectId: string, userId: string): Prom
 };
 
 export const generate = async (projectId: string, userId: string, targetLanguage: string, requestedVoiceId?: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const project = await Project.findOne({ _id: projectId, userId });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
 
@@ -164,7 +166,7 @@ export const generate = async (projectId: string, userId: string, targetLanguage
     status: 'PROCESSING', progress: 0, startedAt: new Date() }); }
   catch (error) { if (duplicateKey(error)) throw new AppError(409, 'TTS_ALREADY_RUNNING', 'Giọng đọc này đang được tạo.'); throw error; }
   await Project.updateOne({ _id: projectId }, { status: 'GENERATING_AUDIO', progress: 0 });
-  void log(userId, project.status === 'FAILED' ? 'TTS_RETRIED' : 'TTS_STARTED', project._id, targetLanguage, voice._id);
+  void detached(() => log(userId, project.status === 'FAILED' ? 'TTS_RETRIED' : 'TTS_STARTED', project._id, targetLanguage, voice._id));
   let storedPath: string | undefined; let temporaryPath: string | undefined;
   try {
     const result = await getTtsProvider().synthesize({ text: translation.fullText, language: targetLanguage, voice: voice.providerVoiceId, format: 'mp3' });
@@ -230,7 +232,7 @@ export const generate = async (projectId: string, userId: string, targetLanguage
       try { completedProjectStatus = await finalizeIdleAudioProject(projectId, userId) ?? completedProjectStatus; }
       catch { /* Best effort; narration already committed */ }
     }
-    void log(userId, 'TTS_COMPLETED', project._id, targetLanguage, voice._id);
+    void detached(() => log(userId, 'TTS_COMPLETED', project._id, targetLanguage, voice._id));
     return { project: { id: projectId, status: completedProjectStatus }, narration: await getNarration(projectId, narrationId), idempotent: false };
   } catch (error) {
     if (temporaryPath) { try { await unlink(temporaryPath); } catch { /* absent temp */ } }
@@ -241,7 +243,9 @@ export const generate = async (projectId: string, userId: string, targetLanguage
       ProcessingJob.updateOne({ _id: job._id, status: 'PROCESSING' }, { status: 'FAILED', errorMessage: code, completedAt: new Date() }),
       Project.updateOne({ _id: projectId, userId, status: 'GENERATING_AUDIO' }, { status: 'FAILED' }),
     ]);
-    void log(userId, 'TTS_FAILED', project._id, targetLanguage, voice._id);
+    void detached(() => log(userId, 'TTS_FAILED', project._id, targetLanguage, voice._id));
     throw new AppError(code === 'TTS_NOT_CONFIGURED' ? 503 : code === 'TTS_TEXT_TOO_LARGE' ? 413 : 502, code, code === 'TTS_NOT_CONFIGURED' ? 'Dịch vụ giọng đọc chưa được cấu hình.' : 'Không thể tạo giọng đọc.');
   }
+
+ });
 };

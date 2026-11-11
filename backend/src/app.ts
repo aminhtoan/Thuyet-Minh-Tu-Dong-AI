@@ -6,10 +6,15 @@ import { errorHandlerMiddleware } from './middleware/error-handler.middleware.js
 import { notFoundMiddleware } from './middleware/not-found.middleware.js';
 import { apiRouter } from './routes/index.js';
 import { AppError } from './utils/app-error.js';
+import { businessAdmission, instrumentRouter } from './maintenance/http.js';
+import { drainRuntime } from './maintenance/runtime.js';
 
 export function createApp(routes = apiRouter) {
+if(routes!==apiRouter)drainRuntime.registerEntryPoint('alternate-router',false);
 if (routes !== apiRouter && process.env.NODE_ENV !== 'test') throw new Error('TEST_ROUTER_INJECTION_REQUIRES_TEST_ENV');
 const app = express();
+instrumentRouter(routes);
+app.use(businessAdmission);
 
 app.use(
   helmet({

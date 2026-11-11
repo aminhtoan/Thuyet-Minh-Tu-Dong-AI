@@ -21,10 +21,16 @@ const { signAccessToken } = await import('../src/utils/jwt.js');
 
 test('authenticated source streaming actual route with DB mocks only', async (t) => {
   const owner = new Types.ObjectId(); const other = new Types.ObjectId(); const projectId = new Types.ObjectId();
-  const user = { _id: owner, fullName: 'Test', email: 'test@example.test', role: 'CUSTOMER', status: 'ACTIVE' };
+  const user = { _id: owner, fullName: 'Test', email: 'test@example.test', role: 'CUSTOMER', status: 'ACTIVE', deletedAt: null as Date|null };
   let media: any = { mimeType: 'audio/mpeg', storagePath: 'source.mp3' };
-  t.mock.method(User, 'findById', async (id: string) => ({ ...user, _id: id === owner.toString() ? owner : other }));
-  t.mock.method(Project, 'findOne', (filter: any) => ({ select: async () => filter._id === projectId.toString() && filter.userId === owner.toString() ? { _id: projectId } : null }));
+  // Match current soft-delete-aware auth query, not the historical findById.
+  t.mock.method(User, 'findOne', async (filter: any) => {
+    assert.equal(filter.deletedAt,null);
+    return user.deletedAt ? null : { ...user, _id: String(filter._id) === owner.toString() ? owner : other };
+  });
+  // Current project-owner middleware explicitly permits ADMIN without userId;
+  // CUSTOMER requests must still match the owner. Do not change access policy.
+  t.mock.method(Project, 'findOne', (filter: any) => ({ select: async () => filter._id === projectId.toString() && (!filter.userId || filter.userId === owner.toString()) ? { _id: projectId } : null }));
   t.mock.method(Media, 'findOne', async () => media);
   const bytes = Buffer.from('0123456789abcdefghij'); await writeFile(join(directory, 'source.mp3'), bytes); await writeFile(join(directory, 'source.mp4'), bytes);
   const app = express(); app.use('/api/projects', projectRouter); app.use(errorHandlerMiddleware);
@@ -35,10 +41,14 @@ test('authenticated source streaming actual route with DB mocks only', async (t)
   const call = (options: RequestInit = {}, auth: string | null = token, url = base) => fetch(url, { ...options, headers: { ...(auth ? { authorization: `Bearer ${auth}` } : {}), ...options.headers } });
   try {
     await t.test('unauthenticated and token-in-query are rejected', async () => { assert.equal((await call({}, null)).status, 401); assert.equal((await call({}, null, base + '?token=not-a-token')).status, 401); });
-    await t.test('cross-user, blocked and Admin cannot stream', async () => {
+    await t.test('cross-user, blocked and soft-deleted customers cannot stream; authorized Admin follows existing route policy', async () => {
       assert.equal((await call({}, otherToken)).status, 404);
       user.status = 'BLOCKED'; assert.equal((await call()).status, 403); user.status = 'ACTIVE';
-      user.role = 'ADMIN'; assert.equal((await call()).status, 403); user.role = 'CUSTOMER';
+      user.deletedAt=new Date();assert.equal((await call()).status,401);user.deletedAt=null;
+      user.role = 'ADMIN';
+      try {const res=await call();assert.equal(res.status,200);assert.deepEqual(Buffer.from(await res.arrayBuffer()),bytes);
+        assert.equal((await call({},token,base.replace(String(projectId),String(new Types.ObjectId())))).status,404);
+      } finally {user.role='CUSTOMER';}
     });
     await t.test('MP3 streamed with correct headers and no path leakage', async () => {
       const res = await call(); assert.equal(res.status, 200); assert.equal(res.headers.get('content-type'), 'audio/mpeg'); assert.equal(res.headers.get('content-length'), '20'); assert.equal(res.headers.get('accept-ranges'), 'bytes'); assert.equal(res.headers.get('cache-control'), 'private, no-store'); assert.deepEqual(Buffer.from(await res.arrayBuffer()), bytes); assert.doesNotMatch(JSON.stringify([...res.headers]), /storagePath|source\.mp3|source-media-test/);

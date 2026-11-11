@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { drainRuntime, trackedObject } from '../../maintenance/runtime.js';
 import mongoose, { type ClientSession } from 'mongoose';
 
 import { Project } from '../../models/Project.js';
@@ -121,6 +122,7 @@ export class GroupTranslationService {
     } finally { lease?.release(); }
   }
   async preview(projectId: string, ownerId: string, body: { targetLanguage: string; sourceRevision: string; groupingVersion: string; groups: string[][]; idempotencyKey: string }) {
+ return drainRuntime.track('activeOperations',async()=>{
     if (customerScopeActive() && !controlledScopeActive()) {
       const source = await this.context(projectId, ownerId, body.targetLanguage);
       assertCustomerLanguages(source.languageCode, body.targetLanguage, customerTranslationMethod());
@@ -147,8 +149,11 @@ export class GroupTranslationService {
     }
     const work = () => this.previewInternal(projectId, ownerId, body);
     return this.admission ? this.admission.operation(ownerId, work) : work();
-  }
+
+ });
+}
   async customerGenerate(projectId: string, ownerId: string, targetLanguage = 'en') {
+ return drainRuntime.track('activeOperations',async()=>{
     if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
     assertCustomerTarget(targetLanguage);
     if (customerActive.size >= 2 || customerActive.has(ownerId)) throw new AppError(429, 'TRANSLATION_CAPACITY_EXHAUSTED', 'Đang có yêu cầu dịch. Chỉ tải lại dữ liệu, không tự thử lại.');
@@ -158,7 +163,9 @@ export class GroupTranslationService {
       return this.preview(projectId, ownerId, { targetLanguage, sourceRevision: plan.sourceRevision, groupingVersion: plan.groupingVersion,
         groups: plan.groups.map(g => g.sourceSegmentIds), idempotencyKey: 'server-derived' });
     }); } finally { customerActive.delete(ownerId); }
-  }
+
+ });
+}
   private async customerReadSource(projectId: string, ownerId: string, targetLanguage: string) {
     assertCustomerTarget(targetLanguage);
     const project = await Project.findOne({ _id: projectId, userId: ownerId }).select('_id sourceLanguage sourceLanguageMode sourceLanguageStatus');
@@ -170,6 +177,7 @@ export class GroupTranslationService {
     return source;
   }
   async customerDraft(projectId: string, ownerId: string, targetLanguage = 'en') {
+ return drainRuntime.track('activeOperations',async()=>{
     if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
     return withCustomerTranslation(async () => {
       // Viewing/recovering a draft/approval receipt must not regress workflow or
@@ -181,7 +189,9 @@ export class GroupTranslationService {
       if (draft.targetLanguage !== targetLanguage || draft.transcriptRevision !== source.transcriptRevision || draft.transcriptId !== source.transcriptId || draft.sourceLanguage !== source.languageCode || draft.groupingVersion !== GROUPING_VERSION || draft.outputDigest !== outputDigest(revision(source), targetLanguage, draft.groups)) throw mismatch();
       return this.store.restore(draft);
     });
-  }
+
+ });
+}
   async customerState(projectId: string, ownerId: string, targetLanguage = 'en') {
     if (process.env.CUSTOMER_TRANSLATION_ENABLED !== 'true' || process.env.CONTROLLED_PROVIDER_MODE) throw new AppError(503, 'CUSTOMER_TRANSLATION_DISABLED', 'Dịch Customer chưa được bật.');
     return withCustomerTranslation(async () => {
@@ -208,7 +218,7 @@ export class GroupTranslationService {
       // One active/result request per owner/project/target/revision. New keys cannot bypass retry safety during TTL.
       const input = translationProviderInput(source, body.targetLanguage, groups);
       try {
-        const output = await this.provider.translate(input, customerScopeActive() ? async () => {
+        const output = await trackedObject(this.provider, 'providerCalls').translate(input, customerScopeActive() ? async () => {
           const current = await this.context(projectId, ownerId, body.targetLanguage);
           if (revision(current) !== body.sourceRevision || current.transcriptRevision !== transcriptRevision || await ProcessingJob.exists({ projectId, status: { $in: ['QUEUED', 'PROCESSING'] } })) throw mismatch();
         } : undefined);
@@ -253,9 +263,12 @@ export class GroupTranslationService {
     return boundedTranslationRecord(filter, session, this.admission);
   }
   async approve(projectId: string, ownerId: string, draftId: string, body: { outputDigest: string; reviewed: true }) {
+ return drainRuntime.track('activeOperations',async()=>{
     const work = () => this.approveInternal(projectId, ownerId, draftId, body);
     return this.admission ? this.admission.operation(ownerId, work) : work();
-  }
+
+ });
+}
   private async approveInternal(projectId: string, ownerId: string, draftId: string, body: { outputDigest: string; reviewed: true }) {
     if (controlledReadinessActive()) throw new AppError(503, 'CONTROLLED_APPROVAL_DENIED', 'Readiness does not authorize database writes.');
     enabled(); const draft = this.store.get(draftId, ownerId, projectId);
@@ -308,6 +321,7 @@ export class GroupTranslationService {
     });
   }
   async translateDirect(projectId: string, ownerId: string, targetLanguage: string) {
+ return drainRuntime.track('activeOperations',async()=>{
     enabled();
     const source = await this.context(projectId, ownerId, targetLanguage);
     const existing = await this.boundedRecord({ transcriptId: new mongoose.Types.ObjectId(source.transcriptId), projectId: new mongoose.Types.ObjectId(projectId), targetLanguage, status: 'READY' });
@@ -332,7 +346,9 @@ export class GroupTranslationService {
       reviewed: true,
     });
     return { project: { id: projectId, status: 'TRANSLATED' }, ...approved, idempotent: false };
-  }
+
+ });
+}
 }
 
 export const groupTranslationService = new GroupTranslationService();

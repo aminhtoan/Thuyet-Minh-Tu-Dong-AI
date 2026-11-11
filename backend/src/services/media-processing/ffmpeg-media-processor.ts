@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createTrackedResource } from '../../maintenance/runtime.js';
 import { stat } from 'node:fs/promises';
 import type { ComposeNarrationInput, MediaProcessingResult, MediaProcessor, MediaProbeResult } from './media-processor.interface.js';
 import { MediaProcessingError, sanitizeProcessingStderr, type ProcessingStage } from './processing-diagnostics.js';
@@ -9,7 +10,7 @@ const timeoutMs = () => { const value = Number(process.env.FFMPEG_TIMEOUT_MS ?? 
 
 export const runMediaCommand = (binary: string, args: string[], stage: ProcessingStage): Promise<{ stdout: string; stderr: string }> => new Promise((resolve, reject) => {
   const started = Date.now();
-  const child = spawn(binary, args, { shell: false, windowsHide: true }); let stdout = ''; let stderr = ''; let timedOut = false;
+  const child = createTrackedResource(()=>spawn(binary, args, { shell: false, windowsHide: true })); let stdout = ''; let stderr = ''; let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, timeoutMs());
   child.stdout.on('data', (chunk: Buffer) => { stdout = (stdout + chunk.toString()).slice(-MAX_STDERR); });
   child.stderr.on('data', (chunk: Buffer) => { stderr = (stderr + chunk.toString()).slice(-MAX_STDERR); });

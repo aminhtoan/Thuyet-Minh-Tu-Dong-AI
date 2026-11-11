@@ -1,0 +1,48 @@
+name: narration-s396-drain-b3
+services:
+  mongodb:
+    image: mongo:8.0.17
+    command: [mongod, --replSet, s396rs, --bind_ip_all]
+    volumes:
+      - database:/data/db
+      - ../mongo-init.js:/opt/init.js:ro
+    tmpfs: [/data/configdb]
+    networks: [isolated]
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --file, /opt/init.js]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  backend:
+    image: ${DRAIN_B3_IMAGE:-narration-drain-b3:unbuilt}
+    command: [node, --import, ./staging/preflight.mjs, acceptance/harness.mjs]
+    init: true
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/s396_drain_b3?replicaSet=s396rs
+      JWT_ACCESS_SECRET: drain-b3-synthetic-access-not-real
+      JWT_REFRESH_SECRET: drain-b3-synthetic-refresh-not-real
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 1d
+      MAINTENANCE_CONTROL_ENABLED: 'true'
+      MAINTENANCE_CONTROL_TOKEN: drain-b3-synthetic-control-token-not-real-123456789
+      GEMINI_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      OPENAI_API_KEY: ''
+      GROUP_TRANSLATION_ENABLED: 'false'
+      CUSTOMER_TRANSLATION_ENABLED: 'false'
+      DRAIN_SYNTHETIC_FIXTURES: 'true'
+    volumes:
+      - media:/data/uploads
+      - ./:/app/acceptance:ro
+    networks: [isolated]
+    depends_on:
+      mongodb: {condition: service_healthy}
+networks:
+  isolated:
+    name: narration-s396-drain-b3-isolated
+    internal: true
+volumes:
+  database:
+    name: narration-s396-drain-b3-database
+  media:
+    name: narration-s396-drain-b3-media

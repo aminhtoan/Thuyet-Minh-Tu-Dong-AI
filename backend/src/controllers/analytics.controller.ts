@@ -1,3 +1,4 @@
+import { drainRuntime } from '../maintenance/runtime.js';
 import type { RequestHandler } from 'express';
 import mongoose from 'mongoose';
 import { ListenEvent } from '../models/ListenEvent.js';
@@ -8,6 +9,7 @@ import { findOrCreateVisitor } from '../services/visitor.service.js';
 import { successResponse } from '../utils/api-response.js';
 
 export const trackListen: RequestHandler = async (request, response) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const { platform, projectId, narrationId, languageCode } = request.body as {
     platform: 'web' | 'mobile';
     projectId?: string;
@@ -46,6 +48,8 @@ export const trackListen: RequestHandler = async (request, response) => {
       eventId: event._id.toString(),
     }),
   );
+
+ });
 };
 
 export const getListenStats: RequestHandler = async (_request, response) => {
@@ -73,6 +77,7 @@ export const getListenStats: RequestHandler = async (_request, response) => {
 };
 
 export const trackVisitQR: RequestHandler = async (request, response) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const { source, targetPath, location } = (request.body ?? {}) as {
     source?: string;
     targetPath?: string;
@@ -109,9 +114,12 @@ export const trackVisitQR: RequestHandler = async (request, response) => {
       visitId: visit._id.toString(),
     }),
   );
+
+ });
 };
 
 export const redirectVisitQR: RequestHandler = async (request, response) => {
+  return drainRuntime.track('activeOperations',async()=>{
   const source = typeof request.query.source === 'string' ? request.query.source : 'qr_scan';
   const target = typeof request.query.target === 'string' ? request.query.target : '/';
   const location = typeof request.query.location === 'string' ? request.query.location : undefined;
@@ -148,5 +156,6 @@ export const redirectVisitQR: RequestHandler = async (request, response) => {
     redirectUrl = `${mobileBase.replace(/\/+$/, '')}${target.startsWith('/') ? target : `/${target}`}`;
   }
   response.redirect(302, redirectUrl);
+  });
 };
 
