@@ -1,3 +1,4 @@
+import { drainRuntime } from '../maintenance/runtime.js';
 import { Visitor, type VisitorDocument } from '../models/Visitor.js';
 import { parseUserAgent } from '../utils/user-agent.js';
 
@@ -20,6 +21,7 @@ export interface RegisterVisitOptions {
 }
 
 export async function findOrCreateVisitor(options: RegisterVisitOptions): Promise<VisitorDocument> {
+ return drainRuntime.track('activeOperations',async()=>{
   const ip = options.ipAddress?.trim() || null;
   const ua = options.userAgent?.trim() || null;
   const visitorCode = getVisitorCode(ip, ua);
@@ -60,4 +62,6 @@ export async function findOrCreateVisitor(options: RegisterVisitOptions): Promis
   );
 
   return visitor as VisitorDocument;
+
+ });
 }

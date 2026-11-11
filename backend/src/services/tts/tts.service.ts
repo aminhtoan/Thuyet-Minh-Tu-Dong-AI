@@ -1,3 +1,4 @@
+import { trackedObject } from '../../maintenance/runtime.js';
 import type { TtsProvider, TtsProviderInput, TtsProviderResult } from './tts-provider.interface.js';
 import { OpenAiTtsProvider } from './openai-tts.provider.js';
 import { GeminiTtsProvider } from './gemini-tts.provider.js';
@@ -25,10 +26,10 @@ class ResilientTtsProvider implements TtsProvider {
 }
 
 export const getTtsProvider = (): TtsProvider => {
-  if (testProvider) return testProvider;
+  if (testProvider) return trackedObject(testProvider, 'providerCalls');
   const provider = process.env.TTS_PROVIDER?.trim().toLowerCase();
   if (provider !== 'openai' && provider !== 'gemini') throw new Error('TTS_NOT_CONFIGURED');
-  return new ResilientTtsProvider();
+  return trackedObject(new ResilientTtsProvider(), 'providerCalls');
 };
 
 export const setTtsProviderForTests = (provider?: TtsProvider): void => { testProvider = provider; };

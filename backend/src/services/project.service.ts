@@ -1,3 +1,4 @@
+import { drainRuntime, detached } from '../maintenance/runtime.js';
 import type { Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
 import { Media } from '../models/Media.js';
@@ -45,13 +46,16 @@ const owned = async (id: string, userId: string) => {
 };
 
 export const create = async (userId: string, input: ProjectInput) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const mode = input.sourceLanguageMode ?? (input.sourceLanguage ? 'MANUAL' : 'AUTO');
   const project = await Project.create({ ...input, sourceLanguageMode: mode,
     sourceLanguage: mode === 'AUTO' ? null : input.sourceLanguage,
     sourceLanguageStatus: mode === 'AUTO' ? 'PENDING_DETECTION' : 'CONFIRMED',
     description: input.description ?? '', userId, status: 'DRAFT', progress: 0 });
-  void log(userId, 'PROJECT_CREATED', project._id, 'Dự án đã được tạo.');
+  void detached(() => log(userId, 'PROJECT_CREATED', project._id, 'Dự án đã được tạo.'));
   return serialize(project);
+
+ });
 };
 
 export const list = async (userId: string, input: ListInput) => {
@@ -75,15 +79,19 @@ export const get = async (id: string, userId: string) => {
 };
 
 export const update = async (id: string, userId: string, input: Partial<ProjectInput>) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const project = input.sourceLanguage !== undefined || input.sourceLanguageMode !== undefined
     ? await updateProjectSource(id, userId, input)
     : await Project.findOneAndUpdate({ _id: id, userId }, { $set: input }, { returnDocument: 'after', runValidators: true });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
-  void log(userId, 'PROJECT_UPDATED', project._id, 'Dự án đã được cập nhật.');
+  void detached(() => log(userId, 'PROJECT_UPDATED', project._id, 'Dự án đã được cập nhật.'));
   return serialize(project);
+
+ });
 };
 
 export const remove = async (id: string, userId: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const project = await owned(id, userId);
   const media = await Media.findOne({ projectId: project._id });
   const narrations = await Narration.find({ projectId: project._id }).select('audioPath');
@@ -95,10 +103,13 @@ export const remove = async (id: string, userId: string) => {
   }
   await Promise.all(narrations.filter((item) => item.audioPath).map((item) => safeDeleteStoredFile(item.audioPath)));
   await Promise.all(results.filter((item) => item.videoPath).map((item) => safeDeleteStoredFile(item.videoPath)));
-  void log(userId, 'PROJECT_DELETED', project._id, 'Dự án đã được xóa.');
+  void detached(() => log(userId, 'PROJECT_DELETED', project._id, 'Dự án đã được xóa.'));
+
+ });
 };
 
 export const branchLanguage = async (sourceProjectId: string, userId: string, targetLanguage: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const sourceProject = await owned(sourceProjectId, userId);
   assertSourceLanguageConfirmed(sourceProject);
   if (targetLanguage === sourceProject.sourceLanguage) {
@@ -154,9 +165,11 @@ export const branchLanguage = async (sourceProjectId: string, userId: string, ta
     })));
   }
 
-  void log(userId, 'PROJECT_BRANCHED', newProject._id, `Đã tạo phiên bản ${targetLabel} từ dự án ${sourceProject.name}.`);
+  void detached(() => log(userId, 'PROJECT_BRANCHED', newProject._id, `Đã tạo phiên bản ${targetLabel} từ dự án ${sourceProject.name}.`));
   const [serialized] = await serializeWithWorkflow([newProject]);
   return { project: serialized, targetLanguage };
+
+ });
 };
 
 export const getLanguageVariants = async (projectId: string, userId: string, currentLanguage?: string) => {

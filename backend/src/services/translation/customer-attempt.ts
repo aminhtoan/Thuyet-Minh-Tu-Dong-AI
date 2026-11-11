@@ -1,4 +1,5 @@
 import { TranslationAttempt } from '../../models/TranslationAttempt.js';
+import { trackedObject } from '../../maintenance/runtime.js';
 import { AppError } from '../../utils/app-error.js';
 import { digest } from './group-plan.js';
 import type { GroupDraft } from './group-draft-store.js';
@@ -24,7 +25,7 @@ function statusOf(row: { state?: string; phase?: string; executionVersion?: numb
   const providerHttpStatus = [400, 408, 429, 503, 504].includes(row.providerHttpStatus ?? 0) ? row.providerHttpStatus! : null;
   return { status, phase: row.executionVersion === 1 ? row.phase ?? 'UNKNOWN' : 'UNKNOWN', diagnosticCode: row.diagnosticCode && safeCodes.has(row.diagnosticCode) ? row.diagnosticCode : null, providerHttpStatus, updatedAt: Number.isFinite(time) ? new Date(time).toISOString() : null, canGenerate: false };
 }
-const repository = {
+const repository = trackedObject({
   claim: async (s: AttemptScope, binding: string) => {
     // Native collection insert uses built-in unique _id; no optional index dependency.
     await TranslationAttempt.collection.insertOne({ _id: key(s), ...s, binding, state: 'CLAIMED', executionVersion: 1, phase: 'PREPARING', createdAt: new Date(), updatedAt: new Date() } as never,
@@ -78,7 +79,7 @@ const repository = {
     const result = await TranslationAttempt.updateOne({ _id: key(s), binding, state: 'CLAIMED', executionVersion: 1 }, { $set: { state, phase, diagnosticCode, failedAt: new Date(), ...(providerHttpStatus ? { providerHttpStatus } : {}), ...(providerDiagnostic ? { providerDiagnostic } : {}), ...(transportDiagnostic ? { transportDiagnostic } : {}) } }, { writeConcern: { w: 'majority', j: true } });
     return result.matchedCount === 1;
   },
-};
+},'activeOperations');
 export class CustomerAttemptStore {
   constructor(private readonly repo = repository) {}
   async inspect(s: AttemptScope): Promise<CustomerAttemptStatus | null> {

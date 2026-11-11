@@ -1,3 +1,4 @@
+import { drainRuntime, detached } from '../maintenance/runtime.js';
 import mongoose, { type Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
 import { Language } from '../models/Language.js';
@@ -81,6 +82,7 @@ function requireLegacyAlignmentCapability(): void {
 }
 
 export const translate = async (projectId: string, userId: string, targetLanguage: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const project = await Project.findOne({ _id: projectId, userId });
   if (!project) throw new AppError(404, 'PROJECT_NOT_FOUND', 'Không tìm thấy dự án.');
   assertSourceLanguageConfirmed(project);
@@ -121,7 +123,7 @@ export const translate = async (projectId: string, userId: string, targetLanguag
     await ProcessingJob.updateOne({ _id: job._id }, { status: 'CANCELLED', completedAt: new Date() });
     throw new AppError(409, 'TRANSLATION_ALREADY_RUNNING', 'Dự án đang được dịch.');
   }
-  void writeLog(userId, claimed.status === 'FAILED' ? 'TRANSLATION_RETRIED' : 'TRANSLATION_STARTED', claimed._id, targetLanguage);
+  void detached(() => writeLog(userId, claimed.status === 'FAILED' ? 'TRANSLATION_RETRIED' : 'TRANSLATION_STARTED', claimed._id, targetLanguage));
   try {
     const providerInput = sourceSegments.map((segment) => ({ index: segment.sequence - 1, text: segment.text, sourceSegmentId: segment._id.toString(), startTime: segment.startTime, endTime: segment.endTime }));
     const result = await getTranslationProvider().translate({ fullText: transcript.fullText, sourceLanguage, targetLanguage, segments: providerInput });
@@ -163,7 +165,7 @@ export const translate = async (projectId: string, userId: string, targetLanguag
         await Project.updateOne({ _id: projectId }, { status: 'TRANSLATED', progress: 100 }, { session });
       });
     } finally { await session.endSession(); }
-    void writeLog(userId, 'TRANSLATION_COMPLETED', claimed._id, targetLanguage);
+    void detached(() => writeLog(userId, 'TRANSLATION_COMPLETED', claimed._id, targetLanguage));
     return { project: { id: projectId, status: 'TRANSLATED' }, translation: await getTranslation(projectId, targetLanguage), translationId, idempotent: false };
   } catch (error) {
     if (env.nodeEnv === 'development' && error instanceof OpenAiTranslationError) console.error('Translation provider diagnostic:', error.diagnostics);
@@ -173,8 +175,10 @@ export const translate = async (projectId: string, userId: string, targetLanguag
       ProcessingJob.updateOne({ _id: job._id }, { status: 'FAILED', errorMessage: known, completedAt: new Date() }),
       Project.updateOne({ _id: projectId }, { status: 'FAILED' }),
     ]);
-    void writeLog(userId, 'TRANSLATION_FAILED', claimed._id, targetLanguage);
+    void detached(() => writeLog(userId, 'TRANSLATION_FAILED', claimed._id, targetLanguage));
     const messages: Record<string, string> = { TRANSLATION_NOT_CONFIGURED: 'Dịch vụ dịch chưa được cấu hình.', TRANSLATION_INVALID_KEY: 'Khóa dịch vụ dịch không hợp lệ. Vui lòng liên hệ quản trị viên.', TRANSLATION_MODEL_UNAVAILABLE: 'Model dịch không khả dụng hoặc chưa được cấp quyền.', TRANSLATION_QUOTA_EXCEEDED: 'Dịch vụ dịch đã hết hạn mức. Vui lòng thử lại sau.', TRANSLATION_TIMEOUT: 'Dịch vụ dịch phản hồi quá lâu. Vui lòng thử lại sau.', TRANSLATION_NETWORK_ERROR: 'Không kết nối được dịch vụ dịch.', TRANSLATION_INVALID_RESPONSE: 'Dịch vụ dịch trả về dữ liệu không hợp lệ.', TRANSLATION_MAPPING_FAILED: 'Không thể ánh xạ bản dịch chính xác với bản ghi gốc.' };
     throw new AppError(known === 'TRANSLATION_NOT_CONFIGURED' ? 503 : 502, known, messages[known] ?? 'Không thể dịch bản ghi.');
   }
+
+ });
 };

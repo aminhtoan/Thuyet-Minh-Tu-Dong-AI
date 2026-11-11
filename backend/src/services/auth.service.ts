@@ -1,3 +1,4 @@
+import { drainRuntime, detached } from '../maintenance/runtime.js';
 import { createHash } from 'node:crypto';
 import { Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
@@ -37,6 +38,7 @@ export interface TokenPair {
 const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
 export const updateDisplayName = async (userId: string, fullName: string): Promise<SafeUser> => {
+ return drainRuntime.track('activeOperations',async()=>{
   const user = await User.findOneAndUpdate(
     availableUserFilter({ _id: userId, status: 'ACTIVE' }),
     { $set: { fullName } },
@@ -44,6 +46,8 @@ export const updateDisplayName = async (userId: string, fullName: string): Promi
   );
   if (!user) throw new AppError(401, 'INVALID_TOKEN', 'Tài khoản không còn khả dụng.');
   return serializeUser(user);
+
+ });
 };
 
 export const serializeUser = (user: UserDocument & { _id: Types.ObjectId }): SafeUser => ({
@@ -83,6 +87,7 @@ const duplicateEmailError = (): AppError =>
   new AppError(409, 'EMAIL_ALREADY_EXISTS', 'Email đã được sử dụng.');
 
 export const register = async (input: RegisterInput): Promise<{ user: SafeUser } & TokenPair> => {
+ return drainRuntime.track('activeOperations',async()=>{
   if (await User.exists({ email: input.email })) throw duplicateEmailError();
 
   try {
@@ -94,7 +99,7 @@ export const register = async (input: RegisterInput): Promise<{ user: SafeUser }
       status: 'ACTIVE',
     });
     const tokens = await createTokenPair(user);
-    void recordActivity(user._id, 'USER_REGISTERED', 'Người dùng đã đăng ký tài khoản.');
+    void detached(() => recordActivity(user._id, 'USER_REGISTERED', 'Người dùng đã đăng ký tài khoản.'));
     return { user: serializeUser(user), ...tokens };
   } catch (error) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
@@ -102,9 +107,12 @@ export const register = async (input: RegisterInput): Promise<{ user: SafeUser }
     }
     throw error;
   }
+
+ });
 };
 
 export const login = async (input: LoginInput): Promise<{ user: SafeUser } & TokenPair> => {
+ return drainRuntime.track('activeOperations',async()=>{
   const user = await User.findOne(availableUserFilter({ email: input.email })).select('+passwordHash');
   if (!user || !(await comparePassword(input.password, user.passwordHash))) {
     throw new AppError(401, 'INVALID_CREDENTIALS', 'Email hoặc mật khẩu không chính xác.');
@@ -114,11 +122,14 @@ export const login = async (input: LoginInput): Promise<{ user: SafeUser } & Tok
   }
 
   const tokens = await createTokenPair(user);
-  void recordActivity(user._id, 'USER_LOGIN', 'Người dùng đã đăng nhập.');
+  void detached(() => recordActivity(user._id, 'USER_LOGIN', 'Người dùng đã đăng nhập.'));
   return { user: serializeUser(user), ...tokens };
+
+ });
 };
 
 export const refresh = async (rawToken: string): Promise<TokenPair> => {
+ return drainRuntime.track('activeOperations',async()=>{
   let payload;
   try {
     payload = verifyRefreshToken(rawToken);
@@ -143,9 +154,12 @@ export const refresh = async (rawToken: string): Promise<TokenPair> => {
   if (!user) throw new AppError(401, 'INVALID_TOKEN', 'Refresh token không hợp lệ.');
   if (user.status === 'BLOCKED') throw new AppError(403, 'ACCOUNT_BLOCKED', 'Tài khoản đã bị khóa.');
   return createTokenPair(user);
+
+ });
 };
 
 export const logout = async (rawToken: string): Promise<void> => {
+ return drainRuntime.track('activeOperations',async()=>{
   try {
     const payload = verifyRefreshToken(rawToken);
     const session = await AuthSession.findOneAndUpdate(
@@ -153,8 +167,10 @@ export const logout = async (rawToken: string): Promise<void> => {
       { $set: { revokedAt: new Date() } },
       { returnDocument: 'after' },
     );
-    if (session) void recordActivity(session.userId, 'USER_LOGOUT', 'Người dùng đã đăng xuất.');
+    if (session) void detached(() => recordActivity(session.userId, 'USER_LOGOUT', 'Người dùng đã đăng xuất.'));
   } catch {
     // Logout is intentionally idempotent and reveals no token/session details.
   }
+
+ });
 };

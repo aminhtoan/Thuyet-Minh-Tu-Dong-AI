@@ -1,3 +1,4 @@
+import { drainRuntime, detached } from '../maintenance/runtime.js';
 import type { Types } from 'mongoose';
 import type { Express } from 'express';
 import { ActivityLog } from '../models/ActivityLog.js';
@@ -18,6 +19,7 @@ const log = async (userId: string, action: string, entityId: Types.ObjectId, des
 };
 
 export const upload = async (projectId: string, userId: string, file: Express.Multer.File) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const mediaType = getMediaType(file.mimetype);
   if (!mediaType) { await safeDeleteStoredFile(toStoragePath(file.path)); throw new AppError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Định dạng tệp không được hỗ trợ.'); }
   const storagePath = toStoragePath(file.path);
@@ -30,12 +32,14 @@ export const upload = async (projectId: string, userId: string, file: Express.Mu
     );
     await Project.updateOne({ _id: projectId, userId }, { $set: { status: 'UPLOADED', progress: 0 } });
     if (old && old.storagePath !== storagePath) await safeDeleteStoredFile(old.storagePath);
-    void log(userId, old ? 'MEDIA_REPLACED' : 'MEDIA_UPLOADED', media._id, old ? 'Media nguồn đã được thay thế.' : 'Media nguồn đã được tải lên.');
+    void detached(() => log(userId, old ? 'MEDIA_REPLACED' : 'MEDIA_UPLOADED', media._id, old ? 'Media nguồn đã được thay thế.' : 'Media nguồn đã được tải lên.'));
     return serialize(media);
   } catch (error) {
     await safeDeleteStoredFile(storagePath);
     throw error;
   }
+
+ });
 };
 
 export const get = async (projectId: string) => {
@@ -45,9 +49,12 @@ export const get = async (projectId: string) => {
 };
 
 export const remove = async (projectId: string, userId: string) => {
+ return drainRuntime.track('activeOperations',async()=>{
   const media = await Media.findOneAndDelete({ projectId });
   if (!media) throw new AppError(404, 'MEDIA_NOT_FOUND', 'Không tìm thấy media nguồn.');
   await Project.updateOne({ _id: projectId, userId }, { $set: { status: 'DRAFT', progress: 0 } });
   await safeDeleteStoredFile(media.storagePath);
-  void log(userId, 'MEDIA_DELETED', media._id, 'Media nguồn đã được xóa.');
+  void detached(() => log(userId, 'MEDIA_DELETED', media._id, 'Media nguồn đã được xóa.'));
+
+ });
 };

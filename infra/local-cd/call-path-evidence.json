@@ -1,0 +1,1671 @@
+{
+  "scope": "server.ts",
+  "paths": [
+    {
+      "path": "controllers/analytics.controller.ts",
+      "line": 33,
+      "call": "ListenEvent.create",
+      "owners": [
+        "callback",
+        "trackListen"
+      ],
+      "boundaries": [
+        {
+          "line": 12,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "controllers/analytics.controller.ts",
+      "line": 99,
+      "call": "VisitQR.create",
+      "owners": [
+        "callback",
+        "trackVisitQR"
+      ],
+      "boundaries": [
+        {
+          "line": 80,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "controllers/analytics.controller.ts",
+      "line": 139,
+      "call": "VisitQR.create",
+      "owners": [
+        "callback",
+        "redirectVisitQR"
+      ],
+      "boundaries": [
+        {
+          "line": 122,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "controllers/project.controller.ts",
+      "line": 8,
+      "call": "projectService.create",
+      "owners": [
+        "create"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/admin.service.ts",
+      "line": 158,
+      "call": "User.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "updateUserStatus"
+      ],
+      "boundaries": [
+        {
+          "line": 156,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/admin.service.ts",
+      "line": 160,
+      "call": "AuthSession.deleteMany",
+      "owners": [
+        "callback",
+        "updateUserStatus"
+      ],
+      "boundaries": [
+        {
+          "line": 156,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/admin.service.ts",
+      "line": 161,
+      "call": "ActivityLog.create",
+      "owners": [
+        "callback",
+        "updateUserStatus"
+      ],
+      "boundaries": [
+        {
+          "line": 156,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/admin.service.ts",
+      "line": 424,
+      "call": "narration.save",
+      "owners": [
+        "callback",
+        "toggleNarrationApproval"
+      ],
+      "boundaries": [
+        {
+          "line": 413,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/admin.service.ts",
+      "line": 430,
+      "call": "ActivityLog.create",
+      "owners": [
+        "callback",
+        "toggleNarrationApproval"
+      ],
+      "boundaries": [
+        {
+          "line": 413,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/auth.service.ts",
+      "line": 42,
+      "call": "User.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "updateDisplayName"
+      ],
+      "boundaries": [
+        {
+          "line": 41,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/auth.service.ts",
+      "line": 64,
+      "call": "ActivityLog.create",
+      "owners": [
+        "recordActivity"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/auth.service.ts",
+      "line": 76,
+      "call": "AuthSession.create",
+      "owners": [
+        "createTokenPair"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/auth.service.ts",
+      "line": 94,
+      "call": "User.create",
+      "owners": [
+        "callback",
+        "register"
+      ],
+      "boundaries": [
+        {
+          "line": 90,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/auth.service.ts",
+      "line": 140,
+      "call": "AuthSession.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "refresh"
+      ],
+      "boundaries": [
+        {
+          "line": 132,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/auth.service.ts",
+      "line": 165,
+      "call": "AuthSession.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "logout"
+      ],
+      "boundaries": [
+        {
+          "line": 162,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/media.service.ts",
+      "line": 18,
+      "call": "ActivityLog.create",
+      "owners": [
+        "log"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/media.service.ts",
+      "line": 28,
+      "call": "Media.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "upload"
+      ],
+      "boundaries": [
+        {
+          "line": 22,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/media.service.ts",
+      "line": 33,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "upload"
+      ],
+      "boundaries": [
+        {
+          "line": 22,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/media.service.ts",
+      "line": 55,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "remove"
+      ],
+      "boundaries": [
+        {
+          "line": 52,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 26,
+      "call": "ActivityLog.create",
+      "owners": [
+        "log"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 125,
+      "call": "Project.findOneAndUpdate",
+      "owners": [
+        "finalizeIdleAudioProject"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 164,
+      "call": "ProcessingJob.create",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 168,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 195,
+      "call": "Transcript.updateOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 196,
+      "call": "Translation.updateOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 201,
+      "call": "Narration.create",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 208,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 215,
+      "call": "Narration.deleteOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 225,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 243,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/narration.service.ts",
+      "line": 244,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "generate"
+      ],
+      "boundaries": [
+        {
+          "line": 134,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 39,
+      "call": "ActivityLog.create",
+      "owners": [
+        "log"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 51,
+      "call": "Project.create",
+      "owners": [
+        "callback",
+        "create"
+      ],
+      "boundaries": [
+        {
+          "line": 49,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 85,
+      "call": "Project.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "update"
+      ],
+      "boundaries": [
+        {
+          "line": 82,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 99,
+      "call": "Media.deleteMany",
+      "owners": [
+        "callback",
+        "remove"
+      ],
+      "boundaries": [
+        {
+          "line": 94,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 99,
+      "call": "Narration.deleteMany",
+      "owners": [
+        "callback",
+        "remove"
+      ],
+      "boundaries": [
+        {
+          "line": 94,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 99,
+      "call": "Result.deleteMany",
+      "owners": [
+        "callback",
+        "remove"
+      ],
+      "boundaries": [
+        {
+          "line": 94,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 99,
+      "call": "Project.deleteOne",
+      "owners": [
+        "callback",
+        "remove"
+      ],
+      "boundaries": [
+        {
+          "line": 94,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 130,
+      "call": "Project.create",
+      "owners": [
+        "callback",
+        "branchLanguage"
+      ],
+      "boundaries": [
+        {
+          "line": 112,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 139,
+      "call": "Media.create",
+      "owners": [
+        "callback",
+        "branchLanguage"
+      ],
+      "boundaries": [
+        {
+          "line": 112,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 150,
+      "call": "Transcript.create",
+      "owners": [
+        "callback",
+        "branchLanguage"
+      ],
+      "boundaries": [
+        {
+          "line": 112,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/project.service.ts",
+      "line": 159,
+      "call": "TranscriptSegment.insertMany",
+      "owners": [
+        "callback",
+        "branchLanguage"
+      ],
+      "boundaries": [
+        {
+          "line": 112,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 22,
+      "call": "ActivityLog.create",
+      "owners": [
+        "log"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 89,
+      "call": "ProcessingJob.create",
+      "owners": [
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 97,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 106,
+      "call": "session.withTransaction",
+      "owners": [
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 118,
+      "call": "Transcript.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 119,
+      "call": "Translation.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 120,
+      "call": "Narration.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 122,
+      "call": "Result.create",
+      "owners": [
+        "callback",
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 126,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 131,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 143,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/result.service.ts",
+      "line": 143,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "process"
+      ],
+      "boundaries": [
+        {
+          "line": 68,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/source-language.service.ts",
+      "line": 30,
+      "call": "session.withTransaction",
+      "owners": [
+        "callback",
+        "updateProjectSource"
+      ],
+      "boundaries": [
+        {
+          "line": 27,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/source-language.service.ts",
+      "line": 46,
+      "call": "Project.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "callback",
+        "updateProjectSource"
+      ],
+      "boundaries": [
+        {
+          "line": 27,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/source-language.service.ts",
+      "line": 59,
+      "call": "session.withTransaction",
+      "owners": [
+        "callback",
+        "confirmSourceLanguage"
+      ],
+      "boundaries": [
+        {
+          "line": 55,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/source-language.service.ts",
+      "line": 76,
+      "call": "Transcript.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "confirmSourceLanguage"
+      ],
+      "boundaries": [
+        {
+          "line": 55,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/source-language.service.ts",
+      "line": 79,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "confirmSourceLanguage"
+      ],
+      "boundaries": [
+        {
+          "line": 55,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/stt/gemini-stt.provider.ts",
+      "line": 91,
+      "call": "ai.interactions.create",
+      "owners": [
+        "transcribe",
+        "sdkTransport"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 32,
+      "call": "ActivityLog.create",
+      "owners": [
+        "log"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 62,
+      "call": "session.withTransaction",
+      "owners": [
+        "callback",
+        "updateTranscriptSegment"
+      ],
+      "boundaries": [
+        {
+          "line": 56,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 82,
+      "call": "Transcript.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "updateTranscriptSegment"
+      ],
+      "boundaries": [
+        {
+          "line": 56,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 87,
+      "call": "TranscriptSegment.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "updateTranscriptSegment"
+      ],
+      "boundaries": [
+        {
+          "line": 56,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 109,
+      "call": "Project.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 120,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 122,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 123,
+      "call": "ProcessingJob.create",
+      "owners": [
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 133,
+      "call": "session.withTransaction",
+      "owners": [
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 137,
+      "call": "Transcript.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 142,
+      "call": "Transcript.create",
+      "owners": [
+        "callback",
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 144,
+      "call": "TranscriptSegment.deleteMany",
+      "owners": [
+        "callback",
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 145,
+      "call": "TranscriptSegment.insertMany",
+      "owners": [
+        "callback",
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 146,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 147,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 162,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "line": 162,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "transcribe"
+      ],
+      "boundaries": [
+        {
+          "line": 108,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 25,
+      "call": "ActivityLog.create",
+      "owners": [
+        "writeLog"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 112,
+      "call": "ProcessingJob.create",
+      "owners": [
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 118,
+      "call": "Project.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 123,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 135,
+      "call": "session.withTransaction",
+      "owners": [
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 139,
+      "call": "Transcript.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 150,
+      "call": "Translation.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 155,
+      "call": "Translation.create",
+      "owners": [
+        "callback",
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 158,
+      "call": "TranslationSegment.deleteMany",
+      "owners": [
+        "callback",
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 159,
+      "call": "TranslationSegment.insertMany",
+      "owners": [
+        "callback",
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 160,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 165,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 175,
+      "call": "ProcessingJob.updateOne",
+      "owners": [
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "line": 176,
+      "call": "Project.updateOne",
+      "owners": [
+        "callback",
+        "translate"
+      ],
+      "boundaries": [
+        {
+          "line": 85,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "line": 31,
+      "call": "TranslationAttempt.collection.insertOne",
+      "owners": [
+        "claim"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "line": 45,
+      "call": "session.withTransaction",
+      "owners": [
+        "quota"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "line": 52,
+      "call": "TranslationAttempt.collection.updateOne",
+      "owners": [
+        "callback",
+        "quota"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "line": 60,
+      "call": "TranslationAttempt.collection.updateOne",
+      "owners": [
+        "callback",
+        "quota"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "line": 70,
+      "call": "TranslationAttempt.updateOne",
+      "owners": [
+        "finish"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "line": 74,
+      "call": "TranslationAttempt.updateOne",
+      "owners": [
+        "record"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "line": 79,
+      "call": "TranslationAttempt.updateOne",
+      "owners": [
+        "fail"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/group-translation.service.ts",
+      "line": 291,
+      "call": "session.withTransaction",
+      "owners": [
+        "callback",
+        "approveInternal"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/group-translation.service.ts",
+      "line": 295,
+      "call": "Project.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "callback",
+        "approveInternal"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/group-translation.service.ts",
+      "line": 301,
+      "call": "Transcript.updateOne",
+      "owners": [
+        "callback",
+        "callback",
+        "approveInternal"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/translation/group-translation.service.ts",
+      "line": 309,
+      "call": "Translation.create",
+      "owners": [
+        "callback",
+        "callback",
+        "approveInternal"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/tts/gemini-tts.provider.ts",
+      "line": 41,
+      "call": "client.interactions.create",
+      "owners": [
+        "synthesize"
+      ],
+      "boundaries": [],
+      "callbacks": [],
+      "classification": "CALLER_BOUNDARY_PROOF_REQUIRED"
+    },
+    {
+      "path": "services/visitor.service.ts",
+      "line": 58,
+      "call": "Visitor.findOneAndUpdate",
+      "owners": [
+        "callback",
+        "findOrCreateVisitor"
+      ],
+      "boundaries": [
+        {
+          "line": 24,
+          "call": "drainRuntime.track"
+        }
+      ],
+      "callbacks": [],
+      "classification": "LEXICAL_BOUNDARY_FOUND"
+    }
+  ],
+  "status": "REVIEW_REQUIRED",
+  "replacementAllowed": false
+}

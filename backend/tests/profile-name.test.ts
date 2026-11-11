@@ -24,9 +24,9 @@ test('self profile name API with mocked persistence only', async (t) => {
   const own = { _id: new Types.ObjectId(), fullName: 'Tên cũ', email: 'owner@example.test', role: 'CUSTOMER', status: 'ACTIVE', passwordHash: 'never-return' };
   const other = { ...own, _id: new Types.ObjectId(), fullName: 'Người khác', email: 'other@example.test' };
   let writes = 0;
-  t.mock.method(User, 'findById', async (id: string) => id === own._id.toString() ? own : other);
+  t.mock.method(User, 'findOne', async (filter: { _id: string; deletedAt: null }) => {assert.equal(filter.deletedAt,null);return filter._id === own._id.toString() ? own : other;});
   t.mock.method(User, 'findOneAndUpdate', async (filter: { _id: string; status: string }, update: { $set: { fullName: string } }, options: unknown) => {
-    assert.deepEqual(filter, { _id: own._id.toString(), status: 'ACTIVE' });
+    assert.deepEqual(filter, { _id: own._id.toString(), status: 'ACTIVE', deletedAt: null });
     assert.deepEqual(Object.keys(update.$set), ['fullName']);
     assert.deepEqual(options, { returnDocument: 'after', runValidators: true });
     writes++; own.fullName = update.$set.fullName; return own;

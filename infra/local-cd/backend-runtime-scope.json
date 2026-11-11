@@ -1,0 +1,1675 @@
+{
+  "entry": "server.ts",
+  "files": [
+    {
+      "path": "app.ts",
+      "imports": [
+        "config/env.ts",
+        "middleware/error-handler.middleware.ts",
+        "middleware/not-found.middleware.ts",
+        "routes/index.ts",
+        "utils/app-error.ts",
+        "maintenance/http.ts",
+        "maintenance/runtime.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "config/customer-translation-method.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "config/customer-translation-quota.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "config/database.ts",
+      "imports": [
+        "maintenance/runtime.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "config/env.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "config/translation-model.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "constants/processing-job.constants.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "constants/project.constants.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "constants/user.constants.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "controllers/admin.controller.ts",
+      "imports": [
+        "services/admin.service.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/analytics.controller.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ListenEvent.ts",
+        "models/VisitQR.ts",
+        "utils/user-agent.ts",
+        "services/analytics.service.ts",
+        "services/visitor.service.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": [
+        {
+          "line": 33,
+          "call": "ListenEvent.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 99,
+          "call": "VisitQR.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 139,
+          "call": "VisitQR.create",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "controllers/auth.controller.ts",
+      "imports": [
+        "services/auth.service.ts",
+        "utils/api-response.ts",
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/health.controller.ts",
+      "imports": [
+        "config/database.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/media.controller.ts",
+      "imports": [
+        "services/media.service.ts",
+        "utils/api-response.ts",
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/narration.controller.ts",
+      "imports": [
+        "maintenance/resources.ts",
+        "services/narration.service.ts",
+        "services/source-media.service.ts",
+        "controllers/source-media.controller.ts",
+        "utils/app-error.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/project.controller.ts",
+      "imports": [
+        "services/project.service.ts",
+        "utils/api-response.ts",
+        "services/source-language.service.ts"
+      ],
+      "writes": [
+        {
+          "line": 8,
+          "call": "projectService.create",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "controllers/result.controller.ts",
+      "imports": [
+        "maintenance/resources.ts",
+        "services/result.service.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/source-media.controller.ts",
+      "imports": [
+        "maintenance/resources.ts",
+        "services/source-media.service.ts",
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/transcription.controller.ts",
+      "imports": [
+        "services/transcription.service.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/translation.controller.ts",
+      "imports": [
+        "services/translation-processing.service.ts",
+        "utils/api-response.ts",
+        "services/translation/group-translation.service.ts",
+        "services/translation/group-response.ts",
+        "utils/app-error.ts",
+        "services/translation/customer-scope.ts",
+        "services/translation/customer-languages.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "controllers/voice-catalog.controller.ts",
+      "imports": [
+        "services/voice-catalog.service.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "maintenance/authorization-loader.ts",
+      "imports": [
+        "maintenance/authorization.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "maintenance/authorization.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "maintenance/control.ts",
+      "imports": [
+        "maintenance/runtime.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "maintenance/http.ts",
+      "imports": [
+        "maintenance/runtime.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "maintenance/resources.ts",
+      "imports": [
+        "maintenance/runtime.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "maintenance/runtime.ts",
+      "imports": [
+        "maintenance/authorization.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "maintenance/scheduled.ts",
+      "imports": [
+        "maintenance/runtime.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "middleware/authenticate.middleware.ts",
+      "imports": [
+        "models/User.ts",
+        "services/auth.service.ts",
+        "utils/app-error.ts",
+        "utils/jwt.ts",
+        "services/user-availability.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "middleware/authorize.middleware.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "middleware/error-handler.middleware.ts",
+      "imports": [
+        "config/env.ts",
+        "utils/app-error.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "middleware/not-found.middleware.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "middleware/project-owner.middleware.ts",
+      "imports": [
+        "models/Project.ts",
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "middleware/upload.middleware.ts",
+      "imports": [
+        "maintenance/resources.ts",
+        "config/env.ts",
+        "utils/app-error.ts",
+        "utils/file.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "middleware/validate.middleware.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/ActivityLog.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/AuthSession.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/Language.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/ListenEvent.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/Media.ts",
+      "imports": [
+        "constants/project.constants.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/Narration.ts",
+      "imports": [
+        "constants/project.constants.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/ProcessingJob.ts",
+      "imports": [
+        "constants/processing-job.constants.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/Project.ts",
+      "imports": [
+        "constants/project.constants.ts",
+        "services/source-language-contract.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/Result.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/Transcript.ts",
+      "imports": [
+        "constants/project.constants.ts",
+        "services/source-language-contract.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/TranscriptSegment.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/Translation.ts",
+      "imports": [
+        "constants/project.constants.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/TranslationAttempt.ts",
+      "imports": [
+        "services/translation/provider-failure.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/TranslationSegment.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/User.ts",
+      "imports": [
+        "constants/user.constants.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "models/Visitor.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/VisitQR.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "models/Voice.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "routes/admin.routes.ts",
+      "imports": [
+        "controllers/admin.controller.ts",
+        "middleware/authenticate.middleware.ts",
+        "middleware/authorize.middleware.ts",
+        "middleware/validate.middleware.ts",
+        "validators/admin.validator.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "routes/analytics.routes.ts",
+      "imports": [
+        "controllers/analytics.controller.ts",
+        "middleware/validate.middleware.ts",
+        "validators/analytics.validator.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "routes/auth.routes.ts",
+      "imports": [
+        "controllers/auth.controller.ts",
+        "middleware/authenticate.middleware.ts",
+        "middleware/validate.middleware.ts",
+        "utils/api-response.ts",
+        "validators/auth.validator.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "routes/health.routes.ts",
+      "imports": [
+        "controllers/health.controller.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "routes/index.ts",
+      "imports": [
+        "utils/api-response.ts",
+        "routes/health.routes.ts",
+        "routes/auth.routes.ts",
+        "routes/project.routes.ts",
+        "routes/voice.routes.ts",
+        "routes/admin.routes.ts",
+        "routes/analytics.routes.ts",
+        "routes/qr.routes.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "routes/project.routes.ts",
+      "imports": [
+        "controllers/media.controller.ts",
+        "controllers/source-media.controller.ts",
+        "controllers/project.controller.ts",
+        "controllers/transcription.controller.ts",
+        "controllers/translation.controller.ts",
+        "controllers/narration.controller.ts",
+        "controllers/result.controller.ts",
+        "middleware/authenticate.middleware.ts",
+        "middleware/authorize.middleware.ts",
+        "middleware/project-owner.middleware.ts",
+        "middleware/upload.middleware.ts",
+        "middleware/validate.middleware.ts",
+        "validators/project.validator.ts",
+        "validators/translation.validator.ts",
+        "validators/narration.validator.ts",
+        "validators/result.validator.ts",
+        "validators/transcription.validator.ts",
+        "services/translation/read-only-diagnostic.ts",
+        "services/translation/customer-simple-preflight.ts",
+        "utils/app-error.ts",
+        "utils/api-response.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "routes/qr.routes.ts",
+      "imports": [
+        "controllers/analytics.controller.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "routes/voice.routes.ts",
+      "imports": [
+        "controllers/voice-catalog.controller.ts",
+        "middleware/authenticate.middleware.ts",
+        "middleware/authorize.middleware.ts",
+        "middleware/validate.middleware.ts",
+        "validators/catalog.validator.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "server.ts",
+      "imports": [
+        "app.ts",
+        "config/database.ts",
+        "config/env.ts",
+        "models/ProcessingJob.ts",
+        "models/TranslationAttempt.ts",
+        "maintenance/control.ts",
+        "maintenance/runtime.ts",
+        "maintenance/authorization-loader.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/admin.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/AuthSession.ts",
+        "models/Language.ts",
+        "models/Media.ts",
+        "models/Narration.ts",
+        "models/ProcessingJob.ts",
+        "models/Project.ts",
+        "models/Translation.ts",
+        "models/User.ts",
+        "models/Voice.ts",
+        "models/ListenEvent.ts",
+        "models/VisitQR.ts",
+        "models/Visitor.ts",
+        "utils/app-error.ts",
+        "config/env.ts",
+        "services/user-availability.ts",
+        "utils/user-agent.ts",
+        "services/analytics.service.ts"
+      ],
+      "writes": [
+        {
+          "line": 158,
+          "call": "User.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 160,
+          "call": "AuthSession.deleteMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 161,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 424,
+          "call": "narration.save",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 430,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/analytics.service.ts",
+      "imports": [
+        "models/ListenEvent.ts",
+        "models/Project.ts",
+        "models/Language.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/artifact-provenance.service.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/auth.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/AuthSession.ts",
+        "models/User.ts",
+        "utils/app-error.ts",
+        "utils/jwt.ts",
+        "utils/password.ts",
+        "services/user-availability.ts"
+      ],
+      "writes": [
+        {
+          "line": 42,
+          "call": "User.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 64,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 76,
+          "call": "AuthSession.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 94,
+          "call": "User.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 140,
+          "call": "AuthSession.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 165,
+          "call": "AuthSession.findOneAndUpdate",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/media-processing/ffmpeg-media-processor.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "services/media-processing/processing-diagnostics.ts",
+        "utils/media-executable.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/media-processing/media-processing.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "services/media-processing/ffmpeg-media-processor.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/media-processing/processing-diagnostics.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/media.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/Media.ts",
+        "models/Project.ts",
+        "utils/app-error.ts",
+        "utils/file.ts",
+        "middleware/upload.middleware.ts"
+      ],
+      "writes": [
+        {
+          "line": 18,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 28,
+          "call": "Media.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 33,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 55,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/narration.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/Language.ts",
+        "models/Media.ts",
+        "models/Narration.ts",
+        "models/ProcessingJob.ts",
+        "models/Project.ts",
+        "models/Translation.ts",
+        "models/Transcript.ts",
+        "models/Voice.ts",
+        "utils/app-error.ts",
+        "utils/file.ts",
+        "config/env.ts",
+        "services/tts/tts.service.ts",
+        "services/tts/openai-tts.provider.ts",
+        "services/tts/tts-terminal-state.ts",
+        "services/translation/group-translation.service.ts",
+        "services/artifact-provenance.service.ts"
+      ],
+      "writes": [
+        {
+          "line": 26,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 125,
+          "call": "Project.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 164,
+          "call": "ProcessingJob.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 168,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 195,
+          "call": "Transcript.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 196,
+          "call": "Translation.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 201,
+          "call": "Narration.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 208,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 215,
+          "call": "Narration.deleteOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 225,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 243,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 244,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/project-workflow.service.ts",
+      "imports": [
+        "models/Media.ts",
+        "models/Narration.ts",
+        "models/ProcessingJob.ts",
+        "models/Result.ts",
+        "models/Transcript.ts",
+        "models/Translation.ts",
+        "services/artifact-provenance.service.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/project.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/Media.ts",
+        "models/Narration.ts",
+        "models/Result.ts",
+        "models/Project.ts",
+        "models/Transcript.ts",
+        "models/TranscriptSegment.ts",
+        "models/Translation.ts",
+        "utils/app-error.ts",
+        "utils/file.ts",
+        "services/project-workflow.service.ts",
+        "services/source-language-contract.ts",
+        "services/source-language.service.ts",
+        "services/translation/customer-languages.ts"
+      ],
+      "writes": [
+        {
+          "line": 39,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 51,
+          "call": "Project.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 85,
+          "call": "Project.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 99,
+          "call": "Media.deleteMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 99,
+          "call": "Narration.deleteMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 99,
+          "call": "Result.deleteMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 99,
+          "call": "Project.deleteOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 130,
+          "call": "Project.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 139,
+          "call": "Media.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 150,
+          "call": "Transcript.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 159,
+          "call": "TranscriptSegment.insertMany",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/result.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/Media.ts",
+        "models/Narration.ts",
+        "models/ProcessingJob.ts",
+        "models/Project.ts",
+        "models/Result.ts",
+        "models/Translation.ts",
+        "models/Transcript.ts",
+        "utils/app-error.ts",
+        "utils/file.ts",
+        "services/media-processing/media-processing.service.ts",
+        "services/media-processing/processing-diagnostics.ts",
+        "services/artifact-provenance.service.ts"
+      ],
+      "writes": [
+        {
+          "line": 22,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 89,
+          "call": "ProcessingJob.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 97,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 106,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 118,
+          "call": "Transcript.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 119,
+          "call": "Translation.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 120,
+          "call": "Narration.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 122,
+          "call": "Result.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 126,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 131,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 143,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 143,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/source-language-contract.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/source-language.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/Project.ts",
+        "models/Transcript.ts",
+        "models/Translation.ts",
+        "models/Narration.ts",
+        "models/Result.ts",
+        "models/TranslationAttempt.ts",
+        "models/ProcessingJob.ts",
+        "utils/app-error.ts",
+        "services/artifact-provenance.service.ts",
+        "services/source-language-contract.ts"
+      ],
+      "writes": [
+        {
+          "line": 30,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 46,
+          "call": "Project.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 59,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 76,
+          "call": "Transcript.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 79,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/source-media.service.ts",
+      "imports": [
+        "models/Media.ts",
+        "utils/file.ts",
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/stt/gemini-stt.provider.ts",
+      "imports": [
+        "utils/media-executable.ts",
+        "services/media-processing/ffmpeg-media-processor.ts"
+      ],
+      "writes": [
+        {
+          "line": 91,
+          "call": "ai.interactions.create",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/stt/openai-stt.provider.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/stt/stt.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "services/stt/openai-stt.provider.ts",
+        "services/stt/gemini-stt.provider.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/transcription.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/Media.ts",
+        "models/ProcessingJob.ts",
+        "models/Project.ts",
+        "models/Transcript.ts",
+        "models/TranscriptSegment.ts",
+        "utils/app-error.ts",
+        "utils/file.ts",
+        "services/stt/stt.service.ts",
+        "services/stt/openai-stt.provider.ts",
+        "services/stt/gemini-stt.provider.ts",
+        "config/env.ts",
+        "services/artifact-provenance.service.ts",
+        "services/source-language-contract.ts"
+      ],
+      "writes": [
+        {
+          "line": 32,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 62,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 82,
+          "call": "Transcript.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 87,
+          "call": "TranscriptSegment.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 109,
+          "call": "Project.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 120,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 122,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 123,
+          "call": "ProcessingJob.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 133,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 137,
+          "call": "Transcript.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 142,
+          "call": "Transcript.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 144,
+          "call": "TranscriptSegment.deleteMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 145,
+          "call": "TranscriptSegment.insertMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 146,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 147,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 162,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 162,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/translation-processing.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/ActivityLog.ts",
+        "models/Language.ts",
+        "models/ProcessingJob.ts",
+        "models/Project.ts",
+        "models/Transcript.ts",
+        "models/TranscriptSegment.ts",
+        "models/Translation.ts",
+        "models/TranslationSegment.ts",
+        "utils/app-error.ts",
+        "services/source-language-contract.ts",
+        "config/env.ts",
+        "services/translation/translation.service.ts",
+        "services/translation/openai-translation.provider.ts",
+        "services/translation/gemini-translation.provider.ts",
+        "services/translation/translation-mapping.ts",
+        "services/translation/group-translation.service.ts",
+        "services/translation/group-source-scope.ts",
+        "services/artifact-provenance.service.ts"
+      ],
+      "writes": [
+        {
+          "line": 25,
+          "call": "ActivityLog.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 112,
+          "call": "ProcessingJob.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 118,
+          "call": "Project.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 123,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 135,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 139,
+          "call": "Transcript.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 150,
+          "call": "Translation.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 155,
+          "call": "Translation.create",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 158,
+          "call": "TranslationSegment.deleteMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 159,
+          "call": "TranslationSegment.insertMany",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 160,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 165,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 175,
+          "call": "ProcessingJob.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 176,
+          "call": "Project.updateOne",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/translation/bounded-fetch.ts",
+      "imports": [
+        "services/translation/gemini-translation.provider.ts",
+        "maintenance/runtime.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/bounded-source.ts",
+      "imports": [
+        "services/translation/group-plan.ts",
+        "utils/app-error.ts",
+        "services/translation/controlled-development.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/controlled-development.ts",
+      "imports": [
+        "services/translation/group-plan.ts",
+        "utils/app-error.ts",
+        "services/translation/controlled-target.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/controlled-target.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/translation/customer-attempt.ts",
+      "imports": [
+        "models/TranslationAttempt.ts",
+        "maintenance/runtime.ts",
+        "utils/app-error.ts",
+        "services/translation/group-plan.ts",
+        "services/translation/gemini-translation.provider.ts",
+        "services/translation/customer-execution.ts",
+        "services/translation/provider-failure.ts",
+        "config/customer-translation-quota.ts"
+      ],
+      "writes": [
+        {
+          "line": 31,
+          "call": "TranslationAttempt.collection.insertOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 45,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 52,
+          "call": "TranslationAttempt.collection.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 60,
+          "call": "TranslationAttempt.collection.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 70,
+          "call": "TranslationAttempt.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 74,
+          "call": "TranslationAttempt.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 79,
+          "call": "TranslationAttempt.updateOne",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/translation/customer-execution.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/customer-languages.ts",
+      "imports": [
+        "utils/app-error.ts",
+        "services/source-language-contract.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/customer-scope.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/translation/customer-simple-preflight.ts",
+      "imports": [
+        "utils/app-error.ts",
+        "models/Project.ts",
+        "models/Translation.ts",
+        "models/ProcessingJob.ts",
+        "services/translation/group-translation.service.ts",
+        "services/translation/group-plan.ts",
+        "services/translation/customer-attempt.ts",
+        "services/translation/group-draft-store.ts",
+        "services/translation/gemini-simple-contract.ts",
+        "services/translation/bounded-source.ts",
+        "config/customer-translation-method.ts",
+        "services/translation/preflight-runtime-evidence.ts",
+        "services/translation/customer-languages.ts",
+        "services/source-language-contract.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/gemini-group-translation.provider.ts",
+      "imports": [
+        "services/translation/gemini-translation.provider.ts",
+        "services/translation/bounded-fetch.ts",
+        "services/translation/controlled-development.ts",
+        "services/translation/customer-scope.ts",
+        "config/customer-translation-method.ts",
+        "services/translation/gemini-simple-contract.ts",
+        "config/translation-model.ts",
+        "services/translation/customer-execution.ts",
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/gemini-simple-contract.ts",
+      "imports": [
+        "utils/app-error.ts",
+        "services/translation/customer-languages.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/gemini-translation.provider.ts",
+      "imports": [
+        "services/translation/provider-failure.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/group-draft-store.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "maintenance/scheduled.ts",
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/group-plan.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/group-response.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/group-source-scope.ts",
+      "imports": [
+        "services/translation/controlled-development.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/group-translation.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/Project.ts",
+        "models/Transcript.ts",
+        "models/TranscriptSegment.ts",
+        "models/Translation.ts",
+        "models/Language.ts",
+        "utils/app-error.ts",
+        "services/translation/group-plan.ts",
+        "services/translation/group-draft-store.ts",
+        "services/translation/gemini-group-translation.provider.ts",
+        "services/translation/gemini-translation.provider.ts",
+        "services/artifact-provenance.service.ts",
+        "services/translation/bounded-source.ts",
+        "services/translation/group-source-scope.ts",
+        "services/translation/controlled-development.ts",
+        "services/translation/customer-scope.ts",
+        "config/customer-translation-method.ts",
+        "services/translation/gemini-simple-contract.ts",
+        "config/translation-model.ts",
+        "services/translation/customer-attempt.ts",
+        "services/translation/customer-execution.ts",
+        "services/translation/provider-failure.ts",
+        "models/ProcessingJob.ts",
+        "services/source-language-contract.ts",
+        "services/translation/customer-languages.ts"
+      ],
+      "writes": [
+        {
+          "line": 291,
+          "call": "session.withTransaction",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 295,
+          "call": "Project.findOneAndUpdate",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 301,
+          "call": "Transcript.updateOne",
+          "owner": "anonymous/module"
+        },
+        {
+          "line": 309,
+          "call": "Translation.create",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/translation/openai-translation.provider.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/translation/preflight-runtime-evidence.ts",
+      "imports": [
+        "models/TranslationAttempt.ts",
+        "config/customer-translation-quota.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/provider-failure.ts",
+      "imports": [
+        "utils/app-error.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/read-only-diagnostic.ts",
+      "imports": [
+        "models/Transcript.ts",
+        "models/TranscriptSegment.ts",
+        "models/Translation.ts",
+        "models/ProcessingJob.ts",
+        "utils/app-error.ts",
+        "services/translation/bounded-source.ts",
+        "services/translation/group-plan.ts",
+        "services/translation/group-translation.service.ts",
+        "services/translation/group-draft-store.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/translation/translation-mapping.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/translation/translation.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "services/translation/openai-translation.provider.ts",
+        "services/translation/gemini-translation.provider.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/tts/gemini-tts.provider.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "utils/media-executable.ts"
+      ],
+      "writes": [
+        {
+          "line": 41,
+          "call": "client.interactions.create",
+          "owner": "synthesize"
+        }
+      ]
+    },
+    {
+      "path": "services/tts/openai-tts.provider.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/tts/tts-terminal-state.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/tts/tts.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "services/tts/openai-tts.provider.ts",
+        "services/tts/gemini-tts.provider.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "services/user-availability.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "services/visitor.service.ts",
+      "imports": [
+        "maintenance/runtime.ts",
+        "models/Visitor.ts",
+        "utils/user-agent.ts"
+      ],
+      "writes": [
+        {
+          "line": 58,
+          "call": "Visitor.findOneAndUpdate",
+          "owner": "anonymous/module"
+        }
+      ]
+    },
+    {
+      "path": "services/voice-catalog.service.ts",
+      "imports": [
+        "models/Language.ts",
+        "models/Voice.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "utils/api-response.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "utils/app-error.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "utils/file.ts",
+      "imports": [
+        "config/env.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "utils/jwt.ts",
+      "imports": [
+        "config/env.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "utils/media-executable.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "utils/password.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "utils/user-agent.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "validators/admin.validator.ts",
+      "imports": [
+        "constants/processing-job.constants.ts",
+        "constants/project.constants.ts",
+        "constants/user.constants.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "validators/analytics.validator.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "validators/auth.validator.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "validators/catalog.validator.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "validators/narration.validator.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "validators/project.validator.ts",
+      "imports": [
+        "constants/project.constants.ts",
+        "services/source-language-contract.ts"
+      ],
+      "writes": []
+    },
+    {
+      "path": "validators/result.validator.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "validators/transcription.validator.ts",
+      "imports": [],
+      "writes": []
+    },
+    {
+      "path": "validators/translation.validator.ts",
+      "imports": [],
+      "writes": []
+    }
+  ],
+  "unresolved": []
+}

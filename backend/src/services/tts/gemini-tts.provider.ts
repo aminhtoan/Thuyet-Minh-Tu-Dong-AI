@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createTrackedResource } from '../../maintenance/runtime.js';
 import { GoogleGenAI } from '@google/genai';
 import type { TtsProvider, TtsProviderInput, TtsProviderResult } from './tts-provider.interface.js';
 import { resolveMediaExecutable } from '../../utils/media-executable.js';
@@ -85,9 +86,9 @@ export class GeminiTtsProvider implements TtsProvider {
 export async function wavToMp3(wavBuffer: Buffer): Promise<Buffer> {
     const ffmpegPath = await resolveMediaExecutable('ffmpeg', process.env.FFMPEG_PATH);
     return new Promise<Buffer>((resolve, reject) => {
-      const ffmpeg = spawn(ffmpegPath, [
+      const ffmpeg = createTrackedResource(()=>spawn(ffmpegPath, [
         '-y', '-i', 'pipe:0', '-c:a', 'libmp3lame', '-b:a', '128k', '-f', 'mp3', 'pipe:1',
-      ], { windowsHide: true, shell: false });
+      ], { windowsHide: true, shell: false }));
       const timer = setTimeout(() => { ffmpeg.kill('SIGKILL'); reject(new Error('TTS_AUDIO_CONVERSION_FAILED')); }, 120_000);
       const chunks: Buffer[] = [];
       ffmpeg.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));

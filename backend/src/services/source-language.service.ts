@@ -1,4 +1,5 @@
 import mongoose, { type ClientSession } from 'mongoose';
+import { drainRuntime } from '../maintenance/runtime.js';
 import { Project } from '../models/Project.js';
 import { Transcript } from '../models/Transcript.js';
 import { Translation } from '../models/Translation.js';
@@ -23,6 +24,7 @@ async function assertNoDependents(projectId: string, session: ClientSession) {
 export async function updateProjectSource(projectId: string, ownerId: string, input: {
   sourceLanguage?: string | null; sourceLanguageMode?: SourceLanguageMode; name?: string; description?: string;
 }) {
+  return drainRuntime.track('activeOperations',async()=>{
   const session = await mongoose.startSession();
   try {
     return await session.withTransaction(async () => {
@@ -46,9 +48,11 @@ export async function updateProjectSource(projectId: string, ownerId: string, in
       return updated;
     });
   } finally { await session.endSession(); }
+  });
 }
 
 export async function confirmSourceLanguage(projectId: string, ownerId: string, language: string, expectedRevision: number) {
+  return drainRuntime.track('activeOperations',async()=>{
   if (!SOURCE_LANGUAGES.includes(language as SourceLanguage) || !isRevision(expectedRevision)) throw new AppError(400, 'SOURCE_LANGUAGE_INVALID', 'Ngôn ngữ nguồn hoặc revision không hợp lệ.');
   const session = await mongoose.startSession();
   try {
@@ -78,4 +82,5 @@ export async function confirmSourceLanguage(projectId: string, ownerId: string, 
       return { ...state, sourceLanguage: language, sourceLanguageStatus: 'CONFIRMED' as const, transcriptRevision: revision, idempotent: false };
     });
   } finally { await session.endSession(); }
+  });
 }

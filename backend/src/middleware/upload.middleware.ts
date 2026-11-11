@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { trackedStorage } from '../maintenance/resources.js';
 import { relative } from 'node:path';
 import multer from 'multer';
 import { env } from '../config/env.js';
@@ -36,7 +37,7 @@ export const uploadMedia = multer({
   // Web/native clients send UTF-8 filename bytes in multipart headers.
   // Decode once at the parser boundary; never reinterpret an existing Unicode name.
   defParamCharset: 'utf8',
-  storage,
+  storage: trackedStorage(storage),
   limits: { fileSize: Math.floor(env.maxUploadSizeMb * 1024 * 1024), files: 1 },
   fileFilter(_request, file, callback) {
     if (!mimeExtensions[file.mimetype]) {
