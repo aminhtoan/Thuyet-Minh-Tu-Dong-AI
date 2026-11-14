@@ -37,9 +37,15 @@ test('authenticated source streaming actual route with DB mocks only', async (t)
   const server = app.listen(0, '127.0.0.1'); await new Promise<void>(r => server.once('listening', r));
   const address = server.address(); assert.ok(address && typeof address !== 'string');
   const base = `http://127.0.0.1:${address.port}/api/projects/${projectId}/media/file`;
+  const publicSource = `http://127.0.0.1:${address.port}/api/projects/public-audio/${projectId}/source`;
   const token = signAccessToken(owner.toString(), 'CUSTOMER'); const otherToken = signAccessToken(other.toString(), 'CUSTOMER');
   const call = (options: RequestInit = {}, auth: string | null = token, url = base) => fetch(url, { ...options, headers: { ...(auth ? { authorization: `Bearer ${auth}` } : {}), ...options.headers } });
   try {
+    await t.test('public source route never returns user source media', async () => {
+      const res = await fetch(publicSource);
+      assert.equal(res.status, 404);
+      assert.doesNotMatch(await res.text(), /source\.mp3|source-media-test|storagePath/);
+    });
     await t.test('unauthenticated and token-in-query are rejected', async () => { assert.equal((await call({}, null)).status, 401); assert.equal((await call({}, null, base + '?token=not-a-token')).status, 401); });
     await t.test('cross-user, blocked and soft-deleted customers cannot stream; authorized Admin follows existing route policy', async () => {
       assert.equal((await call({}, otherToken)).status, 404);

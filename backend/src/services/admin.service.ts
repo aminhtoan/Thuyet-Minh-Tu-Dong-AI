@@ -403,7 +403,7 @@ export const getProjectNarrations = async (projectId: string) => {
       status: n.status,
       isApproved: n.isApproved === true,
       approvedAt: n.approvedAt ?? null,
-      audioUrl: `/api/projects/public-audio/${n.projectId.toString()}/${n._id.toString()}`,
+      audioUrl: `/api/projects/${n.projectId.toString()}/narrations/${n._id.toString()}/audio`,
       createdAt: n.createdAt,
     };
   });

@@ -15,6 +15,7 @@ import { resolveProjectWorkflows } from './project-workflow.service.js';
 import { assertSourceLanguageConfirmed, sourceLanguageState, type SourceLanguageMode } from './source-language-contract.js';
 import { updateProjectSource } from './source-language.service.js';
 import { assertCustomerTarget } from './translation/customer-languages.js';
+import { listPublicNarrations } from './public-media-policy.service.js';
 
 interface ProjectInput { name: string; description?: string; sourceLanguage?: string | null; sourceLanguageMode?: SourceLanguageMode }
 interface ListInput { search?: string; status?: ProjectStatus; page: number; limit: number }
@@ -292,7 +293,7 @@ export const getLanguageVariants = async (projectId: string, userId: string, cur
 };
 
 export const getPublicAudioGuides = async () => {
-  const narrations = await Narration.find({ status: 'READY', isApproved: true }).sort({ createdAt: -1 });
+  const narrations = await listPublicNarrations();
   if (narrations.length === 0) return [];
 
   const projectIds = [...new Set(narrations.map((n) => n.projectId))];
@@ -379,20 +380,7 @@ export const getPublicAudioGuides = async () => {
   }
 
   for (const guide of guideMap.values()) {
-    if (!guide.languages.some((l) => l.code === 'vi')) {
-      const primaryLang = guide.languages[0];
-      const pId = primaryLang?.projectId;
-      if (pId) {
-        guide.languages.unshift({
-          code: 'vi',
-          name: 'Tiếng Việt',
-          flag: '🇻🇳',
-          projectId: pId,
-          narrationId: 'source',
-          audioUrl: `/api/projects/public-audio/${pId}/source`,
-        });
-      }
-    } else {
+    if (guide.languages.some((l) => l.code === 'vi')) {
       const viIndex = guide.languages.findIndex((l) => l.code === 'vi');
       if (viIndex > 0) {
         const viOption = guide.languages[viIndex];

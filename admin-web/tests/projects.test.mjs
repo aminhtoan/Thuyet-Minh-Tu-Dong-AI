@@ -31,7 +31,11 @@ function readFileExists(file) { try { readFileSync(file); return true; } catch {
 
 test('project GET filters and manual approval payload stay unchanged; status100 is not completed', async () => {
   const calls = [];
-  const { mapProject, adminProjectService } = compile('services/adminProjectService.ts', { '../lib/api': { adminApi: async (url, init = {}) => {
+  const blobCalls = [];
+  const previewBlob = new Blob(['preview'], { type: 'audio/mpeg' });
+  const { mapProject, adminProjectService } = compile('services/adminProjectService.ts', { '../lib/api': { adminApiBlob: async (url, init = {}) => {
+    blobCalls.push({ url, init }); return previewBlob;
+  }, adminApi: async (url, init = {}) => {
     calls.push({ url, init });
     return url.includes('/approval') ? { narration: { id: 'n1' } } : { items: rows, summary: {}, pagination: {} };
   } } });
@@ -48,6 +52,10 @@ test('project GET filters and manual approval payload stay unchanged; status100 
   assert.equal(calls[1].url, '/admin/narrations/n1/approval');
   assert.equal(calls[1].init.method, 'PATCH');
   assert.equal(calls[1].init.body, '{"isApproved":true}');
+  const controller = new AbortController();
+  assert.equal(await adminProjectService.getNarrationAudio('/api/projects/p1/narrations/n1/audio', { signal: controller.signal }), previewBlob);
+  assert.equal(blobCalls[0].url, '/api/projects/p1/narrations/n1/audio');
+  assert.equal(blobCalls[0].init.signal, controller.signal);
   const data = { items: rows.map(mapProject), pagination: { page: 1, total: 3, limit: 10, totalPages: 1 } };
   const { AdminProjectsPage } = compile('pages/AdminProjectsPage.tsx', {
     '../hooks/useOperations': { useProjects: () => ({ data, loading: false, error: false, retry() {} }) },
@@ -57,4 +65,19 @@ test('project GET filters and manual approval payload stay unchanged; status100 
   assert.equal((html.match(/disabled=""/g) ?? []).length, 4, 'two unavailable approvals plus two pagination boundaries');
   assert.ok(html.includes('Đang dịch') && html.includes('Thất bại') && html.includes('Hoàn thành'));
   assert.equal((html.match(/Trạng thái chưa phải Hoàn thành/g) ?? []).length, 2);
+});
+
+test('Admin narration preview uses authenticated Blob transport and revokes object URLs', () => {
+  const modal = readFileSync(new URL('../src/components/operations/NarrationApprovalModal.tsx', import.meta.url), 'utf8');
+  const api = readFileSync(new URL('../src/lib/api.ts', import.meta.url), 'utf8');
+  const backend = readFileSync(new URL('../../backend/src/services/admin.service.ts', import.meta.url), 'utf8');
+  assert.match(modal, /getNarrationAudio\(narration\.audioUrl/);
+  assert.match(modal, /URL\.createObjectURL\(blob\)/);
+  assert.match(modal, /URL\.revokeObjectURL\(objectUrl\)/);
+  assert.match(modal, /controller\.abort\(\)/);
+  assert.match(api, /adminApiBlob/);
+  assert.match(api, /authorization.*Bearer/);
+  assert.match(api, /response\.blob\(\)/);
+  assert.match(backend, /audioUrl: `\/api\/projects\/\$\{n\.projectId\.toString\(\)\}\/narrations\/\$\{n\._id\.toString\(\)\}\/audio`/);
+  assert.doesNotMatch(backend, /audioUrl: `\/api\/projects\/public-audio\/\$\{n\.projectId/);
 });
