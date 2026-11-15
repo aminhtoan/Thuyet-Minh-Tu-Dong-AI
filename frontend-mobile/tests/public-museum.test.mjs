@@ -54,6 +54,7 @@ function renderer(slug, open = async () => {}) {
     './assets.generated': { museumAssets: Object.fromEntries(Object.keys(snapshot.imageHashes).map(path => [path, 1])) },
     './theme': theme,
     './MuseumUI': { MuseumFrame: 'MuseumFrame', MuseumImage: 'MuseumImage', MuseumLink: 'MuseumLink', MuseumTitle: 'MuseumTitle' },
+    './PublicAudioSection': { PublicAudioSection: () => null },
     'expo-audio': {
       useAudioPlayer: () => ({ play: () => {}, pause: () => {} }),
       useAudioPlayerStatus: () => ({ playing: false }),
@@ -426,9 +427,10 @@ test('Public theme is isolated from Customer overrides and matches Web brand pal
 });
 
 test('Museum audio guides never auto-play on mount and require explicit user play action', () => {
-  const content = read('MuseumScreens.tsx');
-  assert.doesNotMatch(content, /if\s*\(\s*status\s*===\s*'ready'\s*&&\s*localUri\s*&&\s*!isPlaying\s*\)\s*\{\s*try\s*\{\s*player\.play/);
-  assert.match(content, /activePlayingKey/);
-  assert.match(content, /isPlayingActive/);
+  const content = read('PublicAudioSection.tsx');
+  assert.equal((content.match(/player\.play\(\)/g) ?? []).length, 1);
+  assert.match(content, /async function toggle\(\)[\s\S]*player\.play\(\)/);
+  assert.match(content, /useFocusEffect/);
+  assert.doesNotMatch(read('MuseumScreens.tsx') + content, /resultService|useLibrary|getLanguageVariants|downloadProtected/);
 });
 
