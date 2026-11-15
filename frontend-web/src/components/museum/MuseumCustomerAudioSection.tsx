@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AudioGuideModal, type PublicLanguageOption } from '../../features/results/AudioGuideModal'
 import { env } from '../../config/env'
+import { publicAudioOptionKey, publicAudioOptionLabel } from '../../features/results/publicAudioOptions.mjs'
 
 interface GroupedAudioGuide {
   key: string
@@ -52,24 +53,24 @@ export function MuseumCustomerAudioSection() {
 
   const handleOpenAudio = (guide: GroupedAudioGuide, chosenLangCode: string) => {
     const targetOption =
-      guide.languages.find((l) => l.code === chosenLangCode) || guide.languages[0]
+      guide.languages.find((l) => publicAudioOptionKey(l) === chosenLangCode) || guide.languages[0]
     if (!targetOption) return
 
     setActiveItem({
       id: targetOption.projectId,
       name: guide.title,
-      language: targetOption.code,
+      language: publicAudioOptionKey(targetOption),
       availableLanguages: guide.languages,
     })
   }
 
   return (
-    <section className="museum-audio-section" aria-label="Thuyết minh âm thanh AI">
+    <section className="museum-audio-section" aria-label="Âm thanh công khai">
       <div className="museum-audio-section__header">
         <p className="museum-video__eyebrow">Thư viện thuyết minh</p>
         <h2 className="museum-audio-section__title">Âm thanh thuyết minh đa ngôn ngữ</h2>
         <p className="museum-audio-section__desc">
-          Các bản thu thuyết minh được đồng bộ từ dự án hoàn chỉnh. Chọn ngôn ngữ trong menu thả xuống trên từng card để lắng nghe giọng đọc AI.
+          Chọn âm thanh gốc hoặc bản thuyết minh AI đã được cho phép công khai để lắng nghe.
         </p>
       </div>
 
@@ -95,14 +96,14 @@ export function MuseumCustomerAudioSection() {
             Chưa có bản thu thuyết minh công khai
           </h3>
           <p style={{ fontSize: '14px', lineHeight: 1.6, margin: 0 }}>
-            Các bản thuyết minh âm thanh hoàn thành từ hệ thống sẽ tự động xuất hiện tại đây để khách tham quan lắng nghe.
+            Các bản âm thanh được cho phép công khai sẽ xuất hiện tại đây để khách tham quan lắng nghe.
           </p>
         </div>
       ) : (
         <div className="museum-audio-grid">
           {guides.map((guide) => {
             const isAudio = guide.mediaType === 'AUDIO'
-            const activeLangCode = selectedLangs[guide.key] || guide.languages[0]?.code || 'vi'
+            const activeLangCode = selectedLangs[guide.key] || (guide.languages[0] ? publicAudioOptionKey(guide.languages[0]) : '')
 
             return (
               <article
@@ -148,7 +149,7 @@ export function MuseumCustomerAudioSection() {
 
                   {/* Bottom-left languages badge */}
                   <span className="museum-audio-card__media-badge-bottom">
-                    {guide.languages.length} ngôn ngữ
+                    {guide.languages.length} bản âm thanh
                   </span>
                 </div>
 
@@ -157,7 +158,7 @@ export function MuseumCustomerAudioSection() {
                   <h3 className="museum-audio-card__title">{guide.title}</h3>
                   <p className="museum-audio-card__desc">
                     {guide.description ||
-                      `Bản thu AI hoàn chỉnh có sẵn ${guide.languages.length} ngôn ngữ thuyết minh.`}
+                      `Có ${guide.languages.length} bản âm thanh được phép công khai.`}
                   </p>
 
                   {/* Bottom action row: Language Picker + Listen Button */}
@@ -187,7 +188,7 @@ export function MuseumCustomerAudioSection() {
                         id={`lang-${guide.key}`}
                         className="museum-audio-card__dropdown"
                         value={activeLangCode}
-                        aria-label={`Chọn ngôn ngữ cho ${guide.title}`}
+                        aria-label={`Chọn bản âm thanh cho ${guide.title}`}
                         onChange={(e) => {
                           e.stopPropagation()
                           const newLang = e.target.value
@@ -195,8 +196,8 @@ export function MuseumCustomerAudioSection() {
                         }}
                       >
                         {guide.languages.map((l) => (
-                          <option key={l.code} value={l.code}>
-                            {l.name}
+                          <option key={publicAudioOptionKey(l)} value={publicAudioOptionKey(l)}>
+                            {publicAudioOptionLabel(l)}
                           </option>
                         ))}
                       </select>
@@ -251,6 +252,7 @@ export function MuseumCustomerAudioSection() {
 
       {activeItem && (
         <AudioGuideModal
+          key={`${activeItem.id}:${activeItem.language}`}
           projectId={activeItem.id}
           projectName={activeItem.name}
           initialLanguage={activeItem.language}

@@ -1,4 +1,4 @@
-import { adminApi } from '../lib/api';
+import { adminApi, adminApiBlob } from '../lib/api';
 import type { AdminJob, AdminNarration, AdminProject, NarrationApprovalInfo, ProjectListResult, ProjectQuery } from '../types/operations';
 
 type P = {
@@ -101,6 +101,10 @@ export const adminProjectService = {
   async getProjectNarrations(projectId: string, o: { signal?: AbortSignal } = {}): Promise<AdminNarration[]> {
     const d = await adminApi<{ narrations: AdminNarration[] }>(`/admin/projects/${projectId}/narrations`, { signal: o.signal });
     return d.narrations;
+  },
+
+  getNarrationAudio(audioUrl: string, o: { signal?: AbortSignal } = {}): Promise<Blob> {
+    return adminApiBlob(audioUrl, { signal: o.signal });
   },
 
   async updateNarrationApproval(narrationId: string, isApproved: boolean): Promise<AdminNarration> {

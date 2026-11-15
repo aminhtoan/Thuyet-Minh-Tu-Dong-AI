@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import { resultService, type LanguageVariant } from './resultService'
-import type { Result } from './types'
-import { languageNames } from '../projects/projectUtils'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { env } from '../../config/env'
 import { trackListen } from '../analytics/analyticsService'
+import { publicAudioOptionKey, publicAudioOptionLabel } from './publicAudioOptions.mjs'
 
 export interface PublicLanguageOption {
   code: string
@@ -12,14 +10,27 @@ export interface PublicLanguageOption {
   projectId: string
   narrationId?: string
   audioUrl?: string
+  type?: 'ORIGINAL_AUDIO' | 'AI_NARRATION'
+  optionId?: string
 }
 
 interface AudioGuideModalProps {
   projectId: string
   projectName: string
   initialLanguage?: string
-  availableLanguages?: PublicLanguageOption[]
+  availableLanguages: PublicLanguageOption[]
   onClose: () => void
+}
+
+const unavailableMessage =
+  'Không thể tải bản thuyết minh công khai. Bản thu có thể không còn khả dụng hoặc kết nối mạng đang gián đoạn.'
+
+function publicAudioUrl(value?: string) {
+  const audioUrl = value?.trim()
+  if (!audioUrl) return null
+  return /^https?:\/\//i.test(audioUrl)
+    ? audioUrl
+    : `${env.apiBaseUrl.replace(/\/api\/?$/, '')}${audioUrl.startsWith('/') ? '' : '/'}${audioUrl}`
 }
 
 export function AudioGuideModal({
@@ -29,138 +40,128 @@ export function AudioGuideModal({
   availableLanguages,
   onClose,
 }: AudioGuideModalProps) {
-  const [variants, setVariants] = useState<LanguageVariant[]>([])
-  const [currentLang, setCurrentLang] = useState<string>(initialLanguage || 'vi')
-  const [result, setResult] = useState<Result | null>(null)
-  const [audioUrl, setAudioUrl] = useState<string | null>(null)
-  const [loadingAudio, setLoadingAudio] = useState(false)
+  const firstOption = availableLanguages.find(language => publicAudioOptionKey(language) === initialLanguage || language.code === initialLanguage) || availableLanguages[0]
+  const initialLang = firstOption ? publicAudioOptionKey(firstOption) : ''
+  const [currentLang, setCurrentLang] = useState<string>(initialLang)
+  const selectedLanguage = useMemo(
+    () =>
+      availableLanguages.find((language) => publicAudioOptionKey(language) === currentLang) ||
+      availableLanguages[0],
+    [availableLanguages, currentLang]
+  )
+  const audioUrl = useMemo(() => publicAudioUrl(selectedLanguage?.audioUrl), [selectedLanguage])
+  const [loadingAudio, setLoadingAudio] = useState(Boolean(audioUrl))
+  const [audioError, setAudioError] = useState<string | null>(audioUrl ? null : unavailableMessage)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
   const lastTrackedAudioRef = useRef<string | null>(null)
+  const playbackGeneration = useRef(0)
 
   const trackAudioPlay = () => {
-    if (!audioUrl || lastTrackedAudioRef.current === audioUrl) return
+    if (!audioUrl || selectedLanguage?.type === 'ORIGINAL_AUDIO' || lastTrackedAudioRef.current === audioUrl) return
     lastTrackedAudioRef.current = audioUrl
     void trackListen({
       platform: 'web',
-      projectId,
-      languageCode: currentLang,
+      projectId: selectedLanguage?.projectId || projectId,
+      languageCode: selectedLanguage?.code || '',
     })
   }
 
-  // Close on Escape key
+  const stopPlayback = useCallback((releaseSource = false) => {
+    playbackGeneration.current++
+    const audio = audioRef.current
+    if (!audio) return
+    audio.pause()
+    audio.currentTime = 0
+    if (releaseSource) {
+      audio.removeAttribute('src')
+      audio.load()
+    }
+  }, [])
+
+  const handleClose = useCallback(() => {
+    stopPlayback(true)
+    onClose()
+  }, [onClose, stopPlayback])
+
+  // Keep keyboard focus inside the modal and restore the opening control on close.
   useEffect(() => {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    dialogRef.current?.focus()
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
-
-  // Load language variants
-  useEffect(() => {
-    if (availableLanguages && availableLanguages.length > 0) {
-      setVariants(
-        availableLanguages.map((l) => ({
-          projectId: l.projectId,
-          language: l.code,
-          name: l.name,
-          flag: l.flag,
-          hasResult: true,
-          status: 'READY',
-          isCurrent: l.code === currentLang,
-        }))
-      )
-      return
-    }
-
-    let active = true
-    void resultService.getLanguageVariants(projectId, currentLang).then((items) => {
-      if (!active) return
-      setVariants(items)
-      if (items.length > 0 && !items.some((v) => v.language === currentLang)) {
-        const firstReady = items.find((v) => v.hasResult) || items[0]
-        if (firstReady) setCurrentLang(firstReady.language)
-      }
-    })
-    return () => {
-      active = false
-    }
-  }, [projectId, availableLanguages, currentLang])
-
-  // Load result audio for the selected language
-  useEffect(() => {
-    let active = true
-    let blobUrl: string | null = null
-    setLoadingAudio(true)
-    setIsPlaying(false)
-    setCurrentTime(0)
-
-    if (availableLanguages && availableLanguages.length > 0) {
-      const match = availableLanguages.find((l) => l.code === currentLang) || availableLanguages[0]
-      if (match?.audioUrl) {
-        const fullUrl = match.audioUrl.startsWith('http')
-          ? match.audioUrl
-          : `${env.apiBaseUrl.replace(/\/api\/?$/, '')}${match.audioUrl}`
-        setAudioUrl(fullUrl)
-        setLoadingAudio(false)
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handleClose()
         return
       }
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const controls = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+        )
+      )
+      if (controls.length === 0) {
+        e.preventDefault()
+        dialogRef.current.focus()
+        return
+      }
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
-
-    resultService
-      .getByProjectId(projectId, currentLang)
-      .then(async (res) => {
-        if (!active) return
-        setResult(res)
-        if (res && res.filePath) {
-          try {
-            const blob = await resultService.getFile(res)
-            if (!active) return
-            blobUrl = URL.createObjectURL(blob)
-            setAudioUrl(blobUrl)
-          } catch {
-            if (active) setAudioUrl(null)
-          }
-        } else {
-          setAudioUrl(null)
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setResult(null)
-          setAudioUrl(null)
-        }
-      })
-      .finally(() => {
-        if (active) setLoadingAudio(false)
-      })
-
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      active = false
-      if (blobUrl) URL.revokeObjectURL(blobUrl)
+      window.removeEventListener('keydown', handleKeyDown)
+      stopPlayback(true)
+      returnFocusRef.current?.focus()
     }
-  }, [projectId, currentLang, availableLanguages])
+  }, [handleClose, stopPlayback])
 
-  // Auto-play when audioUrl is ready
+  const selectLanguage = (language: PublicLanguageOption) => {
+    if (publicAudioOptionKey(language) === currentLang) return
+    stopPlayback()
+    const nextAudioUrl = publicAudioUrl(language.audioUrl)
+    setCurrentLang(publicAudioOptionKey(language))
+    setIsPlaying(false)
+    setCurrentTime(0)
+    setDuration(0)
+    setLoadingAudio(Boolean(nextAudioUrl))
+    setAudioError(nextAudioUrl ? null : unavailableMessage)
+  }
+
   useEffect(() => {
-    if (audioUrl && audioRef.current) {
-      audioRef.current.play().catch(() => {
-        // Autoplay may be blocked by browser policy until user clicks play
-      })
-    }
-  }, [audioUrl])
+    if (!audioUrl || !loadingAudio) return
+    const loadingTimeout = window.setTimeout(() => {
+      setLoadingAudio(false)
+      setAudioError(unavailableMessage)
+    }, 15_000)
+    return () => window.clearTimeout(loadingTimeout)
+  }, [audioUrl, loadingAudio])
 
   const togglePlay = () => {
     if (!audioRef.current) return
     if (isPlaying) {
       audioRef.current.pause()
     } else {
-      audioRef.current.play().catch(() => {})
-      trackAudioPlay()
+      const generation = playbackGeneration.current
+      audioRef.current.play().catch(() => {
+        if (playbackGeneration.current !== generation) return
+        setIsPlaying(false)
+        setLoadingAudio(false)
+        setAudioError(unavailableMessage)
+      })
     }
   }
 
@@ -171,7 +172,9 @@ export function AudioGuideModal({
 
   const handleLoadedMetadata = () => {
     if (!audioRef.current) return
-    setDuration(audioRef.current.duration || result?.duration || 0)
+    const measuredDuration = audioRef.current.duration
+    setDuration(Number.isFinite(measuredDuration) && measuredDuration > 0 ? measuredDuration : 0)
+    setLoadingAudio(false)
   }
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,23 +193,25 @@ export function AudioGuideModal({
   }
 
   return (
-    <div className="museum-audio-modal__backdrop" onClick={onClose}>
+    <div className="museum-audio-modal__backdrop" onClick={handleClose}>
       <div
+        ref={dialogRef}
         className="museum-audio-modal__card"
         role="dialog"
         aria-modal="true"
-        aria-label={`Thuyết minh âm thanh: ${projectName}`}
+        aria-labelledby="museum-audio-modal-title"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="museum-audio-modal__header">
           <div>
-            <span className="museum-audio-modal__location">Thuyết minh AI · Bản thu hoàn chỉnh</span>
-            <h2 className="museum-audio-modal__title">{projectName}</h2>
+            <span className="museum-audio-modal__location">{selectedLanguage?.type === 'ORIGINAL_AUDIO' ? 'Âm thanh gốc' : 'Thuyết minh AI'} · Bản thu công khai</span>
+            <h2 id="museum-audio-modal-title" className="museum-audio-modal__title">{projectName}</h2>
           </div>
           <button
             type="button"
             className="museum-audio-modal__close"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Đóng cửa sổ nghe"
           >
             ✕
@@ -214,26 +219,27 @@ export function AudioGuideModal({
         </div>
 
         {/* Language selector chips */}
-        <div className="museum-audio-modal__languages">
-          <label className="museum-audio-modal__lang-label">
-            Chọn ngôn ngữ thuyết minh:
-          </label>
+        <div className="museum-audio-modal__languages" role="group" aria-labelledby="museum-audio-language-label">
+          <span id="museum-audio-language-label" className="museum-audio-modal__lang-label">
+            Chọn phiên bản âm thanh:
+          </span>
           <div className="museum-audio-modal__lang-chips">
-            {variants.length > 0 ? (
-              variants.map((v) => {
-                const isSelected = v.language === currentLang
+            {availableLanguages.length > 0 ? (
+              availableLanguages.map((language) => {
+                const isSelected = publicAudioOptionKey(language) === currentLang
                 return (
                   <button
-                    key={v.language}
+                    key={publicAudioOptionKey(language)}
                     type="button"
                     className={`museum-audio-modal__lang-chip${
                       isSelected ? ' museum-audio-modal__lang-chip--active' : ''
                     }`}
-                    onClick={() => setCurrentLang(v.language)}
+                    aria-pressed={isSelected}
+                    onClick={() => selectLanguage(language)}
                   >
-                    <span>{v.flag || '🌐'}</span>
-                    <strong>{v.name || languageNames[v.language] || v.language}</strong>
-                    {v.hasResult && (
+                    <span>{language.flag || '🌐'}</span>
+                    <strong>{publicAudioOptionLabel(language)}</strong>
+                    {language.audioUrl && (
                       <span
                         style={{
                           display: 'inline-block',
@@ -255,20 +261,20 @@ export function AudioGuideModal({
                 className="museum-audio-modal__lang-chip museum-audio-modal__lang-chip--active"
               >
                 <span>🌐</span>
-                <strong>{languageNames[currentLang] || currentLang}</strong>
+                <strong>Chưa có âm thanh công khai</strong>
               </button>
             )}
           </div>
         </div>
 
         {/* Audio Player UI */}
-        <div className="museum-audio-modal__player">
+        <div className="museum-audio-modal__player" aria-busy={loadingAudio}>
           {audioUrl && (
             <audio
               ref={audioRef}
               src={audioUrl}
-              autoPlay
               onPlay={() => {
+                setLoadingAudio(false)
                 setIsPlaying(true)
                 trackAudioPlay()
               }}
@@ -279,10 +285,13 @@ export function AudioGuideModal({
               }}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
-              onError={(e) => {
-                console.error('Lỗi phát âm thanh:', e)
+              onCanPlay={() => setLoadingAudio(false)}
+              onError={() => {
+                setIsPlaying(false)
+                setLoadingAudio(false)
+                setAudioError(unavailableMessage)
               }}
-              preload="auto"
+              preload="metadata"
             />
           )}
 
@@ -293,7 +302,7 @@ export function AudioGuideModal({
                 isPlaying ? ' museum-audio-modal__play-btn--playing' : ''
               }`}
               onClick={togglePlay}
-              disabled={loadingAudio || !audioUrl}
+              disabled={!audioUrl || Boolean(audioError)}
               aria-label={isPlaying ? 'Tạm dừng' : 'Phát thuyết minh'}
               title={isPlaying ? 'Tạm dừng' : 'Phát thuyết minh'}
             >
@@ -314,7 +323,9 @@ export function AudioGuideModal({
               <div className="museum-audio-modal__times">
                 <span>{formatTime(currentTime)}</span>
                 <span className="museum-audio-modal__status-badge">
-                  {loadingAudio
+                  {audioError
+                    ? 'Không thể phát bản thu'
+                    : loadingAudio
                     ? 'Đang tải tệp âm thanh...'
                     : audioUrl
                     ? isPlaying
@@ -322,20 +333,32 @@ export function AudioGuideModal({
                       : 'Sẵn sàng phát'
                     : 'Chưa có tệp âm thanh'}
                 </span>
-                <span>{formatTime(duration || result?.duration || 0)}</span>
+                <span>{formatTime(duration)}</span>
               </div>
               <input
                 type="range"
                 className="museum-audio-modal__progress"
                 min={0}
-                max={duration || result?.duration || 100}
+                max={duration || 100}
                 value={currentTime}
                 onChange={handleSeek}
-                disabled={!audioUrl}
+                disabled={!audioUrl || loadingAudio || Boolean(audioError) || duration <= 0}
                 aria-label="Thanh trượt thời gian âm thanh"
               />
             </div>
           </div>
+
+          {audioError && (
+            <p className="museum-audio-modal__error" role="alert">
+              {audioError}
+            </p>
+          )}
+
+          {!audioError && (
+            <p className="visually-hidden" role="status" aria-live="polite">
+              {loadingAudio ? 'Đang tải bản thuyết minh công khai.' : isPlaying ? 'Đang phát bản thuyết minh.' : 'Bản thuyết minh sẵn sàng phát.'}
+            </p>
+          )}
 
           <div
             className={`museum-audio-modal__waves${
@@ -355,19 +378,6 @@ export function AudioGuideModal({
           </div>
         </div>
 
-        {/* Audio info footer */}
-        {result && (
-          <div className="museum-audio-modal__transcript">
-            <p className="museum-audio-modal__transcript-title">
-              Thông tin bản thu ({languageNames[currentLang] || currentLang})
-            </p>
-            <p className="museum-audio-modal__transcript-text">
-              {result.voiceName ? `Giọng đọc AI: ${result.voiceName} · ` : ''}
-              {result.fileSize ? `Dung lượng: ${(result.fileSize / 1024).toFixed(1)} KB · ` : ''}
-              Định dạng: MP3 audio chất lượng cao.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   )

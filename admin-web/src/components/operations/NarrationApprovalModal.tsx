@@ -4,7 +4,6 @@ import type { AdminNarration, AdminProject } from '../../types/operations';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Icon } from '../common/Icon';
-import { environment } from '../../config/env';
 import { AdminDialog } from '../common/AdminDialog';
 
 interface NarrationApprovalModalProps {
@@ -13,13 +12,44 @@ interface NarrationApprovalModalProps {
   onUpdated?: () => void;
 }
 
-const resolveAudioUrl = (url: string) => {
-  if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const base = environment.apiBaseUrl.replace(/\/api$/, '');
-  const clean = url.startsWith('/') ? url : `/${url}`;
-  return `${base}${clean}`;
-};
+function ProtectedNarrationPlayer({ narration }: { narration: AdminNarration }) {
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    let objectUrl: string | null = null;
+    adminProjectService.getNarrationAudio(narration.audioUrl, { signal: controller.signal })
+      .then((blob) => {
+        if (!active) return;
+        objectUrl = URL.createObjectURL(blob);
+        setAudioUrl(objectUrl);
+      })
+      .catch((reason: unknown) => {
+        if (active && !(reason instanceof DOMException && reason.name === 'AbortError')) setError(true);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [narration.audioUrl]);
+
+  if (error) return <p role="alert" className="narration-item__preview-error">Không thể tải bản nghe thử.</p>;
+  if (!audioUrl) return <p role="status" className="narration-item__preview-loading">Đang tải bản nghe thử...</p>;
+  return (
+    <audio
+      aria-label={`Nghe bản âm thanh ${narration.languageName}`}
+      controls
+      preload="none"
+      src={audioUrl}
+      className="narration-item__audio-player"
+    >
+      Trình duyệt không hỗ trợ thẻ audio.
+    </audio>
+  );
+}
 
 const formatSeconds = (sec: number) => {
   if (!sec || isNaN(sec)) return '0:00';
@@ -263,15 +293,7 @@ export function NarrationApprovalModal({ project, onClose, onUpdated }: Narratio
                     </div>
 
                     <div className="narration-item__player-row">
-                      <audio
-                        aria-label={`Nghe bản âm thanh ${n.languageName || lang.label}`}
-                        controls
-                        preload="none"
-                        src={resolveAudioUrl(n.audioUrl)}
-                        className="narration-item__audio-player"
-                      >
-                        Trình duyệt không hỗ trợ thẻ audio.
-                      </audio>
+                      <ProtectedNarrationPlayer key={n.audioUrl} narration={n} />
 
                       <Button
                         aria-label={`${isItemApproved ? 'Tạm ẩn' : 'Duyệt phát hành'} âm thanh ${n.languageName || lang.label} của dự án ${project.name}`}

@@ -7,6 +7,7 @@ import { Button } from '../components/common/Button';
 import { OperationProgress, OperationSkeleton } from '../components/operations/OperationsCommon';
 import { useProject } from '../hooks/useOperations';
 import { formatLanguageCode } from '../utils/operationsFormat';
+import { OriginalAudioPublication } from '../components/operations/OriginalAudioPublication';
 
 export function AdminProjectDetailPage() {
   const { projectId = '' } = useParams();
@@ -104,6 +105,7 @@ export function AdminProjectDetailPage() {
         </Card>
       </div>
 
+      {p.media && <OriginalAudioPublication key={projectId} projectId={projectId} />}
       <Card>
         <h2>Công việc liên quan</h2>
         {data.jobs?.length ? (

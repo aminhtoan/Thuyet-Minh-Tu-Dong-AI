@@ -31,7 +31,11 @@ function readFileExists(file) { try { readFileSync(file); return true; } catch {
 
 test('project GET filters and manual approval payload stay unchanged; status100 is not completed', async () => {
   const calls = [];
-  const { mapProject, adminProjectService } = compile('services/adminProjectService.ts', { '../lib/api': { adminApi: async (url, init = {}) => {
+  const blobCalls = [];
+  const previewBlob = new Blob(['preview'], { type: 'audio/mpeg' });
+  const { mapProject, adminProjectService } = compile('services/adminProjectService.ts', { '../lib/api': { adminApiBlob: async (url, init = {}) => {
+    blobCalls.push({ url, init }); return previewBlob;
+  }, adminApi: async (url, init = {}) => {
     calls.push({ url, init });
     return url.includes('/approval') ? { narration: { id: 'n1' } } : { items: rows, summary: {}, pagination: {} };
   } } });
@@ -48,13 +52,63 @@ test('project GET filters and manual approval payload stay unchanged; status100 
   assert.equal(calls[1].url, '/admin/narrations/n1/approval');
   assert.equal(calls[1].init.method, 'PATCH');
   assert.equal(calls[1].init.body, '{"isApproved":true}');
+  const controller = new AbortController();
+  assert.equal(await adminProjectService.getNarrationAudio('/api/projects/p1/narrations/n1/audio', { signal: controller.signal }), previewBlob);
+  assert.equal(blobCalls[0].url, '/api/projects/p1/narrations/n1/audio');
+  assert.equal(blobCalls[0].init.signal, controller.signal);
   const data = { items: rows.map(mapProject), pagination: { page: 1, total: 3, limit: 10, totalPages: 1 } };
   const { AdminProjectsPage } = compile('pages/AdminProjectsPage.tsx', {
     '../hooks/useOperations': { useProjects: () => ({ data, loading: false, error: false, retry() {} }) },
     '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: () => null },
+    '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: () => null },
   });
   const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(AdminProjectsPage)));
   assert.equal((html.match(/disabled=""/g) ?? []).length, 4, 'two unavailable approvals plus two pagination boundaries');
   assert.ok(html.includes('Đang dịch') && html.includes('Thất bại') && html.includes('Hoàn thành'));
   assert.equal((html.match(/Trạng thái chưa phải Hoàn thành/g) ?? []).length, 2);
+});
+
+test('Admin narration preview uses authenticated Blob transport and revokes object URLs', () => {
+  const modal = readFileSync(new URL('../src/components/operations/NarrationApprovalModal.tsx', import.meta.url), 'utf8');
+  const api = readFileSync(new URL('../src/lib/api.ts', import.meta.url), 'utf8');
+  const backend = readFileSync(new URL('../../backend/src/services/admin.service.ts', import.meta.url), 'utf8');
+  assert.match(modal, /getNarrationAudio\(narration\.audioUrl/);
+  assert.match(modal, /URL\.createObjectURL\(blob\)/);
+  assert.match(modal, /URL\.revokeObjectURL\(objectUrl\)/);
+  assert.match(modal, /controller\.abort\(\)/);
+  assert.match(api, /adminApiBlob/);
+  assert.match(api, /authorization.*Bearer/);
+  assert.match(api, /response\.blob\(\)/);
+  assert.match(backend, /audioUrl: `\/api\/projects\/\$\{n\.projectId\.toString\(\)\}\/narrations\/\$\{n\._id\.toString\(\)\}\/audio`/);
+  assert.doesNotMatch(backend, /audioUrl: `\/api\/projects\/public-audio\/\$\{n\.projectId/);
+});
+
+test('project row opens original-audio modal for the selected project without a COMPLETED requirement', () => {
+  let cursor = 0; const slots = [];
+  const React = { ...require('react'), useState(value) { const index = cursor++; if (!(index in slots)) slots[index] = value; return [slots[index], value => { slots[index] = value; }]; } };
+  const projects = rows.map((row, index) => ({ ...row, customerName: 'Fixture', id: `project-${index}` }));
+  const { AdminProjectsPage } = compile('pages/AdminProjectsPage.tsx', {
+    react: React,
+    '../hooks/useOperations': { useProjects: () => ({ data: { items: projects, pagination: { total: 3, totalPages: 1, page: 1 } }, loading: false, error: false, retry() {} }) },
+    '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: 'ai-modal' },
+    '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: 'original-modal' },
+  });
+  const findAll = (node, predicate) => !node || typeof node !== 'object' ? [] : [ ...(predicate(node) ? [node] : []), ...[node.props?.children].flat(Infinity).flatMap(child => findAll(child, predicate)) ];
+  const render = () => { cursor = 0; return AdminProjectsPage(); };
+  let tree = render();
+  const actions = findAll(tree, node => node.props?.className === 'projects-row-actions');
+  assert.equal(actions.length, 3);
+  const labels = [actions[0].props.children].flat().map(node => node.props.children);
+  assert.deepEqual(labels, ['Xem', 'Duyệt', 'Âm thanh gốc']);
+  const buttons = findAll(tree, node => node.props?.children === 'Âm thanh gốc');
+  assert.equal(buttons[0].props.disabled, undefined);
+  buttons[0].props.onClick(); tree = render();
+  let modal = findAll(tree, node => node.type === 'original-modal')[0];
+  assert.equal(modal.props.project.id, 'project-0');
+  assert.equal(findAll(tree, node => node.type === 'ai-modal').length, 0);
+  modal.props.onClose(); tree = render();
+  assert.equal(findAll(tree, node => node.type === 'original-modal').length, 0);
+  findAll(tree, node => node.props?.children === 'Âm thanh gốc')[1].props.onClick(); tree = render();
+  modal = findAll(tree, node => node.type === 'original-modal')[0];
+  assert.equal(modal.props.project.id, 'project-1');
 });

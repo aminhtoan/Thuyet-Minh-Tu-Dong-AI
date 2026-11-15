@@ -5,6 +5,8 @@ import {resolve,dirname,relative,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createServer} from 'node:net';
 import assert from 'node:assert/strict';
+import {redact,failureText,captureProjectDiagnostics} from './diagnostics.mjs';
+import {MONGO_IMAGE,prepareMongoImage} from './required-images.mjs';
 
 const here=dirname(fileURLToPath(import.meta.url)),root=resolve(here,'../../..');
 const stateRoot=resolve(root,'infra/local-cd/.state/synthetic-v1');
@@ -22,8 +24,12 @@ async function request(url,options={}){
 }
 function exec(binary,args,{input,log,timeout=30000,allowFailure=false,cwd=root}={}){
  const result=spawnSync(binary,args,{cwd,input,encoding:'utf8',timeout,windowsHide:true,maxBuffer:32*1024*1024});
- if(log)writeFileSync(log,(result.stdout??'')+(result.stderr??''));
- if(!allowFailure&&(result.error||result.status!==0))throw Error(`${binary} ${args.slice(0,3).join(' ')} failed: ${log??(result.stderr??'').slice(-400)}`);
+ if(log)writeFileSync(log,redact((result.stdout??'')+(result.stderr??'')));
+ if(!allowFailure&&(result.error||result.status!==0)){
+  const detail=failureText(result,log);
+  console.error(`${binary} ${args.slice(0,3).join(' ')} failed\n${detail}`);
+  throw Error(`${binary} ${args.slice(0,3).join(' ')} failed: ${log??'see stderr'} (exit=${result.status??'unknown'}, signal=${result.signal??'none'})`);
+ }
  return allowFailure?result:result.stdout.trim();
 }
 const docker=(args,options)=>exec('docker',args,options);
@@ -63,7 +69,7 @@ function snapshot(s){
  const files=[];s.snapshot=resolve(s.dir,'snapshot');mkdirSync(s.snapshot);
  for(const path of [...new Set(paths)].sort()){
   if(/(^|\/)(\.env[^/]*|node_modules|uploads|dist|build|\.git|\.state|scratch|cache|tmp)(\/|$)|\.(pem|key|pfx|p12|tsbuildinfo)$/.test(path))continue;
-  const selected=/^(frontend-web|admin-web)\/(src\/|public\/|[^/]+\.(json|ts|js|mjs|html|css)$)/.test(path)||/^backend\/(src\/|staging\/(preflight|runtime-checks|healthcheck)\.mjs$|Dockerfile$|\.dockerignore$|package(-lock)?\.json$|tsconfig\.json$)/.test(path)||['scripts/customer-design-sync.mjs','design/customer/tokens.json','frontend-mobile/src/theme/tokens.ts','infra/local-cd/nginx.conf','infra/local-cd/mongo-init.js','infra/local-cd/frontend.Dockerfile.dockerignore','infra/local-cd/synthetic-v1/frontend.Dockerfile','infra/local-cd/synthetic-v1/run.mjs'].includes(path);
+  const selected=/^(frontend-web|admin-web)\/(src\/|public\/|[^/]+\.(json|ts|js|mjs|html|css)$)/.test(path)||/^backend\/(src\/|staging\/(preflight|runtime-checks|healthcheck)\.mjs$|Dockerfile$|\.dockerignore$|package(-lock)?\.json$|tsconfig\.json$)/.test(path)||['scripts/customer-design-sync.mjs','design/customer/tokens.json','frontend-mobile/src/theme/tokens.ts','infra/local-cd/nginx.conf','infra/local-cd/mongo-init.js','infra/local-cd/frontend.Dockerfile.dockerignore','infra/local-cd/synthetic-v1/frontend.Dockerfile','infra/local-cd/synthetic-v1/run.mjs','infra/local-cd/synthetic-v1/diagnostics.mjs','infra/local-cd/synthetic-v1/required-images.mjs'].includes(path);
   if(!selected||!existsSync(resolve(root,path)))continue;
   const src=resolve(root,path);if(lstatSync(src).isSymbolicLink())throw Error('SOURCE_LINK_REJECTED');
   const out=resolve(s.snapshot,path);mkdirSync(dirname(out),{recursive:true});copyFileSync(src,out);files.push({path,sha256:hash(readFileSync(out))});
@@ -84,20 +90,21 @@ function build(s){
   docker(args,{log:resolve(s.dir,`build-${role}.log`),timeout:600000});
   s.images[role]={tag,id:JSON.parse(docker(['image','inspect',tag]))[0].Id};save(s);
  }
- s.manifest={schema:'S397_RELEASE_V1',releaseId:s.releaseId,sourceHash:s.sourceHash,head:s.head,dirty:s.dirty,files:s.sourceFiles,images:s.images,ports:s.ports,knownGood:false};
+ s.manifest={schema:'S397_RELEASE_V1',releaseId:s.releaseId,sourceHash:s.sourceHash,head:s.head,dirty:s.dirty,files:s.sourceFiles,images:s.images,dependencies:{mongodb:s.mongoImage},ports:s.ports,knownGood:false};
  s.manifestPath=resolve(s.dir,'release-a.json');write(s.manifestPath,s.manifest);s.manifestHash=hash(readFileSync(s.manifestPath));event(s,'BUILT');
 }
 function verifyRelease(s){
  assert.equal(hash(readFileSync(s.manifestPath)),s.manifestHash,'manifest changed');
  for(const row of s.sourceFiles)assert.equal(hash(readFileSync(resolve(s.snapshot,row.path))),row.sha256,'snapshot changed');
  for(const image of Object.values(s.images))assert.equal(JSON.parse(docker(['image','inspect',image.id]))[0].Id,image.id);
+ if(s.mongoImage)assert.equal(docker(['image','inspect',MONGO_IMAGE,'--format','{{.Id}}']),s.mongoImage.id,'MongoDB dependency changed after preparation');
 }
 function makeProject(s,role,images=s.images){
  const name=`narration-s397-v1-${s.runId}-${role}`,p={name,role,networks:[`${name}-internal`,`${name}-frontend`],volumes:[`${name}-database`,`${name}-media`],images:structuredClone(images),config:resolve(s.dir,`${role}-compose.json`)};
  fresh(p);const lab=labels(s,p);const internal={isolated:{},frontend:{gw_priority:1}};
  const frontend=service=>({image:images[service].id,labels:lab,ports:[`127.0.0.1:${service==='customer-web'?s.ports.customer:s.ports.admin}:8080`],networks:internal,depends_on:{backend:{condition:'service_healthy'}},read_only:true,tmpfs:['/tmp','/var/cache/nginx','/var/run']});
  const cfg={name,services:{
-  mongodb:{image:'mongo:8.0.17',labels:lab,command:['mongod','--replSet','s396rs','--bind_ip_all'],volumes:[`${p.volumes[0]}:/data/db`,`${resolve(s.snapshot,'infra/local-cd/mongo-init.js').replaceAll('\\','/')}:/opt/init.js:ro`],tmpfs:['/data/configdb'],networks:['isolated'],healthcheck:{test:['CMD','mongosh','--quiet','--file','/opt/init.js'],interval:'3s',timeout:'5s',retries:30}},
+  mongodb:{image:MONGO_IMAGE,labels:lab,command:['mongod','--replSet','s396rs','--bind_ip_all'],volumes:[`${p.volumes[0]}:/data/db`,`${resolve(s.snapshot,'infra/local-cd/mongo-init.js').replaceAll('\\','/')}:/opt/init.js:ro`],tmpfs:['/data/configdb'],networks:['isolated'],healthcheck:{test:['CMD','mongosh','--quiet','--file','/opt/init.js'],interval:'3s',timeout:'5s',retries:30}},
   backend:{image:images.backend.id,labels:lab,init:true,environment:{NODE_ENV:'production',PORT:'8080',UPLOAD_DIR:'/data/uploads',MONGODB_URI:'mongodb://mongodb:27017/s397_synthetic?replicaSet=s396rs',CORS_ORIGINS:`http://127.0.0.1:${s.ports.customer},http://127.0.0.1:${s.ports.admin}`,JWT_ACCESS_SECRET:'s397-synthetic-access-not-a-real-secret',JWT_REFRESH_SECRET:'s397-synthetic-refresh-not-a-real-secret',JWT_ACCESS_EXPIRES_IN:'15m',JWT_REFRESH_EXPIRES_IN:'1d',GEMINI_API_KEY:'',GOOGLE_API_KEY:'',OPENAI_API_KEY:'',GROUP_TRANSLATION_ENABLED:'false',CUSTOMER_TRANSLATION_ENABLED:'false'},volumes:[`${p.volumes[1]}:/data/uploads`],networks:['isolated'],depends_on:{mongodb:{condition:'service_healthy'}},stop_grace_period:'15s'},
   'customer-web':frontend('customer-web'),'admin-web':frontend('admin-web')},
   networks:{isolated:{name:p.networks[0],internal:true,labels:lab},frontend:{name:p.networks[1],driver:'bridge',labels:lab}},volumes:Object.fromEntries(p.volumes.map(name=>[name,{name,labels:lab}]))};
@@ -107,7 +114,7 @@ function deploy(s,p,{failAfterMongo=false}={}){
  assert.equal(hash(readFileSync(p.config)),p.configHash);event(s,'DEPLOYING',{project:p.name});
  try{if(failAfterMongo){compose(s,p,['up','-d','--no-build','--pull','never','--wait','--wait-timeout','90','mongodb']);throw Error('INJECTED_PARTIAL_DEPLOYMENT_FAILURE');}
   compose(s,p,['up','-d','--no-build','--pull','never','--wait','--wait-timeout','150']);event(s,'DEPLOYED',{project:p.name});
- }catch(error){event(s,'DEPLOY_FAILED',{project:p.name,reason:error.message});throw error;}
+ }catch(error){event(s,'DEPLOY_FAILED',{project:p.name,reason:error.message});diagnose(s,p,'failure');throw error;}
 }
 function port(s,p,role){const c=service(s,p,role);const bindings=c.NetworkSettings.Ports['8080/tcp'];assert.equal(bindings.length,1);assert.equal(bindings[0].HostIp,'127.0.0.1');return bindings[0].HostPort;}
 async function smoke(s,p){
@@ -158,7 +165,11 @@ function buildVariants(s){
  }
  write(resolve(s.dir,'release-b.json'),{schema:'S397_SYNTHETIC_CANDIDATE_V1',baseRelease:s.releaseId,compatibility:'IDENTICAL_JS_ONLY_METADATA_OR_HEALTHCHECK_CHANGED',images});return images;
 }
-function collect(s){for(const p of s.projects){try{for(const id of assertOwned(s,p))docker(['logs','--tail','100',id],{log:resolve(s.dir,`${p.role}-${inspect(id).Config.Labels['com.docker.compose.service']}.log`),allowFailure:true});}catch{/* keep original failure, never mutate resources for logs */}}}
+function diagnose(s,p,phase){
+ try{const ids=assertOwned(s,p);const path=captureProjectDiagnostics({dir:s.dir,prefix:`${phase}-${s.events.length}-${p.role}`,owner:s.owner,project:p.name,composeArgs:['compose','--env-file',resolve(s.dir,'empty.env'),'-f',p.config],images:['mongo:8.0.17',...Object.values(p.images).map(image=>image.id)],ids,inspect,run:args=>docker(args,{allowFailure:true}),files:[p.config,resolve(s.snapshot,'infra/local-cd/mongo-init.js')]});console.log('DIAGNOSTICS='+path);}
+ catch(error){const path=resolve(s.dir,`${phase}-${s.events.length}-diagnostics-unavailable.log`);writeFileSync(path,redact(error.message));console.error('Diagnostics unavailable: '+redact(error.message));}
+}
+function collect(s){for(const p of s.projects)diagnose(s,p,'snapshot');}
 function cleanup(s){
  // Validate EVERY target before deleting ANY. Labels + planned names + private run nonce.
  const targets=s.projects.map(p=>({p,ids:assertOwned(s,p)}));
@@ -180,6 +191,8 @@ async function run(){
   assert.equal(docker(['info','--format','{{.OSType}}']),'linux');s.before=allContainers();s.ports={customer:await freePort(),admin:await freePort()};while(s.ports.customer===s.ports.admin)s.ports.admin=await freePort();
   for(const role of ['a','bad','recovery']){const name=`narration-s397-v1-${s.runId}-${role}`;fresh({name,networks:[`${name}-internal`,`${name}-frontend`],volumes:[`${name}-database`,`${name}-media`]});}
   save(s);event(s,'PREFLIGHT_PASS');
+  try{const mongo=prepareMongoImage(args=>docker(args,{allowFailure:true,timeout:180000}));writeFileSync(resolve(s.dir,'mongo-image.log'),mongo.log);s.mongoImage={reference:mongo.reference,id:mongo.id,pulled:mongo.pulled};event(s,'MONGO_IMAGE_READY',s.mongoImage);}
+  catch(error){writeFileSync(resolve(s.dir,'mongo-image.log'),redact(error.details??error.message));console.error(redact(error.details??error.message));event(s,'MONGO_IMAGE_FAILED',{reason:error.message});throw error;}
   snapshot(s);build(s);verifyRelease(s);const a=makeProject(s,'a');deploy(s,a);await smoke(s,a);fixture(s,a,true);const checksum=fixture(s,a);
   assertOwned(s,a);docker(['restart',service(s,a,'mongodb').Id,service(s,a,'backend').Id],{timeout:60000});await waitHealthy(s,a);await smoke(s,a);assert.equal(fixture(s,a),checksum);event(s,'RESTART_PERSISTENCE_PASS');
   const foundation=backbone(s,a);s.manifest.knownGood=true;write(s.manifestPath,s.manifest);s.manifestHash=hash(readFileSync(s.manifestPath));save(s);event(s,'RELEASE_A_VERIFIED');
@@ -198,5 +211,5 @@ async function run(){
 }
 try{
  if(command==='run')await run();
- else {const s=loadState(argument('--state'));const path=resolve(s.dir,'operation.lock'),lock=openSync(path,'wx');try{if(command==='cleanup'){collect(s);cleanup(s);}else if(command==='smoke'){const p=s.projects.find(p=>p.name===s.activeProject);if(!p)throw Error('NO_VERIFIED_ACTIVE_RELEASE');await smoke(s,p);}else throw Error('UNKNOWN_COMMAND');}finally{closeSync(lock);unlinkSync(path);}}
+ else {const s=loadState(argument('--state'));const path=resolve(s.dir,'operation.lock'),lock=openSync(path,'wx');try{if(command==='cleanup'){collect(s);cleanup(s);}else if(command==='diagnostics'){collect(s);}else if(command==='smoke'){const p=s.projects.find(p=>p.name===s.activeProject);if(!p)throw Error('NO_VERIFIED_ACTIVE_RELEASE');await smoke(s,p);}else throw Error('UNKNOWN_COMMAND');}finally{closeSync(lock);unlinkSync(path);}}
 }catch(error){console.error(error.message);process.exitCode=1;}

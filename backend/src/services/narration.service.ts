@@ -20,6 +20,7 @@ import { OpenAiTtsError } from './tts/openai-tts.provider.js';
 import { resolveTtsTerminalStatus } from './tts/tts-terminal-state.js';
 import { assertApprovedCurrent, loadSource, boundedTranslationRecord } from './translation/group-translation.service.js';
 import { isRevision, narrationProvenance, revisionFenceOperation, translationProvenance } from './artifact-provenance.service.js';
+import { findPublicNarration } from './public-media-policy.service.js';
 
 const speed = 1;
 const log = async (userId: string, action: string, projectId: Types.ObjectId, language: string, voiceId: Types.ObjectId) => {
@@ -69,6 +70,12 @@ export const getAudio = async (projectId: string, narrationId: string) => {
   const narration = await Narration.findOne({ _id: narrationId, projectId, status: 'READY' });
   if (!narration) throw new AppError(404, 'NARRATION_NOT_FOUND', 'Không tìm thấy bản thuyết minh.');
   await requireCurrentNarration(projectId, narration);
+  try { return { audio: await readFile(resolveStoredFile(narration.audioPath)), mimeType: narration.mimeType }; }
+  catch { throw new AppError(404, 'NARRATION_AUDIO_NOT_FOUND', 'Không tìm thấy tệp âm thanh thuyết minh.'); }
+};
+export const getPublicAudio = async (projectId: string, narrationId: string) => {
+  const narration = await findPublicNarration(projectId, narrationId);
+  if (!narration) throw new AppError(404, 'NARRATION_NOT_FOUND', 'Không tìm thấy bản thuyết minh.');
   try { return { audio: await readFile(resolveStoredFile(narration.audioPath)), mimeType: narration.mimeType }; }
   catch { throw new AppError(404, 'NARRATION_AUDIO_NOT_FOUND', 'Không tìm thấy tệp âm thanh thuyết minh.'); }
 };
