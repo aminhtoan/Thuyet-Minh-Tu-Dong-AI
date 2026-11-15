@@ -55,6 +55,7 @@ function renderer(slug, open = async () => {}) {
     './theme': theme,
     './MuseumUI': { MuseumFrame: 'MuseumFrame', MuseumImage: 'MuseumImage', MuseumLink: 'MuseumLink', MuseumTitle: 'MuseumTitle' },
     './PublicAudioSection': { PublicAudioSection: () => null },
+    './PublicVideoSection': { PublicVideoSection: () => null },
     'expo-audio': {
       useAudioPlayer: () => ({ play: () => {}, pause: () => {} }),
       useAudioPlayerStatus: () => ({ playing: false }),

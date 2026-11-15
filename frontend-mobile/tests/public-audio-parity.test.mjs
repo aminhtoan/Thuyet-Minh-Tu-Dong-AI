@@ -31,6 +31,16 @@ test('public-only URLs reject protected/source/external/malformed paths', () => 
     'https://external.test/api/published-original-audio/' + originalId + '/audio', 'javascript:alert(1)', '',
     `/api/published-original-audio/${originalId}/audio?token=secret`]) assert.equal(contract.publicAudioUrl({ ...options[0], audioUrl }, base), null);
 });
+
+test('VIDEO source remains an AUDIO publication, including legacy Backend responses', () => {
+  for (const metadata of [{ mediaType: 'VIDEO', sourceMediaType: 'VIDEO', artifactType: 'AUDIO' }, { mediaType: 'VIDEO' }]) {
+    const [guide] = contract.parsePublicGuides({ success: true, data: { guides: [{ ...guides[0], ...metadata }] } });
+    assert.equal(guide.artifactType, 'AUDIO'); assert.equal(guide.sourceMediaType, 'VIDEO');
+    assert.deepEqual(guide.languages.map(option => option.audioUrl), options.map(option => option.audioUrl));
+    assert.deepEqual(guide.languages.map(option => option.optionId), options.map(option => option.optionId));
+  }
+  assert.throws(() => contract.parsePublicGuides({ success: true, data: { guides: [{ ...guides[0], artifactType: 'VIDEO' }] } }));
+});
 test('listing fetch uses only public API; errors/empty do not request alternatives', async () => {
   const calls = [], signal = new AbortController().signal;
   const fetcher = async (url, init) => { calls.push([url, init]); return { ok: true, json: async () => ({ success: true, data: { guides: [] } }) }; };

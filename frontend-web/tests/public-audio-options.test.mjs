@@ -17,6 +17,25 @@ test('original and AI options in the same language have distinct identities and 
   assert.equal(publicAudioOptionLabel(options[2]), 'Thuyết minh AI — Tiếng Anh')
   assert.equal(publicAudioOptionLabel({ code: 'en', name: 'Tiếng Anh', projectId: 'legacy' }), 'Thuyết minh AI — Tiếng Anh')
 })
+
+test('audio cards label VIDEO-source guides as audio for new and legacy public responses', () => {
+  for (const metadata of [{ mediaType: 'VIDEO', sourceMediaType: 'VIDEO', artifactType: 'AUDIO' }, { mediaType: 'VIDEO' }]) {
+    let cursor = 0
+    const guide = { key: 'fixture', title: 'Fixture audio guide', description: '', languages: options, ...metadata }
+    const values = [[guide], false, {}, null]
+    const exports = {}
+    const code = ts.transpileModule(readFileSync(new URL('../src/components/museum/MuseumCustomerAudioSection.tsx', import.meta.url), 'utf8'),
+      { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
+    runInNewContext(code, { exports, require: key => key === 'react' ? { ...require('react'), useState: () => [values[cursor++], () => {}], useEffect: () => {} }
+      : key === '../../config/env' ? { env: { apiBaseUrl: 'http://fixture.test/api' } }
+        : key === '../../features/results/AudioGuideModal' ? { AudioGuideModal: () => null }
+          : key === '../../features/results/publicAudioOptions.mjs' ? { publicAudioOptionKey, publicAudioOptionLabel } : require(key) })
+    const html = require('react-dom/server').renderToStaticMarkup(require('react').createElement(exports.MuseumCustomerAudioSection))
+    assert.match(html, /<span>Âm thanh<\/span>/)
+    assert.doesNotMatch(html, /<span>Video<\/span>/)
+    for (const option of options) assert.ok(html.includes(publicAudioOptionKey(option)))
+  }
+})
 test('actual modal selects each supplied option, starts paused and stops the preceding audio', async () => {
   let cursor = 0, tree, playCalls = 0, pauses = 0, closed = 0
   const slots = [], refs = [], effects = []

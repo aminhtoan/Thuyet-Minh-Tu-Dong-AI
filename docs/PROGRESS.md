@@ -1,5 +1,281 @@
 # Project Progress
 
+## START HERE — CURRENT PROJECT STATUS
+
+Updated 2026-11-15 (Asia/Bangkok), task S42.3I. This section takes precedence over
+older sprint/status snapshots below; historical entries are not current authorization.
+
+1. Read this file and [CONTEXT.md](CONTEXT.md) before continuing.
+2. Verify Git and the actual source before editing; preserve unrelated working-tree changes.
+3. Do not reimplement STATIC PASS work unless a regression or changed evidence justifies it.
+4. Perform only the next task explicitly requested by the user. Static acceptance is not runtime acceptance.
+5. Do not commit, push, merge, deploy, invoke paid AI, or mutate shared data without concrete authorization.
+
+### Latest — S42.3I PR #11 Admin Web CI fix (2026-11-15)
+
+- Current branch `feature/public-video-narration`, HEAD
+  `9922863eb7b7c2ee2400e15e6e2548d1000a0423`, matching PR #11 HEAD. Working tree
+  was clean at preflight; earlier uncommitted/main references below are historical.
+  This task does not checkout, fetch/pull, commit, push or merge.
+- Confirmed directly from GitHub Actions logs: CI V1 run
+  [43678343769](https://github.com/vuvantai14/multilingual-ai-narration/actions/runs/43678343769),
+  Admin Web job `132703320561`. Install/lint/typecheck succeeded. The failed step
+  is `Test (network guard inherited by npm and Node tests)` (`npm test`); build
+  was skipped. GitHub connector/public PR access returned 404; logs were retrieved
+  read-only through existing noninteractive Git authentication. No credential was
+  printed or persisted into source/docs.
+- Exact failure: `Project list and detail render unknown source without inventing
+  a source or changing status`, `admin-web/tests/project-source-language.test.mjs:65`.
+  Its recursive VM compiler imported the new VideoPublicationModal, then the video
+  control/service/API client. The fixture's existing `Live API access is forbidden
+  in this test` import guard correctly rejected that dependency. This is a missing
+  fixture mock, not evidence of a live HTTP call or a Linux-specific application bug.
+- Minimal fix: add only the `VideoPublicationModal: () => null` override alongside
+  the existing audio modal overrides for the project-list fixture. All source-language
+  assertions and import/network guards remain unchanged. Production UI, services,
+  Backend/Web/Mobile, publication policy and CI workflow are untouched.
+- Reproduction: exact focused source-language file under CI network preload FAIL,
+  2/3 passing with the same error/stack as GitHub. After the one-line fix, actual
+  Admin `npm test` with CI_NETWORK_GUARD=1 and inherited NODE_OPTIONS preload PASS,
+  **56/56 tests**, including the formerly failing case. Local Vite fixtures printed
+  nonfatal port-24678 warnings; no unrelated port/configuration change was made.
+- The subsequent Admin build (TypeScript + Vite), skipped in the failed hosted
+  job, also PASS locally. Final git diff --check PASS.
+- Local Node is 24.22.1; CI pins 22.23.3. Hosted success is pending a user-authorized
+  commit/push and subsequent CI run. No hosted rerun was triggered automatically.
+- Files for I: the test above and this PROGRESS entry only. Documentation/targeted
+  checks do not authorize a runtime publication test. F2 live acceptance remains
+  independently unverified; preserve the existing handoff in CONTEXT.md.
+
+### S42.3H Mobile publication parity — STATIC PASS (2026-11-15)
+
+- Scope verified **CUSTOMER**, not ADMIN: Mobile `authService.login` rejects
+  non-CUSTOMER before saving a session; `useCurrentUser` checks the same role.
+  `src/app/` has Customer/public routes and no Admin routing. The AuthUser type
+  mentioning ADMIN is not evidence of an Admin Mobile interface.
+- Do not copy Admin Web's Duyệt video action into Customer Mobile. Publication
+  management remains in Admin Web; Mobile follows Customer Web's public listing
+  and playback contract from S42.3D/E. No new Admin system, API or UI was needed.
+- Existing `PublicVideoSection` already fetches fresh public data on focus/refresh,
+  clears the selected native player before waiting for reload, discards superseded
+  responses, removes revoked/missing Results after refresh and shows empty/error
+  states. Each Result retains its own identity/language. Public-only URLs, fresh
+  HEAD, disabled caching, no autoplay, native seek/controls and cleanup remain intact.
+- Only changed `frontend-mobile/tests/public-video-parity.test.mjs` and these two
+  docs. Added refresh fixtures/negative regressions for published visibility,
+  removal of a revoked selected Result while retaining another language, empty
+  refresh, failed/superseded refresh not restoring stale entries, actual rejection
+  of ADMIN login, and absence of Admin routes/actions/PATCH paths in public video UI.
+  No production/UI/Expo API implementation changed; existing S42.3E reused.
+- Validation: Mobile video/audio/Museum tests **43/43 PASS**; relevant Web
+  video/audio parity checks **19/19 PASS**; both design checks, Mobile typecheck,
+  lint (0 errors, 1 existing translationService array-style warning), offline
+  Android Hermes export (1,481 modules, 3.5 MB bundle) and diff check PASS.
+- Git remains `main` / `afa9213af29fa12d54db10eeade3e07538f22ced`, preserving
+  all 34 pre-existing changed/untracked files. All changes remain uncommitted.
+  No Backend/Admin/Web changes, real API calls/publication changes, database/media,
+  .env or Docker/CD edits. Android export wrote only ignored .expo build output.
+- Final gate **STATIC PASS**. No device/emulator playback or live publication
+  acceptance was performed. F2 runtime BLOCKED remains a separate pending task;
+  its target publication observations are historical, not refreshed by H.
+
+### S42.3G Admin project-list video action — STATIC PASS (2026-11-15)
+
+- Branch `main`, HEAD `afa9213af29fa12d54db10eeade3e07538f22ced`; 30 existing
+  changed/untracked files preserved at preflight. No checkout/reset/stash or Git publishing.
+- `/projects` action order is now Xem → Duyệt → Duyệt video → Âm thanh gốc.
+  The new secondary button opens `VideoPublicationModal` with the exact selected
+  project name/id; opening it only reads state, with no automatic approval.
+- Reuses S42.3C `VideoPublication` and its existing service unchanged: individual
+  Result/language controls, explicit MP4 verification, confirmation, versioned
+  ON/OFF requests and Backend state synchronization. Missing/stale/unverified MP4s
+  remain ineligible for activation. Project COMPLETED is not required merely to
+  inspect the modal. AI narration/original audio actions remain independent.
+- Layout: existing compact secondary styling/spacing, wrapping action group capped
+  at 320px, action-cell minimum width, viewport-bounded scrolling dialog and wrapping
+  project title. Shared AdminDialog provides keyboard dismissal and focus restoration.
+- Changed: `admin-web/src/pages/AdminProjectsPage.tsx`, new
+  `src/components/operations/VideoPublicationModal.tsx`, `src/styles/projects.css`,
+  `tests/projects.test.mjs`, existing uncommitted `tests/video-publication.test.mjs`,
+  plus these two handoff docs. No Backend/Web/Mobile/service/API/policy changes.
+- Validation: 21/21 Admin project/video/original-audio regression tests PASS;
+  typecheck, lint (no warnings), build and final diff check PASS. Tests cover action
+  order, correct project open/close, old actions, empty/invalid MP4s, multilingual
+  Result identities, exact per-Result CAS writes, refusal/no optimistic success and
+  audio independence. All mutations were mocks; no live API or database mutation.
+- **STATIC PASS only.** Browser visual/runtime publication acceptance remains
+  BLOCKED as recorded in F2. No actual publication, media or environment was changed.
+  Next requested runtime work can use Admin → Dự án → Duyệt video for the already
+  authorized F2 target; do not silently resume that runtime test during UI work.
+
+### S42.3F1/F2 targeted runtime validation (2026-11-15, 11:19 +07)
+
+- **F1 READY for candidate selection; F2 overall BLOCKED for live acceptance.**
+  Branch/HEAD remain `main` / `afa9213af29fa12d54db10eeade3e07538f22ced`.
+  There were 30 changed/untracked files at F2 preflight. F2 only updates these two
+  already-modified docs; all application changes are preserved and remain uncommitted.
+- User has explicitly authorized a controlled publication test for project
+  `6af074f1eead9966720896f0` (nỗi đau tàn ác), Result
+  `6af077f1c2ce5544e17363cb`, language `en`, including disabling that same Result
+  afterward. This authorization is contingent on validation and applies to no
+  other Result. Do not ask again for the same target authorization; do not treat
+  it as authority for account/session writes, other data, configuration edits or restarts.
+- F1 used raw MongoDB driver reads only (no Mongoose/model initialization or index
+  creation). Configuration identifies development/Atlas and the expected project
+  database; all 9 project IDs from the then-current public audio API matched.
+  146 Projects, 5 Results, 77 ProcessingJobs observed. All 5 Results had matching
+  COMPLETED VIDEO_PROCESSING jobs and passed file/probe/provenance checks, with
+  publication OFF. These are point-in-time observations, not permanent counts.
+- F2 target recheck: complete revision chain CURRENT, generated file distinct from
+  source, recorded size matches 2,511,219 bytes; h264 video/aac audio; duration
+  28.21225 seconds. SHA-256
+  `8fb5f8f66bca64aafeb6f447cddc87536c7e7b7592c8c9cbec88fdcfd611e3e2`.
+- **Binary diagnosis correction:** current configured values are command names
+  `ffmpeg` and `ffprobe`. `existsSync('ffmpeg') === false` is not an executable
+  resolution test. The actual source resolver checks `-version`, prefers a verified
+  configured executable, then verifies PATH fallback. Both resolved successfully
+  in a fresh diagnostic process using current configuration/PATH. Installed binaries
+  also returned version 9.0.2. No .env/config/PATH edits were made.
+- F2 successfully ran the existing FfmpegMediaProcessor probe and the same full
+  decode command used by publication activation (`-xerror`, video/audio maps,
+  `-f null -`) on the exact target file. No MP4 was created, replaced or regenerated;
+  before/after SHA-256 matched. Gemini was not called. This proves source/config
+  validation in the diagnostic process, **not** environment attestation or an
+  activation result in the already-running Backend process (PID 12868).
+
+| F2 acceptance item | Actual evidence / gate |
+| --- | --- |
+| FFmpeg/ffprobe resolver + target full decode | PASS in diagnostic process; live process environment not independently attested |
+| Backend health | HTTP 200, database connected |
+| Admin publication ON | BLOCKED: no controllable authenticated Admin Web session/browser tool. Anonymous GET for the exact target returns 401 |
+| Persisted target publication | OFF, version 0; only read, no PATCH/DB update performed |
+| Target in public listing | Absent, consistent with OFF; listing itself responds successfully |
+| Customer actual playback / audible sound / seek | BLOCKED: target was not published and no interactive browser acceptance was available |
+| Mobile playback | BLOCKED: no Metro/Android emulator/adb runtime detected |
+| Revocation ON → OFF | BLOCKED / NOT RUN: no activation occurred; initial OFF is not revocation evidence |
+| Documentation / diff check | Updated; no static suites repeated for documentation-only changes |
+
+Next action: provide access to an existing authenticated Admin Web/browser session
+or have the user execute the already-approved target toggle manually. Confirm
+the normal Backend activation succeeds, then verify listing and real Web/native
+playback before disabling the same Result and checking new requests. Do not forge
+an Admin token or bypass the Admin UI/policy; do not create a new login/session
+without addressing the task's restriction against non-publication DB writes.
+If live Backend binary resolution fails, the minimal proposed fix is to set both
+binary paths to verified installed executables and restart only that Backend under
+separate configuration/restart authorization. No such change was made or is
+currently proven necessary: the fresh-process resolver already passes.
+
+
+### S42.3A–E implementation — STATIC PASS
+
+- Git at S42.3F preflight: branch `main`, HEAD
+  `afa9213af29fa12d54db10eeade3e07538f22ced`, 28 changed/untracked files.
+  S42.3A–E remain UNCOMMITTED. S42.3F edits only these two documentation files;
+  expected final count is 30 changed/untracked files. No checkout/reset/stash.
+- A: public audio is `artifactType=AUDIO` even when `sourceMediaType=VIDEO`;
+  legacy mediaType retained. Backend project service, Web Museum audio cards,
+  Mobile publicAudio module/declaration and their regression tests updated.
+- B: generated MP4 publication is embedded in `backend/src/models/Result.ts`,
+  default OFF and independent from AI narration/audio approval. New
+  `services/public-video.service.ts`, `routes/public-video.routes.ts`, route mount
+  in `routes/index.ts`, and `tests/public-video.test.ts`.
+  Activation validates CURRENT transcript/translation/narration provenance,
+  source incarnation, real generated file, H.264/AAC, probe/full decode and SHA-256.
+  Public listing/playback revalidate publication, revision and bytes. Version CAS
+  protects toggle conflicts. No source upload fallback; protected Result API unchanged.
+- C: Admin project detail uses `VideoPublication.tsx` + CSS and
+  `videoPublicationService.ts`. Separate per-Result controls, explicit protected
+  MP4/browser preflight, confirmation, authenticated versioned PATCH and GET
+  synchronization; no optimistic success. Tests: `video-publication.test.mjs`.
+- D: Web `/thuyet-minh` uses `MuseumPublishedVideos.tsx` and
+  `features/museum/publishedVideos.ts`, mounted in `MuseumVideosPage.tsx` with
+  scoped `museum-video.css`. Result identity distinguishes languages/versions;
+  editorial `publicVideos.ts` catalog remains independent and unchanged.
+  Native HTML video controls, no autoplay, fresh public HEAD, no protected fallback,
+  abort/timeout/error/close/unmount cleanup. Tests: `published-videos.test.mjs`.
+- E: Mobile is aligned to Customer Web as functional baseline. New
+  `PublicVideoSection.tsx`, `publicVideo.mjs` and `publicVideo.d.mts`, mounted in
+  `MuseumScreens.tsx`. Existing Expo SDK 58 expo-video native controls provide
+  play/pause/seek; cache disabled, no autoplay, focus/close/unmount cleanup and late
+  async replacement protection. Editorial catalog and public/original/AI audio
+  remain separate. Tests: `public-video-parity.test.mjs`; existing Museum test
+  harness adds only the new component mock, without weakening assertions.
+
+### Public video API contract
+
+- `GET /api/published-video-narrations/public` returns
+  `{success:true,data:{videos:[{id,projectId,title,artifactType,sourceMediaType,languageCode,mimeType,duration,fileUrl}]}}`.
+  Backend listing currently caps results at 100. Only valid published generated MP4s are returned.
+- Playback URL is supplied by listing:
+  `/api/published-video-narrations/public/projects/:projectId/results/:resultId/file`.
+  GET/HEAD and byte ranges are supported; unavailable/revoked resources return 404.
+- Admin authenticated GET/PATCH:
+  `/api/published-video-narrations/admin/projects/:projectId/results/:resultId/publication`.
+  PATCH body `{enabled:boolean,version:number}`; response publication contains
+  `{resultId,projectId,enabled,version}`. Audio approval does not toggle this state.
+- Admin status reports configured enabled/version, not a comprehensive artifact
+  validity state. Browser preflight is preliminary; full activation validation and
+  public playback checks remain Backend authority. No database migration was executed.
+
+### Recorded static validation (executed in S42.3B–E; not rerun in F)
+
+| Scope | Actual result |
+| --- | --- |
+| Backend video/public audio/original audio/provenance/source tests | 51/51 PASS; typecheck/lint/build PASS |
+| Admin video/original audio/project regression | 17/17 PASS; typecheck/lint/build PASS |
+| Customer Web public video/catalog/audio regression | 31/31 PASS; typecheck/lint/build PASS |
+| Mobile video/audio/Museum regression | 40/40 PASS; typecheck/lint PASS |
+| Web regression checked during Mobile parity | 19/19 PASS |
+| Both Customer design checks | PASS |
+| Android offline Hermes export | PASS, 1,481 modules; bundle only, not APK/device acceptance |
+
+Web lint has 3 existing warnings in unrelated project/translation components;
+Mobile lint has 1 existing array-style warning in translationService.ts.
+Web build has bundle/chunk warnings. These were not broadened into unrelated fixes.
+
+### S42.3F runtime acceptance — BLOCKED (2026-11-15, approximately 10:52 +07)
+
+Only read-only local HTTP/process inspection was performed. No Backend or frontend
+was started/restarted by this task, and no session credentials were read or fabricated.
+
+| Check | Runtime evidence / gate |
+| --- | --- |
+| Backend running | PASS: localhost:8080 health HTTP 200, status ok, database connected; PID 16404 |
+| Admin reachable | HTTP PASS: localhost:5174/projects HTTP 200; Vite serves new VideoPublication source; PID 32192. Authenticated UI flow NOT VERIFIED |
+| Customer reachable | HTTP PASS: localhost:5173/thuyet-minh HTTP 200; Vite serves new MuseumPublishedVideos source; PID 21468. Browser rendering NOT VERIFIED |
+| Public generated MP4 listing | HTTP 200/success=true, videos count 0. This does NOT prove there are no private/generated Results |
+| Select a valid generated Result | BLOCKED: no public candidate; no authenticated Admin session/selected Result available to this task |
+| Admin enable/disable | BLOCKED: no concrete project/Result and no approval for a specific shared-database publication mutation. Anonymous Admin status GET returns 401 |
+| Customer MP4 playback | BLOCKED: no published candidate; browser automation unavailable. No actual video decoding/playback claimed |
+| Mobile MP4 playback | BLOCKED: no Metro listener at 8081, no detected emulator/adb process, adb unavailable on PATH; no device/native playback acceptance |
+| Revocation ON → OFF | BLOCKED: no toggle performed. Generic unavailable/404 behavior/static tests are not live revocation evidence |
+| Audio independence HTTP smoke | PASS: public listing returns 8 guides; one supplied AI public URL HEAD returns 200 audio/mpeg, Content-Length 1102892. Audible/browser/native playback NOT VERIFIED |
+| Source privacy smoke | PASS: legacy public /source alias returns 404; no source media fallback used |
+
+The health response does not independently identify the exact database deployment;
+the shared Atlas target must be confirmed through a safe administrative procedure
+before any mutation. No connection string or credential was inspected or recorded.
+No Atlas writes, publication changes, AI calls, real artifact generation, media edits,
+Docker/CD changes or Git publishing occurred. Overall runtime gate: **BLOCKED**.
+
+### Next authorized step / controlled acceptance prerequisites
+
+1. User opens Admin and selects an existing generated Result. Record only projectId,
+   resultId and language; verify the actual database/environment and current MP4 validity.
+2. Before any shared Atlas mutation, present the exact project/Result and planned
+   enable-then-disable operations for explicit approval. Do not request blind approval
+   or use a synthetic identifier as a substitute for the target.
+3. With approval, record initial publication/version, enable using normal Admin flow,
+   inspect Web listing and actual playback, and test the same Result on Android.
+4. User supplies/runs the Android environment with reachable LAN API configuration;
+   do not silently edit .env. Verify native play/pause/seek, language selection and blur cleanup.
+5. Disable the same approved publication; verify listing removal and fresh HEAD/GET
+   denial. Retest audio independently without changing its approval/publication.
+6. Update F with real evidence. Do not regenerate missing media or recreate finished
+   projects. Revocation cannot erase bytes already downloaded/buffered on a client.
+
+
 ## S37.4C — Backend CI GROUP_TRANSLATION_DISABLED (2026-11-08)
 
 - Branch ci/first-run, baseline22e6ca5. Run #2: Backend87/88, other three apps

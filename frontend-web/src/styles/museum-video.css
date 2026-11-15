@@ -1,4 +1,9 @@
 .museum-theme .museum-video { overflow-wrap: anywhere; }
+.museum-theme .museum-published-videos { display: grid; gap: var(--museum-space-4); }
+.museum-theme .museum-published-videos > .museum-button { justify-self: start; }
+.museum-theme .museum-published-videos__player { display: grid; gap: var(--museum-space-4); padding: var(--museum-space-6); border: 1px solid var(--museum-color-border); border-radius: var(--museum-radius-lg); }
+.museum-theme .museum-published-videos__player video { width: 100%; max-height: 70vh; aspect-ratio: 16 / 9; background: var(--museum-color-primary); border-radius: var(--museum-radius-md); }
+.museum-theme .museum-published-videos__player .museum-button { justify-self: start; }
 .museum-theme .museum-video__hero { padding-block: var(--museum-space-4) var(--museum-space-8); background: var(--museum-color-surface); border-bottom: 1px solid var(--museum-color-border); }
 .museum-theme .museum-video__hero .museum-section-heading { margin: 0; }
 .museum-theme .museum-video__breadcrumb { margin-block: var(--museum-space-4) var(--museum-space-6); font-size: var(--museum-font-size-sm); }

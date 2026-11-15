@@ -14,6 +14,7 @@ import { Button } from '../components/common/Button';
 import { OperationProgress } from '../components/operations/OperationsCommon';
 import { NarrationApprovalModal } from '../components/operations/NarrationApprovalModal';
 import { OriginalAudioPublicationModal } from '../components/operations/OriginalAudioPublicationModal';
+import { VideoPublicationModal } from '../components/operations/VideoPublicationModal';
 import { useProjects } from '../hooks/useOperations';
 import type { AdminProject, MediaType } from '../types/operations';
 import type { ProjectStatus } from '../types/domain';
@@ -31,6 +32,7 @@ export function AdminProjectsPage() {
   const [page, setPage] = useState(1);
   const [approvalProject, setApprovalProject] = useState<AdminProject | null>(null);
   const [originalProject, setOriginalProject] = useState<AdminProject | null>(null);
+  const [videoProject, setVideoProject] = useState<AdminProject | null>(null);
   const { data, loading, error, retry } = useProjects({ search, status, mediaType, page, limit: 10 });
   const filtered = Boolean(search.trim() || status !== 'ALL' || mediaType !== 'ALL');
   const reset = () => { setSearch(''); setStatus('ALL'); setMediaType('ALL'); setPage(1); };
@@ -80,6 +82,8 @@ export function AdminProjectsPage() {
                     <Button id={`approve-project-${p.id}`} variant="secondary" disabled={!isCompleted} onClick={() => isCompleted && setApprovalProject(p)}
                       aria-label={`Xem và phê duyệt âm thanh dự án ${p.name}`} aria-describedby={!isCompleted ? `approval-reason-${p.id}` : undefined}
                       title={!isCompleted ? 'Chỉ có thể duyệt khi dự án đã hoàn thành' : isApproved ? 'Đã duyệt phát hành (Bấm để xem/chỉnh sửa)' : 'Chưa duyệt phát hành (Bấm để duyệt)'}>Duyệt</Button>
+                    <Button variant="secondary" aria-haspopup="dialog" aria-label={`Quản lý công khai video dự án ${p.name}`}
+                      onClick={() => setVideoProject(p)}>Duyệt video</Button>
                     <Button variant="secondary" aria-haspopup="dialog" aria-label={`Quản lý âm thanh gốc dự án ${p.name}`}
                       onClick={() => setOriginalProject(p)}>Âm thanh gốc</Button>
                   </div>{!isCompleted && <small id={`approval-reason-${p.id}`}>Chỉ duyệt khi dự án hoàn thành</small>}</td>
@@ -94,5 +98,6 @@ export function AdminProjectsPage() {
     </Card>
     {approvalProject && <NarrationApprovalModal project={approvalProject} onClose={closeApproval} onUpdated={retry} />}
     {originalProject && <OriginalAudioPublicationModal key={originalProject.id} project={originalProject} onClose={() => setOriginalProject(null)} />}
+    {videoProject && <VideoPublicationModal key={videoProject.id} project={videoProject} onClose={() => setVideoProject(null)} />}
   </div>;
 }

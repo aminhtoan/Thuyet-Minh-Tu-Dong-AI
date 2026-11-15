@@ -8,6 +8,8 @@ interface GroupedAudioGuide {
   title: string
   description?: string
   mediaType: string
+  artifactType?: 'AUDIO'
+  sourceMediaType?: 'AUDIO' | 'VIDEO'
   languages: PublicLanguageOption[]
 }
 
@@ -102,7 +104,6 @@ export function MuseumCustomerAudioSection() {
       ) : (
         <div className="museum-audio-grid">
           {guides.map((guide) => {
-            const isAudio = guide.mediaType === 'AUDIO'
             const activeLangCode = selectedLangs[guide.key] || (guide.languages[0] ? publicAudioOptionKey(guide.languages[0]) : '')
 
             return (
@@ -137,7 +138,9 @@ export function MuseumCustomerAudioSection() {
                       <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
                       <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
                     </svg>
-                    <span>{isAudio ? 'Âm thanh' : 'Video'}</span>
+                    {/* This endpoint publishes audio artifacts, even when sourceMediaType is VIDEO.
+                        Legacy responses without artifactType retain the same audio-only contract. */}
+                    <span>Âm thanh</span>
                   </span>
 
                   {/* Centered white circular play button */}

@@ -16,6 +16,7 @@ export function parsePublicGuides(payload) {
   if (!payload?.success || !Array.isArray(payload.data?.guides)) throw Error('PUBLIC_AUDIO_INVALID_RESPONSE');
   return payload.data.guides.map(guide => {
     if (typeof guide.key !== 'string' || typeof guide.title !== 'string' || !Array.isArray(guide.languages)) throw Error('PUBLIC_AUDIO_INVALID_RESPONSE');
+    if (guide.artifactType !== undefined && guide.artifactType !== 'AUDIO') throw Error('PUBLIC_AUDIO_INVALID_ARTIFACT');
     const seen = new Set();
     const languages = guide.languages.map(option => {
       if (!['ORIGINAL_AUDIO', 'AI_NARRATION', undefined].includes(option.type) || typeof option.code !== 'string' || typeof option.name !== 'string'
@@ -26,7 +27,8 @@ export function parsePublicGuides(payload) {
       seen.add(key);
       return { ...option, optionId: key, type: option.type || 'AI_NARRATION' };
     });
-    return { key: guide.key, title: guide.title, description: typeof guide.description === 'string' ? guide.description : '', languages };
+    return { key: guide.key, title: guide.title, description: typeof guide.description === 'string' ? guide.description : '',
+      artifactType: 'AUDIO', sourceMediaType: guide.sourceMediaType ?? guide.mediaType, mediaType: guide.mediaType, languages };
   });
 }
 

@@ -13,6 +13,15 @@ const resultSchema = new Schema(
     fileSize: { type: Number, required: true, min: 1 },
     width: { type: Number, min: 1 },
     height: { type: Number, min: 1 },
+    // Independent from narration approval; legacy Results remain private.
+    videoPublication: { type: new Schema({
+      enabled: { type: Boolean, default: false, required: true },
+      version: { type: Number, default: 0, min: 0, required: true, validate: Number.isSafeInteger },
+      snapshot: String,
+      digest: String,
+      reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+      reviewedAt: Date,
+    }, { _id: false }), default: undefined },
   },
   { timestamps: true },
 );

@@ -415,6 +415,12 @@ export const getPublicAudioGuides = async () => {
     }
   }
 
-  return Array.from(guideMap.values(), guide => ({ ...guide, key: createHash('sha256').update(guide.key).digest('hex') }));
+  return Array.from(guideMap.values(), guide => ({
+    ...guide,
+    // Preserve legacy mediaType (source type) for existing consumers.
+    artifactType: 'AUDIO' as const,
+    sourceMediaType: guide.mediaType,
+    key: createHash('sha256').update(guide.key).digest('hex'),
+  }));
 };
 

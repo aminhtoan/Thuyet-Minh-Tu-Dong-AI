@@ -61,6 +61,7 @@ test('project GET filters and manual approval payload stay unchanged; status100 
     '../hooks/useOperations': { useProjects: () => ({ data, loading: false, error: false, retry() {} }) },
     '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: () => null },
     '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: () => null },
+    '../components/operations/VideoPublicationModal': { VideoPublicationModal: () => null },
   });
   const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(AdminProjectsPage)));
   assert.equal((html.match(/disabled=""/g) ?? []).length, 4, 'two unavailable approvals plus two pagination boundaries');
@@ -92,6 +93,7 @@ test('project row opens original-audio modal for the selected project without a 
     '../hooks/useOperations': { useProjects: () => ({ data: { items: projects, pagination: { total: 3, totalPages: 1, page: 1 } }, loading: false, error: false, retry() {} }) },
     '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: 'ai-modal' },
     '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: 'original-modal' },
+    '../components/operations/VideoPublicationModal': { VideoPublicationModal: 'video-modal' },
   });
   const findAll = (node, predicate) => !node || typeof node !== 'object' ? [] : [ ...(predicate(node) ? [node] : []), ...[node.props?.children].flat(Infinity).flatMap(child => findAll(child, predicate)) ];
   const render = () => { cursor = 0; return AdminProjectsPage(); };
@@ -99,7 +101,7 @@ test('project row opens original-audio modal for the selected project without a 
   const actions = findAll(tree, node => node.props?.className === 'projects-row-actions');
   assert.equal(actions.length, 3);
   const labels = [actions[0].props.children].flat().map(node => node.props.children);
-  assert.deepEqual(labels, ['Xem', 'Duyệt', 'Âm thanh gốc']);
+  assert.deepEqual(labels, ['Xem', 'Duyệt', 'Duyệt video', 'Âm thanh gốc']);
   const buttons = findAll(tree, node => node.props?.children === 'Âm thanh gốc');
   assert.equal(buttons[0].props.disabled, undefined);
   buttons[0].props.onClick(); tree = render();
@@ -111,4 +113,37 @@ test('project row opens original-audio modal for the selected project without a 
   findAll(tree, node => node.props?.children === 'Âm thanh gốc')[1].props.onClick(); tree = render();
   modal = findAll(tree, node => node.type === 'original-modal')[0];
   assert.equal(modal.props.project.id, 'project-1');
+});
+
+test('Duyệt video opens only the chosen project control and preserves independent audio actions', () => {
+  let cursor = 0; const slots = [];
+  const React = { ...require('react'), useState(value) { const i = cursor++; if (!(i in slots)) slots[i] = value; return [slots[i], value => { slots[i] = value; }]; } };
+  const projects = rows.map((row, index) => ({ ...row, id: `video-project-${index}`, customerName: 'Fixture' }));
+  const { AdminProjectsPage } = compile('pages/AdminProjectsPage.tsx', {
+    react: React,
+    '../hooks/useOperations': { useProjects: () => ({ data: { items: projects, pagination: { total: 3, totalPages: 1, page: 1 } }, loading: false, error: false, retry() {} }) },
+    '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: 'ai-modal' },
+    '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: 'original-modal' },
+    '../components/operations/VideoPublicationModal': { VideoPublicationModal: 'video-modal' },
+  });
+  const all = (node, predicate) => !node || typeof node !== 'object' ? [] : [...(predicate(node) ? [node] : []), ...[node.props?.children].flat(Infinity).flatMap(child => all(child, predicate))];
+  const render = () => { cursor = 0; return AdminProjectsPage(); };
+  let tree = render();
+  assert.equal(all(tree, node => node.type === 'video-modal').length, 0);
+  assert.equal(all(tree, node => node.props?.children === 'Xem').length, 3);
+  assert.equal(all(tree, node => node.props?.children === 'Duyệt').length, 3);
+  assert.equal(all(tree, node => node.props?.children === 'Âm thanh gốc').length, 3);
+  const buttons = all(tree, node => node.props?.children === 'Duyệt video');
+  assert.equal(buttons.length, 3); assert.equal(buttons[0].props.variant, 'secondary');
+  assert.equal(buttons[0].props.disabled, undefined, 'a project need not be COMPLETED merely to inspect available MP4s');
+  buttons[0].props.onClick(); tree = render();
+  let modal = all(tree, node => node.type === 'video-modal')[0];
+  assert.equal(modal.props.project.id, 'video-project-0');
+  assert.equal(all(tree, node => node.type === 'ai-modal' || node.type === 'original-modal').length, 0);
+  modal.props.onClose(); tree = render(); assert.equal(all(tree, node => node.type === 'video-modal').length, 0);
+  all(tree, node => node.props?.children === 'Duyệt video')[2].props.onClick(); tree = render();
+  modal = all(tree, node => node.type === 'video-modal')[0]; assert.equal(modal.props.project.id, 'video-project-2');
+  const css = readFileSync(new URL('../src/styles/projects.css', import.meta.url), 'utf8');
+  assert.match(css, /\.projects-row-actions\s*\{[^}]*flex-wrap:\s*wrap/);
+  assert.match(css, /\.video-publication-dialog\s*\{[^}]*max-height:[^}]*overflow-y:\s*auto/);
 });

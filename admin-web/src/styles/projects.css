@@ -11,7 +11,13 @@
 .projects-page .projects-table td small { margin-top: var(--space-1); color: var(--secondary); }
 .projects-page .projects-table td .projects-progress-note { max-width: 160px; }
 .projects-secondary { font-size: var(--text-small); color: var(--secondary); }
-.projects-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.projects-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); max-width: 320px; }
+.projects-page .projects-table td:last-child { min-width: 200px; }
+.admin-shell .video-publication-dialog { width: min(800px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.video-publication-dialog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.video-publication-dialog__header h2 { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.video-publication-dialog__header .button { flex-shrink: 0; }
+.video-publication-dialog .video-publication { min-width: 0; }
 .projects-row-actions .button { font-size: var(--text-small); min-height: var(--control-height-compact); padding: var(--space-2); white-space: nowrap; }
 .admin-shell .original-publication-dialog { width: min(640px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
 .original-publication-dialog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }

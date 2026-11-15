@@ -8,6 +8,7 @@ import { OperationProgress, OperationSkeleton } from '../components/operations/O
 import { useProject } from '../hooks/useOperations';
 import { formatLanguageCode } from '../utils/operationsFormat';
 import { OriginalAudioPublication } from '../components/operations/OriginalAudioPublication';
+import { VideoPublication } from '../components/operations/VideoPublication';
 
 export function AdminProjectDetailPage() {
   const { projectId = '' } = useParams();
@@ -106,6 +107,7 @@ export function AdminProjectDetailPage() {
       </div>
 
       {p.media && <OriginalAudioPublication key={projectId} projectId={projectId} />}
+      {p.media?.mediaType === 'VIDEO' && <VideoPublication key={`video-${projectId}`} projectId={projectId} />}
       <Card>
         <h2>Công việc liên quan</h2>
         {data.jobs?.length ? (

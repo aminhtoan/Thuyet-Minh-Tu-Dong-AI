@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { MuseumCard, MuseumContainer, MuseumSectionHeading } from '../components/museum'
 import { getPublishedPublicVideos, isPublicVideoAsset } from '../features/museum/publicVideos'
 import { MuseumCustomerAudioSection } from '../components/museum/MuseumCustomerAudioSection'
+import { MuseumPublishedVideos } from '../components/museum/MuseumPublishedVideos'
 import '../styles/museum-video.css'
 
 export function MuseumVideosPage() {
@@ -33,7 +34,9 @@ export function MuseumVideosPage() {
 
       {/* Video Section */}
       <MuseumContainer>
+        <MuseumPublishedVideos />
         <section className="museum-video__list" aria-label="Video đã công bố">
+          <h2>Video biên tập</h2>
           {videos.length ? (
             <div className={`museum-video__cards${videos.length === 1 ? ' museum-video__cards--featured' : ''}`}>
               {videos.map((video) => (

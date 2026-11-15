@@ -1,5 +1,118 @@
 # Multilingual AI Narration System
 
+## Current handoff — S42.3H (2026-11-15)
+
+Read [PROGRESS.md — START HERE](PROGRESS.md#start-here--current-project-status)
+first. This handoff supersedes historical implementation/sprint snapshots below.
+Verify source and Git before editing; do not reimplement accepted work without a
+regression. Perform only the requested next step; no automatic commit/push/merge.
+
+S42.3H **STATIC PASS; Mobile scope CUSTOMER**. Login and current-user loading
+reject ADMIN, and there is no Admin Mobile route. Do not introduce Duyệt video
+or a publication PATCH control into Customer Mobile. Existing S42.3E public video
+UI is the correct parity scope: fresh public listing on focus/refresh, per-Result
+languages, removal of revoked entries and selected player on refresh, no protected
+fallback/autoplay/cache, native controls/seek and blur/unmount cleanup. Catalog and
+public original/AI audio remain independent.
+
+H changed only Mobile `tests/public-video-parity.test.mjs` and these docs, adding
+refresh/revocation/race and Customer-role regressions. Production/UI code did not
+need alteration. Mobile tests 43/43, Web parity tests 19/19, both design checks,
+Mobile typecheck/lint and offline Android Hermes bundle PASS; 1 existing unrelated
+lint warning remains. No live publication/data changes or runtime device test.
+Branch main/afa9213 and all 34 previously changed/untracked files are preserved.
+F2 live acceptance is still pending; the older OFF/version-0 observations below
+refer to F2's inspection time and were not re-read in H.
+
+S42.3G **STATIC PASS**: Admin `/projects` now shows Xem → Duyệt → Duyệt video →
+Âm thanh gốc. `VideoPublicationModal` opens the selected project's existing
+`VideoPublication` controls. It supports individual Results/languages, missing-MP4
+feedback, explicit verification/confirmation and versioned ON/OFF synchronization
+through the unchanged S42.3C service. Opening the modal does not publish anything;
+audio approval is independent. The old project-detail control remains available.
+Styles preserve compact secondary actions, wrapping and viewport-bounded dialog
+scrolling. Admin project/video/original-audio tests 21/21, typecheck/lint/build and
+diff check PASS; no real publication or database/media change. Full file inventory
+is in the latest PROGRESS entry. F2 live acceptance below is still BLOCKED; G did
+not run or supersede it. Use the new Duyệt video entry point only when the next
+runtime task is requested.
+
+Latest runtime gate: **BLOCKED at authenticated Admin Web interaction**, not a
+confirmed missing MP4 or broken fresh-process binary resolver. F1 found 5 generated
+Results using read-only database/file inspection. User then authorized testing only
+project `6af074f1eead9966720896f0`, Result `6af077f1c2ce5544e17363cb`, language en,
+and turning it OFF afterward. Preserve that concrete authorization; no repeated
+approval is required for the same publication toggle. Other data/config/restart
+changes are not authorized by it.
+
+F2 revalidated that target: CURRENT, H.264/AAC, 28.21225 seconds, 2,511,219 bytes,
+source-distinct generated MP4, full decode to null output PASS, unchanged SHA-256
+`8fb5f8f66bca64aafeb6f447cddc87536c7e7b7592c8c9cbec88fdcfd611e3e2`.
+Current binary settings are the command names ffmpeg/ffprobe, both verified by
+the real resolver in a diagnostic process. A relative-file existence check is not
+PATH executable validation; do not repeat the earlier inference that these settings
+are invalid just because existsSync returns false. No environment/configuration
+was edited. Live Backend process environment remains independently UNVERIFIED;
+successful diagnostic decode is not a successful live Admin activation.
+
+Target publication remains OFF/version 0 and absent from public listing. No
+publication was changed. Exact-target anonymous Admin status GET returns 401;
+there is no browser-control tool/authenticated session available in this agent
+session, and no detected Metro/Android runtime. Actual Web sound/seek, native
+playback, ON persistence and ON-to-OFF revocation remain BLOCKED/NOT RUN.
+Next: use an existing authenticated Admin Web session or user-assisted execution
+of the approved toggle, then observe live activation/listing/playback and revoke
+the same Result. Do not manufacture Admin credentials or mutate auth-session data
+to get around the task's non-publication write restriction. Details are in the
+latest F1/F2 PROGRESS entry; older F observations below are historical.
+
+- Branch `main`, HEAD `afa9213af29fa12d54db10eeade3e07538f22ced`.
+  S42.3A–E are STATIC PASS and UNCOMMITTED (28 changed/untracked files before F;
+  F adds edits to these two docs). Preserve all existing changes.
+- Backend: generated Result MP4 publication defaults OFF and is independent from
+  narration/audio approval. Admin enables/disables a specific Result using version
+  CAS. Activation validates real generated H.264/AAC MP4, full decode, digest and
+  CURRENT upstream/source provenance. Public listing/playback revalidate and deny
+  missing, corrupt, stale or revoked artifacts. Never fall back to source upload.
+  Protected Result APIs and original/AI audio policies remain unchanged.
+- APIs: public GET `/api/published-video-narrations/public` returns `data.videos`
+  with Result id, projectId, title, languageCode, duration, artifact/source type,
+  MIME and fileUrl. Use the supplied public playback URL; do not derive it from
+  protected Result data. Admin GET/PATCH
+  `/api/published-video-narrations/admin/projects/:projectId/results/:resultId/publication`
+  uses `{enabled,version}` and returns `data.publication`.
+- Admin: project detail's `VideoPublication` control is per generated Result,
+  authenticated, with explicit MP4 preflight/confirmation, loading/errors and
+  Backend resynchronization. It does not approve audio or publish on page open.
+- Customer Web `/thuyet-minh`: `MuseumPublishedVideos` + `publishedVideos.ts`
+  consume only the public contract. Existing editorial video catalog remains an
+  independent section. Customer Web is Mobile's functional baseline.
+- Mobile: `PublicVideoSection` + `publicVideo.mjs`/declaration use installed Expo
+  SDK 58 expo-video, native play/pause/seek, no autoplay, no persistent video cache,
+  fresh public HEAD, abort/error/timeout handling and focus/unmount cleanup.
+  Result identity supports multiple MP4s/languages per project. Public original
+  audio, AI audio and editorial catalog were preserved.
+- Main implementation files/tests and acceptance evidence are enumerated in the
+  current PROGRESS entry. Recorded PASS: Backend 51 tests; Admin 17; Web 31;
+  Mobile 40; Web cross-check 19; associated typecheck/lint/build/design checks and
+  offline Android Hermes bundle. These are static/mock results, not live media acceptance.
+- S42.3F runtime gate **BLOCKED**: existing Backend health HTTP 200/database
+  connected; Admin and Customer routes HTTP 200 and current components served.
+  Public video API returns 0 videos. This does not establish whether private
+  generated Results exist. Admin authenticated toggle and Web/Mobile MP4 playback
+  have not been performed. No Metro/device runtime was detected; browser visual
+  automation was unavailable.
+- Audio HTTP smoke PASS: 8 public guides and one public AI audio HEAD HTTP 200,
+  audio/mpeg. This is not audible playback verification. Legacy public /source
+  remains 404. No real-data publication, database write, AI invocation, restart,
+  media regeneration or Docker/CD operation was performed in F.
+- Next: user selects a real generated project/Result in Admin, confirms the exact
+  database/environment, and explicitly approves enabling/disabling that target
+  before any shared Atlas mutation. Then test real Web/native playback and
+  revocation of fresh requests, preserving audio. Do not invent missing data or
+  treat prior static PASS as runtime PASS. Buffered/downloaded bytes cannot be revoked.
+
+
 ## Project
 
 Vietnamese: Hệ thống thuyết minh tự động đa ngôn ngữ
@@ -28,7 +141,7 @@ Upload → Speech-to-Text → Edit Transcript → Translate/Edit → Select Voic
 | Application | Folder | State |
 | --- | --- | --- |
 | Customer Web | `frontend-web/` | Implemented UI; React + TypeScript + Vite |
-| Customer Mobile | `frontend-mobile/` | Implemented UI; React Native + TypeScript + Expo SDK 57 |
+| Customer Mobile | `frontend-mobile/` | Implemented UI; React Native + TypeScript + Expo SDK 58 |
 | Admin Web | `admin-web/` | S24.4 API-integrated Admin client; React + TypeScript + Vite; separate app |
 | Backend | `backend/` | S17 foundation implemented; Node.js + Express.js + TypeScript + Mongoose |
 

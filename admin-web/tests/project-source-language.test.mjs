@@ -71,6 +71,7 @@ test('Project list and detail render unknown source without inventing a source o
       '../hooks/useOperations': { useProjects: () => ({ data, loading: false, error: false, retry() {} }) },
       '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: () => null },
       '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: () => null },
+      '../components/operations/VideoPublicationModal': { VideoPublicationModal: () => null },
     });
     assert.match(render(AdminProjectsPage), /Chưa xác định/);
     const { AdminProjectDetailPage } = compile('pages/AdminProjectDetailPage.tsx', {

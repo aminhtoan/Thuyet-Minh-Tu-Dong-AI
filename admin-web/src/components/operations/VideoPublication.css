@@ -1,0 +1,12 @@
+.video-publication { display: grid; gap: 16px; }
+.video-publication > h2, .video-publication > p, .video-publication__item > h3, .video-publication__item > p { margin: 0; }
+.video-publication__item { display: grid; gap: 12px; padding: 20px; border: 1px solid var(--border); border-radius: 12px; overflow-wrap: anywhere; }
+.video-publication__item h3 { font-size: 16px; line-height: 1.5; }
+.video-publication__item p { line-height: 1.6; }
+.video-publication__item [role="alert"] { color: var(--danger); }
+.video-publication__toggle { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.video-publication__toggle input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--primary); }
+.video-publication__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.video-publication__actions .button { min-height: 44px; }
+.video-publication input:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+@media (max-width: 600px) { .video-publication__item { padding: 16px; } .video-publication__actions .button { flex: 1 1 180px; } }

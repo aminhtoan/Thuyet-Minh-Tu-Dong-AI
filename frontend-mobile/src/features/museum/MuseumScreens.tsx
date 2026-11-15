@@ -5,6 +5,7 @@ import { publicMuseum, publishedExhibitions, findPublicVideo, languageAvailable,
 import { MuseumFrame, MuseumImage, MuseumLink, MuseumTitle } from './MuseumUI';
 import { ms } from './theme';
 import { PublicAudioSection } from './PublicAudioSection';
+import { PublicVideoSection } from './PublicVideoSection';
 
 function Intro() {
   return <View style={ms.intro}><MuseumImage path={publicMuseum.images.museumIntro.src} alt={publicMuseum.images.museumIntro.alt} /><View style={ms.introCopy}><Text style={ms.eyebrow}>Lắng nghe quá khứ</Text><Text accessibilityRole="header" style={ms.introHeading}>Gìn giữ ký ức. Kết nối hôm nay.</Text>
@@ -58,9 +59,10 @@ export function MuseumVideosScreen() {
       <MuseumTitle eyebrow="Bảo tàng Chứng tích Chiến tranh" title="Thuyết minh bảo tàng"
         description="Lắng nghe những câu chuyện lịch sử qua âm thanh và nhiều ngôn ngữ." />
       <PublicAudioSection />
+      <PublicVideoSection />
 
       <Text accessibilityRole="header" style={[ms.heading, { marginTop: 16 }]}>
-        Video thuyết minh
+        Video biên tập
       </Text>
       {publicMuseum.videos.length ? (
         publicMuseum.videos.map(video => (

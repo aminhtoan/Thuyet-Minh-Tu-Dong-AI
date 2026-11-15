@@ -120,7 +120,10 @@ test('public narration listing and playback share the approved current publicati
       sub.mock.method(Project, 'findById', async () => ({ _id: projectId, userId: ownerId, sourceLanguage: 'vi', sourceLanguageStatus: 'CONFIRMED' }) as never);
       sub.mock.method(Media, 'findOne', async () => media as never);
       sub.mock.method(Media, 'find', async () => [media] as never);
-      const body = await (await fetch(`${base}/api/projects/public-audio-guides`)).json() as { data: { guides: { key: string; languages: { type: string; code: string; optionId: string }[] }[] } };
+      const body = await (await fetch(`${base}/api/projects/public-audio-guides`)).json() as { data: { guides: { key: string; artifactType: string; sourceMediaType: string; mediaType: string; languages: { type: string; code: string; optionId: string }[] }[] } };
+      assert.equal(body.data.guides[0]!.artifactType, 'AUDIO');
+      assert.equal(body.data.guides[0]!.sourceMediaType, 'VIDEO');
+      assert.equal(body.data.guides[0]!.mediaType, 'VIDEO'); // legacy contract unchanged
       const languages = body.data.guides[0]!.languages;
       assert.ok(languages.some(option => option.type === 'ORIGINAL_AUDIO' && option.code === 'vi'));
       assert.ok(languages.some(option => option.type === 'AI_NARRATION' && option.code === 'en'));
