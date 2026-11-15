@@ -60,6 +60,7 @@ test('project GET filters and manual approval payload stay unchanged; status100 
   const { AdminProjectsPage } = compile('pages/AdminProjectsPage.tsx', {
     '../hooks/useOperations': { useProjects: () => ({ data, loading: false, error: false, retry() {} }) },
     '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: () => null },
+    '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: () => null },
   });
   const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(AdminProjectsPage)));
   assert.equal((html.match(/disabled=""/g) ?? []).length, 4, 'two unavailable approvals plus two pagination boundaries');
@@ -80,4 +81,34 @@ test('Admin narration preview uses authenticated Blob transport and revokes obje
   assert.match(api, /response\.blob\(\)/);
   assert.match(backend, /audioUrl: `\/api\/projects\/\$\{n\.projectId\.toString\(\)\}\/narrations\/\$\{n\._id\.toString\(\)\}\/audio`/);
   assert.doesNotMatch(backend, /audioUrl: `\/api\/projects\/public-audio\/\$\{n\.projectId/);
+});
+
+test('project row opens original-audio modal for the selected project without a COMPLETED requirement', () => {
+  let cursor = 0; const slots = [];
+  const React = { ...require('react'), useState(value) { const index = cursor++; if (!(index in slots)) slots[index] = value; return [slots[index], value => { slots[index] = value; }]; } };
+  const projects = rows.map((row, index) => ({ ...row, customerName: 'Fixture', id: `project-${index}` }));
+  const { AdminProjectsPage } = compile('pages/AdminProjectsPage.tsx', {
+    react: React,
+    '../hooks/useOperations': { useProjects: () => ({ data: { items: projects, pagination: { total: 3, totalPages: 1, page: 1 } }, loading: false, error: false, retry() {} }) },
+    '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: 'ai-modal' },
+    '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: 'original-modal' },
+  });
+  const findAll = (node, predicate) => !node || typeof node !== 'object' ? [] : [ ...(predicate(node) ? [node] : []), ...[node.props?.children].flat(Infinity).flatMap(child => findAll(child, predicate)) ];
+  const render = () => { cursor = 0; return AdminProjectsPage(); };
+  let tree = render();
+  const actions = findAll(tree, node => node.props?.className === 'projects-row-actions');
+  assert.equal(actions.length, 3);
+  const labels = [actions[0].props.children].flat().map(node => node.props.children);
+  assert.deepEqual(labels, ['Xem', 'Duyệt', 'Âm thanh gốc']);
+  const buttons = findAll(tree, node => node.props?.children === 'Âm thanh gốc');
+  assert.equal(buttons[0].props.disabled, undefined);
+  buttons[0].props.onClick(); tree = render();
+  let modal = findAll(tree, node => node.type === 'original-modal')[0];
+  assert.equal(modal.props.project.id, 'project-0');
+  assert.equal(findAll(tree, node => node.type === 'ai-modal').length, 0);
+  modal.props.onClose(); tree = render();
+  assert.equal(findAll(tree, node => node.type === 'original-modal').length, 0);
+  findAll(tree, node => node.props?.children === 'Âm thanh gốc')[1].props.onClick(); tree = render();
+  modal = findAll(tree, node => node.type === 'original-modal')[0];
+  assert.equal(modal.props.project.id, 'project-1');
 });

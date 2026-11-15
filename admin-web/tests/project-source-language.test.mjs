@@ -70,10 +70,14 @@ test('Project list and detail render unknown source without inventing a source o
     const { AdminProjectsPage } = compile('pages/AdminProjectsPage.tsx', {
       '../hooks/useOperations': { useProjects: () => ({ data, loading: false, error: false, retry() {} }) },
       '../components/operations/NarrationApprovalModal': { NarrationApprovalModal: () => null },
+      '../components/operations/OriginalAudioPublicationModal': { OriginalAudioPublicationModal: () => null },
     });
     assert.match(render(AdminProjectsPage), /Chưa xác định/);
     const { AdminProjectDetailPage } = compile('pages/AdminProjectDetailPage.tsx', {
       '../hooks/useOperations': { useProject: () => ({ data: { project: mapped, jobs: [] }, loading: false, error: false, retry() {} }) },
+      // Publication is tested separately; this source-language fixture has no media.
+      '../../lib/api': { ApiError: class extends Error {}, adminApi: async () => { throw Error('Live API forbidden'); } },
+      '../lib/api': { adminApi: async () => { throw Error('Live API forbidden'); } },
     });
     assert.match(render(AdminProjectDetailPage), /Chưa xác định/);
     assert.equal(mapped.sourceLanguage, source);

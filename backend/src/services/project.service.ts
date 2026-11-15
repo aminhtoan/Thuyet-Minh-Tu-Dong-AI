@@ -1,4 +1,5 @@
 import { drainRuntime, detached } from '../maintenance/runtime.js';
+import { createHash } from 'node:crypto';
 import type { Types } from 'mongoose';
 import { ActivityLog } from '../models/ActivityLog.js';
 import { Media } from '../models/Media.js';
@@ -16,6 +17,7 @@ import { assertSourceLanguageConfirmed, sourceLanguageState, type SourceLanguage
 import { updateProjectSource } from './source-language.service.js';
 import { assertCustomerTarget } from './translation/customer-languages.js';
 import { listPublicNarrations } from './public-media-policy.service.js';
+import { listPublicOriginalAudio } from './original-audio.service.js';
 
 interface ProjectInput { name: string; description?: string; sourceLanguage?: string | null; sourceLanguageMode?: SourceLanguageMode }
 interface ListInput { search?: string; status?: ProjectStatus; page: number; limit: number }
@@ -294,9 +296,10 @@ export const getLanguageVariants = async (projectId: string, userId: string, cur
 
 export const getPublicAudioGuides = async () => {
   const narrations = await listPublicNarrations();
-  if (narrations.length === 0) return [];
+  const originals = await listPublicOriginalAudio();
+  if (narrations.length === 0 && originals.length === 0) return [];
 
-  const projectIds = [...new Set(narrations.map((n) => n.projectId))];
+  const projectIds = [...new Set([...narrations.map((n) => String(n.projectId)), ...originals.map(item => item.projectId)])];
   const projects = await Project.find({ _id: { $in: projectIds } });
   const projectMap = new Map(projects.map((p) => [p._id.toString(), p]));
 
@@ -332,6 +335,8 @@ export const getPublicAudioGuides = async () => {
       projectId: string;
       narrationId: string;
       audioUrl: string;
+      type: 'ORIGINAL_AUDIO' | 'AI_NARRATION';
+      optionId: string;
     }>;
   };
 
@@ -361,6 +366,8 @@ export const getPublicAudioGuides = async () => {
       projectId: proj._id.toString(),
       narrationId: n._id.toString(),
       audioUrl: `/api/projects/public-audio/${proj._id.toString()}/${n._id.toString()}`,
+      type: 'AI_NARRATION' as const,
+      optionId: `narration:${n._id}`,
     };
 
     if (!guideMap.has(groupKey)) {
@@ -379,6 +386,22 @@ export const getPublicAudioGuides = async () => {
     }
   }
 
+  for (const original of originals) {
+    const proj = projectMap.get(original.projectId);
+    if (!proj || /^(?:S23\s|E2E\s|Test\s[a-f0-9-]{36})/i.test(proj.name)) continue;
+    const media = mediaMap.get(original.projectId);
+    const baseTitle = normalizeTitle(proj.name) || proj.name;
+    const groupKey = media?.storagePath ? `media:${media.storagePath}` : media?.originalName && media?.fileSize
+      ? `file:${media.originalName}:${media.fileSize}` : `title:${baseTitle.toLowerCase()}`;
+    const guide = guideMap.get(groupKey) ?? { key: groupKey, title: baseTitle, description: proj.description ?? '', mediaType: media?.mediaType ?? 'AUDIO', languages: [] };
+    if (!guide.languages.some(option => option.type === 'ORIGINAL_AUDIO' && option.code === original.languageCode)) {
+      const meta = LANGUAGE_METAS[original.languageCode] ?? { name: original.languageCode.toUpperCase(), flag: '🌐' };
+      guide.languages.unshift({ code: original.languageCode, name: meta.name, flag: meta.flag, projectId: original.projectId,
+        narrationId: original.id, audioUrl: original.audioUrl, type: 'ORIGINAL_AUDIO', optionId: `original:${original.id}` });
+    }
+    guideMap.set(groupKey, guide);
+  }
+
   for (const guide of guideMap.values()) {
     if (guide.languages.some((l) => l.code === 'vi')) {
       const viIndex = guide.languages.findIndex((l) => l.code === 'vi');
@@ -392,6 +415,6 @@ export const getPublicAudioGuides = async () => {
     }
   }
 
-  return Array.from(guideMap.values());
+  return Array.from(guideMap.values(), guide => ({ ...guide, key: createHash('sha256').update(guide.key).digest('hex') }));
 };
 

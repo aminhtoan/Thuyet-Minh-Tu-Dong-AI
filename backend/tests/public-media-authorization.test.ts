@@ -21,12 +21,14 @@ const { Translation } = await import('../src/models/Translation.js');
 const { Transcript } = await import('../src/models/Transcript.js');
 const { Project } = await import('../src/models/Project.js');
 const { Media } = await import('../src/models/Media.js');
+const { PublishedOriginalAudio } = await import('../src/models/PublishedOriginalAudio.js');
 const { User } = await import('../src/models/User.js');
 const { projectRouter } = await import('../src/routes/project.routes.js');
 const { errorHandlerMiddleware } = await import('../src/middleware/error-handler.middleware.js');
 const { signAccessToken } = await import('../src/utils/jwt.js');
 
 test('public narration listing and playback share the approved current publication policy', async (t) => {
+  t.mock.method(PublishedOriginalAudio, 'find', () => ({ sort: () => ({ limit: async () => [] }) }) as never);
   const projectId = new Types.ObjectId();
   const otherProjectId = new Types.ObjectId();
   const transcriptId = new Types.ObjectId();
@@ -103,6 +105,29 @@ test('public narration listing and playback share the approved current publicati
   };
 
   try {
+    await t.test('listing merges enabled original Vietnamese audio with approved AI English without exposing storage identity', async sub => {
+      const { sourceFingerprint, fileDigest } = await import('../src/services/original-audio-artifact.js');
+      const sourcePath = 'fixture-original-source.bin', artifactPath = 'fixture-original-artifact.mp3';
+      await writeFile(join(directory, sourcePath), 'synthetic source');
+      await writeFile(join(directory, artifactPath), 'synthetic original artifact');
+      const media = { _id: new Types.ObjectId(), projectId, storagePath: sourcePath, updatedAt: new Date(), mediaType: 'VIDEO' };
+      const original = new PublishedOriginalAudio({ projectId, ownerId, sourceMediaId: media._id,
+        sourceFingerprint: sourceFingerprint(media, (await fileDigest(sourcePath)).digest), languageCode: 'vi',
+        authorizationMode: 'ADMIN_DIRECT', publicationEnabled: true, publicationStatus: 'APPROVED', artifactStatus: 'READY',
+        artifactPath, artifactDigest: (await fileDigest(artifactPath)).digest, fileSize: Buffer.byteLength('synthetic original artifact'),
+        duration: 2, mimeType: 'audio/mpeg', reviewedBy: adminId, reviewedAt: new Date() });
+      sub.mock.method(PublishedOriginalAudio, 'find', () => ({ sort: () => ({ limit: async () => [original] }) }) as never);
+      sub.mock.method(Project, 'findById', async () => ({ _id: projectId, userId: ownerId, sourceLanguage: 'vi', sourceLanguageStatus: 'CONFIRMED' }) as never);
+      sub.mock.method(Media, 'findOne', async () => media as never);
+      sub.mock.method(Media, 'find', async () => [media] as never);
+      const body = await (await fetch(`${base}/api/projects/public-audio-guides`)).json() as { data: { guides: { key: string; languages: { type: string; code: string; optionId: string }[] }[] } };
+      const languages = body.data.guides[0]!.languages;
+      assert.ok(languages.some(option => option.type === 'ORIGINAL_AUDIO' && option.code === 'vi'));
+      assert.ok(languages.some(option => option.type === 'AI_NARRATION' && option.code === 'en'));
+      assert.equal(new Set(languages.map(option => option.optionId)).size, 2);
+      assert.doesNotMatch(JSON.stringify(body), /fixture-original|storagePath|rightsDeclaration|rightsReference/);
+      assert.match(body.data.guides[0]!.key, /^[a-f0-9]{64}$/);
+    });
     await t.test('approved READY CURRENT narration is listed and anonymously playable', async () => {
       const listing = await fetch(`${base}/api/projects/public-audio-guides`);
       assert.equal(listing.status, 200);

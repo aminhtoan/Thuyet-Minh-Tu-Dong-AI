@@ -8,14 +8,17 @@ import { resolveMediaExecutable } from '../../utils/media-executable.js';
 const MAX_STDERR = 16_384;
 const timeoutMs = () => { const value = Number(process.env.FFMPEG_TIMEOUT_MS ?? 300_000); return Number.isFinite(value) && value > 0 ? value : 300_000; };
 
-export const runMediaCommand = (binary: string, args: string[], stage: ProcessingStage): Promise<{ stdout: string; stderr: string }> => new Promise((resolve, reject) => {
+export const runMediaCommand = (binary: string, args: string[], stage: ProcessingStage, signal?: AbortSignal): Promise<{ stdout: string; stderr: string }> => new Promise((resolve, reject) => {
+  if (signal?.aborted) { reject(new MediaProcessingError({ stage, code: 'MEDIA_PROCESSING_CANCELLED', durationMs: 0 })); return; }
   const started = Date.now();
   const child = createTrackedResource(()=>spawn(binary, args, { shell: false, windowsHide: true })); let stdout = ''; let stderr = ''; let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, timeoutMs());
+  const cancel = () => { child.kill('SIGKILL'); };
+  signal?.addEventListener('abort', cancel, { once: true });
   child.stdout.on('data', (chunk: Buffer) => { stdout = (stdout + chunk.toString()).slice(-MAX_STDERR); });
   child.stderr.on('data', (chunk: Buffer) => { stderr = (stderr + chunk.toString()).slice(-MAX_STDERR); });
-  child.on('error', (error: NodeJS.ErrnoException) => { clearTimeout(timer); reject(new MediaProcessingError({ stage, code: error.code === 'ENOENT' ? 'FFMPEG_NOT_AVAILABLE' : 'MEDIA_PROCESSING_FAILED', durationMs: Date.now() - started, systemCode: /^[A-Z0-9_]+$/.test(error.code ?? '') ? error.code : undefined })); });
-  child.on('close', (code, signal) => { clearTimeout(timer); if (timedOut || code !== 0) reject(new MediaProcessingError({ stage, code: timedOut ? 'MEDIA_PROCESSING_TIMEOUT' : 'MEDIA_PROCESSING_FAILED', exitCode: code, signal, durationMs: Date.now() - started, stderr: sanitizeProcessingStderr(stderr, [binary, ...args.filter(arg => arg.includes('/') || arg.includes('\\'))]) })); else resolve({ stdout, stderr }); });
+  child.on('error', (error: NodeJS.ErrnoException) => { clearTimeout(timer); signal?.removeEventListener('abort', cancel); reject(new MediaProcessingError({ stage, code: error.code === 'ENOENT' ? 'FFMPEG_NOT_AVAILABLE' : 'MEDIA_PROCESSING_FAILED', durationMs: Date.now() - started, systemCode: /^[A-Z0-9_]+$/.test(error.code ?? '') ? error.code : undefined })); });
+  child.on('close', (code, exitSignal) => { clearTimeout(timer); signal?.removeEventListener('abort', cancel); if (timedOut || code !== 0 || signal?.aborted) reject(new MediaProcessingError({ stage, code: signal?.aborted ? 'MEDIA_PROCESSING_CANCELLED' : timedOut ? 'MEDIA_PROCESSING_TIMEOUT' : 'MEDIA_PROCESSING_FAILED', exitCode: code, signal: exitSignal, durationMs: Date.now() - started, stderr: sanitizeProcessingStderr(stderr, [binary, ...args.filter(arg => arg.includes('/') || arg.includes('\\'))]) })); else resolve({ stdout, stderr }); });
 });
 
 const verifiedMediaCommand: typeof runMediaCommand = async (binary, args, stage) => {
