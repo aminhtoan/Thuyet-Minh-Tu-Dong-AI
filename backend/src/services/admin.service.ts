@@ -77,11 +77,14 @@ import { getListenBreakdown } from './analytics.service.js';
 
 export const dashboard = async () => {
   const today = new Date(); today.setHours(0, 0, 0, 0);
+  const now = new Date();
   const [
     totalCustomers,
     totalProjects,
     processing,
     failed,
+    todayScans,
+    onlineUserIds,
     totalListens,
     webListens,
     mobileListens,
@@ -98,6 +101,8 @@ export const dashboard = async () => {
     Project.countDocuments(),
     Project.countDocuments({ status: { $in: processingStatuses } }),
     Project.countDocuments({ status: 'FAILED' }),
+    VisitQR.countDocuments({ createdAt: { $gte: today } }),
+    AuthSession.distinct('userId', { revokedAt: null, expiresAt: { $gt: now } }),
     ListenEvent.countDocuments(),
     ListenEvent.countDocuments({ platform: 'web' }),
     ListenEvent.countDocuments({ platform: 'mobile' }),
@@ -116,6 +121,8 @@ export const dashboard = async () => {
       totalProjects,
       processing,
       failed,
+      todayScans,
+      onlineUsers: onlineUserIds.length,
       totalListens,
       listenStats: {
         total: totalListens,

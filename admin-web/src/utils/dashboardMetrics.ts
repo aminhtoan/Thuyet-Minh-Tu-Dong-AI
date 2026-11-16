@@ -13,7 +13,7 @@ export function dashboardKpis(stats: AdminDashboardData['stats']) {
     { label: 'Cán bộ biên tập', value: stats.totalCustomers, icon: 'users' as const, description: 'Nhân sự phụ trách tạo nội dung thuyết minh', tone: 'primary' as const },
     { label: 'Tổng dự án', value: stats.totalProjects, icon: 'projects' as const, description: 'Toàn bộ bản ghi Project trong hệ thống', tone: 'primary' as const },
     { label: 'Dự án đang xử lý', value: stats.processing, icon: 'jobs' as const, description: 'Đang tạo bản ghi, dịch, giọng đọc hoặc video', tone: 'warning' as const },
-    { label: 'Dự án thất bại', value: stats.failed, icon: 'alert' as const, description: 'Project có trạng thái FAILED', tone: 'danger' as const },
+    { label: 'Lượt quét hôm nay', value: stats.todayScans ?? stats.onlineUsers ?? 0, icon: 'qr' as const, description: 'Lượt quét trong ngày', tone: 'primary' as const },
     { label: 'Lượt nghe', value: totalListens, icon: 'wave' as const, description: listenDesc, tone: 'primary' as const },
   ];
 }
@@ -24,6 +24,8 @@ export function assertDashboardMetrics(value: unknown): asserts value is Pick<Ad
   if (!d || !d.stats || !d.jobSummary || typeof d.generatedAt !== 'string' || !Number.isFinite(Date.parse(d.generatedAt)) ||
     ![d.stats.totalCustomers, d.stats.totalProjects, d.stats.processing, d.stats.failed,
       d.jobSummary.queued, d.jobSummary.processing, d.jobSummary.completedToday, d.jobSummary.failed].every(validCount) ||
+    (d.stats.todayScans !== undefined && !validCount(d.stats.todayScans)) ||
+    (d.stats.onlineUsers !== undefined && !validCount(d.stats.onlineUsers)) ||
     (d.stats.totalListens !== undefined && !validCount(d.stats.totalListens)) ||
     (d.stats.listenStats?.web !== undefined && !validCount(d.stats.listenStats.web)) ||
     (d.stats.listenStats?.mobile !== undefined && !validCount(d.stats.listenStats.mobile))) {

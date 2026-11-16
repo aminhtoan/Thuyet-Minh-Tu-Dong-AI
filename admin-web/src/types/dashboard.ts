@@ -44,6 +44,8 @@ export type AdminDashboardData = {
     totalProjects: number;
     processing: number;
     failed: number;
+    todayScans?: number;
+    onlineUsers?: number;
     totalListens?: number;
     listenStats?: { total: number; web: number; mobile: number };
   };

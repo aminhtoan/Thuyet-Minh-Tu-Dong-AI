@@ -35,7 +35,7 @@ export function AdminDashboardPage() {
         <LanguageDistributionCard items={data.listenAnalytics?.topLanguages} />
         <RecentActivityCard activities={data.recentActivities} now={now} />
       </div>
-      <details className="dashboard-definitions"><summary>Phạm vi và cách tính số liệu</summary><p>KPI dự án được tổng hợp phía máy chủ, không cộng từ các bảng gần đây. “Đang xử lý” gồm TRANSCRIBING, TRANSLATING, GENERATING_AUDIO và PROCESSING_VIDEO; “Thất bại” chỉ đếm trạng thái FAILED.</p><p>Thống kê công việc đếm ProcessingJob, không đếm dự án hoặc TranslationAttempt. “Hôm nay” bắt đầu lúc 00:00 theo múi giờ Backend, có thể khác thiết bị. Một dự án có thể có nhiều công việc.</p><p>Bảng gần đây giới hạn 5 dự án, 5 công việc và 6 hoạt động theo lần đọc API. Tiến độ 100% không thay thế trạng thái COMPLETED.</p></details>
+      <details className="dashboard-definitions"><summary>Phạm vi và cách tính số liệu</summary><p>KPI dự án được tổng hợp phía máy chủ, không cộng từ các bảng gần đây. “Đang xử lý” gồm TRANSCRIBING, TRANSLATING, GENERATING_AUDIO và PROCESSING_VIDEO; “Lượt quét hôm nay” đếm các lượt khách quét mã QR trong ngày.</p><p>Thống kê công việc đếm ProcessingJob, không đếm dự án hoặc TranslationAttempt. “Hôm nay” bắt đầu lúc 00:00 theo múi giờ Backend, có thể khác thiết bị. Một dự án có thể có nhiều công việc.</p><p>Bảng gần đây giới hạn 5 dự án, 5 công việc và 6 hoạt động theo lần đọc API. Tiến độ 100% không thay thế trạng thái COMPLETED.</p></details>
     </div>}
     <span className="sr-only" aria-live="polite">{loading ? 'Đang tải bảng điều khiển' : error ? '' : 'Đã cập nhật bảng điều khiển'}</span>
   </div>;

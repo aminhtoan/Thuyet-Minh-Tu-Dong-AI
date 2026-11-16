@@ -16,7 +16,7 @@ function compile(file, dependencies = {}) {
 const metrics = compile('utils/dashboardMetrics.ts');
 const format = compile('utils/dashboardFormat.ts');
 const payload = () => ({
-  stats: { totalCustomers: 9, totalProjects: 31, processing: 0, failed: 9, totalListens: 20, listenStats: { total: 20, web: 12, mobile: 8 } },
+  stats: { totalCustomers: 9, totalProjects: 31, processing: 0, failed: 9, onlineUsers: 3, totalListens: 20, listenStats: { total: 20, web: 12, mobile: 8 } },
   listenAnalytics: {
     topLanguages: [{ code: 'en', name: 'Tiếng Anh', flag: '🇬🇧', count: 12, percentage: 60, web: 7, mobile: 5 }],
     topAudios: [{ projectId: 'p1', title: 'Hiện vật A', languageCode: 'en', languageName: 'Tiếng Anh', flag: '🇬🇧', count: 12, web: 7, mobile: 5 }],
@@ -33,10 +33,10 @@ function nodes(tree, predicate) {
   if (!tree || typeof tree !== 'object') return [];
   return [...(predicate(tree) ? [tree] : []), ...nodes(tree.props?.children, predicate)];
 }
-test('KPI selector separates9 FAILED projects from28 FAILED jobs; no sum from recent lists or attempt data', () => {
+test('KPI selector separates projects and today QR scans; no sum from recent lists or attempt data', () => {
   const d = payload(); const cards = metrics.dashboardKpis(d.stats);
-  assert.deepEqual(Array.from(cards, c => c.value), [9, 31, 0, 9, 20]);
-  assert.equal(cards[2].label, 'Dự án đang xử lý'); assert.equal(cards[3].label, 'Dự án thất bại'); assert.equal(cards[4].label, 'Lượt nghe');
+  assert.deepEqual(Array.from(cards, c => c.value), [9, 31, 0, 3, 20]);
+  assert.equal(cards[2].label, 'Dự án đang xử lý'); assert.equal(cards[3].label, 'Lượt quét hôm nay'); assert.equal(cards[4].label, 'Lượt nghe');
   assert.equal(d.jobSummary.failed, 28); assert.equal(d.jobSummary.completedToday, 15);
   const backend = readFileSync(new URL('../../backend/src/services/admin.service.ts', import.meta.url), 'utf8');
   assert.match(backend, /Project.countDocuments\(\{ status: 'FAILED' \}\)/);

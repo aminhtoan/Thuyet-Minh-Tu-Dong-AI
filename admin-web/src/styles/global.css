@@ -63,6 +63,7 @@ h2 { font-size: 17px; line-height: 1.4; letter-spacing: -.02em; }
 .stat-card__icon { position: absolute; right: 18px; top: 20px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px; color: var(--primary); background: var(--primary-soft); }
 .stat-card--warning .stat-card__icon { color: var(--warning); background: var(--warning-soft); }
 .stat-card--danger .stat-card__icon { color: var(--danger); background: var(--danger-soft); }
+.stat-card--success .stat-card__icon { color: var(--success); background: var(--success-soft); }
 .stat-card__label { padding-right: 38px; color: var(--secondary); font-size: 12px; }
 .stat-card strong { font-size: 30px; letter-spacing: -.035em; }
 .stat-card small { color: var(--muted); font-size: 10px; }
