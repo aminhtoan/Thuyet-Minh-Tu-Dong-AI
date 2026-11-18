@@ -3,6 +3,7 @@ import { createTrackedResource } from '../../maintenance/runtime.js';
 import { GoogleGenAI } from '@google/genai';
 import type { TtsProvider, TtsProviderInput, TtsProviderResult } from './tts-provider.interface.js';
 import { resolveMediaExecutable } from '../../utils/media-executable.js';
+import { geminiKeyPool } from '../../utils/gemini-key-pool.js';
 
 export const GEMINI_TTS_MODEL = 'gemini-3.8-flash-tts';
 
@@ -29,7 +30,7 @@ export class GeminiTtsProvider implements TtsProvider {
     private readonly convert = wavToMp3,
   ) {}
   public async synthesize(input: TtsProviderInput): Promise<TtsProviderResult> {
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    const apiKey = geminiKeyPool.pick();
     if (!apiKey) throw new Error('TTS_NOT_CONFIGURED');
     if (input.text.length > 4096) throw new Error('TTS_TEXT_TOO_LARGE');
 

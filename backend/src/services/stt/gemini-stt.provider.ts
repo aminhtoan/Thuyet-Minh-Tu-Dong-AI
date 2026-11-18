@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import { z } from 'zod';
 import { FfmpegMediaProcessor } from '../media-processing/ffmpeg-media-processor.js';
 import type { SttInput, SttProvider, SttResult } from './stt-provider.interface.js';
+import { geminiKeyPool } from '../../utils/gemini-key-pool.js';
 
 export const GEMINI_STT_MODEL = 'gemini-3.5-transcribe';
 export const geminiTranscriptionConfig = (language?: string) => ({
@@ -192,7 +193,7 @@ export class GeminiSttProvider implements SttProvider {
     await promisify(execFile)(await resolveMediaExecutable('ffmpeg', process.env.FFMPEG_PATH), ['-nostdin', '-y', '-i', source, '-map', '0:a:0', '-vn', '-c:a', 'pcm_s16le', destination], { timeout: 120_000, windowsHide: true });
   }) {}
   async transcribe(input: SttInput): Promise<SttResult> {
-    const key = process.env.GEMINI_API_KEY?.trim();
+    const key = geminiKeyPool.pick();
     if (!key) throw new GeminiSttError('STT_NOT_CONFIGURED');
     const model = process.env.GEMINI_STT_MODEL?.trim() || GEMINI_STT_MODEL;
     if (model !== GEMINI_STT_MODEL) throw new GeminiSttError('STT_MODEL_UNAVAILABLE');
@@ -229,7 +230,11 @@ export class GeminiSttProvider implements SttProvider {
       const hint = input.sourceLanguageMode === 'AUTO' ? undefined : input.language;
       const language = hint ? ({ vi: 'vi-VN', en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'cmn-Hans-CN' } as Record<string, string>)[hint] ?? hint : undefined;
       return mapGeminiTranscript(await client.transcribe(model, remote.uri, mime, language, signal), source.duration, hint);
-    } catch (error) { throw mapError(error); }
+    } catch (error) {
+      const mapped = mapError(error);
+      if (mapped.httpStatus) geminiKeyPool.report(key, mapped.httpStatus);
+      throw mapped;
+    }
     finally {
       if (uploadedName) { try { await client.deleteFile(uploadedName); } catch { /* Remote Files expire; do not log URLs, headers or provider payload. */ } }
       if (temporary) { try { await rm(temporary, { recursive: true, force: true }); } catch { if (process.env.NODE_ENV === 'development') console.error('STT temporary cleanup failed (path suppressed).'); } }

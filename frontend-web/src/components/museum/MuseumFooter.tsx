@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MuseumContainer } from './MuseumContainer'
 
-const DEFAULT_MOBILE_URL = 'https://sempiternal-maddison-reservedly.ngrok-free.dev/api/qr/visit?source=footer_web&target=/thuyet-minh'
+const DEFAULT_MOBILE_URL =
+  (import.meta.env.VITE_MOBILE_APP_URL
+    ? `${import.meta.env.VITE_MOBILE_APP_URL.replace(/\/+$/, '')}/thuyet-minh`
+    : '') || 'https://thuyet-minh-tu-dong-ai.vercel.app/thuyet-minh'
 
 export function MuseumFooter() {
   const isMounted = typeof window !== 'undefined'

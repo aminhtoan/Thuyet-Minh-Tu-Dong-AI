@@ -152,7 +152,7 @@ export const redirectVisitQR: RequestHandler = async (request, response) => {
   if (target.startsWith('http://') || target.startsWith('https://')) {
     redirectUrl = target;
   } else {
-    const mobileBase = process.env.MOBILE_URL || 'https://sempiternal-maddison-reservedly.ngrok-free.dev';
+    const mobileBase = process.env.MOBILE_URL || 'https://thuyet-minh-tu-dong-ai.vercel.app';
     redirectUrl = `${mobileBase.replace(/\/+$/, '')}${target.startsWith('/') ? target : `/${target}`}`;
   }
   response.redirect(302, redirectUrl);

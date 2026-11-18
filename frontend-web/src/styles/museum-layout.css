@@ -105,39 +105,271 @@
   .museum-public-layout .museum-footer__row { gap: 16px; }
 }
 
-/* Multilingual Audio Guides Section */
-.museum-audio-section { padding-block: var(--museum-space-8) var(--museum-space-6); }
-.museum-audio-section__header { margin-bottom: var(--museum-space-6); }
-.museum-audio-section__title { margin: 4px 0 8px; font-size: clamp(1.25rem, 2.5vw, 1.75rem); font-weight: 700; color: var(--museum-color-text); }
-.museum-audio-section__desc { margin: 0; color: var(--museum-color-muted-text); font-size: var(--museum-font-size-sm); max-width: 65ch; }
+/* =========================================================
+   Multilingual Audio Guides Section — ui-craft redesign
+   90/10 neutral canvas · 8pt rhythm · tactile physics
+   ========================================================= */
 
-.museum-audio-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--museum-space-6); }
-/* Museum Audio Card - Sleek Modern Design (Matching Image 2) */
-.museum-audio-card { display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; overflow: hidden; cursor: pointer; transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04); }
-.museum-audio-card:hover { transform: translateY(-4px); border-color: #cbd5e1; box-shadow: 0 14px 30px rgba(15, 23, 42, 0.09); }
+/* -- Section wrapper -- */
+.museum-audio-section {
+  padding-block: clamp(40px, 5vw, 60px) clamp(40px, 5vw, 56px);
+}
 
-.museum-audio-card__media { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 45%, #0ea5e9 100%); display: flex; align-items: center; justify-content: center; }
+.museum-audio-section__header {
+  margin-bottom: 32px;
+  display: grid;
+  gap: 6px;
+}
 
-.museum-audio-card__media-badge-top { position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; background: #ffffff; color: #0f172a; font-size: 0.75rem; font-weight: 700; border-radius: 9999px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); z-index: 2; }
-.museum-audio-card__media-badge-bottom { position: absolute; bottom: 12px; left: 12px; display: inline-flex; align-items: center; padding: 5px 12px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); color: #ffffff; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; z-index: 2; }
+.museum-audio-section__title {
+  margin: 0;
+  font-size: clamp(1.375rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -.025em;
+  line-height: 1.25;
+  color: var(--museum-color-text);
+  text-wrap: balance;
+}
 
-.museum-audio-card__play-btn { width: 52px; height: 52px; border-radius: 50%; background: #ffffff; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease; z-index: 3; }
+.museum-audio-section__desc {
+  margin: 0;
+  color: var(--museum-color-muted-text);
+  font-size: .9375rem;
+  line-height: 1.65;
+  max-width: 65ch;
+}
+
+/* -- Grid -- */
+.museum-audio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* -- Card shell -- */
+.museum-audio-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--museum-color-border);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--museum-color-surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  transition:
+    transform 200ms cubic-bezier(0.16,1,0.3,1),
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.museum-audio-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(88,80,236,.30);
+  box-shadow: 0 10px 32px rgba(88,80,236,.12), 0 2px 8px rgba(0,0,0,.05);
+}
+
+/* -- Media banner (gradient thumbnail) -- */
+.museum-audio-card__media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: linear-gradient(135deg, #4338ca 0%, #5850ec 40%, #7c3aed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Subtle noise texture over gradient */
+.museum-audio-card__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E") repeat;
+  pointer-events: none;
+}
+
+/* Top pill badge */
+.museum-audio-card__media-badge-top {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  color: #0f172a;
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+/* Bottom language count badge */
+.museum-audio-card__media-badge-bottom {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  border-radius: 999px;
+  z-index: 2;
+}
+
+/* Centered play circle */
+.museum-audio-card__play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition:
+    transform 200ms cubic-bezier(0.16,1,0.3,1),
+    box-shadow 200ms ease;
+}
+
 .museum-audio-card__play-btn svg { margin-left: 3px; }
-.museum-audio-card:hover .museum-audio-card__play-btn { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 8px 26px rgba(0, 0, 0, 0.25); }
 
-.museum-audio-card__content { display: flex; flex-direction: column; flex: 1; padding: 20px 20px 22px; background: #ffffff; }
-.museum-audio-card__title { margin: 0 0 8px; font-size: 1.0625rem; font-weight: 700; color: #0f172a; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.8em; }
-.museum-audio-card__desc { margin: 0 0 18px; color: #64748b; font-size: 0.84rem; line-height: 1.5; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em; }
+.museum-audio-card:hover .museum-audio-card__play-btn {
+  transform: translate(-50%, -50%) scale(1.09);
+  box-shadow: 0 10px 32px rgba(0,0,0,.28);
+}
 
-.museum-audio-card__action-row { display: flex; align-items: center; gap: 10px; margin-top: auto; }
-.museum-audio-card__lang-picker { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 42px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; position: relative; transition: border-color 0.15s ease; }
-.museum-audio-card__lang-picker:hover, .museum-audio-card__lang-picker:focus-within { border-color: #94a3b8; }
-.museum-audio-card__globe-icon { flex-shrink: 0; }
-.museum-audio-card__dropdown { flex: 1; min-width: 0; border: none; background: transparent; font-size: 0.8125rem; font-weight: 600; color: #1e293b; outline: none; cursor: pointer; padding: 0 18px 0 0; appearance: none; -webkit-appearance: none; }
-.museum-audio-card__chevron { position: absolute; right: 12px; pointer-events: none; flex-shrink: 0; }
+/* -- Content body -- */
+.museum-audio-card__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 18px 18px 20px;
+}
 
-.museum-audio-card__listen-btn { width: 42px; height: 42px; min-width: 42px; border-radius: 12px; background: #4f46e5; color: #ffffff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25); }
-.museum-audio-card__listen-btn:hover { background: #4338ca; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79, 70, 229, 0.38); }
+.museum-audio-card__title {
+  margin: 0 0 6px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--museum-color-text);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -.01em;
+}
+
+.museum-audio-card__desc {
+  margin: 0 0 16px;
+  color: var(--museum-color-muted-text);
+  font-size: .84375rem;
+  line-height: 1.6;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* -- Action row: language picker + listen button -- */
+.museum-audio-card__action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.museum-audio-card__lang-picker {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  height: 40px;
+  background: var(--museum-color-background);
+  border: 1px solid var(--museum-color-border);
+  border-radius: 10px;
+  position: relative;
+  transition: border-color 130ms ease;
+}
+
+.museum-audio-card__lang-picker:hover,
+.museum-audio-card__lang-picker:focus-within {
+  border-color: var(--museum-color-muted-text);
+}
+
+.museum-audio-card__globe-icon { flex-shrink: 0; color: var(--museum-color-muted-text); }
+
+.museum-audio-card__dropdown {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--museum-color-text);
+  outline: none;
+  cursor: pointer;
+  padding: 0 18px 0 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.museum-audio-card__chevron {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  flex-shrink: 0;
+  color: var(--museum-color-muted-text);
+}
+
+/* Listen button */
+.museum-audio-card__listen-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  background: var(--museum-color-primary);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(88,80,236,.22);
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 120ms cubic-bezier(0.16,1,0.3,1);
+}
+
+.museum-audio-card__listen-btn:hover {
+  background: var(--museum-color-primary-hover);
+  box-shadow: 0 4px 16px rgba(88,80,236,.38);
+  transform: translateY(-1px);
+}
+
+.museum-audio-card__listen-btn:active {
+  background: var(--museum-color-primary-pressed);
+  transform: translateY(0) scale(.96);
+  box-shadow: none;
+}
 
 /* Audio Modal */
 .museum-audio-modal__backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; padding: 16px; animation: museumAudioFadeIn 0.2s ease-out; }

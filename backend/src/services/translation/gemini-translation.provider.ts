@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 import type { TranslationProvider, TranslationProviderInput, TranslationProviderResult } from './translation-provider.interface.js';
 import { gemini400Diagnostic, type ProviderDiagnostic, type TransportDiagnostic } from './provider-failure.js';
+import { geminiKeyPool } from '../../utils/gemini-key-pool.js';
 
 export const GEMINI_TRANSLATION_MODEL = 'gemini-3.8-flash';
 export const GEMINI_TRANSLATION_ERRORS = ['TRANSLATION_NOT_CONFIGURED', 'TRANSLATION_INVALID_KEY', 'TRANSLATION_MODEL_UNAVAILABLE', 'TRANSLATION_QUOTA_EXCEEDED', 'TRANSLATION_TIMEOUT', 'TRANSLATION_NETWORK_ERROR', 'TRANSLATION_INVALID_RESPONSE', 'TRANSLATION_MAPPING_FAILED', 'TRANSLATION_PROVIDER_ERROR'] as const;
@@ -61,7 +62,7 @@ export const mapGeminiTranslationError = (error: unknown, transportDiagnostic?: 
 export class GeminiTranslationProvider implements TranslationProvider {
   constructor(private readonly transport?: GeminiTranslationTransport) {}
   async translate(input: TranslationProviderInput): Promise<TranslationProviderResult> {
-    const key = process.env.GEMINI_API_KEY?.trim();
+    const key = geminiKeyPool.pick();
     const model = process.env.GEMINI_TRANSLATION_MODEL?.trim() || GEMINI_TRANSLATION_MODEL;
     if (!key) throw new GeminiTranslationError('TRANSLATION_NOT_CONFIGURED');
     if (!/^gemini-[a-z0-9.-]+$/.test(model) || /transcribe|tts|live|image/i.test(model)) throw new GeminiTranslationError('TRANSLATION_MODEL_UNAVAILABLE');
@@ -73,6 +74,10 @@ export class GeminiTranslationProvider implements TranslationProvider {
       const metadata = await client.checkModel(model, signal);
       if (!metadata.supportedActions?.includes('generateContent')) throw new GeminiTranslationError('TRANSLATION_MODEL_UNAVAILABLE');
       return mapGeminiTranslation(await client.generate(model, input, signal), input);
-    } catch (error) { throw mapGeminiTranslationError(error); }
+    } catch (error) {
+      const mapped = mapGeminiTranslationError(error);
+      if (mapped.httpStatus) geminiKeyPool.report(key, mapped.httpStatus);
+      throw mapped;
+    }
   }
 }
